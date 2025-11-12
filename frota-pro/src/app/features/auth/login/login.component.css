@@ -3,21 +3,23 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #004e92, #000428);
+  width: 100vw;
 }
 
 .login-card {
-  background-color: white;
+  background-color: #fff;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  width: 320px;
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  width: 340px;
   text-align: center;
 }
 
 .title {
   color: #004e92;
   margin-bottom: 1.5rem;
+  font-size: 28px;
+  font-weight: bold;
 }
 
 input {
@@ -38,7 +40,7 @@ button {
   border-radius: 8px;
   font-size: 16px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: background 0.3s;
 }
 
 button:hover {
