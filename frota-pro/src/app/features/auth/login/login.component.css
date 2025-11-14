@@ -60,3 +60,9 @@ input:focus {
 .login-button:hover {
   background-color: #1e3c72;
 }
+
+.logo {
+  width: 120px;
+  margin-bottom: 20px;
+}
+
