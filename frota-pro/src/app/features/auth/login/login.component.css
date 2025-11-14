@@ -17,7 +17,7 @@
 
 h2 {
   margin-bottom: 1.5rem;
-  color: #333;
+  color: #2a5298;
 }
 
 .form-group {
@@ -46,7 +46,7 @@ input:focus {
 }
 
 .login-button {
-  width: 100%;
+  width: 70%;
   background-color: #2a5298;
   color: white;
   border: none;
@@ -55,6 +55,7 @@ input:focus {
   cursor: pointer;
   font-size: 16px;
   transition: background 0.3s;
+  
 }
 
 .login-button:hover {
@@ -63,6 +64,5 @@ input:focus {
 
 .logo {
   width: 120px;
-  margin-bottom: 20px;
 }
 
