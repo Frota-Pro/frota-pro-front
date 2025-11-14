@@ -3,46 +3,60 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  width: 100vw;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
 }
 
 .login-card {
-  background-color: #fff;
+  background: #fff;
   padding: 2rem;
   border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-  width: 340px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  width: 350px;
   text-align: center;
 }
 
-.title {
-  color: #004e92;
+h2 {
   margin-bottom: 1.5rem;
-  font-size: 28px;
-  font-weight: bold;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+label {
+  font-size: 14px;
+  color: #333;
+  display: block;
+  margin-bottom: 5px;
 }
 
 input {
   width: 100%;
   padding: 10px;
-  margin-bottom: 1rem;
-  border: 1px solid #ccc;
   border-radius: 8px;
-  font-size: 14px;
+  border: 1px solid #ccc;
+  outline: none;
+  transition: border 0.3s;
 }
 
-button {
+input:focus {
+  border-color: #2a5298;
+}
+
+.login-button {
   width: 100%;
-  padding: 10px;
-  background-color: #004e92;
+  background-color: #2a5298;
   color: white;
   border: none;
+  padding: 10px;
   border-radius: 8px;
-  font-size: 16px;
   cursor: pointer;
+  font-size: 16px;
   transition: background 0.3s;
 }
 
-button:hover {
-  background-color: #003974;
+.login-button:hover {
+  background-color: #1e3c72;
 }
