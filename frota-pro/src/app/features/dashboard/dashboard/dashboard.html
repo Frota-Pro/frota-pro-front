@@ -5,26 +5,27 @@
 <div class="layout">
   <aside class="sidebar" [class.closed]="isClosed">
     <div class="logo-area">
-      <span *ngIf="!isClosed" class="logo-text">FrotasPRO</span>
+      <img src="assets/logo.png" class="logo" />
+      <span *ngIf="!isClosed" class="logo-text">FrotaPRO</span>
     </div>
 
     <nav class="menu">
-      <a class="menu-item">
+      <a class="menu-item" routerLink="/motoristas" routerLinkActive="active" data-tooltip="Motoristas">
         <i class="icon fas fa-user"></i>
         <span *ngIf="!isClosed">Motoristas</span>
       </a>
 
-      <a class="menu-item">
+      <a class="menu-item" routerLink="/veiculos" routerLinkActive="active" data-tooltip="Veículos">
         <i class="icon fas fa-truck"></i>
         <span *ngIf="!isClosed">Veículos</span>
       </a>
 
-      <a class="menu-item">
+      <a class="menu-item" routerLink="/cargas" routerLinkActive="active" data-tooltip="Cargas">
         <i class="icon fas fa-box"></i>
         <span *ngIf="!isClosed">Cargas</span>
       </a>
 
-      <a class="menu-item">
+      <a class="menu-item" routerLink="/dashboard" routerLinkActive="active" data-tooltip="Dashboard">
         <i class="icon fas fa-chart-line"></i>
         <span *ngIf="!isClosed">Dashboard</span>
       </a>
@@ -33,7 +34,7 @@
 
   <main class="content">
     <button class="toggle-btn" (click)="toggleSidebar()">
-      ☰
+      <i class="fas fa-bars"></i>
     </button>
 
     <h1>Dashboard</h1>
