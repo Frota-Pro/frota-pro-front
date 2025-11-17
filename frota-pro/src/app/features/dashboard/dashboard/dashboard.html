@@ -1,32 +1,41 @@
+<head>
+  <link rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
 <div class="layout">
   <aside class="sidebar" [class.closed]="isClosed">
     <div class="logo-area">
-      <img src="assets/logo.png" class="logo" />
-      <span *ngIf="!isClosed" class="logo-text">FrotaPRO</span>
+      <span *ngIf="!isClosed" class="logo-text">FrotasPRO</span>
     </div>
+
     <nav class="menu">
       <a class="menu-item">
-        <i class="icon">🚚</i>
+        <i class="icon fas fa-user"></i>
         <span *ngIf="!isClosed">Motoristas</span>
       </a>
+
       <a class="menu-item">
-        <i class="icon">🚛</i>
+        <i class="icon fas fa-truck"></i>
         <span *ngIf="!isClosed">Veículos</span>
       </a>
+
       <a class="menu-item">
-        <i class="icon">📦</i>
+        <i class="icon fas fa-box"></i>
         <span *ngIf="!isClosed">Cargas</span>
       </a>
+
       <a class="menu-item">
-        <i class="icon">📊</i>
+        <i class="icon fas fa-chart-line"></i>
         <span *ngIf="!isClosed">Dashboard</span>
       </a>
     </nav>
   </aside>
+
   <main class="content">
     <button class="toggle-btn" (click)="toggleSidebar()">
-      {{ isClosed ? '➡️' : '⬅️' }}
+      ☰
     </button>
+
     <h1>Dashboard</h1>
     <p>Bem-vindo ao sistema FrotaPRO!</p>
   </main>
