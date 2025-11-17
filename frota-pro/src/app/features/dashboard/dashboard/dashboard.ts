@@ -13,5 +13,4 @@ export class Dashboard {
   toggleSidebar() {
     this.isClosed = !this.isClosed;
   }
-
 }
