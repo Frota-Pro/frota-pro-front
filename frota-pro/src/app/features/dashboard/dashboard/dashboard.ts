@@ -6,11 +6,16 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css'
+  styleUrls: ['./dashboard.css']
 })
 export class Dashboard {
   isClosed = false;
   toggleSidebar() {
     this.isClosed = !this.isClosed;
   }
+  statusFrota = {
+  total: 25,
+  emRota: 8,
+  manutencao: 3
+};
 }
