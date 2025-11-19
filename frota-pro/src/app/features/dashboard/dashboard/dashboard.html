@@ -4,10 +4,15 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   />
 </head>
+
 <div class="layout">
   <aside class="sidebar" [class.closed]="isClosed">
+
+    <button class="toggle-btn" (click)="toggleSidebar()">
+      <i class="fas fa-bars"></i>
+    </button>
+
     <div class="logo-area">
-      <img src="assets/logo.png" class="logo" />
       <span *ngIf="!isClosed" class="logo-text">FrotaPRO</span>
     </div>
 
@@ -22,12 +27,22 @@
         <span *ngIf="!isClosed">Motoristas</span>
       </a>
 
-      <a class="menu-item" routerLink="/veiculos" routerLinkActive="active" data-tooltip="Veículos">
+      <a
+        class="menu-item"
+        routerLink="/veiculos"
+        routerLinkActive="active"
+        data-tooltip="Veículos"
+      >
         <i class="icon fas fa-truck"></i>
         <span *ngIf="!isClosed">Veículos</span>
       </a>
 
-      <a class="menu-item" routerLink="/cargas" routerLinkActive="active" data-tooltip="Cargas">
+      <a
+        class="menu-item"
+        routerLink="/cargas"
+        routerLinkActive="active"
+        data-tooltip="Cargas"
+      >
         <i class="icon fas fa-box"></i>
         <span *ngIf="!isClosed">Cargas</span>
       </a>
@@ -45,9 +60,6 @@
   </aside>
 
   <main class="content">
-    <button class="toggle-btn" (click)="toggleSidebar()">
-      <i class="fas fa-bars"></i>
-    </button>
 
     <div class="status-card">
       <h3>Status da Frota</h3>
@@ -69,5 +81,6 @@
         </div>
       </div>
     </div>
+
   </main>
 </div>

@@ -84,20 +84,74 @@
   padding: 20px;
   position: relative;
 }
-.toggle-btn {
-  position: absolute;
-  top: 15px;
-  left: 15px;
+.sidebar .toggle-btn {
+  width: 100%;
   background: transparent;
   border: none;
-  font-size: 22px;
-  color: #16325c;
+  color: white;
+  padding: 12px 0;
+  font-size: 20px;
   cursor: pointer;
-  transition: 0.2s ease;
+  display: flex;
+  justify-content: center;
+  transition: background 0.2s;
+  margin-bottom: 10px;
+}
+.sidebar .toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.status-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(85, 83, 83, 0.08);
+  max-width: 450px;
 }
 
-.toggle-btn:hover {
-  transform: scale(1.2);
+.status-card h3 {
+  margin: 0 0 15px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.status-item {
+  background: #f5f5f5;
+  padding: 12px 16px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-item .label {
+  font-size: 14px;
+  color: #555;
+}
+
+.status-item .value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+}
+
+/* Cores específicas */
+.status-item.rota {
+  border-left: 5px solid #1976d2; /* azul */
+}
+
+.status-item.manutencao {
+  border-left: 5px solid #d32f2f; /* vermelho */
+}
+
+.status-item.total {
+  border-left: 5px solid #388e3c; /* verde */
 }
 
 
