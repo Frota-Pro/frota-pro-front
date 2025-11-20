@@ -100,6 +100,24 @@
   position: relative;
 }
 
+.sidebar .toggle-btn { 
+  width: 100%; 
+  background: transparent; 
+  border: none; 
+  color: white; 
+  padding: 12px 0; 
+  font-size: 20px; 
+  cursor: pointer; 
+  display: flex; 
+  justify-content: center; 
+  transition: background 0.2s; 
+  margin-bottom: 10px; 
+} 
+  
+.sidebar .toggle-btn:hover { 
+  background: rgba(255, 255, 255, 0.1); 
+}
+
 .top-cards {
   display: flex;
   gap: 20px;
