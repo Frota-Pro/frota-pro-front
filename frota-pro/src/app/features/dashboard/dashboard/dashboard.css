@@ -238,3 +238,40 @@
     flex: none;
   }
 }
+
+.grafico-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 25px;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+
+.grafico-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.grafico-header h3 {
+  color: #1e3c72;
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.grafico-header select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+  .grafico-card {
+    margin-top: 15px;
+  }
+}
