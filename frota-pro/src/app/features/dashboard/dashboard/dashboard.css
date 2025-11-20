@@ -269,7 +269,6 @@
   font-size: 14px;
 }
 
-/* Mobile */
 @media (max-width: 900px) {
   .grafico-card {
     margin-top: 15px;
