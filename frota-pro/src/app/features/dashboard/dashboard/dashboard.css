@@ -64,7 +64,6 @@
 
 .menu-item:hover {
   background: rgba(255, 255, 255, 0.12);
-  padding-left: 18px;
 }
 
 .menu-item.active {
@@ -78,6 +77,9 @@
   flex-shrink: 0;
 }
 
+.menu-item:hover .icon{
+  color: #1976d2;
+}
 .sidebar.closed .menu-item span {
   display: none;
 }
