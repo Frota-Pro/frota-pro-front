@@ -2,11 +2,14 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoogleChartsModule, ChartType } from 'angular-google-charts';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, GoogleChartsModule, FormsModule],
+  imports: [CommonModule, GoogleChartsModule, FormsModule, RouterOutlet, RouterModule, RouterLink, RouterLinkActive],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })

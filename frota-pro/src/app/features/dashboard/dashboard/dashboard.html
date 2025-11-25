@@ -7,7 +7,6 @@
 
 <div class="layout">
   <aside class="sidebar" [class.closed]="isClosed">
-
     <button class="toggle-btn" (click)="toggleSidebar()">
       <i class="fas fa-bars"></i>
     </button>
@@ -17,12 +16,22 @@
     </div>
 
     <nav class="menu">
-      <a class="menu-item" routerLink="/dashboard" routerLinkActive="active" data-tooltip="Dashboard">
+      <a
+        class="menu-item"
+        routerLink="dashboard-home"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        >
         <i class="icon fas fa-chart-line"></i>
         <span *ngIf="!isClosed">Dashboard</span>
       </a>
 
-      <a class="menu-item" routerLink="/colaboradores" routerLinkActive="active" data-tooltip="Colaboradores">
+      <a
+        class="menu-item"
+        routerLink="colaboradores"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
         <i class="icon fas fa-user"></i>
         <span *ngIf="!isClosed">Colaboradores</span>
       </a>
@@ -40,70 +49,6 @@
   </aside>
 
   <main class="content">
-
-    <div class="top-cards">
-
-      <div class="status-card">
-        <h3>Status da Frota</h3>
-
-        <div class="status-grid">
-          <div class="status-item total">
-            <span class="label">Total de Caminhões</span>
-            <span class="value">{{ statusFrota.total }}</span>
-          </div>
-
-          <div class="status-item rota">
-            <span class="label">Em Rota</span>
-            <span class="value">{{ statusFrota.emRota }}</span>
-          </div>
-
-          <div class="status-item manutencao">
-            <span class="label">Em Manutenção</span>
-            <span class="value">{{ statusFrota.manutencao }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="notificacoes-card">
-        <h3>Notificações</h3>
-
-        <ul class="notificacoes-lista">
-          <li
-            *ngFor="let n of notificacoes"
-            class="notificacao"
-            [class.aviso]="n.tipo === 'aviso'"
-            [class.alerta]="n.tipo === 'alerta'"
-            [class.risco]="n.tipo === 'risco'"
-          >
-            <i class="fas fa-exclamation-circle"></i>
-            <span>{{ n.mensagem }}</span>
-          </li>
-        </ul>
-      </div>
-
-    </div>
-    <div class="grafico-card">
-      <div class="grafico-header">
-        <h3>Cargas por Dia</h3>
-
-        <select [(ngModel)]="periodoSelecionado" (change)="atualizarGrafico()">
-          <option value="7">Últimos 7 dias</option>
-          <option value="14">Últimos 14 dias</option>
-          <option value="31">Últimos 31 dias</option>
-        </select>
-      </div>
-
-      <google-chart
-        [type]="chart.type"
-        [data]="chart.data"
-        [columns]="chart.columns"
-        [options]="chart.options"
-        [width]="900"
-        [height]="350"
-      >
-      </google-chart>
-
-    </div> 
-
+    <router-outlet></router-outlet>
   </main>
 </div>
