@@ -18,7 +18,7 @@ export class LoginComponent {
 
   login() {
     if (this.email === 'admin@frotapro.com' && this.password === '123456') {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/dashboard/dashboard-home']);
     } else {
       alert('Usuário ou senha inválidos!');
     }
