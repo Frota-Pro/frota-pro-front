@@ -17,7 +17,7 @@ export class LoginComponent {
   constructor(private router: Router) {}
 
   login() {
-    if (this.email === 'admin@frotapro.com' && this.password === '123456') {
+    if (this.email === 'igor' && this.password === '123456') {
       this.router.navigate(['/dashboard/dashboard-home']);
     } else {
       alert('Usuário ou senha inválidos!');
