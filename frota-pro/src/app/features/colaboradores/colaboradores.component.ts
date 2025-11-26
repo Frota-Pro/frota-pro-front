@@ -10,9 +10,9 @@ interface Motorista {
   codigoExterno?: string;
   nome: string;
   email?: string;
-  dataNascimento?: string; // ISO
+  dataNascimento?: string;
   cnh?: string;
-  validadeCnh?: string; // ISO
+  validadeCnh?: string;
   status?: string;
   ativo?: boolean;
 }
@@ -42,6 +42,13 @@ interface Mecanico {
   styleUrls: ['./colaboradores.component.css'],
 })
 export class ColaboradoresComponent {
+
+  // 🔍 Campo de pesquisa
+  searchTerm: string = '';
+
+  // ============================
+  // 📌 LISTAS MOCKADAS
+  // ============================
 
   motoristas: Motorista[] = [
     {
@@ -104,12 +111,17 @@ export class ColaboradoresComponent {
     },
   ];
 
+  // ============================
+  // 🔄 EXPANSÃO
+  // ============================
+
   expanded = new Set<string>();
 
   toggleExpand(tipo: 'motorista' | 'ajudante' | 'mecanico', id: UUID) {
     const key = `${tipo}-${id}`;
-    if (this.expanded.has(key)) this.expanded.delete(key);
-    else this.expanded.add(key);
+    this.expanded.has(key)
+      ? this.expanded.delete(key)
+      : this.expanded.add(key);
   }
 
   isExpanded(tipo: 'motorista' | 'ajudante' | 'mecanico', id: UUID) {
@@ -120,4 +132,45 @@ export class ColaboradoresComponent {
     return item.id;
   }
 
+  // ============================
+  // 🔍 FILTROS (nome OU código)
+  // ============================
+  // Getters modernos (usados se seu HTML referir motoristasFiltrados, etc.)
+  get motoristasFiltrados() {
+    const t = this.searchTerm?.toLowerCase().trim() || '';
+    if (!t) return this.motoristas;
+    return this.motoristas.filter(m =>
+      (m.nome || '').toLowerCase().includes(t) ||
+      (m.codigo || '').toLowerCase().includes(t)
+    );
+  }
+
+  get ajudantesFiltrados() {
+    const t = this.searchTerm?.toLowerCase().trim() || '';
+    if (!t) return this.ajudantes;
+    return this.ajudantes.filter(a =>
+      (a.nome || '').toLowerCase().includes(t) ||
+      (a.codigo || '').toLowerCase().includes(t)
+    );
+  }
+
+  get mecanicosFiltrados() {
+    const t = this.searchTerm?.toLowerCase().trim() || '';
+    if (!t) return this.mecanicos;
+    return this.mecanicos.filter(m =>
+      (m.nome || '').toLowerCase().includes(t) ||
+      (m.codigo || '').toLowerCase().includes(t)
+    );
+  }
+
+  // Método genérico compatível com templates que ainda usam filterList(...)
+  // Ex.: *ngFor="let me of filterList(mecanicos)"
+  filterList<T extends { nome?: string; codigo?: string }>(lista: T[]): T[] {
+    const term = this.searchTerm?.toLowerCase().trim() || '';
+    if (!term) return lista;
+    return lista.filter(item =>
+      (item.nome || '').toLowerCase().includes(term) ||
+      (item.codigo || '').toLowerCase().includes(term)
+    );
+  }
 }

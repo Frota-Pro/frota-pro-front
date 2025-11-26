@@ -135,3 +135,25 @@
   .role { font-size: 12px; }
   .details { font-size: 13px; padding: 8px 10px; }
 }
+
+.search-box {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.search-box input {
+  width: 60%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  transition: all 0.25s ease;
+}
+
+.search-box input:focus {
+  border-color: #4fa3ff;
+  box-shadow: 0 0 6px rgba(79, 163, 255, 0.4);
+  outline: none;
+}
