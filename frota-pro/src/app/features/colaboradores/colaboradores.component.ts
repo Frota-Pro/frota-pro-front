@@ -43,12 +43,7 @@ interface Mecanico {
 })
 export class ColaboradoresComponent {
 
-  // 🔍 Campo de pesquisa
   searchTerm: string = '';
-
-  // ============================
-  // 📌 LISTAS MOCKADAS
-  // ============================
 
   motoristas: Motorista[] = [
     {
@@ -111,10 +106,6 @@ export class ColaboradoresComponent {
     },
   ];
 
-  // ============================
-  // 🔄 EXPANSÃO
-  // ============================
-
   expanded = new Set<string>();
 
   toggleExpand(tipo: 'motorista' | 'ajudante' | 'mecanico', id: UUID) {
@@ -132,10 +123,6 @@ export class ColaboradoresComponent {
     return item.id;
   }
 
-  // ============================
-  // 🔍 FILTROS (nome OU código)
-  // ============================
-  // Getters modernos (usados se seu HTML referir motoristasFiltrados, etc.)
   get motoristasFiltrados() {
     const t = this.searchTerm?.toLowerCase().trim() || '';
     if (!t) return this.motoristas;
@@ -163,8 +150,6 @@ export class ColaboradoresComponent {
     );
   }
 
-  // Método genérico compatível com templates que ainda usam filterList(...)
-  // Ex.: *ngFor="let me of filterList(mecanicos)"
   filterList<T extends { nome?: string; codigo?: string }>(lista: T[]): T[] {
     const term = this.searchTerm?.toLowerCase().trim() || '';
     if (!term) return lista;
