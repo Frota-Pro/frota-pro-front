@@ -157,3 +157,21 @@
   box-shadow: 0 0 6px rgba(79, 163, 255, 0.4);
   outline: none;
 }
+
+.expand-container {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition:
+    max-height 0.35s ease,
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.expand-container.expanded {
+  max-height: 500px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
