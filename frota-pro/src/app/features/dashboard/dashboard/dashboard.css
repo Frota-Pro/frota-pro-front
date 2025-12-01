@@ -16,9 +16,27 @@
   padding: 15px;
   transition: width 0.25s ease-in-out;
   overflow: hidden;
-  position: relative;
+
+  /* 🔥 Parte nova para deixar fixo */
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 1000;
+
   flex-shrink: 0;
   box-sizing: border-box;
+}
+
+.content {
+  flex: 1;
+  background: #f0f2f5;
+  padding: 20px;
+  position: relative;
+  min-width: 0;
+  box-sizing: border-box;
+  margin-left: 240px;
+  transition: margin-left 0.25s ease-in-out;
 }
 
 .sidebar.closed {
@@ -80,6 +98,11 @@
 .menu-item:hover .icon{
   color: #1976d2;
 }
+
+.sidebar.closed ~ .content {
+  margin-left: 70px;
+}
+
 .sidebar.closed .menu-item span {
   display: none;
 }
