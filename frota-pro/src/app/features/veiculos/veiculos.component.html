@@ -1,0 +1,59 @@
+<div class="veiculos-page">
+  <h2 class="page-title">Veículos</h2>
+
+  <div class="search-box">
+    <input
+      type="text"
+      placeholder="Pesquisar por código ou placa..."
+      [(ngModel)]="searchTerm"
+      aria-label="Pesquisar veículos por código ou placa"
+    />
+  </div>
+
+  <section class="veiculos-block">
+    <div class="block-header">
+      <h3>Lista de Veículos</h3>
+      <span class="count">{{ veiculosFiltrados.length }}</span>
+    </div>
+
+    <ul class="veiculos-list">
+      <li *ngFor="let v of veiculosFiltrados; trackBy: trackById" class="veiculo-item">
+        <button class="row" type="button" (click)="toggleExpand(v.id)">
+          <div class="left">
+            <span class="codigo">{{ v.codigo }}</span>
+            <span class="descricao">{{ v.descricao || v.modelo || '—' }}</span>
+          </div>
+
+          <div class="right">
+            <div class="meta">
+              <span class="placa">{{ v.placa || '—' }}</span>
+              <span class="status">{{ v.status || '—' }}</span>
+            </div>
+            <i
+              class="fas"
+              [ngClass]="{ 'fa-chevron-down': !isExpanded(v.id), 'fa-chevron-up': isExpanded(v.id) }"
+            ></i>
+          </div>
+        </button>
+
+        <div class="details" *ngIf="isExpanded(v.id)">
+          <div class="detail-row"><strong>Código:</strong> {{ v.codigo }}</div>
+          <div class="detail-row" *ngIf="v.codigoExterno"><strong>Código Externo:</strong> {{ v.codigoExterno }}</div>
+          <div class="detail-row" *ngIf="v.modelo"><strong>Modelo:</strong> {{ v.modelo }}</div>
+          <div class="detail-row" *ngIf="v.marca"><strong>Marca:</strong> {{ v.marca }}</div>
+          <div class="detail-row" *ngIf="v.cor"><strong>Cor:</strong> {{ v.cor }}</div>
+          <div class="detail-row"><strong>Placa:</strong> {{ v.placa || '—' }}</div>
+          <div class="detail-row" *ngIf="v.renavam"><strong>Renavam:</strong> {{ v.renavam }}</div>
+          <div class="detail-row" *ngIf="v.chassi"><strong>Chassi:</strong> {{ v.chassi }}</div>
+          <div class="detail-row" *ngIf="v.tara !== undefined"><strong>Tara:</strong> {{ v.tara }}</div>
+          <div class="detail-row" *ngIf="v.maxPeso !== undefined"><strong>Max Peso:</strong> {{ v.maxPeso }}</div>
+          <div class="detail-row" *ngIf="v.dataLicenciamento"><strong>Licenciamento:</strong> {{ v.dataLicenciamento | date:'dd/MM/yyyy' }}</div>
+          <div class="detail-row" *ngIf="v.seguro"><strong>Seguro:</strong> {{ v.seguro }}</div>
+          <div class="detail-row" *ngIf="v.categoria"><strong>Categoria:</strong> {{ v.categoria?.nome }}</div>
+          <div class="detail-row"><strong>Status:</strong> {{ v.status }}</div>
+          <div class="detail-row"><strong>Ativo:</strong> {{ v.ativo ? 'Sim' : 'Não' }}</div>
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>

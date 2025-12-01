@@ -1,0 +1,151 @@
+.veiculos-page {
+  padding: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.page-title {
+  margin: 0 0 12px 0;
+  font-size: 22px;
+  color: #1e3c72;
+}
+
+.search-box {
+  margin-bottom: 14px;
+  display: flex;
+}
+.search-box input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #dcdcdc;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.veiculos-block {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.block-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.block-header .count {
+  background: #f0f0f0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.veiculos-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.veiculo-item {
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.codigo {
+  font-weight: 700;
+  color: #1e3c72;
+}
+
+.descricao {
+  font-size: 13px;
+  color: #666;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  margin-right: 6px;
+}
+
+.placa {
+  font-weight: 600;
+  color: #333;
+}
+
+.status {
+  font-size: 13px;
+  color: #777;
+}
+
+.details {
+  padding: 12px 16px 16px 16px;
+  border-top: 1px solid rgba(0,0,0,0.04);
+  background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(250,250,250,0.95));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #444;
+}
+
+.detail-row strong {
+  display: inline-block;
+  width: 150px;
+  color: #222;
+}
+
+.fas {
+  color: #666;
+}
+
+@media (max-width: 900px) {
+  .veiculos-page {
+    padding: 12px;
+  }
+
+  .detail-row strong {
+    width: 120px;
+  }
+}

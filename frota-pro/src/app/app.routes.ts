@@ -15,7 +15,6 @@ export const routes: Routes = [
       ),
   },
 
-  // LAYOUT DO DASHBOARD
   {
     path: 'dashboard',
     loadComponent: () =>
@@ -39,6 +38,15 @@ export const routes: Routes = [
             (m) => m.ColaboradoresComponent
           ),
       },
+
+      {
+        path: 'veiculos',
+        loadComponent: () =>
+          import('./features/veiculos/veiculos.component').then(
+            (m) => m.VeiculosComponent
+          ),
+      },
+
 
     ],
   },
