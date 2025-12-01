@@ -9,16 +9,51 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, GoogleChartsModule, FormsModule, RouterOutlet, RouterModule, RouterLink, RouterLinkActive],
+  imports: [
+    CommonModule,
+    GoogleChartsModule,
+    FormsModule,
+    RouterOutlet,
+    RouterModule,
+    RouterLink,
+    RouterLinkActive
+  ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })
 export class Dashboard {
 
   isClosed = false;
+
+  ngOnInit() {
+    this.atualizarGrafico();
+
+    // 🔒 Garante que o sidebar fique fechado ao carregar em telas pequenas
+    if (window.innerWidth <= 800) {
+      this.isClosed = true;
+    }
+
+    // 🔒 Listener para fechar automaticamente ao redimensionar
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 800) {
+        this.isClosed = true;
+      }
+    });
+  }
+
+  // 🔒 Toggle bloqueado quando tela <= 800px
   toggleSidebar() {
+    if (window.innerWidth <= 800) {
+      this.isClosed = true; // Fica sempre fechado
+      return;
+    }
+
     this.isClosed = !this.isClosed;
   }
+
+  // --------------------------
+  // DADOS DO DASHBOARD
+  // --------------------------
 
   statusFrota = {
     total: 25,
@@ -44,10 +79,6 @@ export class Dashboard {
       colors: ['#1e3c72']
     },
   };
-
-  ngOnInit() {
-    this.atualizarGrafico();
-  }
 
   atualizarGrafico() {
     const dados: any[] = [];
