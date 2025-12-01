@@ -9,6 +9,7 @@
     />
   </div>
 
+  <!-- MOTORISTAS -->
   <section class="colab-block">
     <div class="block-header">
       <h3>Motoristas</h3>
@@ -17,6 +18,7 @@
 
     <ul class="colab-list">
       <li *ngFor="let m of filterList(motoristas); trackBy: trackById" class="colab-item">
+        
         <button class="row" type="button" (click)="toggleExpand('motorista', m.id)">
           <div class="left">
             <span class="codigo">{{ m.codigo }}</span>
@@ -34,26 +36,31 @@
           </div>
         </button>
 
-        <div class="details" *ngIf="isExpanded('motorista', m.id)">
-          <div class="detail-row"><strong>Código:</strong> {{ m.codigo }}</div>
-          <div class="detail-row" *ngIf="m.codigoExterno">
-            <strong>Código Externo:</strong> {{ m.codigoExterno }}
+        <!-- COM ANIMAÇÃO -->
+        <div class="expand-container" [class.expanded]="isExpanded('motorista', m.id)">
+          <div class="details">
+            <div class="detail-row"><strong>Código:</strong> {{ m.codigo }}</div>
+            <div class="detail-row" *ngIf="m.codigoExterno">
+              <strong>Código Externo:</strong> {{ m.codigoExterno }}
+            </div>
+            <div class="detail-row" *ngIf="m.email"><strong>E-mail:</strong> {{ m.email }}</div>
+            <div class="detail-row" *ngIf="m.dataNascimento">
+              <strong>Data Nasc.:</strong> {{ m.dataNascimento | date : 'dd/MM/yyyy' }}
+            </div>
+            <div class="detail-row" *ngIf="m.cnh"><strong>CNH:</strong> {{ m.cnh }}</div>
+            <div class="detail-row" *ngIf="m.validadeCnh">
+              <strong>Validade CNH:</strong> {{ m.validadeCnh | date : 'dd/MM/yyyy' }}
+            </div>
+            <div class="detail-row"><strong>Status:</strong> {{ m.status }}</div>
+            <div class="detail-row"><strong>Ativo:</strong> {{ m.ativo ? 'Sim' : 'Não' }}</div>
           </div>
-          <div class="detail-row" *ngIf="m.email"><strong>E-mail:</strong> {{ m.email }}</div>
-          <div class="detail-row" *ngIf="m.dataNascimento">
-            <strong>Data Nasc.:</strong> {{ m.dataNascimento | date : 'dd/MM/yyyy' }}
-          </div>
-          <div class="detail-row" *ngIf="m.cnh"><strong>CNH:</strong> {{ m.cnh }}</div>
-          <div class="detail-row" *ngIf="m.validadeCnh">
-            <strong>Validade CNH:</strong> {{ m.validadeCnh | date : 'dd/MM/yyyy' }}
-          </div>
-          <div class="detail-row"><strong>Status:</strong> {{ m.status }}</div>
-          <div class="detail-row"><strong>Ativo:</strong> {{ m.ativo ? 'Sim' : 'Não' }}</div>
         </div>
+
       </li>
     </ul>
   </section>
 
+  <!-- AJUDANTES -->
   <section class="colab-block">
     <div class="block-header">
       <h3>Ajudantes</h3>
@@ -62,6 +69,7 @@
 
     <ul class="colab-list">
       <li *ngFor="let a of filterList(ajudantes); trackBy: trackById" class="colab-item">
+
         <button class="row" type="button" (click)="toggleExpand('ajudante', a.id)">
           <div class="left">
             <span class="codigo">{{ a.codigo }}</span>
@@ -79,19 +87,24 @@
           </div>
         </button>
 
-        <div class="details" *ngIf="isExpanded('ajudante', a.id)">
-          <div class="detail-row"><strong>Código:</strong> {{ a.codigo }}</div>
-          <div class="detail-row" *ngIf="a.codigoExterno">
-            <strong>Código Externo:</strong> {{ a.codigoExterno }}
+        <!-- COM ANIMAÇÃO -->
+        <div class="expand-container" [class.expanded]="isExpanded('ajudante', a.id)">
+          <div class="details">
+            <div class="detail-row"><strong>Código:</strong> {{ a.codigo }}</div>
+            <div class="detail-row" *ngIf="a.codigoExterno">
+              <strong>Código Externo:</strong> {{ a.codigoExterno }}
+            </div>
+            <div class="detail-row"><strong>Nome:</strong> {{ a.nome }}</div>
+            <div class="detail-row"><strong>Status:</strong> {{ a.status }}</div>
+            <div class="detail-row"><strong>Ativo:</strong> {{ a.ativo ? 'Sim' : 'Não' }}</div>
           </div>
-          <div class="detail-row"><strong>Nome:</strong> {{ a.nome }}</div>
-          <div class="detail-row"><strong>Status:</strong> {{ a.status }}</div>
-          <div class="detail-row"><strong>Ativo:</strong> {{ a.ativo ? 'Sim' : 'Não' }}</div>
         </div>
+
       </li>
     </ul>
   </section>
 
+  <!-- MECÂNICOS -->
   <section class="colab-block">
     <div class="block-header">
       <h3>Mecânicos</h3>
@@ -100,6 +113,7 @@
 
     <ul class="colab-list">
       <li *ngFor="let me of filterList(mecanicos); trackBy: trackById" class="colab-item">
+
         <button class="row" type="button" (click)="toggleExpand('mecanico', me.id)">
           <div class="left">
             <span class="codigo">{{ me.codigo }}</span>
@@ -117,14 +131,18 @@
           </div>
         </button>
 
-        <div class="details" *ngIf="isExpanded('mecanico', me.id)">
-          <div class="detail-row"><strong>Código:</strong> {{ me.codigo }}</div>
-          <div class="detail-row"><strong>Nome:</strong> {{ me.nome }}</div>
-          <div class="detail-row" *ngIf="me.oficina">
-            <strong>Oficina:</strong> {{ me.oficina.nome }}
+        <!-- COM ANIMAÇÃO -->
+        <div class="expand-container" [class.expanded]="isExpanded('mecanico', me.id)">
+          <div class="details">
+            <div class="detail-row"><strong>Código:</strong> {{ me.codigo }}</div>
+            <div class="detail-row"><strong>Nome:</strong> {{ me.nome }}</div>
+            <div class="detail-row" *ngIf="me.oficina">
+              <strong>Oficina:</strong> {{ me.oficina.nome }}
+            </div>
+            <div class="detail-row"><strong>Ativo:</strong> {{ me.ativo ? 'Sim' : 'Não' }}</div>
           </div>
-          <div class="detail-row"><strong>Ativo:</strong> {{ me.ativo ? 'Sim' : 'Não' }}</div>
         </div>
+
       </li>
     </ul>
   </section>
