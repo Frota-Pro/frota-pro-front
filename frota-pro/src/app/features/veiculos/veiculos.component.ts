@@ -23,7 +23,7 @@ interface Caminhao {
   chassi?: string;
   tara?: number;
   maxPeso?: number;
-  dataLicenciamento?: string; 
+  dataLicenciamento?: string;
   seguro?: string;
   categoria?: CategoriaCaminhao | null;
   status?: string;
@@ -38,7 +38,7 @@ interface Caminhao {
   styleUrls: ['./veiculos.component.css'],
 })
 export class VeiculosComponent {
-  
+
   searchTerm: string = '';
 
   veiculos: Caminhao[] = [
@@ -84,22 +84,22 @@ export class VeiculosComponent {
     },
   ];
 
-  expanded = new Set<string>();
+  // 🔽 Agora apenas UM caminhão pode estar expandido
+  expanded: string | null = null;
 
   toggleExpand(id: UUID) {
-    if (this.expanded.has(id)) this.expanded.delete(id);
-    else this.expanded.add(id);
+    this.expanded = this.expanded === id ? null : id;
   }
 
   isExpanded(id: UUID) {
-    return this.expanded.has(id);
+    return this.expanded === id;
   }
 
   trackById(index: number, item: { id: UUID }) {
     return item.id;
   }
 
-  // getters filtrados (busca por codigo OU placa)
+  // 🔍 Filtro por código OU placa
   get veiculosFiltrados() {
     const t = (this.searchTerm || '').toLowerCase().trim();
     if (!t) return this.veiculos;
@@ -109,13 +109,13 @@ export class VeiculosComponent {
     );
   }
 
-  // método genérico compatível se preferir usar filterList(lista)
+  // 🔍 Método genérico opcional
   filterList<T extends { codigo?: string; placa?: string }>(lista: T[]) {
     const term = (this.searchTerm || '').toLowerCase().trim();
     if (!term) return lista;
     return lista.filter(item =>
       (item.codigo || '').toLowerCase().includes(term) ||
-      (item['placa'] || '').toLowerCase().includes(term)
+      (item.placa || '').toLowerCase().includes(term)
     );
   }
 }

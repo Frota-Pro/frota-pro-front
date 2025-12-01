@@ -109,11 +109,18 @@ export class ColaboradoresComponent {
   expanded = new Set<string>();
 
   toggleExpand(tipo: 'motorista' | 'ajudante' | 'mecanico', id: UUID) {
-    const key = `${tipo}-${id}`;
-    this.expanded.has(key)
-      ? this.expanded.delete(key)
-      : this.expanded.add(key);
+  const key = `${tipo}-${id}`;
+
+  // Se já está expandido → colapsa
+  if (this.expanded.has(key)) {
+    this.expanded.delete(key);
+    return;
   }
+
+  // Caso contrário, limpa tudo e expande somente o novo
+  this.expanded.clear();
+  this.expanded.add(key);
+}
 
   isExpanded(tipo: 'motorista' | 'ajudante' | 'mecanico', id: UUID) {
     return this.expanded.has(`${tipo}-${id}`);
