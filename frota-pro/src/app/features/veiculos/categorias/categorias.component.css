@@ -1,0 +1,132 @@
+.categoria-container {
+  padding: 20px;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+.btn-nova {
+  background: #1e3c72;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+  margin-bottom: 20px;
+}
+.btn-nova:hover {
+  opacity: .85;
+}
+
+.form-card {
+  background: #fff;
+  padding: 18px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  margin-bottom: 25px;
+}
+
+.form-card label {
+  display: block;
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+.form-card input,
+.form-card textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-top: 4px;
+}
+
+textarea {
+  min-height: 70px;
+}
+
+.ativo-check {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-buttons {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-salvar {
+  background: #1e3c72;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn-salvar:hover {
+  opacity: .85;
+}
+
+.btn-cancelar {
+  background: #888;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.lista .item {
+  background: white;
+  padding: 14px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 3px 6px rgba(0,0,0,.05);
+  margin-bottom: 12px;
+}
+
+.infos {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.codigo {
+  font-weight: 600;
+}
+
+.status {
+  margin-top: 4px;
+  color: green;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status.inativo {
+  color: #c0392b;
+}
+
+.acoes button {
+  margin-left: 8px;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-editar {
+  background: #276fbf;
+  color: white;
+}
+
+.btn-excluir {
+  background: #c0392b;
+  color: white;
+}

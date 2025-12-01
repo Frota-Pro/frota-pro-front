@@ -25,30 +25,54 @@ export class Dashboard {
 
   isClosed = false;
 
+  // ➕ Submenu de Veículos
+  submenuVeiculosAberto = false;
+
   ngOnInit() {
     this.atualizarGrafico();
 
-    // 🔒 Garante que o sidebar fique fechado ao carregar em telas pequenas
+    // 🔒 Sidebar inicia fechado em telas pequenas
     if (window.innerWidth <= 800) {
       this.isClosed = true;
+      this.submenuVeiculosAberto = false;
     }
 
-    // 🔒 Listener para fechar automaticamente ao redimensionar
+    // 🔒 Listener responsivo
     window.addEventListener('resize', () => {
       if (window.innerWidth <= 800) {
         this.isClosed = true;
+        this.submenuVeiculosAberto = false;
       }
     });
   }
 
-  // 🔒 Toggle bloqueado quando tela <= 800px
+  // 🔒 Sidebar toggle (bloqueado em telas pequenas)
   toggleSidebar() {
     if (window.innerWidth <= 800) {
-      this.isClosed = true; // Fica sempre fechado
+      this.isClosed = true;
+      this.submenuVeiculosAberto = false;
       return;
     }
 
+    // alterna sidebar
     this.isClosed = !this.isClosed;
+
+    // fecha submenu automaticamente se a sidebar fechar
+    if (this.isClosed) {
+      this.submenuVeiculosAberto = false;
+    }
+  }
+
+  // --------------------------
+  // SUBMENU VEÍCULOS
+  // --------------------------
+  toggleSubmenuVeiculos() {
+    // não permite abrir submenu se sidebar estiver fechada
+    if (this.isClosed) {
+      return;
+    }
+
+    this.submenuVeiculosAberto = !this.submenuVeiculosAberto;
   }
 
   // --------------------------

@@ -393,3 +393,34 @@ img, svg, iframe {
   word-wrap: break-word;
   box-sizing: border-box;
 }
+
+/* SUBMENU */
+.submenu {
+  list-style: none;
+  padding-left: 32px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.submenu li {
+  padding: 6px 0;
+  cursor: pointer;
+  font-size: 14px;
+  color: #e0e0e0;
+  transition: 0.2s;
+}
+
+.submenu li:hover {
+  color: white;
+}
+
+.menu-item.open > .menu-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.chevron {
+  margin-left: auto;
+  font-size: 12px;
+}

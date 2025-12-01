@@ -1,1 +1,54 @@
-<p>categorias works!</p>
+<div class="categoria-container">
+
+  <h2>Categorias de Caminhão</h2>
+
+  <!-- Botão Nova Categoria -->
+  <button class="btn-nova" (click)="abrirFormulario()">
+    Nova Categoria
+  </button>
+
+  <!-- Formulário -->
+  <div class="form-card" *ngIf="formVisivel">
+    <h3>{{ editando ? 'Editar Categoria' : 'Nova Categoria' }}</h3>
+
+    <label>Código</label>
+    <input type="text" [(ngModel)]="form.codigo" placeholder="Ex: TRK" />
+
+    <label>Descrição</label>
+    <input type="text" [(ngModel)]="form.descricao" placeholder="Descrição da categoria" />
+
+    <label>Observação</label>
+    <textarea [(ngModel)]="form.observacao" placeholder="Alguma observação opcional..."></textarea>
+
+    <label class="ativo-check">
+      <input type="checkbox" [(ngModel)]="form.ativo" />
+      Ativo
+    </label>
+
+    <div class="form-buttons">
+      <button class="btn-salvar" (click)="salvar()">Salvar</button>
+      <button class="btn-cancelar" (click)="cancelar()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Lista de Categorias -->
+  <div class="lista">
+
+    <div class="item" *ngFor="let cat of categorias; let i = index">
+      <div class="infos">
+        <span class="codigo">Código: {{ cat.codigo }}</span>
+        <span class="descricao">{{ cat.descricao }}</span>
+        <span class="status" [class.inativo]="!cat.ativo">
+          {{ cat.ativo ? 'Ativo' : 'Inativo' }}
+        </span>
+      </div>
+
+      <div class="acoes">
+        <button class="btn-editar" (click)="editar(i)">Editar</button>
+        <button class="btn-excluir" (click)="excluir(i)">Excluir</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>

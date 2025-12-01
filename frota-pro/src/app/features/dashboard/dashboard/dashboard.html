@@ -7,6 +7,7 @@
 
 <div class="layout">
   <aside class="sidebar" [class.closed]="isClosed">
+
     <button class="toggle-btn" (click)="toggleSidebar()">
       <i class="fas fa-bars"></i>
     </button>
@@ -16,35 +17,60 @@
     </div>
 
     <nav class="menu">
+
+      <!-- DASHBOARD -->
       <a
         class="menu-item"
         routerLink="dashboard-home"
         routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        >
+        [routerLinkActiveOptions]="{ exact: true }">
         <i class="icon fas fa-chart-line"></i>
         <span *ngIf="!isClosed">Dashboard</span>
       </a>
 
+      <!-- COLABORADORES -->
       <a
         class="menu-item"
         routerLink="colaboradores"
         routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
+        [routerLinkActiveOptions]="{ exact: true }">
         <i class="icon fas fa-user"></i>
         <span *ngIf="!isClosed">Colaboradores</span>
       </a>
 
-      <a class="menu-item" routerLink="veiculos" routerLinkActive="active" data-tooltip="Veículos">
-        <i class="icon fas fa-truck"></i>
-        <span *ngIf="!isClosed">Veículos</span>
-      </a>
+      <!-- MENU VEÍCULOS (AGORA COM SUBMENU) -->
+      <li class="menu-item submenu-wrapper" [class.open]="submenuVeiculosAberto">
 
-      <a class="menu-item" routerLink="/cargas" routerLinkActive="active" data-tooltip="Cargas">
+        <button class="menu-btn" (click)="toggleSubmenuVeiculos()">
+          <i class="fas fa-truck"></i>
+
+          <!-- Texto só aparece se sidebar estiver aberta -->
+          <span class="menu-text" *ngIf="!isClosed">Veículos</span>
+
+          <!-- Chevron – aparece só com sidebar aberta -->
+          <i
+            class="fas chevron"
+            *ngIf="!isClosed"
+            [ngClass]="{
+              'fa-chevron-down': !submenuVeiculosAberto,
+              'fa-chevron-up': submenuVeiculosAberto
+            }">
+          </i>
+        </button>
+
+        <!-- SUBMENU — aparece somente com sidebar aberta -->
+        <ul class="submenu" *ngIf="submenuVeiculosAberto && !isClosed">
+          <li routerLink="veiculos" routerLinkActive="active">Lista de Veículos</li>
+          <li routerLink="categorias" routerLinkActive="active">Categorias</li>
+        </ul>
+      </li>
+
+      <!-- CARGAS -->
+      <a class="menu-item" routerLink="/cargas" routerLinkActive="active">
         <i class="icon fas fa-box"></i>
         <span *ngIf="!isClosed">Cargas</span>
       </a>
+
     </nav>
   </aside>
 
