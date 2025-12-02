@@ -64,7 +64,7 @@
             </div>
 
             <div class="detail-row" *ngIf="v.seguro"><strong>Seguro:</strong> {{ v.seguro }}</div>
-            <div class="detail-row" *ngIf="v.categoria"><strong>Categoria:</strong> {{ v.categoria?.nome }}</div>
+            <div class="detail-row" *ngIf="v.categoria"><strong>Categoria:</strong> {{ v.categoria ? v.categoria.nome : 'Sem categoria'  }}</div>
 
             <div class="detail-row"><strong>Status:</strong> {{ v.status }}</div>
             <div class="detail-row"><strong>Ativo:</strong> {{ v.ativo ? 'Sim' : 'Não' }}</div>

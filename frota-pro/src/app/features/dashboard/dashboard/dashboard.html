@@ -44,10 +44,8 @@
         <button class="menu-btn" (click)="toggleSubmenuVeiculos()">
           <i class="fas fa-truck"></i>
 
-          <!-- Texto só aparece se sidebar estiver aberta -->
           <span class="menu-text" *ngIf="!isClosed">Veículos</span>
 
-          <!-- Chevron – aparece só com sidebar aberta -->
           <i
             class="fas chevron"
             *ngIf="!isClosed"
@@ -58,14 +56,12 @@
           </i>
         </button>
 
-        <!-- SUBMENU — aparece somente com sidebar aberta -->
         <ul class="submenu" *ngIf="submenuVeiculosAberto && !isClosed">
           <li routerLink="veiculos" routerLinkActive="active">Lista de Veículos</li>
           <li routerLink="categorias" routerLinkActive="active">Categorias</li>
         </ul>
       </li>
 
-      <!-- CARGAS -->
       <a class="menu-item" routerLink="/cargas" routerLinkActive="active">
         <i class="icon fas fa-box"></i>
         <span *ngIf="!isClosed">Cargas</span>
