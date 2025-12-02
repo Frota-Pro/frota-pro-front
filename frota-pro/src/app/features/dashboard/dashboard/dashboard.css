@@ -17,7 +17,6 @@
   transition: width 0.25s ease-in-out;
   overflow: hidden;
 
-  /* 🔥 Parte nova para deixar fixo */
   position: fixed;
   top: 0;
   left: 0;

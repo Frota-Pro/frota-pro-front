@@ -18,7 +18,6 @@
 
     <nav class="menu">
 
-      <!-- DASHBOARD -->
       <a
         class="menu-item"
         routerLink="dashboard-home"
@@ -28,7 +27,6 @@
         <span *ngIf="!isClosed">Dashboard</span>
       </a>
 
-      <!-- COLABORADORES -->
       <a
         class="menu-item"
         routerLink="colaboradores"
@@ -38,11 +36,10 @@
         <span *ngIf="!isClosed">Colaboradores</span>
       </a>
 
-      <!-- MENU VEÍCULOS (AGORA COM SUBMENU) -->
       <li class="menu-item submenu-wrapper" [class.open]="submenuVeiculosAberto">
 
         <button class="menu-btn" (click)="toggleSubmenuVeiculos()">
-          <i class="fas fa-truck"></i>
+          <i class="icon fas fa-truck"></i>
 
           <span class="menu-text" *ngIf="!isClosed">Veículos</span>
 

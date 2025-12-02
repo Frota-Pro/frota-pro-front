@@ -64,7 +64,24 @@
             </div>
 
             <div class="detail-row" *ngIf="v.seguro"><strong>Seguro:</strong> {{ v.seguro }}</div>
-            <div class="detail-row" *ngIf="v.categoria"><strong>Categoria:</strong> {{ v.categoria ? v.categoria.nome : 'Sem categoria'  }}</div>
+
+            <!-- 🌟 SELECT de Categoria -->
+            <div class="detail-row">
+              <strong>Categoria:</strong>
+              <select 
+                [(ngModel)]="v.categoria"
+                (change)="atualizarCategoria(v)"
+              >
+                <option [ngValue]="null">Sem categoria</option>
+
+                <option 
+                  *ngFor="let cat of categorias"
+                  [ngValue]="cat"
+                >
+                  {{ cat.nome }}
+                </option>
+              </select>
+            </div>
 
             <div class="detail-row"><strong>Status:</strong> {{ v.status }}</div>
             <div class="detail-row"><strong>Ativo:</strong> {{ v.ativo ? 'Sim' : 'Não' }}</div>

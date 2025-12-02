@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CategoriasComponent } from './categorias/categorias.component';
 
 type UUID = string;
 
@@ -41,6 +40,13 @@ interface Caminhao {
 export class VeiculosComponent {
 
   searchTerm: string = '';
+
+  // ✅ LISTA DE CATEGORIAS (TEMPORÁRIA)
+  categorias: CategoriaCaminhao[] = [
+    { id: 'cat-1', nome: 'Truck' },
+    { id: 'cat-2', nome: 'VUC' },
+    { id: 'cat-3', nome: 'Carreta' },
+  ];
 
   veiculos: Caminhao[] = [
     {
@@ -85,7 +91,7 @@ export class VeiculosComponent {
     },
   ];
 
-  // 🔽 Agora apenas UM caminhão pode estar expandido
+  // 🔽 EXPANSÃO
   expanded: string | null = null;
 
   toggleExpand(id: UUID) {
@@ -100,7 +106,7 @@ export class VeiculosComponent {
     return item.id;
   }
 
-  // 🔍 Filtro por código OU placa
+  // 🔍 FILTRO
   get veiculosFiltrados() {
     const t = (this.searchTerm || '').toLowerCase().trim();
     if (!t) return this.veiculos;
@@ -110,7 +116,6 @@ export class VeiculosComponent {
     );
   }
 
-  // 🔍 Método genérico opcional
   filterList<T extends { codigo?: string; placa?: string }>(lista: T[]) {
     const term = (this.searchTerm || '').toLowerCase().trim();
     if (!term) return lista;
@@ -118,5 +123,11 @@ export class VeiculosComponent {
       (item.codigo || '').toLowerCase().includes(term) ||
       (item.placa || '').toLowerCase().includes(term)
     );
+  }
+
+  // ✅ Atualiza a categoria — já recebe o objeto automaticamente pelo ngModel
+  atualizarCategoria(veiculo: Caminhao) {
+    console.log('Categoria alterada:', veiculo.categoria);
+    // Aqui depois você pode salvar no backend
   }
 }
