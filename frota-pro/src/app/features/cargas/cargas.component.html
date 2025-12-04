@@ -1,0 +1,112 @@
+<div class="cargas-page">
+  <h2 class="page-title">Cargas</h2>
+
+  <div class="search-box">
+    <input
+      type="text"
+      placeholder="Pesquisar por número da carga..."
+      [(ngModel)]="searchTerm"
+      aria-label="Pesquisar cargas por número"
+    />
+  </div>
+
+  <section class="cargas-block">
+    <div class="block-header">
+      <h3>Lista de Cargas</h3>
+      <span class="count">{{ cargasFiltradas.length }}</span>
+    </div>
+
+    <ul class="carga-list">
+      <li *ngFor="let c of cargasFiltradas; trackBy: trackById" class="carga-item">
+        <button class="row" type="button" (click)="toggleExpand(c.id)">
+          <div class="left">
+            <span class="numero">{{ c.numeroCarga }}</span>
+            <span class="sub">{{ c.numeroCargaExterno || '' }}</span>
+          </div>
+
+          <div class="right">
+            <div class="meta">
+              <span class="data">{{ c.dtFaturamento ? (c.dtFaturamento | date:'dd/MM/yyyy') : '—' }}</span>
+              <span class="saida">{{ c.dtSaida ? (c.dtSaida | date:'dd/MM/yyyy') : '—' }}</span>
+            </div>
+            <i
+              class="fas"
+              [ngClass]="{ 'fa-chevron-down': !isExpanded(c.id), 'fa-chevron-up': isExpanded(c.id) }"
+            ></i>
+          </div>
+        </button>
+
+        <div class="expand-container" [class.expanded]="isExpanded(c.id)">
+          <div class="details">
+
+            <div class="detail-row"><strong>Número:</strong> {{ c.numeroCarga }}</div>
+            <div class="detail-row" *ngIf="c.numeroCargaExterno">
+              <strong>Externo:</strong> {{ c.numeroCargaExterno }}
+            </div>
+
+            <div class="detail-row">
+              <strong>Data faturamento:</strong>
+              {{ c.dtFaturamento ? (c.dtFaturamento | date:'dd/MM/yyyy') : '—' }}
+            </div>
+
+            <div class="detail-row">
+              <strong>Data saída:</strong>
+              {{ c.dtSaida ? (c.dtSaida | date:'dd/MM/yyyy') : '—' }}
+            </div>
+
+            <div class="detail-row" *ngIf="c.dtPrevista">
+              <strong>Prevista:</strong> {{ c.dtPrevista | date:'dd/MM/yyyy' }}
+            </div>
+
+            <div class="detail-row" *ngIf="c.dtChegada">
+              <strong>Chegada:</strong> {{ c.dtChegada | date:'dd/MM/yyyy' }}
+            </div>
+
+            <div class="detail-row" *ngIf="c.pesoCarga !== undefined">
+              <strong>Peso (kg):</strong> {{ c.pesoCarga | number:'1.0-3' }}
+            </div>
+
+            <div class="detail-row"><strong>KM Inicial:</strong> {{ c.kmInicial ?? '—' }}</div>
+            <div class="detail-row" *ngIf="c.kmFinal !== undefined">
+              <strong>KM Final:</strong> {{ c.kmFinal }}
+            </div>
+
+            <div class="detail-row">
+              <strong>KM Total:</strong> {{ calcularKmTotal(c) }}
+            </div>
+
+            <div class="detail-row" *ngIf="c.motorista">
+              <strong>Motorista:</strong> {{ c.motorista.nome }} ({{ c.motorista.codigo || '—' }})
+            </div>
+
+            <div class="detail-row" *ngIf="c.caminhao">
+              <strong>Caminhão:</strong>
+              {{ c.caminhao.codigo || c.caminhao.placa || '—' }}
+            </div>
+
+            <div class="detail-row" *ngIf="c.rota">
+              <strong>Rota:</strong> {{ c.rota.nome }}
+            </div>
+
+            <div class="detail-row" *ngIf="c.clientes?.length">
+              <strong>Clientes:</strong> {{ listarClientes(c) }}
+            </div>
+
+            <div class="detail-row" *ngIf="c.notas?.length">
+              <strong>Notas:</strong> {{ listarNotas(c) }}
+            </div>
+
+            <div class="detail-row" *ngIf="c.dtPrevista && c.dtChegada">
+              <strong>Atraso (dias):</strong> {{ calcularAtrasoDias(c) }}
+            </div>
+
+            <div class="detail-row">
+              <strong>Status:</strong> {{ c.statusCarga || '—' }}
+            </div>
+
+          </div>
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>

@@ -10,17 +10,13 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () =>
-      import('./features/auth/login/login.component').then(
-        (m) => m.LoginComponent
-      ),
+      import('./features/auth/login/login.component').then((m) => m.LoginComponent),
   },
 
   {
     path: 'dashboard',
     loadComponent: () =>
-      import('./features/dashboard/dashboard/dashboard').then(
-        (m) => m.Dashboard
-      ),
+      import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
 
     children: [
       {
@@ -42,17 +38,24 @@ export const routes: Routes = [
       {
         path: 'veiculos',
         loadComponent: () =>
-          import('./features/veiculos/veiculos.component').then(
-            (m) => m.VeiculosComponent
+          import('./features/veiculos/veiculos.component').then((m) => m.VeiculosComponent),
+      },
+      
+      {
+        path: 'categorias',
+        loadComponent: () =>
+          import('./features/veiculos/categorias/categorias.component').then(
+            (m) => m.CategoriasComponent
           ),
       },
+
       {
-  path: 'categorias',
-  loadComponent: () =>
-    import('./features/veiculos/categorias/categorias.component').then(m => m.CategoriasComponent)
-}
-
-
+        path: 'cargas',
+        loadComponent: () =>
+          import('./features/cargas/cargas.component').then(
+            (m) => m.CargasComponent
+          ),
+      },
     ],
   },
 ];
