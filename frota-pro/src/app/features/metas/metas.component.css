@@ -110,3 +110,51 @@
   border-radius: 6px;
   color: white;
 }
+
+/* Estilo padrão dos botões */
+button {
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+/* Botão de Nova Meta */
+button.nova-meta-btn {
+  background: #1976d2;
+  color: white;
+}
+
+button.nova-meta-btn:hover {
+  background: #125ba1;
+  transform: scale(1.03);
+  box-shadow: 0 0 6px rgba(0,0,0,0.2);
+}
+
+/* Botões de ação da tabela */
+.table-actions button {
+  cursor: pointer;
+  transition: background-color 0.25s ease, transform 0.2s ease;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* Editar */
+.btn-edit {
+  background: #ffcc00;
+  color: #000;
+}
+
+.btn-edit:hover {
+  background: #e6b800;
+  transform: scale(1.05);
+}
+
+/* Excluir */
+.btn-delete {
+  background: #e53935;
+  color: #fff;
+}
+
+.btn-delete:hover {
+  background: #b72828;
+  transform: scale(1.05);
+}
