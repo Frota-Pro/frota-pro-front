@@ -1,1 +1,86 @@
-<p>metas works!</p>
+<div class="metas-page">
+  <h2 class="page-title">Metas</h2>
+
+  <div class="top-actions">
+    <input type="text" placeholder="Buscar metas..." [(ngModel)]="searchTerm" />
+    <button class="btn-add" (click)="addNovaMeta()">+ Nova Meta</button>
+  </div>
+
+  <!-- FORMULÁRIO DE CRIAÇÃO / EDIÇÃO -->
+  <div class="form-card" *ngIf="novaMeta">
+    <h3>{{ editando ? 'Editar Meta' : 'Nova Meta' }}</h3>
+
+    <label>Descrição:</label>
+    <input [(ngModel)]="novaMeta.descricao" type="text" />
+
+    <label>Data Início:</label>
+    <input [(ngModel)]="novaMeta.dataInicio" type="date" />
+
+    <label>Data Fim:</label>
+    <input [(ngModel)]="novaMeta.dataFim" type="date" />
+
+    <label>Tipo da Meta:</label>
+    <select [(ngModel)]="novaMeta.tipoMeta">
+      <option value="">Selecione...</option>
+      <option value="LITROS_COMBUSTIVEL">Litros de Combustível</option>
+      <option value="KM_RODADO">KM Rodado</option>
+      <option value="CARGAS_ENTREGUES">Cargas Entregues</option>
+    </select>
+
+    <label>Valor Meta:</label>
+    <input type="number" [(ngModel)]="novaMeta.valorMeta" />
+
+    <label>Unidade:</label>
+    <input type="text" [(ngModel)]="novaMeta.unidade" />
+
+    <label>Status:</label>
+    <select [(ngModel)]="novaMeta.statusMeta">
+      <option value="EM_ANDAMENTO">Em andamento</option>
+      <option value="CONCLUIDA">Concluída</option>
+      <option value="CANCELADA">Cancelada</option>
+    </select>
+
+    <label class="checkbox-row">
+      <input type="checkbox" [(ngModel)]="novaMeta.renovarAutomaticamente" />
+      Renovar automaticamente
+    </label>
+
+    <div class="form-buttons">
+      <button (click)="salvarMeta()">Salvar</button>
+      <button class="cancel" (click)="cancelar()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- LISTA DE METAS -->
+  <ul class="meta-list">
+    <li *ngFor="let m of metasFiltradas" class="meta-item">
+      <button class="row" (click)="toggleExpand(m.id)">
+        <div class="left">
+          <strong>{{ m.descricao || 'Meta sem descrição' }}</strong>
+          
+        </div>
+
+        <div class="right">
+          <span>{{ m.dataInicio | date:'dd/MM/yyyy' }} → {{ m.dataFim | date:'dd/MM/yyyy' }}</span>
+          <i class="fas" [ngClass]="{ 'fa-chevron-down': !isExpanded(m.id), 'fa-chevron-up': isExpanded(m.id) }"></i>
+        </div>
+      </button>
+
+      <div class="expand" [class.expanded]="isExpanded(m.id)">
+        <div class="details">
+          <div><strong>Valor Meta:</strong> {{ m.valorMeta }}</div>
+          <div><strong>Realizado:</strong> {{ m.valorRealizado }}</div>
+          <div><strong>Unidade:</strong> {{ m.unidade }}</div>
+          <div><strong>Tipo de meta: </strong>{{ m.tipoMeta }}</div>
+          <div><strong>Status:</strong> {{ m.statusMeta }}</div>
+          <div><strong>Renovar Automaticamente:</strong> {{ m.renovarAutomaticamente ? 'Sim' : 'Não' }}</div>
+
+          <div class="btn-row">
+            <button class="edit" (click)="editarMeta(m)">Editar</button>
+            <button class="delete" (click)="excluirMeta(m.id)">Excluir</button>
+          </div>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>

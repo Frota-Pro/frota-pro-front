@@ -1,0 +1,112 @@
+.metas-page {
+  padding: 20px;
+}
+
+.top-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.top-actions input {
+  flex: 1;
+  padding: 8px;
+}
+
+.btn-add {
+  background: #007bff;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+}
+
+.form-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.1);
+}
+
+.form-card input,
+.form-card select {
+  width: 100%;
+  padding: 7px;
+  margin-bottom: 12px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.form-buttons .cancel {
+  background: #777;
+}
+
+.meta-list {
+  list-style: none;
+  padding: 0;
+}
+
+.meta-item {
+  background: #fff;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+}
+
+.row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  background: #f7f7f7;
+  border: none;
+}
+
+.expand {
+  height: 0;
+  overflow: hidden;
+  transition: 0.3s;
+  padding: 0 15px;
+}
+
+.expand.expanded {
+  height: auto;
+  padding: 15px;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.edit {
+  background: #ffc107;
+  padding: 8px 14px;
+  border-radius: 6px;
+}
+
+.delete {
+  background: #dc3545;
+  padding: 8px 14px;
+  border-radius: 6px;
+  color: white;
+}
