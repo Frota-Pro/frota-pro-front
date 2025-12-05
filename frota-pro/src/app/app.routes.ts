@@ -56,6 +56,14 @@ export const routes: Routes = [
             (m) => m.CargasComponent
           ),
       },
+
+      {
+        path: 'metas',
+        loadComponent: () =>
+          import('./features/metas/metas.component').then(
+            (m) => m.MetasComponent
+          ),
+      },
     ],
   },
 ];

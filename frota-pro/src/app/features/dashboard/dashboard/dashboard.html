@@ -64,6 +64,15 @@
         <span *ngIf="!isClosed">Cargas</span>
       </a>
 
+      <a
+        class="menu-item"
+        routerLink="metas"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <i class="icon fas fa-chart-bar"></i>
+        <span *ngIf="!isClosed">Metas</span>
+      </a>
+
     </nav>
   </aside>
 
