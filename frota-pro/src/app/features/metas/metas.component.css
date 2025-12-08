@@ -99,9 +99,10 @@
 }
 
 .edit {
-  background: #ffc107;
   padding: 8px 14px;
   border-radius: 6px;
+  background: #1976d2;
+  color: #000;
 }
 
 .delete {
@@ -137,14 +138,8 @@ button.nova-meta-btn:hover {
   border-radius: 6px;
 }
 
-/* Editar */
-.btn-edit {
-  background: #ffcc00;
-  color: #000;
-}
-
-.btn-edit:hover {
-  background: #e6b800;
+.edit:hover {
+  background: #83bcf5;
   transform: scale(1.05);
 }
 
