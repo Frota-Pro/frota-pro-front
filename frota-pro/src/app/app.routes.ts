@@ -64,6 +64,13 @@ export const routes: Routes = [
             (m) => m.MetasComponent
           ),
       },
+      {
+        path: 'relatorios',
+        loadComponent: () =>
+          import('./features/relatorios/relatorios.compont').then(
+            (m) => m.RelatoriosComponent
+          ),
+      },
     ],
   },
 ];

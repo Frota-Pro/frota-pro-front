@@ -72,6 +72,14 @@
         <i class="icon fas fa-chart-bar"></i>
         <span *ngIf="!isClosed">Metas</span>
       </a>
+      <a
+        class="menu-item"
+        routerLink="relatorios"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <i class="icon far fa-file-alt"></i>
+        <span *ngIf="!isClosed">Relatorios</span>
+      </a>
 
     </nav>
   </aside>
