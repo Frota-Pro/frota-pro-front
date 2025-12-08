@@ -24,6 +24,32 @@
       </select>
     </div>
 
+    <!-- 🔹 CAMPO EXTRA PARA CAMINHÃO -->
+    <div
+      class="filter-item"
+      *ngIf="relatoriosQuePedemCaminhao.includes(filtro.tipoRelatorio)"
+    >
+      <label>Caminhão</label>
+      <input
+        type="text"
+        placeholder="Digite o código do caminhão"
+        [(ngModel)]="codigoCaminhao"
+      />
+    </div>
+
+    <!-- 🔹 CAMPO EXTRA PARA MOTORISTA -->
+    <div
+      class="filter-item"
+      *ngIf="relatoriosQuePedemMotorista.includes(filtro.tipoRelatorio)"
+    >
+      <label>Motorista</label>
+      <input
+        type="text"
+        placeholder="Digite o código do motorista"
+        [(ngModel)]="codigoMotorista"
+      />
+    </div>
+
     <button class="btn-gerar" (click)="gerarRelatorio()">Gerar Relatório</button>
   </div>
 
@@ -35,10 +61,26 @@
     </div>
 
     <div class="preview">
-      <!-- Aqui no futuro vai entrar o conteúdo real vindo do backend -->
       <h4>{{ tituloRelatorio }}</h4>
       <p class="periodo">
-        Período: {{ filtro.inicio | date:'dd/MM/yyyy' }} → {{ filtro.fim | date:'dd/MM/yyyy' }}
+        Período: {{ filtro.inicio | date:'dd/MM/yyyy' }} →
+        {{ filtro.fim | date:'dd/MM/yyyy' }}
+      </p>
+
+      <!-- MOSTRA CAMINHÃO SE HOUVER -->
+      <p
+        class="periodo"
+        *ngIf="relatoriosQuePedemCaminhao.includes(filtro.tipoRelatorio)"
+      >
+        Caminhão: {{ codigoCaminhao }}
+      </p>
+
+      <!-- MOSTRA MOTORISTA SE HOUVER -->
+      <p
+        class="periodo"
+        *ngIf="relatoriosQuePedemMotorista.includes(filtro.tipoRelatorio)"
+      >
+        Motorista: {{ codigoMotorista }}
       </p>
 
       <div class="preview-area">

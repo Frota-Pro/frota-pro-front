@@ -25,12 +25,16 @@
   font-weight: 600;
 }
 
-input[type="date"],
+input[type="date"],[type="text"],
 select {
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
   min-width: 180px;
+}
+
+input[type="text"] {
+  padding-top: 10px;
 }
 
 .btn-gerar {

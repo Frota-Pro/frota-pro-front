@@ -10,19 +10,55 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./relatorios.component.css'],
 })
 export class RelatoriosComponent {
-  
+
   filtro = {
     inicio: '',
     fim: '',
     tipoRelatorio: ''
   };
 
+  // NOVOS CAMPOS
+  codigoCaminhao = '';
+  codigoMotorista = '';
+
+  // LISTA DOS RELATÓRIOS QUE PRECISAM DE CAMINHÃO
+  relatoriosQuePedemCaminhao = [
+    'RESUMO_CAMINHAO',
+    'MANUTENCOES_CAMINHAO',
+    'VIDA_UTIL_PNEU'
+  ];
+
+  // LISTA DOS RELATÓRIOS QUE PRECISAM DE MOTORISTA
+  relatoriosQuePedemMotorista = [
+    'RELATORIO_MOTORISTA'
+  ];
+
   relatorioGerado = false;
   tituloRelatorio = '';
 
   gerarRelatorio() {
+
+    // Verificação padrão
     if (!this.filtro.inicio || !this.filtro.fim || !this.filtro.tipoRelatorio) {
       alert('Preencha todos os campos para gerar o relatório.');
+      return;
+    }
+
+    // 🔎 Se o relatório exigir CAMINHÃO
+    if (
+      this.relatoriosQuePedemCaminhao.includes(this.filtro.tipoRelatorio) &&
+      !this.codigoCaminhao
+    ) {
+      alert('Informe o caminhão para gerar este relatório.');
+      return;
+    }
+
+    // 🔎 Se exigir MOTORISTA
+    if (
+      this.relatoriosQuePedemMotorista.includes(this.filtro.tipoRelatorio) &&
+      !this.codigoMotorista
+    ) {
+      alert('Informe o motorista para gerar este relatório.');
       return;
     }
 
