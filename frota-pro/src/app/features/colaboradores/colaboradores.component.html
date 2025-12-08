@@ -60,6 +60,49 @@
     </ul>
   </section>
 
+  <!-- MECÂNICOS -->
+  <section class="colab-block">
+    <div class="block-header">
+      <h3>Mecânicos</h3>
+      <span class="count">{{ filterList(mecanicos).length }}</span>
+    </div>
+
+    <ul class="colab-list">
+      <li *ngFor="let me of filterList(mecanicos); trackBy: trackById" class="colab-item">
+
+        <button class="row" type="button" (click)="toggleExpand('mecanico', me.id)">
+          <div class="left">
+            <span class="codigo">{{ me.codigo }}</span>
+            <span class="nome">{{ me.nome }}</span>
+          </div>
+          <div class="right">
+            <span class="role">Mecânico</span>
+            <i
+              class="fas"
+              [ngClass]="{
+                'fa-chevron-down': !isExpanded('mecanico', me.id),
+                'fa-chevron-up': isExpanded('mecanico', me.id)
+              }"
+            ></i>
+          </div>
+        </button>
+
+        <!-- COM ANIMAÇÃO -->
+        <div class="expand-container" [class.expanded]="isExpanded('mecanico', me.id)">
+          <div class="details">
+            <div class="detail-row"><strong>Código:</strong> {{ me.codigo }}</div>
+            <div class="detail-row"><strong>Nome:</strong> {{ me.nome }}</div>
+            <div class="detail-row" *ngIf="me.oficina">
+              <strong>Oficina:</strong> {{ me.oficina.nome }}
+            </div>
+            <div class="detail-row"><strong>Ativo:</strong> {{ me.ativo ? 'Sim' : 'Não' }}</div>
+          </div>
+        </div>
+
+      </li>
+    </ul>
+  </section>
+
   <!-- AJUDANTES -->
   <section class="colab-block">
     <div class="block-header">
@@ -97,49 +140,6 @@
             <div class="detail-row"><strong>Nome:</strong> {{ a.nome }}</div>
             <div class="detail-row"><strong>Status:</strong> {{ a.status }}</div>
             <div class="detail-row"><strong>Ativo:</strong> {{ a.ativo ? 'Sim' : 'Não' }}</div>
-          </div>
-        </div>
-
-      </li>
-    </ul>
-  </section>
-
-  <!-- MECÂNICOS -->
-  <section class="colab-block">
-    <div class="block-header">
-      <h3>Mecânicos</h3>
-      <span class="count">{{ filterList(mecanicos).length }}</span>
-    </div>
-
-    <ul class="colab-list">
-      <li *ngFor="let me of filterList(mecanicos); trackBy: trackById" class="colab-item">
-
-        <button class="row" type="button" (click)="toggleExpand('mecanico', me.id)">
-          <div class="left">
-            <span class="codigo">{{ me.codigo }}</span>
-            <span class="nome">{{ me.nome }}</span>
-          </div>
-          <div class="right">
-            <span class="role">Mecânico</span>
-            <i
-              class="fas"
-              [ngClass]="{
-                'fa-chevron-down': !isExpanded('mecanico', me.id),
-                'fa-chevron-up': isExpanded('mecanico', me.id)
-              }"
-            ></i>
-          </div>
-        </button>
-
-        <!-- COM ANIMAÇÃO -->
-        <div class="expand-container" [class.expanded]="isExpanded('mecanico', me.id)">
-          <div class="details">
-            <div class="detail-row"><strong>Código:</strong> {{ me.codigo }}</div>
-            <div class="detail-row"><strong>Nome:</strong> {{ me.nome }}</div>
-            <div class="detail-row" *ngIf="me.oficina">
-              <strong>Oficina:</strong> {{ me.oficina.nome }}
-            </div>
-            <div class="detail-row"><strong>Ativo:</strong> {{ me.ativo ? 'Sim' : 'Não' }}</div>
           </div>
         </div>
 
