@@ -46,12 +46,11 @@
     </label>
 
     <div class="form-buttons">
-      <button (click)="salvarMeta()">Salvar</button>
-      <button class="cancel" (click)="cancelar()">Cancelar</button>
+      <button class="bnt-form" (click)="salvarMeta()">Salvar</button>
+      <button class="bnt-form" (click)="cancelar()">Cancelar</button>
     </div>
   </div>
 
-  <!-- LISTA DE METAS -->
   <ul class="meta-list">
     <li *ngFor="let m of metasFiltradas" class="meta-item">
       <button class="row" (click)="toggleExpand(m.id)">
