@@ -53,6 +53,19 @@ export class MetasComponent {
   novaMeta: Meta | null = null;
   editando: boolean = false;
 
+  // 🔥 UUID SEGURO E UNIVERSAL
+  private gerarUUID(): string {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback
+    return 'xxxx-xxxx-4xxx-yxxx-xxxxxx'.replace(/[xy]/g, c => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
   toggleExpand(id: UUID) {
     this.expanded = this.expanded === id ? null : id;
   }
@@ -71,7 +84,7 @@ export class MetasComponent {
 
   addNovaMeta() {
     this.novaMeta = {
-      id: crypto.randomUUID(),
+      id: this.gerarUUID(),
       dataInicio: '',
       dataFim: '',
       tipoMeta: '',

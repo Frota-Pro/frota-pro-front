@@ -4,6 +4,7 @@
 
 h2 {
   margin-bottom: 20px;
+  color: #1e3c72;
 }
 
 .btn-nova {
@@ -81,8 +82,15 @@ textarea {
   cursor: pointer;
 }
 
-.lista .item {
+.lista{
   background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.lista .item {
+  background: #fafafa;
   padding: 14px;
   border-radius: 10px;
   display: flex;
@@ -100,6 +108,11 @@ textarea {
 
 .codigo {
   font-weight: 600;
+  color: #1e3c72;
+}
+
+.descricao{
+  color: #1e3c72;
 }
 
 .status {

@@ -156,10 +156,10 @@
 .submenu {
   list-style: none;
   padding-left: 42px;
-  padding-top: 6px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin: 0px;
 }
 
 .submenu li {
