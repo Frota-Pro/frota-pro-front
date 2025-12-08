@@ -1,0 +1,97 @@
+.relatorios-page {
+  padding: 20px;
+}
+
+.page-title {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.filters {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 25px;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-item label {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+input[type="date"],
+select {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  min-width: 180px;
+}
+
+.btn-gerar {
+  padding: 10px 18px;
+  background: #007bff;
+  color: white;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.btn-gerar:hover {
+  background: #0a74d1;
+  transform: scale(1.03);
+}
+
+/* Resultado do relatório */
+.relatorio-block {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  margin-top: 25px;
+}
+
+.block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.btn-download {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.btn-download:hover {
+  background: #1e7e34;
+  transform: scale(1.03);
+}
+
+.preview h4 {
+  margin-bottom: 5px;
+}
+
+.preview-area {
+  margin-top: 15px;
+  height: 240px;
+  background: #f4f4f4;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-style: italic;
+  border: 1px dashed #ccc;
+}

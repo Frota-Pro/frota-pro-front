@@ -1,0 +1,49 @@
+<div class="relatorios-page">
+  <h2 class="page-title">Relatórios</h2>
+
+  <div class="filters">
+    <div class="filter-item">
+      <label>Data Início</label>
+      <input type="date" [(ngModel)]="filtro.inicio" />
+    </div>
+
+    <div class="filter-item">
+      <label>Data Fim</label>
+      <input type="date" [(ngModel)]="filtro.fim" />
+    </div>
+
+    <div class="filter-item">
+      <label>Tipo de Relatório</label>
+      <select [(ngModel)]="filtro.tipoRelatorio">
+        <option value="">Selecione...</option>
+        <option value="GASTO_COMBUSTIVEL">Gasto por Tipo de Combustível</option>
+        <option value="RESUMO_CAMINHAO">Resumo por Caminhão</option>
+        <option value="MANUTENCOES_CAMINHAO">Manutenções do Caminhão</option>
+        <option value="VIDA_UTIL_PNEU">Vida Útil do Pneu</option>
+        <option value="RELATORIO_MOTORISTA">Mensal do Motorista</option>
+      </select>
+    </div>
+
+    <button class="btn-gerar" (click)="gerarRelatorio()">Gerar Relatório</button>
+  </div>
+
+  <!-- RESULTADO DO RELATÓRIO -->
+  <section class="relatorio-block" *ngIf="relatorioGerado">
+    <div class="block-header">
+      <h3>Visualização do Relatório</h3>
+      <button class="btn-download" (click)="baixarRelatorio()">Baixar PDF</button>
+    </div>
+
+    <div class="preview">
+      <!-- Aqui no futuro vai entrar o conteúdo real vindo do backend -->
+      <h4>{{ tituloRelatorio }}</h4>
+      <p class="periodo">
+        Período: {{ filtro.inicio | date:'dd/MM/yyyy' }} → {{ filtro.fim | date:'dd/MM/yyyy' }}
+      </p>
+
+      <div class="preview-area">
+        <p>Pré-visualização disponível em breve...</p>
+      </div>
+    </div>
+  </section>
+</div>

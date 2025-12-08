@@ -40,7 +40,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/veiculos/veiculos.component').then((m) => m.VeiculosComponent),
       },
-      
+
       {
         path: 'categorias',
         loadComponent: () =>
@@ -52,24 +52,18 @@ export const routes: Routes = [
       {
         path: 'cargas',
         loadComponent: () =>
-          import('./features/cargas/cargas.component').then(
-            (m) => m.CargasComponent
-          ),
+          import('./features/cargas/cargas.component').then((m) => m.CargasComponent),
       },
 
       {
         path: 'metas',
         loadComponent: () =>
-          import('./features/metas/metas.component').then(
-            (m) => m.MetasComponent
-          ),
+          import('./features/metas/metas.component').then((m) => m.MetasComponent),
       },
       {
         path: 'relatorios',
         loadComponent: () =>
-          import('./features/relatorios/relatorios.compont').then(
-            (m) => m.RelatoriosComponent
-          ),
+          import('./features/relatorios/relatorios.component').then((m) => m.RelatoriosComponent),
       },
     ],
   },
