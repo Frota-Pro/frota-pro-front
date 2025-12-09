@@ -45,6 +45,9 @@ export class ColaboradoresComponent {
 
   searchTerm: string = '';
 
+  // ==========================================================
+  // LISTAS MOCKADAS
+  // ==========================================================
   motoristas: Motorista[] = [
     {
       id: '9f1a1d5a-1a1a-4c3a-9d1f-000000000001',
@@ -106,23 +109,24 @@ export class ColaboradoresComponent {
     },
   ];
 
+  // ==========================================================
+  // EXPAND / COLLAPSE
+  // ==========================================================
   expanded = new Set<string>();
 
   toggleExpand(tipo: 'motorista' | 'ajudante' | 'mecanico', id: UUID) {
-  const key = `${tipo}-${id}`;
+    const key = `${tipo}-${id}`;
 
-  // Se já está expandido → colapsa
-  if (this.expanded.has(key)) {
-    this.expanded.delete(key);
-    return;
+    if (this.expanded.has(key)) {
+      this.expanded.delete(key);
+      return;
+    }
+
+    this.expanded.clear();
+    this.expanded.add(key);
   }
 
-  // Caso contrário, limpa tudo e expande somente o novo
-  this.expanded.clear();
-  this.expanded.add(key);
-}
-
-  isExpanded(tipo: 'motorista' | 'ajudante' | 'mecanico', id: UUID) {
+  isExpanded(tipo: string, id: UUID) {
     return this.expanded.has(`${tipo}-${id}`);
   }
 
@@ -130,39 +134,87 @@ export class ColaboradoresComponent {
     return item.id;
   }
 
-  get motoristasFiltrados() {
-    const t = this.searchTerm?.toLowerCase().trim() || '';
-    if (!t) return this.motoristas;
-    return this.motoristas.filter(m =>
-      (m.nome || '').toLowerCase().includes(t) ||
-      (m.codigo || '').toLowerCase().includes(t)
-    );
-  }
-
-  get ajudantesFiltrados() {
-    const t = this.searchTerm?.toLowerCase().trim() || '';
-    if (!t) return this.ajudantes;
-    return this.ajudantes.filter(a =>
-      (a.nome || '').toLowerCase().includes(t) ||
-      (a.codigo || '').toLowerCase().includes(t)
-    );
-  }
-
-  get mecanicosFiltrados() {
-    const t = this.searchTerm?.toLowerCase().trim() || '';
-    if (!t) return this.mecanicos;
-    return this.mecanicos.filter(m =>
-      (m.nome || '').toLowerCase().includes(t) ||
-      (m.codigo || '').toLowerCase().includes(t)
-    );
-  }
-
+  // ==========================================================
+  // FILTRO
+  // ==========================================================
   filterList<T extends { nome?: string; codigo?: string }>(lista: T[]): T[] {
-    const term = this.searchTerm?.toLowerCase().trim() || '';
+    const term = this.searchTerm?.toLowerCase().trim();
     if (!term) return lista;
+
     return lista.filter(item =>
-      (item.nome || '').toLowerCase().includes(term) ||
-      (item.codigo || '').toLowerCase().includes(term)
+      (item.nome ?? '').toLowerCase().includes(term) ||
+      (item.codigo ?? '').toLowerCase().includes(term)
     );
   }
+
+  // ==========================================================
+  // CRUD AJUDANTES
+  // ==========================================================
+  showAjudanteModal = false;
+  modoEdicao = false;
+
+  ajudanteEditando: Ajudante | null = null;
+
+  novoAjudante: Ajudante = {
+    id: '',
+    codigo: '',
+    nome: '',
+    status: 'DISPONIVEL',
+    ativo: true,
+  };
+
+  abrirFormularioAjudante() {
+    this.modoEdicao = false;
+    this.novoAjudante = {
+      id: '',
+      codigo: this.gerarCodigo(),
+      nome: '',
+      status: 'DISPONIVEL',
+      ativo: true,
+    };
+    this.showAjudanteModal = true;
+  }
+
+  editarAjudante(a: Ajudante) {
+    this.modoEdicao = true;
+    this.ajudanteEditando = a;
+    this.novoAjudante = { ...a };
+    this.showAjudanteModal = true;
+  }
+
+  salvarAjudante() {
+    if (!this.novoAjudante.nome.trim()) {
+      alert('Nome é obrigatório.');
+      return;
+    }
+
+    if (this.modoEdicao && this.ajudanteEditando) {
+      Object.assign(this.ajudanteEditando, this.novoAjudante);
+    } else {
+      this.novoAjudante.id = crypto.randomUUID();
+      this.ajudantes.push({ ...this.novoAjudante });
+    }
+
+    this.fecharFormulario();
+  }
+
+  excluirAjudante(id: UUID) {
+    if (!confirm('Tem certeza que deseja excluir este ajudante?')) return;
+    this.ajudantes = this.ajudantes.filter(a => a.id !== id);
+  }
+
+  fecharFormulario() {
+    this.showAjudanteModal = false;
+    this.ajudanteEditando = null;
+  }
+
+  cancelarAjudante() {
+    this.fecharFormulario();
+  }
+
+  gerarCodigo(): string {
+    const num = this.ajudantes.length + 1;
+    return `AJD-${num.toString().padStart(3, '0')}`;
+  }
+
 }

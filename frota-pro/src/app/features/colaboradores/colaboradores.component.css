@@ -175,3 +175,154 @@
   transform: translateY(0);
 }
 
+/* BOTÃO ADICIONAR */
+.btn-add {
+  background: #1e3c72;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.25s ease;
+}
+
+.btn-add:hover {
+  background: #274c97;
+}
+
+/* BOTÕES DE AÇÃO (Editar / Excluir) */
+.action-buttons {
+  margin-top: 10px;
+  display: flex;
+  gap: 12px;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: 0.25s;
+}
+
+.btn-edit {
+  background: #f0f4ff;
+  color: #1e3c72;
+}
+.btn-edit:hover {
+  background: #dce7ff;
+}
+
+.btn-delete {
+  background: #ffe7e7;
+  color: #c62828;
+}
+.btn-delete:hover {
+  background: #ffd4d4;
+}
+
+/* MODAL - FUNDO */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* MODAL - CAIXA */
+.modal-box {
+  background: white;
+  padding: 20px 22px;
+  width: 360px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  animation: modalFade 0.25s ease;
+}
+
+@keyframes modalFade {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e3c72;
+  margin-bottom: 12px;
+}
+
+/* CAMPOS DO FORMULÁRIO */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e3c72;
+}
+
+.modal-form input,
+.modal-form select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  transition: 0.25s;
+}
+
+.modal-form input:focus,
+.modal-form select:focus {
+  border-color: #4fa3ff;
+  box-shadow: 0 0 4px rgba(79,163,255,0.3);
+  outline: none;
+}
+
+/* BOTÕES SALVAR / CANCELAR */
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btn-save {
+  background: #1e3c72;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.btn-save:hover {
+  background: #274c97;
+}
+
+.btn-cancel {
+  background: #eaeaea;
+  color: #333;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-cancel:hover {
+  background: #d5d5d5;
+}
