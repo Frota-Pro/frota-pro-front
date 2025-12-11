@@ -81,6 +81,15 @@
         <span *ngIf="!isClosed">Relatorios</span>
       </a>
 
+      <a
+        class="menu-item"
+        routerLink="abastecimentos"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <i class="icon fas fa-gas-pump"></i>
+        <span *ngIf="!isClosed">Abastecimentos</span>
+      </a>
+
     </nav>
   </aside>
 

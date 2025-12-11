@@ -60,10 +60,17 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/metas/metas.component').then((m) => m.MetasComponent),
       },
+      
       {
         path: 'relatorios',
         loadComponent: () =>
           import('./features/relatorios/relatorios.component').then((m) => m.RelatoriosComponent),
+      },
+
+       {
+        path: 'abastecimentos',
+        loadComponent: () =>
+          import('./features/abastecimento/abastecimentos.component').then((m) => m.AbastecimentosComponent),
       },
     ],
   },
