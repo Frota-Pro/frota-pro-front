@@ -6,8 +6,16 @@ type UUID = string;
 
 type TipoCombustivel = 'DIESEL' | 'GASOLINA' | 'ETANOL' | 'DIESEL_S10' | 'GNV' | string;
 
-interface CaminhaoMini { id: UUID; codigo: string; placa: string; }
-interface MotoristaMini { id: UUID; nome: string; codigo: string; }
+interface CaminhaoMini {
+  id: UUID;
+  codigo: string;
+  placa: string;
+}
+interface MotoristaMini {
+  id: UUID;
+  nome: string;
+  codigo: string;
+}
 
 interface Abastecimento {
   id: UUID;
@@ -57,7 +65,6 @@ interface NovoAbastecimento {
   styleUrls: ['./abastecimentos.component.css'],
 })
 export class AbastecimentosComponent {
-
   // filtros
   filtroMotorista: string = '';
   filtroCaminhao: string = '';
@@ -90,7 +97,7 @@ export class AbastecimentosComponent {
       cidade: 'Campina',
       uf: 'PB',
       numNotaOuCupom: 'NF12345',
-      mediaKmLitro: 3.2
+      mediaKmLitro: 3.2,
     },
     {
       id: 'ab-2',
@@ -108,8 +115,8 @@ export class AbastecimentosComponent {
       cidade: 'João Pessoa',
       uf: 'PB',
       numNotaOuCupom: 'NF54321',
-      mediaKmLitro: 4.1
-    }
+      mediaKmLitro: 4.1,
+    },
   ];
 
   /* =============================
@@ -123,12 +130,14 @@ export class AbastecimentosComponent {
     valorLitro: 0,
     valorTotal: 0,
     caminhao: { id: '', codigo: '', placa: '' },
-    motorista: { id: '', nome: '', codigo: '' }
+    motorista: { id: '', nome: '', codigo: '' },
   };
 
   private generateId(): string {
     if (typeof crypto !== 'undefined' && (crypto as any).randomUUID) {
-      try { return (crypto as any).randomUUID(); } catch {}
+      try {
+        return (crypto as any).randomUUID();
+      } catch {}
     }
     return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
   }
@@ -138,14 +147,16 @@ export class AbastecimentosComponent {
     this.editingId = null;
 
     this.novo = {
-      codigo: `AB-${new Date().getFullYear()}-${(this.abastecimentos.length + 1).toString().padStart(4, '0')}`,
+      codigo: `AB-${new Date().getFullYear()}-${(this.abastecimentos.length + 1)
+        .toString()
+        .padStart(4, '0')}`,
       dtAbastecimento: new Date().toISOString().slice(0, 16),
       tipoCombustivel: 'DIESEL',
       qtLitros: 0,
       valorLitro: 0,
       valorTotal: 0,
       caminhao: { id: '', codigo: '', placa: '' },
-      motorista: { id: '', nome: '', codigo: '' }
+      motorista: { id: '', nome: '', codigo: '' },
     };
 
     this.showAddModal = true;
@@ -156,7 +167,7 @@ export class AbastecimentosComponent {
     this.editingId = ab.id;
 
     // converte dt para input datetime-local format yyyy-MM-ddTHH:mm (já está em ISO nos mocks)
-    const dt = ab.dtAbastecimento ? ab.dtAbastecimento.slice(0,16) : '';
+    const dt = ab.dtAbastecimento ? ab.dtAbastecimento.slice(0, 16) : '';
 
     this.novo = {
       codigo: ab.codigo,
@@ -173,7 +184,7 @@ export class AbastecimentosComponent {
       cidade: ab.cidade ?? '',
       uf: ab.uf ?? '',
       numNotaOuCupom: ab.numNotaOuCupom ?? '',
-      mediaKmLitro: ab.mediaKmLitro ?? null
+      mediaKmLitro: ab.mediaKmLitro ?? null,
     };
 
     this.showAddModal = true;
@@ -191,7 +202,7 @@ export class AbastecimentosComponent {
       valorLitro: 0,
       valorTotal: 0,
       caminhao: { id: '', codigo: '', placa: '' },
-      motorista: { id: '', nome: '', codigo: '' }
+      motorista: { id: '', nome: '', codigo: '' },
     };
   }
 
@@ -211,14 +222,15 @@ export class AbastecimentosComponent {
 
     if (this.isEditing && this.editingId) {
       // atualizar
-      const idx = this.abastecimentos.findIndex(x => x.id === this.editingId);
+      const idx = this.abastecimentos.findIndex((x) => x.id === this.editingId);
       if (idx >= 0) {
         this.abastecimentos[idx] = {
           id: this.editingId,
           codigo: this.novo.codigo,
           dtAbastecimento: this.novo.dtAbastecimento,
           caminhao: { ...this.novo.caminhao },
-          motorista: this.novo.motorista && this.novo.motorista.nome ? { ...this.novo.motorista } : null,
+          motorista:
+            this.novo.motorista && this.novo.motorista.nome ? { ...this.novo.motorista } : null,
           kmOdometro: this.novo.kmOdometro ?? null,
           qtLitros: qt,
           valorLitro: vl,
@@ -229,7 +241,7 @@ export class AbastecimentosComponent {
           cidade: this.novo.cidade || '',
           uf: this.novo.uf || '',
           numNotaOuCupom: this.novo.numNotaOuCupom || '',
-          mediaKmLitro: this.novo.mediaKmLitro ?? null
+          mediaKmLitro: this.novo.mediaKmLitro ?? null,
         };
       }
     } else {
@@ -239,7 +251,8 @@ export class AbastecimentosComponent {
         codigo: this.novo.codigo,
         dtAbastecimento: this.novo.dtAbastecimento,
         caminhao: { ...this.novo.caminhao },
-        motorista: this.novo.motorista && this.novo.motorista.nome ? { ...this.novo.motorista } : null,
+        motorista:
+          this.novo.motorista && this.novo.motorista.nome ? { ...this.novo.motorista } : null,
         kmOdometro: this.novo.kmOdometro ?? null,
         qtLitros: qt,
         valorLitro: vl,
@@ -250,7 +263,7 @@ export class AbastecimentosComponent {
         cidade: this.novo.cidade || '',
         uf: this.novo.uf || '',
         numNotaOuCupom: this.novo.numNotaOuCupom || '',
-        mediaKmLitro: this.novo.mediaKmLitro ?? null
+        mediaKmLitro: this.novo.mediaKmLitro ?? null,
       };
 
       this.abastecimentos.unshift(ab);
@@ -261,7 +274,7 @@ export class AbastecimentosComponent {
 
   deleteAbastecimento(id: UUID) {
     if (!confirm('Tem certeza que deseja excluir este abastecimento?')) return;
-    this.abastecimentos = this.abastecimentos.filter(a => a.id !== id);
+    this.abastecimentos = this.abastecimentos.filter((a) => a.id !== id);
     // se estava expandido, fecha
     if (this.expanded === id) this.expanded = null;
   }
@@ -287,22 +300,28 @@ export class AbastecimentosComponent {
     const inicio = this.filtroDataInicio ? new Date(this.filtroDataInicio) : null;
     const fim = this.filtroDataFim ? new Date(this.filtroDataFim) : null;
 
-    return this.abastecimentos.filter(a => {
+    return this.abastecimentos.filter((a) => {
       const dt = new Date(a.dtAbastecimento);
       if (inicio && dt < inicio) return false;
-      if (fim && dt > new Date(fim.getFullYear(), fim.getMonth(), fim.getDate(), 23, 59, 59)) return false;
+      if (fim && dt > new Date(fim.getFullYear(), fim.getMonth(), fim.getDate(), 23, 59, 59))
+        return false;
 
       if (mot) {
-        if (!(`${a.motorista?.nome || ''} ${a.motorista?.codigo || ''}`.toLowerCase().includes(mot)))
+        if (!`${a.motorista?.nome || ''} ${a.motorista?.codigo || ''}`.toLowerCase().includes(mot))
           return false;
       }
 
       if (cam) {
-        if (!(`${a.caminhao.placa} ${a.caminhao.codigo}`.toLowerCase().includes(cam)))
-          return false;
+        if (!`${a.caminhao.placa} ${a.caminhao.codigo}`.toLowerCase().includes(cam)) return false;
       }
 
-      if (tipo && !String(a.tipoCombustivel || '').toLowerCase().includes(tipo)) return false;
+      if (
+        tipo &&
+        !String(a.tipoCombustivel || '')
+          .toLowerCase()
+          .includes(tipo)
+      )
+        return false;
 
       if (t) {
         const hay = [
@@ -312,8 +331,10 @@ export class AbastecimentosComponent {
           a.motorista?.codigo || '',
           a.caminhao.placa || '',
           a.caminhao.codigo || '',
-          a.numNotaOuCupom || ''
-        ].join(' ').toLowerCase();
+          a.numNotaOuCupom || '',
+        ]
+          .join(' ')
+          .toLowerCase();
 
         if (!hay.includes(t)) return false;
       }
@@ -326,7 +347,7 @@ export class AbastecimentosComponent {
   get litersThisMonth() {
     const now = new Date();
     return this.abastecimentos
-      .filter(a => {
+      .filter((a) => {
         const d = new Date(a.dtAbastecimento);
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
       })
@@ -346,8 +367,8 @@ export class AbastecimentosComponent {
 
   get avgConsumption() {
     const records = this.abastecimentos
-      .map(a => a.mediaKmLitro)
-      .filter(v => v != null) as number[];
+      .map((a) => a.mediaKmLitro)
+      .filter((v) => v != null) as number[];
 
     if (!records.length) return 0;
 
