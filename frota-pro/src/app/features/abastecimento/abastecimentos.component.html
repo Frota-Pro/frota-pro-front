@@ -166,15 +166,22 @@
         <option value="GNV">GNV</option>
       </select>
 
-      <label>Litros</label>
-      <input type="number" step="0.001" [(ngModel)]="novo.qtLitros" />
+      <div class="form-row">
+        
+        <div>
+          <label>Litros</label>
+          <input type="number" step="0.001" [(ngModel)]="novo.qtLitros" />
+        </div>
+        <div>  
+          <label>Valor por litro</label>
+          <input type="number" step="0.001" [(ngModel)]="novo.valorLitro" />
+        </div>
+        <div>
+          <label>Valor total</label>
+          <input type="number" step="0.01" [(ngModel)]="novo.valorTotal" />
+        </div>
 
-      <label>Valor por litro</label>
-      <input type="number" step="0.001" [(ngModel)]="novo.valorLitro" />
-
-      <label>Valor total</label>
-      <input type="number" step="0.01" [(ngModel)]="novo.valorTotal" />
-
+      </div>
       <label>Posto</label>
       <input type="text" [(ngModel)]="novo.posto" />
 
