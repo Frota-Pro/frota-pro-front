@@ -288,6 +288,11 @@
   overflow: hidden;       /* 🔥 necessário */
 }
 
+.modal-card h3{
+  color: #163055;
+  padding-left: 20px;
+  margin-bottom: 0px;
+}
 
 @keyframes modalFade {
   from { opacity: 0; transform: translateY(-20px); }
