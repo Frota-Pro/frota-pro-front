@@ -292,56 +292,88 @@ export class AbastecimentosComponent {
   }
 
   get abastecimentosFiltrados() {
-    const t = (this.searchTerm || '').toLowerCase().trim();
-    const mot = (this.filtroMotorista || '').toLowerCase().trim();
-    const cam = (this.filtroCaminhao || '').toLowerCase().trim();
-    const tipo = (this.filtroTipo || '').toLowerCase().trim();
+  const t = (this.searchTerm || '').toLowerCase().trim();
+  const mot = (this.filtroMotorista || '').toLowerCase().trim();
+  const cam = (this.filtroCaminhao || '').toLowerCase().trim();
+  const tipo = (this.filtroTipo || '').toLowerCase().trim();
 
-    const inicio = this.filtroDataInicio ? new Date(this.filtroDataInicio) : null;
-    const fim = this.filtroDataFim ? new Date(this.filtroDataFim) : null;
+  // 🔥 NORMALIZA AS DATAS (SEM FUSO)
+  const inicio = this.filtroDataInicio
+    ? new Date(
+        Number(this.filtroDataInicio.slice(0, 4)),
+        Number(this.filtroDataInicio.slice(5, 7)) - 1,
+        Number(this.filtroDataInicio.slice(8, 10)),
+        0,
+        0,
+        0,
+        0
+      )
+    : null;
 
-    return this.abastecimentos.filter((a) => {
-      const dt = new Date(a.dtAbastecimento);
-      if (inicio && dt < inicio) return false;
-      if (fim && dt > new Date(fim.getFullYear(), fim.getMonth(), fim.getDate(), 23, 59, 59))
-        return false;
+  const fim = this.filtroDataFim
+    ? new Date(
+        Number(this.filtroDataFim.slice(0, 4)),
+        Number(this.filtroDataFim.slice(5, 7)) - 1,
+        Number(this.filtroDataFim.slice(8, 10)),
+        23,
+        59,
+        59,
+        999
+      )
+    : null;
 
-      if (mot) {
-        if (!`${a.motorista?.nome || ''} ${a.motorista?.codigo || ''}`.toLowerCase().includes(mot))
-          return false;
-      }
+  return this.abastecimentos.filter((a) => {
+    const dt = new Date(a.dtAbastecimento);
 
-      if (cam) {
-        if (!`${a.caminhao.placa} ${a.caminhao.codigo}`.toLowerCase().includes(cam)) return false;
-      }
+    if (inicio && dt < inicio) return false;
+    if (fim && dt > fim) return false;
 
+    if (mot) {
       if (
-        tipo &&
-        !String(a.tipoCombustivel || '')
+        !`${a.motorista?.nome || ''} ${a.motorista?.codigo || ''}`
           .toLowerCase()
-          .includes(tipo)
+          .includes(mot)
       )
         return false;
+    }
 
-      if (t) {
-        const hay = [
-          a.codigo || '',
-          a.posto || '',
-          a.motorista?.nome || '',
-          a.motorista?.codigo || '',
-          a.caminhao.placa || '',
-          a.caminhao.codigo || '',
-          a.numNotaOuCupom || '',
-        ]
-          .join(' ')
-          .toLowerCase();
+    if (cam) {
+      if (
+        !`${a.caminhao.placa} ${a.caminhao.codigo}`
+          .toLowerCase()
+          .includes(cam)
+      )
+        return false;
+    }
 
-        if (!hay.includes(t)) return false;
-      }
+    if (
+      tipo &&
+      !String(a.tipoCombustivel || '')
+        .toLowerCase()
+        .includes(tipo)
+    )
+      return false;
 
-      return true;
-    });
-  }
+    if (t) {
+      const hay = [
+        a.codigo || '',
+        a.posto || '',
+        a.motorista?.nome || '',
+        a.motorista?.codigo || '',
+        a.caminhao.placa || '',
+        a.caminhao.codigo || '',
+        a.numNotaOuCupom || '',
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      if (!hay.includes(t)) return false;
+    }
+
+    return true;
+  });
+}
+
 
   // CARDS AGREGADOS (REFLECTEM O ARRAY atual de abastecimentos)
   get litersThisMonth() {
