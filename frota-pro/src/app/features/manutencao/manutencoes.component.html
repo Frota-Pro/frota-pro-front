@@ -1,0 +1,137 @@
+<div class="manut-page">
+
+  <!-- HEADER -->
+  <div class="page-head">
+    <div class="titles">
+      <h2 class="page-title">Manutenções</h2>
+      <div class="subtitle">Controle de ordens de serviços</div>
+    </div>
+
+    <button class="btn-add" (click)="openModal()">+ Nova OS</button>
+  </div>
+
+  <!-- FILTRO DATA -->
+  <div class="filters-row">
+    <label class="date-inline">
+      <span>De</span>
+      <input type="date" [(ngModel)]="filtroInicio" />
+    </label>
+
+    <label class="date-inline">
+      <span>Até</span>
+      <input type="date" [(ngModel)]="filtroFim" />
+    </label>
+  </div>
+
+  <!-- CARDS STATUS -->
+  <div class="cards-row">
+    <div class="card status-open">
+      <div class="card-icon">🕒</div>
+      <div>
+        <div class="card-title">OS abertas</div>
+        <div class="card-value">{{ countByStatus('ABERTA') }}</div>
+      </div>
+    </div>
+
+    <div class="card status-progress">
+      <div class="card-icon">⚠️</div>
+      <div>
+        <div class="card-title">Em andamento</div>
+        <div class="card-value">{{ countByStatus('EM_ANDAMENTO') }}</div>
+      </div>
+    </div>
+
+    <div class="card status-done">
+      <div class="card-icon">✅</div>
+      <div>
+        <div class="card-title">Concluídas</div>
+        <div class="card-value">{{ countByStatus('CONCLUIDA') }}</div>
+      </div>
+    </div>
+
+    <div class="card status-cancel">
+      <div class="card-icon">❌</div>
+      <div>
+        <div class="card-title">Canceladas</div>
+        <div class="card-value">{{ countByStatus('CANCELADA') }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTA -->
+  <div class="os-list">
+    <div
+      class="os-card"
+      *ngFor="let m of manutencoesFiltradas"
+      (click)="toggleExpand(m.id)"
+    >
+      <div class="os-main">
+        <div>
+          <div class="os-desc">{{ m.descricao }}</div>
+          <div class="os-status" [class]="m.statusManutencao">
+            {{ statusLabel(m.statusManutencao) }}
+          </div>
+        </div>
+
+        <div class="os-value" [class]="m.statusManutencao">
+          {{ m.valor | currency:'BRL' }}
+        </div>
+      </div>
+
+      <div class="os-info">
+        <div>🚚 {{ m.caminhao.placa }}</div>
+        <div>📅 Início: {{ m.dataInicioManutencao | date:'dd/MM/yyyy' }}</div>
+        <div>
+          🏁 Fim:
+          {{ m.dataFimManutencao ? (m.dataFimManutencao | date:'dd/MM/yyyy') : '—' }}
+        </div>
+        <div>🔧 Serviços: {{ m.itens.length }}</div>
+      </div>
+
+      <!-- EXPAND -->
+      <div class="expand" *ngIf="isExpanded(m.id)">
+        <div class="items-header">
+          <span>Item</span>
+          <span>Qtd</span>
+          <span>Unitário</span>
+          <span>Total</span>
+        </div>
+
+        <div class="item-row" *ngFor="let i of m.itens">
+          <span>{{ i.nome }}</span>
+          <span>{{ i.quantidade }}</span>
+          <span>{{ i.valorUnitario | currency:'BRL' }}</span>
+          <span>{{ i.valorTotal | currency:'BRL' }}</span>
+        </div>
+
+        <div class="actions">
+          <button class="btn-edit">✏️ Editar</button>
+          <button class="btn-cancel">❌ Cancelar OS</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" *ngIf="showModal">
+    <div class="modal-card">
+      <h3>Nova Ordem de Serviço</h3>
+
+      <div class="modal-form">
+        <input placeholder="Descrição" />
+        <input type="date" />
+        <select>
+          <option>Preventiva</option>
+          <option>Corretiva</option>
+        </select>
+        <input placeholder="Caminhão (placa)" />
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-save">Salvar</button>
+        <button class="btn-cancel" (click)="closeModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+</div>

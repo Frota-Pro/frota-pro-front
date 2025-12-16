@@ -78,7 +78,7 @@ export const routes: Routes = [
       {
         path: 'manutencoes',
         loadComponent: () =>
-          import('./features/manutencao/manutencao.component').then((m) => m.ManuntencaoComponent),
+          import('./features/manutencao/manutencoes.component').then((m) => m.ManutencoesComponent),
       },
     ],
   },
