@@ -90,6 +90,15 @@
         <span *ngIf="!isClosed">Abastecimentos</span>
       </a>
 
+      <a
+        class="menu-item"
+        routerLink="manutencoes"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <i class="icon fa fa-wrench"></i>
+        <span *ngIf="!isClosed">Manutençôes</span>
+      </a>
+
     </nav>
   </aside>
 
