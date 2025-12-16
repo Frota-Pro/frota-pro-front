@@ -62,8 +62,9 @@
   <div class="os-list">
     <div
       class="os-card"
-      *ngFor="let m of manutencoesFiltradas"
+      *ngFor="let m of manutencoesFiltradas()"
       (click)="toggleExpand(m.id)"
+      [class]="m.statusManutencao"
     >
       <div class="os-main">
         <div>
@@ -90,6 +91,7 @@
 
       <!-- EXPAND -->
       <div class="expand" *ngIf="isExpanded(m.id)">
+
         <div class="items-header">
           <span>Item</span>
           <span>Qtd</span>
@@ -105,8 +107,27 @@
         </div>
 
         <div class="actions">
-          <button class="btn-edit">✏️ Editar</button>
-          <button class="btn-cancel">❌ Cancelar OS</button>
+          <button
+            class="btn-edit"
+            (click)="editarOS(m); $event.stopPropagation()"
+          >
+            ✏️ Editar
+          </button>
+
+          <button
+            class="btn-cancel"
+            (click)="cancelarOS(m); $event.stopPropagation()"
+          >
+            ❌ Cancelar OS
+          </button>
+
+          <button
+            class="btn-save"
+            *ngIf="m.statusManutencao === 'EM_ANDAMENTO'"
+            (click)="finalizarOS(m); $event.stopPropagation()"
+          >
+            ✅ Finalizar OS
+          </button>
         </div>
       </div>
     </div>
@@ -115,22 +136,60 @@
   <!-- MODAL -->
   <div class="modal-overlay" *ngIf="showModal">
     <div class="modal-card">
-      <h3>Nova Ordem de Serviço</h3>
+
+      <h3>{{ editando ? 'Editar OS' : 'Nova Ordem de Serviço' }}</h3>
 
       <div class="modal-form">
-        <input placeholder="Descrição" />
-        <input type="date" />
-        <select>
-          <option>Preventiva</option>
-          <option>Corretiva</option>
+
+        <input
+          placeholder="Descrição"
+          [(ngModel)]="form.descricao"
+        />
+
+        <input
+          type="date"
+          [(ngModel)]="form.dataInicioManutencao"
+        />
+
+        <select [(ngModel)]="form.tipoManutencao">
+          <option value="PREVENTIVA">Preventiva</option>
+          <option value="CORRETIVA">Corretiva</option>
+          <option value="OUTRA">Outra</option>
         </select>
-        <input placeholder="Caminhão (placa)" />
+
+        <input
+          placeholder="Placa do caminhão"
+          [(ngModel)]="form.caminhao.placa"
+        />
+
+        <!-- ITENS -->
+        <div class="items-header">
+          <span>Item</span>
+          <span>Qtd</span>
+          <span>Unitário</span>
+          <span>Total</span>
+        </div>
+
+        <div class="item-row" *ngFor="let i of form.itens; let idx = index">
+          <input [(ngModel)]="i.nome" placeholder="Serviço" />
+          <input type="number" [(ngModel)]="i.quantidade" (input)="recalcularItem(i)" />
+          <input type="number" [(ngModel)]="i.valorUnitario" (input)="recalcularItem(i)" />
+          <span>{{ i.valorTotal | currency:'BRL' }}</span>
+        </div>
+
+        <button class="btn-add" (click)="addItem()">+ Adicionar serviço</button>
+
+        <div class="os-value">
+          Total da OS: {{ form.valor | currency:'BRL' }}
+        </div>
+
       </div>
 
       <div class="modal-actions">
-        <button class="btn-save">Salvar</button>
+        <button class="btn-save" (click)="salvarOS()">Salvar</button>
         <button class="btn-cancel" (click)="closeModal()">Cancelar</button>
       </div>
+
     </div>
   </div>
 

@@ -4,39 +4,29 @@ import { FormsModule } from '@angular/forms';
 
 type UUID = string;
 
-type StatusManutencao =
-  | 'ABERTA'
-  | 'EM_ANDAMENTO'
-  | 'CONCLUIDA'
-  | 'CANCELADA';
+type StatusOS = 'ABERTA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA';
 
-type TipoManutencao = 'PREVENTIVA' | 'CORRETIVA' | 'OUTRA';
-
-interface CaminhaoMini {
-  id: UUID;
-  codigo: string;
-  placa: string;
-}
-
-interface ItemManutencao {
+interface ItemOS {
   nome: string;
   quantidade: number;
   valorUnitario: number;
   valorTotal: number;
 }
 
+interface Caminhao {
+  placa: string;
+}
+
 interface Manutencao {
-  id: UUID;
-  codigo: string;
+  id: number;
   descricao: string;
+  tipoManutencao: string;
+  statusManutencao: StatusOS;
+  caminhao: Caminhao;
   dataInicioManutencao: string;
-  dataFimManutencao?: string | null;
-  tipoManutencao: TipoManutencao;
-  statusManutencao: StatusManutencao;
+  dataFimManutencao?: string;
+  itens: ItemOS[];
   valor: number;
-  observacoes?: string;
-  caminhao: CaminhaoMini;
-  itens: ItemManutencao[];
 }
 
 @Component({
@@ -44,80 +34,106 @@ interface Manutencao {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './manutencoes.component.html',
-  styleUrls: ['./manutencoes.component.css'],
+  styleUrls: ['./manutencoes.component.css']
 })
 export class ManutencoesComponent {
-  filtroInicio = '';
-  filtroFim = '';
 
-  showModal = false;
-  expanded: string | null = null;
-
+  /* =============================
+     LISTA PRINCIPAL
+  ==============================*/
   manutencoes: Manutencao[] = [
     {
-      id: 'm1',
-      codigo: 'OS-2025-001',
-      descricao: 'Troca de embreagem',
-      dataInicioManutencao: '2025-01-05',
-      dataFimManutencao: null,
-      tipoManutencao: 'CORRETIVA',
+      id: 1,
+      descricao: 'Troca de óleo',
+      tipoManutencao: 'PREVENTIVA',
       statusManutencao: 'EM_ANDAMENTO',
-      valor: 4800,
-      caminhao: { id: 'c1', codigo: 'CAM-01', placa: 'ABC1D23' },
+      caminhao: { placa: 'ABC-1234' },
+      dataInicioManutencao: '2025-12-01',
       itens: [
-        { nome: 'Kit embreagem', quantidade: 1, valorUnitario: 4200, valorTotal: 4200 },
-        { nome: 'Mão de obra', quantidade: 1, valorUnitario: 600, valorTotal: 600 },
+        { nome: 'Óleo', quantidade: 10, valorUnitario: 30, valorTotal: 300 }
       ],
+      valor: 300
     },
     {
-      id: 'm2',
-      codigo: 'OS-2025-002',
-      descricao: 'Revisão preventiva',
-      dataInicioManutencao: '2025-01-02',
-      dataFimManutencao: '2025-01-03',
-      tipoManutencao: 'PREVENTIVA',
+      id: 2,
+      descricao: 'Freio',
+      tipoManutencao: 'CORRETIVA',
       statusManutencao: 'CONCLUIDA',
-      valor: 1200,
-      caminhao: { id: 'c2', codigo: 'CAM-02', placa: 'XYZ9A87' },
+      caminhao: { placa: 'DEF-5678' },
+      dataInicioManutencao: '2025-12-05',
+      dataFimManutencao: '2025-12-06',
       itens: [
-        { nome: 'Filtro de óleo', quantidade: 1, valorUnitario: 120, valorTotal: 120 },
-        { nome: 'Óleo motor', quantidade: 10, valorUnitario: 108, valorTotal: 1080 },
+        { nome: 'Pastilha', quantidade: 4, valorUnitario: 120, valorTotal: 480 }
       ],
-    },
+      valor: 480
+    }
   ];
 
-  get manutencoesFiltradas() {
-    const inicio = this.filtroInicio ? new Date(this.filtroInicio) : null;
-    const fim = this.filtroFim ? new Date(this.filtroFim) : null;
+  /* =============================
+     FILTRO DE DATA
+  ==============================*/
+  filtroInicio: string | null = null;
+  filtroFim: string | null = null;
+
+  manutencoesFiltradas(): Manutencao[] {
+    const inicio = this.filtroInicio
+      ? new Date(this.filtroInicio + 'T00:00:00')
+      : null;
+
+    const fim = this.filtroFim
+      ? new Date(this.filtroFim + 'T23:59:59.999')
+      : null;
 
     return this.manutencoes.filter((m) => {
-      const dt = new Date(m.dataInicioManutencao);
+      const dt = new Date(m.dataInicioManutencao + 'T12:00:00');
 
       if (inicio && dt < inicio) return false;
-
-      if (fim) {
-        const fimDia = new Date(fim);
-        fimDia.setHours(23, 59, 59, 999);
-        if (dt > fimDia) return false;
-      }
+      if (fim && dt > fim) return false;
 
       return true;
     });
   }
 
-  countByStatus(status: StatusManutencao) {
-    return this.manutencoesFiltradas.filter((m) => m.statusManutencao === status).length;
+  /* =============================
+     CONTADORES STATUS
+  ==============================*/
+  countByStatus(status: StatusOS): number {
+    return this.manutencoes.filter(m => m.statusManutencao === status).length;
   }
 
-  toggleExpand(id: UUID) {
-    this.expanded = this.expanded === id ? null : id;
+  statusLabel(status: StatusOS): string {
+    return {
+      ABERTA: 'Aberta',
+      EM_ANDAMENTO: 'Em andamento',
+      CONCLUIDA: 'Concluída',
+      CANCELADA: 'Cancelada'
+    }[status];
   }
 
-  isExpanded(id: UUID) {
-    return this.expanded === id;
+  /* =============================
+     EXPANSÃO DE CARD
+  ==============================*/
+  expandedId: number | null = null;
+
+  toggleExpand(id: number) {
+    this.expandedId = this.expandedId === id ? null : id;
   }
+
+  isExpanded(id: number): boolean {
+    return this.expandedId === id;
+  }
+
+  /* =============================
+     MODAL
+  ==============================*/
+  showModal = false;
+  editando = false;
+
+  form: Manutencao = this.createEmptyOS();
 
   openModal() {
+    this.form = this.createEmptyOS();
+    this.editando = false;
     this.showModal = true;
   }
 
@@ -125,16 +141,76 @@ export class ManutencoesComponent {
     this.showModal = false;
   }
 
-  statusLabel(status: StatusManutencao) {
-    switch (status) {
-      case 'ABERTA':
-        return 'Aberta';
-      case 'EM_ANDAMENTO':
-        return 'Em andamento';
-      case 'CONCLUIDA':
-        return 'Concluída';
-      case 'CANCELADA':
-        return 'Cancelada';
+  editarOS(os: Manutencao) {
+    this.form = JSON.parse(JSON.stringify(os));
+    this.editando = true;
+    this.showModal = true;
+  }
+
+  /* =============================
+     SALVAR / CANCELAR / FINALIZAR
+  ==============================*/
+  salvarOS() {
+    this.recalcularTotalOS();
+
+    if (this.editando) {
+      const idx = this.manutencoes.findIndex(m => m.id === this.form.id);
+      if (idx !== -1) this.manutencoes[idx] = this.form;
+    } else {
+      this.form.id = Date.now();
+      this.form.statusManutencao = 'ABERTA';
+      this.manutencoes.unshift(this.form);
     }
+
+    this.closeModal();
+  }
+
+  cancelarOS(os: Manutencao) {
+    os.statusManutencao = 'CANCELADA';
+  }
+
+  finalizarOS(os: Manutencao) {
+    os.statusManutencao = 'CONCLUIDA';
+    os.dataFimManutencao = new Date().toISOString().slice(0, 10);
+  }
+
+  /* =============================
+     ITENS
+  ==============================*/
+  addItem() {
+    this.form.itens.push({
+      nome: '',
+      quantidade: 1,
+      valorUnitario: 0,
+      valorTotal: 0
+    });
+  }
+
+  recalcularItem(item: ItemOS) {
+    item.valorTotal = item.quantidade * item.valorUnitario;
+    this.recalcularTotalOS();
+  }
+
+  recalcularTotalOS() {
+    this.form.valor = this.form.itens.reduce(
+      (sum, i) => sum + i.valorTotal,
+      0
+    );
+  }
+
+  /* =============================
+     FACTORY
+  ==============================*/
+  private createEmptyOS(): Manutencao {
+    return {
+      id: 0,
+      descricao: '',
+      tipoManutencao: 'PREVENTIVA',
+      statusManutencao: 'ABERTA',
+      caminhao: { placa: '' },
+      dataInicioManutencao: '',
+      itens: [],
+      valor: 0
+    };
   }
 }
