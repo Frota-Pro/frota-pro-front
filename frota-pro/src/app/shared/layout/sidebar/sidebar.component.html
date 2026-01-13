@@ -1,0 +1,122 @@
+<aside class="sidebar">
+  <div class="brand">
+    <div class="logo">Frota<span>PRO</span></div>
+    <button class="collapse-btn" type="button" aria-label="Recolher sidebar">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+  </div>
+
+  <nav class="nav">
+    <a class="nav-item" routerLink="/dashboard/dashboard-home" routerLinkActive="active">
+      <span class="icon"><i class="fas fa-th-large"></i></span>
+      <span class="label">Dashboard</span>
+    </a>
+
+    <a class="nav-item" routerLink="/dashboard/caminhoes" routerLinkActive="active">
+      <span class="icon"><i class="fas fa-truck"></i></span>
+      <span class="label">Caminhões</span>
+    </a>
+
+    <a class="nav-item" routerLink="/dashboard/motoristas" routerLinkActive="active">
+      <span class="icon"><i class="fas fa-user"></i></span>
+      <span class="label">Motoristas</span>
+    </a>
+
+    <a class="nav-item" routerLink="/dashboard/cargas" routerLinkActive="active">
+      <span class="icon"><i class="fas fa-cube"></i></span>
+      <span class="label">Cargas</span>
+    </a>
+
+    <a class="nav-item" routerLink="/dashboard/abastecimentos" routerLinkActive="active">
+      <span class="icon"><i class="fas fa-gas-pump"></i></span>
+      <span class="label">Abastecimentos</span>
+    </a>
+
+    <a class="nav-item" routerLink="/dashboard/metas" routerLinkActive="active">
+      <span class="icon"><i class="fas fa-bullseye"></i></span>
+      <span class="label">Metas</span>
+    </a>
+
+    <!-- OFICINA (grupo) -->
+    <button class="nav-group" type="button" (click)="toggle('oficina')" [attr.aria-expanded]="open.oficina">
+      <span class="left">
+        <span class="icon"><i class="fas fa-wrench"></i></span>
+        <span class="label">Oficina</span>
+      </span>
+      <span class="chev" [class.open]="open.oficina"><i class="fas fa-chevron-down"></i></span>
+    </button>
+
+    <div class="subnav" *ngIf="open.oficina">
+      <a class="sub-item" routerLink="/dashboard/oficina/estoque" routerLinkActive="active">
+        <span class="sub-icon"><i class="fas fa-box"></i></span>
+        <span>Estoque</span>
+      </a>
+
+      <a class="sub-item" routerLink="/dashboard/oficina/ordens-servico" routerLinkActive="active">
+        <span class="sub-icon"><i class="fas fa-clipboard-list"></i></span>
+        <span>Ordens de Serviço</span>
+      </a>
+    </div>
+
+    <!-- INTEGRAÇÕES (grupo) -->
+    <button class="nav-group" type="button" (click)="toggle('integracoes')" [attr.aria-expanded]="open.integracoes">
+      <span class="left">
+        <span class="icon"><i class="fas fa-link"></i></span>
+        <span class="label">Integrações</span>
+      </span>
+      <span class="chev" [class.open]="open.integracoes"><i class="fas fa-chevron-down"></i></span>
+    </button>
+
+    <div class="subnav" *ngIf="open.integracoes">
+      <a class="sub-item" routerLink="/dashboard/integracoes/winthor" routerLinkActive="active">
+        <span class="sub-icon"><i class="fas fa-wave-square"></i></span>
+        <span>WinThor</span>
+      </a>
+
+      <a class="sub-item" routerLink="/dashboard/integracoes/licencas" routerLinkActive="active">
+        <span class="sub-icon"><i class="fas fa-key"></i></span>
+        <span>Licenças</span>
+      </a>
+    </div>
+
+    <!-- ADMINISTRAÇÃO (grupo) -->
+    <button class="nav-group" type="button" (click)="toggle('administracao')" [attr.aria-expanded]="open.administracao">
+      <span class="left">
+        <span class="icon"><i class="fas fa-shield-alt"></i></span>
+        <span class="label">Administração</span>
+      </span>
+      <span class="chev" [class.open]="open.administracao"><i class="fas fa-chevron-down"></i></span>
+    </button>
+
+    <div class="subnav" *ngIf="open.administracao">
+      <a class="sub-item" routerLink="/dashboard/admin/usuarios" routerLinkActive="active">
+        <span class="sub-icon"><i class="fas fa-users"></i></span>
+        <span>Usuários</span>
+      </a>
+
+      <a class="sub-item" routerLink="/dashboard/admin/logs" routerLinkActive="active">
+        <span class="sub-icon"><i class="fas fa-scroll"></i></span>
+        <span>Logs</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="footer">
+    <div class="user">
+      <div class="avatar">{{ userName?.slice(0,1) }}</div>
+      <div class="meta">
+        <div class="name">{{ userName }}</div>
+        <div class="role">{{ userRole }}</div>
+      </div>
+    </div>
+
+    <a class="nav-item settings" routerLink="/dashboard/configuracoes" routerLinkActive="active">
+      <span class="icon"><i class="fas fa-cog"></i></span>
+      <span class="label">Configurações</span>
+    </a>
+
+    <button class="logout" type="button" (click)="logout()" aria-label="Sair">
+      <i class="fas fa-sign-out-alt"></i>
+    </button>
+  </div>
+</aside>

@@ -1,64 +1,106 @@
-<div class="top-cards">
-  <!-- Status da frota -->
-  <div class="status-card">
-    <h3>Status da Frota</h3>
+<div class="dashboard-page">
+  <header class="page-header">
+    <div class="header-left">
+      <h1 class="title">{{ pageTitle }}</h1>
+      <p class="subtitle">{{ pageSubtitle }}</p>
+    </div>
 
-    <div class="status-grid">
-      <div class="status-item total">
-        <span class="label">Total de Caminhões</span>
-        <span class="value">{{ statusFrota.total }}</span>
-      </div>
+    <div class="header-right">
+      <button class="icon-btn" type="button" aria-label="Notificações">
+        <i class="fas fa-bell"></i>
+        <span class="dot" aria-hidden="true"></span>
+      </button>
 
-      <div class="status-item rota">
-        <span class="label">Em Rota</span>
-        <span class="value">{{ statusFrota.emRota }}</span>
-      </div>
-
-      <div class="status-item manutencao">
-        <span class="label">Em Manutenção</span>
-        <span class="value">{{ statusFrota.manutencao }}</span>
+      <div class="user-chip" aria-label="Usuário logado">
+        <div class="avatar">A</div>
+        <div class="user-text">
+          <div class="user-name">Arthenyo</div>
+          <div class="user-role">OPERADOR LOGISTICA</div>
+        </div>
       </div>
     </div>
-  </div>
+  </header>
 
-  <!-- Notificações -->
-  <div class="notificacoes-card">
-    <h3>Notificações</h3>
+  <!-- KPI cards -->
+  <section class="kpi-grid">
+    <app-stat-card
+      *ngFor="let kpi of kpis"
+      [title]="kpi.title"
+      [value]="kpi.value"
+      [iconClass]="kpi.icon"
+      [variant]="kpi.variant"
+    ></app-stat-card>
+  </section>
 
-    <ul class="notificacoes-lista">
-      <li
-        *ngFor="let n of notificacoes"
-        [class.aviso]="n.tipo === 'aviso'"
-        [class.alerta]="n.tipo === 'alerta'"
-        [class.risco]="n.tipo === 'risco'"
-        class="notificacao"
-      >
-        <i class="fas fa-exclamation-circle"></i>
-        <span>{{ n.mensagem }}</span>
-      </li>
-    </ul>
-  </div>
-</div>
+  <!-- Conteúdo principal -->
+  <section class="main-grid">
+    <!-- Cargas recentes -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Cargas Recentes</h2>
+          <p class="panel-subtitle">Últimas cargas cadastradas</p>
+        </div>
 
-<!-- gráfico -->
-<div class="grafico-card">
-  <div class="grafico-header">
-    <h3>Cargas por Dia</h3>
+        <button class="link-btn" type="button" (click)="verTodasCargas()">
+          Ver todas <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
 
-    <select [(ngModel)]="periodoSelecionado" (change)="atualizarGrafico()">
-      <option value="7">Últimos 7 dias</option>
-      <option value="14">Últimos 14 dias</option>
-      <option value="31">Últimos 31 dias</option>
-    </select>
-  </div>
+      <div class="recent-list">
+        <div class="recent-item" *ngFor="let c of cargasRecentes">
+          <div class="recent-left">
+            <div class="recent-icon" aria-hidden="true"><i class="fas fa-cube"></i></div>
 
-  <google-chart
-    [type]="chart.type"
-    [data]="chart.data"
-    [columns]="chart.columns"
-    [options]="chart.options"
-    [width]="900"
-    [height]="350"
-  >
-  </google-chart>
+            <div class="recent-meta">
+              <div class="recent-title">Carga #{{ c.numero }}</div>
+              <div class="recent-sub">{{ c.origem }} &nbsp; • &nbsp; {{ c.destino }}</div>
+            </div>
+          </div>
+
+          <div class="recent-right">
+            <div class="recent-values">
+              <div class="value">{{ c.valor }}</div>
+              <div class="sub">{{ c.peso }}</div>
+            </div>
+            <span class="badge warning">{{ c.status }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ações rápidas -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Ações Rápidas</h2>
+          <p class="panel-subtitle">Acesso rápido às principais funções</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <app-action-button label="Nova Carga" iconClass="fas fa-cube" (action)="novaCarga()"></app-action-button>
+        <app-action-button label="Novo Abastecimento" iconClass="fas fa-gas-pump" (action)="novoAbastecimento()"></app-action-button>
+        <app-action-button label="Nova OS" iconClass="fas fa-wrench" (action)="novaOS()"></app-action-button>
+        <app-action-button label="Nova Meta" iconClass="fas fa-bullseye" (action)="novaMeta()"></app-action-button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sessão abaixo (deixei como placeholder) -->
+  <section class="below">
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Indicadores de Performance</h2>
+          <p class="panel-subtitle">Visão geral do desempenho operacional</p>
+        </div>
+      </div>
+
+      <div class="empty">
+        <div class="empty-title">Em breve</div>
+        <div class="empty-sub">Aqui entraremos com gráficos e análises (refatorado em componentes).</div>
+      </div>
+    </div>
+  </section>
 </div>

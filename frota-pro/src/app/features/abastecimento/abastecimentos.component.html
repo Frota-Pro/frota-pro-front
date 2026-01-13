@@ -1,20 +1,24 @@
 <div class="abaste-page">
-  <!-- HEAD -->
+
+  <!-- Cabeçalho -->
   <div class="page-head">
     <div class="titles">
       <h2 class="page-title">Abastecimentos</h2>
-      <div class="subtitle">Controle de combustível da frota</div>
+      <p class="subtitle">Controle de combustível da frota</p>
     </div>
 
     <div class="actions">
-      <button class="btn-add" (click)="openAddModal()">+ Adicionar Abastecimento</button>
+      <button class="btn-add" type="button" (click)="openAddModal()">
+        <i class="fas fa-plus"></i>
+        Adicionar Abastecimento
+      </button>
     </div>
   </div>
 
-  <!-- CARDS -->
+  <!-- Cards KPI -->
   <div class="cards-row">
     <div class="card">
-      <div class="card-icon">🛢️</div>
+      <div class="card-icon">⛽</div>
       <div class="card-info">
         <div class="card-title">Litros (mês)</div>
         <div class="card-value">{{ litersThisMonth | number : '1.0-3' }}</div>
@@ -22,7 +26,7 @@
     </div>
 
     <div class="card">
-      <div class="card-icon">💸</div>
+      <div class="card-icon">💵</div>
       <div class="card-info">
         <div class="card-title">Gasto total</div>
         <div class="card-value">{{ totalSpent | currency : 'BRL' }}</div>
@@ -46,41 +50,50 @@
     </div>
   </div>
 
-  <!-- FILTROS -->
+  <!-- Filtros -->
   <div class="filters-row">
-    <!-- Pesquisar geral -->
-    <input type="text" placeholder="Pesquisar geral..." [(ngModel)]="searchTerm" />
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      placeholder="Pesquisar geral..."
+    />
 
-    <!-- Tipo combustível -->
     <select [(ngModel)]="filtroTipo">
       <option value="">Todos combustíveis</option>
-      <option value="DIESEL">Diesel</option>
-      <option value="DIESEL_S10">Diesel S10</option>
-      <option value="GASOLINA">Gasolina</option>
-      <option value="ETANOL">Etanol</option>
-      <option value="GNV">GNV</option>
+      <option *ngFor="let c of combustiveis" [value]="c">{{ c }}</option>
     </select>
 
-    <!-- Datas -->
-    <label class="date-inline">
+    <input
+      type="text"
+      [(ngModel)]="filtroCaminhao"
+      placeholder="Filtrar por caminhão (placa/código)"
+    />
+
+    <input
+      type="text"
+      [(ngModel)]="filtroMotorista"
+      placeholder="Filtrar por motorista"
+    />
+
+    <div class="date-inline">
       <span>De</span>
       <input type="date" [(ngModel)]="filtroDataInicio" />
-    </label>
-
-    <label class="date-inline">
-      <span>Até</span>
-      <input type="date" [(ngModel)]="filtroDataFim" />
-    </label>
-  </div>
-
-  <!-- LISTA -->
-  <section class="list-block">
-    <div class="block-header">
-      <h3>Abastecimentos</h3>
-      <span class="count">{{ abastecimentosFiltrados.length }}</span>
     </div>
 
-    <!-- CABEÇALHO -->
+    <div class="date-inline">
+      <span>Até</span>
+      <input type="date" [(ngModel)]="filtroDataFim" />
+    </div>
+  </div>
+
+  <!-- Lista -->
+  <div class="list-block">
+    <div class="block-header">
+      <h3>Abastecimentos</h3>
+      <span class="count">{{ abastecimentosFiltrados.length || 0 }}</span>
+    </div>
+
+    <!-- Cabeçalho “tabela” -->
     <div class="list-header">
       <span>Data</span>
       <span>Caminhão</span>
@@ -89,110 +102,188 @@
       <span>Litros</span>
       <span>Valor</span>
       <span>Posto</span>
-      <span>Ações</span>
+      <span style="text-align:right;">Ações</span>
     </div>
 
-    <!-- ITENS -->
     <ul class="abaste-list">
-      <li *ngFor="let a of abastecimentosFiltrados; trackBy: trackById" class="abaste-item">
-        <!-- Linha principal -->
+      <li class="abaste-item" *ngFor="let a of abastecimentosFiltrados; trackBy: trackById">
+
+        <!-- Linha -->
         <div class="row" (click)="toggleExpand(a.id)">
           <span>{{ a.dtAbastecimento | date : 'dd/MM/yyyy HH:mm' }}</span>
-          <span>{{ a.caminhao?.placa || a.caminhao?.codigo }}</span>
-          <span>{{ a.motorista?.nome || '—' }}</span>
-          <span>{{ a.tipoCombustivel }}</span>
-          <span>{{ a.qtLitros | number : '1.0-3' }}</span>
-          <span>{{ a.valorTotal | currency : 'BRL' }}</span>
-          <span>{{ a.posto }}</span>
+
+          <span class="mono">{{ a.caminhao.placa || a.caminhao.codigo || '—' }}</span>
+
+          <span class="truncate">{{ a.motorista?.nome || '—' }}</span>
+
+          <span>
+            <span class="pill pill-fuel">{{ a.tipoCombustivel || '—' }}</span>
+          </span>
+
+          <span class="num">{{ a.qtLitros || 0 | number : '1.0-3' }}</span>
+
+          <span class="num">{{ a.valorTotal || 0 | currency : 'BRL' }}</span>
+
+          <span class="truncate">{{ a.posto || '—' }}</span>
 
           <!-- Ações -->
           <div class="row-actions">
-            <button class="btn-edit" (click)="openEditModal(a); $event.stopPropagation()">
-              ✏️
-            </button>
             <button
-              class="btn-delete"
+              class="icon-btn edit"
+              type="button"
+              title="Editar"
+              (click)="openEditModal(a); $event.stopPropagation()"
+            >
+              <i class="fas fa-pen"></i>
+            </button>
+
+            <button
+              class="icon-btn danger"
+              type="button"
+              title="Excluir"
               (click)="deleteAbastecimento(a.id); $event.stopPropagation()"
             >
-              🗑️
+              <i class="fas fa-trash"></i>
             </button>
           </div>
         </div>
 
-        <!-- EXPANDIDO -->
+        <!-- Expand -->
         <div class="expand-container" [class.expanded]="isExpanded(a.id)">
           <div class="details">
-            <div><strong>Código:</strong> {{ a.codigo }}</div>
-            <div><strong>Caminhão:</strong> {{ a.caminhao?.placa }}</div>
-            <div><strong>Motorista:</strong> {{ a.motorista?.nome }}</div>
-            <div><strong>Kilometragem:</strong> {{ a.kmOdometro }}</div>
-            <div><strong>Valor por litro:</strong> {{ a.valorLitro }}</div>
-            <div><strong>Forma pagamento:</strong> {{ a.formaPagamento }}</div>
-            <div><strong>Local:</strong> {{ a.posto }} — {{ a.cidade }}/{{ a.uf }}</div>
-            <div *ngIf="a.numNotaOuCupom"><strong>Cupom:</strong> {{ a.numNotaOuCupom }}</div>
-            <div *ngIf="a.mediaKmLitro"><strong>Km/L:</strong> {{ a.mediaKmLitro }}</div>
+            <div><strong>Código:</strong> {{ a.codigo || '—' }}</div>
+            <div><strong>Odômetro:</strong> {{ a.kmOdometro ?? '—' }}</div>
+
+            <div><strong>Valor/L:</strong> {{ (a.valorLitro || 0) | currency : 'BRL' }}</div>
+            <div><strong>Forma Pgto:</strong> {{ a.formaPagamento || '—' }}</div>
+
+            <div><strong>Nota/Cupom:</strong> {{ a.numNotaOuCupom || '—' }}</div>
+            <div><strong>Média km/L:</strong> {{ a.mediaKmLitro ?? '—' }}</div>
+
+            <div><strong>Cidade:</strong> {{ a.cidade || '—' }}</div>
+            <div><strong>UF:</strong> {{ a.uf || '—' }}</div>
           </div>
+        </div>
+
+      </li>
+
+      <li *ngIf="(abastecimentosFiltrados.length || 0) === 0" class="abaste-item">
+        <div class="row" style="grid-template-columns: 1fr; text-align: center;">
+          <span style="padding: 12px; color: rgba(15,23,42,0.55);">
+            Nenhum abastecimento encontrado.
+          </span>
         </div>
       </li>
     </ul>
-  </section>
-
-  <!-- MODAL ADicionar -->
-<div class="modal-overlay" *ngIf="showAddModal">
-  <div class="modal-card">
-
-    <h3>Novo Abastecimento</h3>
-
-    <div class="modal-form">
-
-      <label>Código</label>
-      <input type="text" [(ngModel)]="novo.codigo" />
-
-      <label>Data / Hora</label>
-      <input type="datetime-local" [(ngModel)]="novo.dtAbastecimento" />
-
-      <label>Caminhão (placa)</label>
-      <input type="text" [(ngModel)]="novo.caminhao.placa" />
-
-      <label>Motorista</label>
-      <input type="text" [(ngModel)]="novo.motorista.nome" />
-
-      <label>Tipo Combustível</label>
-      <select [(ngModel)]="novo.tipoCombustivel">
-        <option value="DIESEL">Diesel</option>
-        <option value="DIESEL_S10">Diesel S10</option>
-        <option value="GASOLINA">Gasolina</option>
-        <option value="ETANOL">Etanol</option>
-        <option value="GNV">GNV</option>
-      </select>
-
-      <div class="form-row">
-        
-        <div>
-          <label>Litros</label>
-          <input type="number" step="0.001" [(ngModel)]="novo.qtLitros" />
-        </div>
-        <div>  
-          <label>Valor por litro</label>
-          <input type="number" step="0.001" [(ngModel)]="novo.valorLitro" />
-        </div>
-        <div>
-          <label>Valor total</label>
-          <input type="number" step="0.01" [(ngModel)]="novo.valorTotal" />
-        </div>
-
-      </div>
-      <label>Posto</label>
-      <input type="text" [(ngModel)]="novo.posto" />
-
-      <div class="modal-actions">
-        <button class="btn-save" (click)="saveAbastecimento()">Salvar</button>
-        <button class="btn-cancel" (click)="closeAddModal()">Cancelar</button>
-      </div>
-
-    </div>
-
   </div>
-</div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <h3>{{ isEditing ? 'Editar Abastecimento' : 'Novo Abastecimento' }}</h3>
+
+      <form class="modal-form" (ngSubmit)="saveAbastecimento()">
+
+        <div class="form-row">
+          <div>
+            <label>Código</label>
+            <input type="text" [(ngModel)]="novo.codigo" name="codigo" required />
+          </div>
+
+          <div>
+            <label>Data/Hora</label>
+            <input
+              type="datetime-local"
+              [(ngModel)]="novo.dtAbastecimento"
+              name="dtAbastecimento"
+              required
+            />
+          </div>
+
+          <div>
+            <label>Combustível</label>
+            <select [(ngModel)]="novo.tipoCombustivel" name="tipoCombustivel" required>
+              <option *ngFor="let c of combustiveis" [value]="c">{{ c }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Litros</label>
+            <input type="number" step="0.001" [(ngModel)]="novo.qtLitros" name="qtLitros" required />
+          </div>
+
+          <div>
+            <label>Valor/L</label>
+            <input type="number" step="0.001" [(ngModel)]="novo.valorLitro" name="valorLitro" required />
+          </div>
+
+          <div>
+            <label>Odômetro</label>
+            <input type="number" [(ngModel)]="novo.kmOdometro" name="kmOdometro" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Placa do Caminhão</label>
+            <input type="text" [(ngModel)]="novo.caminhao.placa" name="placa" placeholder="Ex: ABC1D23" />
+          </div>
+
+          <div>
+            <label>Código do Caminhão</label>
+            <input type="text" [(ngModel)]="novo.caminhao.codigo" name="codigoCaminhao" placeholder="Ex: CAM-001" />
+          </div>
+
+          <div>
+            <label>Motorista</label>
+            <input type="text" [(ngModel)]="novo.motorista.nome" name="nomeMotorista" placeholder="Ex: Carlos Silva" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Posto</label>
+            <input type="text" [(ngModel)]="novo.posto" name="posto" placeholder="Ex: Posto Central" />
+          </div>
+
+          <div>
+            <label>Forma Pgto</label>
+            <input type="text" [(ngModel)]="novo.formaPagamento" name="formaPagamento" placeholder="Ex: CARTAO" />
+          </div>
+
+          <div>
+            <label>Nota/Cupom</label>
+            <input type="text" [(ngModel)]="novo.numNotaOuCupom" name="numNotaOuCupom" placeholder="Ex: NF12345" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Cidade</label>
+            <input type="text" [(ngModel)]="novo.cidade" name="cidade" />
+          </div>
+
+          <div>
+            <label>UF</label>
+            <input type="text" [(ngModel)]="novo.uf" name="uf" maxlength="2" />
+          </div>
+
+          <div>
+            <label>Média km/L</label>
+            <input type="number" step="0.01" [(ngModel)]="novo.mediaKmLitro" name="mediaKmLitro" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" type="button" (click)="closeAddModal()">Cancelar</button>
+          <button class="btn-save" type="submit">{{ isEditing ? 'Salvar' : 'Cadastrar' }}</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
 
 </div>

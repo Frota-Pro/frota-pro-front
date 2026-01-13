@@ -1,3 +1,4 @@
+<!-- (Ideal: FontAwesome no src/index.html, mas pode manter aqui por enquanto) -->
 <head>
   <link
     rel="stylesheet"
@@ -8,14 +9,17 @@
 <div class="layout">
   <aside class="sidebar" [class.closed]="isClosed">
 
+    <!-- Toggle -->
     <button class="toggle-btn" (click)="toggleSidebar()">
       <i class="fas fa-bars"></i>
     </button>
 
+    <!-- Logo -->
     <div class="logo-area">
-      <span *ngIf="!isClosed" class="logo-text">FrotasPRO</span>
+      <span *ngIf="!isClosed" class="logo-text">Frota<span class="logo-accent">PRO</span></span>
     </div>
 
+    <!-- Menu -->
     <nav class="menu">
 
       <a
@@ -23,83 +27,131 @@
         routerLink="dashboard-home"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }">
-        <i class="icon fas fa-chart-line"></i>
+        <i class="icon fas fa-th-large"></i>
         <span *ngIf="!isClosed">Dashboard</span>
       </a>
 
-      <a
-        class="menu-item"
-        routerLink="colaboradores"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        <i class="icon fas fa-user"></i>
-        <span *ngIf="!isClosed">Colaboradores</span>
+      <a class="menu-item" routerLink="caminhoes" routerLinkActive="active">
+        <i class="icon fas fa-truck"></i>
+        <span *ngIf="!isClosed">Caminhões</span>
       </a>
 
-      <li class="menu-item submenu-wrapper" [class.open]="submenuVeiculosAberto">
+      <a class="menu-item" routerLink="motoristas" routerLinkActive="active">
+        <i class="icon fas fa-user"></i>
+        <span *ngIf="!isClosed">Motoristas</span>
+      </a>
 
-        <button class="menu-btn" (click)="toggleSubmenuVeiculos()">
-          <i class="icon fas fa-truck"></i>
+      <a class="menu-item" routerLink="cargas" routerLinkActive="active">
+        <i class="icon fas fa-cube"></i>
+        <span *ngIf="!isClosed">Cargas</span>
+      </a>
 
-          <span class="menu-text" *ngIf="!isClosed">Veículos</span>
+      <a class="menu-item" routerLink="abastecimentos" routerLinkActive="active">
+        <i class="icon fas fa-gas-pump"></i>
+        <span *ngIf="!isClosed">Abastecimentos</span>
+      </a>
+
+      <a class="menu-item" routerLink="metas" routerLinkActive="active">
+        <i class="icon fas fa-bullseye"></i>
+        <span *ngIf="!isClosed">Metas</span>
+      </a>
+
+      <!-- OFICINA -->
+      <li class="menu-item submenu-wrapper" [class.open]="submenuOficinaAberto">
+
+        <button class="menu-btn" (click)="toggleSubmenuOficina()">
+          <i class="icon fas fa-wrench"></i>
+
+          <span class="menu-text" *ngIf="!isClosed">Oficina</span>
 
           <i
             class="fas chevron"
             *ngIf="!isClosed"
             [ngClass]="{
-              'fa-chevron-down': !submenuVeiculosAberto,
-              'fa-chevron-up': submenuVeiculosAberto
+              'fa-chevron-down': !submenuOficinaAberto,
+              'fa-chevron-up': submenuOficinaAberto
             }">
           </i>
         </button>
 
-        <ul class="submenu" *ngIf="submenuVeiculosAberto && !isClosed">
-          <li routerLink="veiculos" routerLinkActive="active">Lista de Veículos</li>
-          <li routerLink="categorias" routerLinkActive="active">Categorias</li>
+        <ul class="submenu" *ngIf="submenuOficinaAberto && !isClosed">
+          <li routerLink="oficina/estoque" routerLinkActive="active">Estoque</li>
+          <li routerLink="oficina/ordens-servico" routerLinkActive="active">Ordens de Serviço</li>
         </ul>
       </li>
 
-      <a class="menu-item" routerLink="cargas" routerLinkActive="active">
-        <i class="icon fas fa-box"></i>
-        <span *ngIf="!isClosed">Cargas</span>
-      </a>
+      <!-- INTEGRAÇÕES -->
+      <li class="menu-item submenu-wrapper" [class.open]="submenuIntegracoesAberto">
 
-      <a
-        class="menu-item"
-        routerLink="metas"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        <i class="icon fas fa-chart-bar"></i>
-        <span *ngIf="!isClosed">Metas</span>
-      </a>
-      <a
-        class="menu-item"
-        routerLink="relatorios"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        <i class="icon far fa-file-alt"></i>
-        <span *ngIf="!isClosed">Relatorios</span>
-      </a>
+        <button class="menu-btn" (click)="toggleSubmenuIntegracoes()">
+          <i class="icon fas fa-link"></i>
 
-      <a
-        class="menu-item"
-        routerLink="abastecimentos"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        <i class="icon fas fa-gas-pump"></i>
-        <span *ngIf="!isClosed">Abastecimentos</span>
-      </a>
+          <span class="menu-text" *ngIf="!isClosed">Integrações</span>
 
-      <a
-        class="menu-item"
-        routerLink="manutencoes"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        <i class="icon fa fa-wrench"></i>
-        <span *ngIf="!isClosed">Manutençôes</span>
-      </a>
+          <i
+            class="fas chevron"
+            *ngIf="!isClosed"
+            [ngClass]="{
+              'fa-chevron-down': !submenuIntegracoesAberto,
+              'fa-chevron-up': submenuIntegracoesAberto
+            }">
+          </i>
+        </button>
+
+        <ul class="submenu" *ngIf="submenuIntegracoesAberto && !isClosed">
+          <li routerLink="integracoes/winthor" routerLinkActive="active">WinThor</li>
+          <li routerLink="integracoes/licencas" routerLinkActive="active">Licenças</li>
+        </ul>
+      </li>
+
+      <!-- ADMINISTRAÇÃO -->
+      <li class="menu-item submenu-wrapper" [class.open]="submenuAdministracaoAberto">
+
+        <button class="menu-btn" (click)="toggleSubmenuAdministracao()">
+          <i class="icon fas fa-shield-alt"></i>
+
+          <span class="menu-text" *ngIf="!isClosed">Administração</span>
+
+          <i
+            class="fas chevron"
+            *ngIf="!isClosed"
+            [ngClass]="{
+              'fa-chevron-down': !submenuAdministracaoAberto,
+              'fa-chevron-up': submenuAdministracaoAberto
+            }">
+          </i>
+        </button>
+
+        <ul class="submenu" *ngIf="submenuAdministracaoAberto && !isClosed">
+          <li routerLink="admin/usuarios" routerLinkActive="active">Usuários</li>
+          <li routerLink="admin/logs" routerLinkActive="active">Logs</li>
+        </ul>
+      </li>
 
     </nav>
+
+    <!-- Footer do sidebar (usuário + configurações + logout) -->
+    <div class="sidebar-footer">
+
+      <div class="user-box" *ngIf="!isClosed">
+        <div class="user-avatar">A</div>
+        <div class="user-meta">
+          <div class="user-name">Arthenyo</div>
+          <div class="user-role">OPERADOR_LOGISTICA</div>
+        </div>
+      </div>
+
+      <a class="menu-item footer-item" routerLink="configuracoes" routerLinkActive="active">
+        <i class="icon fas fa-cog"></i>
+        <span *ngIf="!isClosed">Configurações</span>
+      </a>
+
+      <button class="logout-btn" (click)="logout()" title="Sair">
+        <i class="fas fa-right-from-bracket"></i>
+      </button>
+
+    </div>
+
   </aside>
 
   <main class="content">

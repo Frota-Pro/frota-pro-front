@@ -30,31 +30,24 @@ export const routes: Routes = [
       },
 
       {
-        path: 'colaboradores',
+        path: 'motoristas',
         loadComponent: () =>
-          import('./features/colaboradores/colaboradores.component').then(
-            (m) => m.ColaboradoresComponent
-          ),
+          import('./features/motoristas/motoristas-list/motoristas-list.component')
+            .then(m => m.MotoristasListComponent),
       },
 
       {
-        path: 'veiculos',
+        path: 'caminhoes',
         loadComponent: () =>
-          import('./features/veiculos/veiculos.component').then((m) => m.VeiculosComponent),
-      },
-
-      {
-        path: 'categorias',
-        loadComponent: () =>
-          import('./features/veiculos/categorias/categorias.component').then(
-            (m) => m.CategoriasComponent
-          ),
+          import('./features/caminhoes/caminhoes-list/caminhoes-list.component')
+            .then(m => m.CaminhoesListComponent),
       },
 
       {
         path: 'cargas',
         loadComponent: () =>
-          import('./features/cargas/cargas.component').then((m) => m.CargasComponent),
+          import('./features/cargas/cargas-list/cargas-list.component')
+            .then(m => m.CargasListComponent),
       },
 
       {

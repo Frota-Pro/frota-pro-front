@@ -1,85 +1,205 @@
-<div class="metas-page">
-  <h2 class="page-title">Metas</h2>
+<div class="page">
 
-  <div class="top-actions">
-    <input type="text" placeholder="Buscar metas..." [(ngModel)]="searchTerm" />
-    <button class="btn-add" (click)="addNovaMeta()">+ Nova Meta</button>
-  </div>
+  <!-- Cabeçalho -->
+  <div class="page-head">
+    <div class="titles">
+      <h2 class="page-title">Metas</h2>
+      <p class="subtitle">Gestão de metas e indicadores</p>
+    </div>
 
-  <!-- FORMULÁRIO DE CRIAÇÃO / EDIÇÃO -->
-  <div class="form-card" *ngIf="novaMeta">
-    <h3>{{ editando ? 'Editar Meta' : 'Nova Meta' }}</h3>
-
-    <label>Descrição:</label>
-    <input [(ngModel)]="novaMeta.descricao" type="text" />
-
-    <label>Data Início:</label>
-    <input [(ngModel)]="novaMeta.dataInicio" type="date" />
-
-    <label>Data Fim:</label>
-    <input [(ngModel)]="novaMeta.dataFim" type="date" />
-
-    <label>Tipo da Meta:</label>
-    <select [(ngModel)]="novaMeta.tipoMeta">
-      <option value="">Selecione...</option>
-      <option value="LITROS_COMBUSTIVEL">Litros de Combustível</option>
-      <option value="KM_RODADO">KM Rodado</option>
-      <option value="CARGAS_ENTREGUES">Cargas Entregues</option>
-    </select>
-
-    <label>Valor Meta:</label>
-    <input type="number" [(ngModel)]="novaMeta.valorMeta" />
-
-    <label>Unidade:</label>
-    <input type="text" [(ngModel)]="novaMeta.unidade" />
-
-    <label>Status:</label>
-    <select [(ngModel)]="novaMeta.statusMeta">
-      <option value="EM_ANDAMENTO">Em andamento</option>
-      <option value="CONCLUIDA">Concluída</option>
-      <option value="CANCELADA">Cancelada</option>
-    </select>
-
-    <label class="checkbox-row">
-      <input type="checkbox" [(ngModel)]="novaMeta.renovarAutomaticamente" />
-      Renovar automaticamente
-    </label>
-
-    <div class="form-buttons">
-      <button class="bnt-form" (click)="salvarMeta()">Salvar</button>
-      <button class="bnt-form" (click)="cancelar()">Cancelar</button>
+    <div class="actions">
+      <button class="btn-add" type="button" (click)="openAddModal()">
+        <i class="fas fa-plus"></i>
+        Nova Meta
+      </button>
     </div>
   </div>
 
-  <ul class="meta-list">
-    <li *ngFor="let m of metasFiltradas" class="meta-item">
-      <button class="row" (click)="toggleExpand(m.id)">
-        <div class="left">
-          <strong>{{ m.descricao || 'Meta sem descrição' }}</strong>
-          
-        </div>
+  <!-- Filtros -->
+  <div class="filters-row">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      placeholder="Buscar por tipo, caminhão ou motorista..."
+    />
 
-        <div class="right">
-          <span>{{ m.dataInicio | date:'dd/MM/yyyy' }} → {{ m.dataFim | date:'dd/MM/yyyy' }}</span>
-          <i class="fas" [ngClass]="{ 'fa-chevron-down': !isExpanded(m.id), 'fa-chevron-up': isExpanded(m.id) }"></i>
-        </div>
-      </button>
+    <select [(ngModel)]="filtroStatus">
+      <option value="">Todos</option>
+      <option value="ATIVA">Ativas</option>
+      <option value="FINALIZADA">Finalizadas</option>
+    </select>
+  </div>
 
-      <div class="expand" [class.expanded]="isExpanded(m.id)">
-        <div class="details">
-          <div><strong>Valor Meta:</strong> {{ m.valorMeta }}</div>
-          <div><strong>Realizado:</strong> {{ m.valorRealizado }}</div>
-          <div><strong>Unidade:</strong> {{ m.unidade }}</div>
-          <div><strong>Tipo de meta: </strong>{{ m.tipoMeta }}</div>
-          <div><strong>Status:</strong> {{ m.statusMeta }}</div>
-          <div><strong>Renovar Automaticamente:</strong> {{ m.renovarAutomaticamente ? 'Sim' : 'Não' }}</div>
+  <!-- Lista -->
+  <div class="card">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Caminhão/Motorista</th>
+          <th>Período</th>
+          <th>Progresso</th>
+          <th>Status</th>
+          <th class="actions-col">Ações</th>
+        </tr>
+        </thead>
 
-          <div class="btn-row">
-            <button class="edit" (click)="editarMeta(m)">Editar</button>
-            <button class="delete" (click)="excluirMeta(m.id)">Excluir</button>
+        <tbody>
+        <tr *ngFor="let m of metasFiltradas; trackBy: trackById">
+          <td class="strong">{{ m.tipoMeta || '—' }}</td>
+
+          <td class="truncate">
+            {{ m.caminhao?.placa || '—' }}
+            <span *ngIf="m.motorista?.nome"> / {{ m.motorista?.nome }}</span>
+          </td>
+
+          <td>
+            {{ (m.dataInicio || '') | date:'dd/MM/yy' }} -
+            {{ (m.dataFim || '') | date:'dd/MM/yy' }}
+          </td>
+
+          <td>
+            <div class="progress-wrapper">
+              <div class="progress-info">
+                <span class="mono">{{ m.valorRealizado ?? 0 }}</span>
+                <span class="mono">{{ m.valorMeta ?? 0 }}</span>
+              </div>
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  [style.width.%]="getProgressPercent(m)"
+                ></div>
+              </div>
+            </div>
+          </td>
+
+          <td>
+              <span
+                class="pill"
+                [class.pill-success]="getStatusLabel(m) === 'ATIVA'"
+                [class.pill-muted]="getStatusLabel(m) !== 'ATIVA'"
+              >
+                {{ getStatusLabel(m) }}
+              </span>
+          </td>
+
+          <td class="actions">
+            <button class="icon-btn edit" type="button" title="Editar" (click)="editarMeta(m)">
+              <i class="fas fa-pen"></i>
+            </button>
+
+            <button
+              class="icon-btn success"
+              type="button"
+              title="Concluir"
+              *ngIf="getStatusLabel(m) === 'ATIVA'"
+              (click)="finalizarMeta(m)"
+            >
+              <i class="fas fa-check"></i>
+            </button>
+
+            <button class="icon-btn danger" type="button" title="Excluir" (click)="excluirMeta(m.id)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="metasFiltradas.length === 0">
+          <td colspan="6" class="empty">Nenhuma meta encontrada.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-head">
+        <h3>{{ editando ? 'Editar Meta' : 'Nova Meta' }}</h3>
+      </div>
+
+      <form class="modal-form" (ngSubmit)="salvarMeta()">
+        <div class="form-row">
+          <div>
+            <label>Tipo</label>
+            <input type="text" [(ngModel)]="novaMeta!.tipoMeta" name="tipoMeta" required />
+          </div>
+
+          <div>
+            <label>Status</label>
+            <select [(ngModel)]="novaMeta!.statusMeta" name="statusMeta">
+              <option value="ATIVA">ATIVA</option>
+              <option value="FINALIZADA">FINALIZADA</option>
+              <option value="CANCELADA">CANCELADA</option>
+            </select>
           </div>
         </div>
-      </div>
-    </li>
-  </ul>
+
+        <div class="form-row">
+          <div>
+            <label>Data Início</label>
+            <input type="date" [(ngModel)]="novaMeta!.dataInicio" name="dataInicio" required />
+          </div>
+
+          <div>
+            <label>Data Fim</label>
+            <input type="date" [(ngModel)]="novaMeta!.dataFim" name="dataFim" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Valor Meta</label>
+            <input type="number" step="0.01" [(ngModel)]="novaMeta!.valorMeta" name="valorMeta" />
+          </div>
+
+          <div>
+            <label>Valor Realizado</label>
+            <input type="number" step="0.01" [(ngModel)]="novaMeta!.valorRealizado" name="valorRealizado" />
+          </div>
+
+          <div>
+            <label>Unidade</label>
+            <input type="text" [(ngModel)]="novaMeta!.unidade" name="unidade" placeholder="Ex: L, km/L, R$" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Caminhão (placa)</label>
+            <input type="text" [(ngModel)]="novaMeta!.caminhao!.placa" name="caminhaoPlaca"
+                   (ngModelChange)="novaMeta!.caminhao = { id: novaMeta!.caminhao?.id || 'tmp', placa: $event }"
+                   placeholder="Ex: ABC-1234" />
+          </div>
+
+          <div>
+            <label>Motorista</label>
+            <input type="text" [(ngModel)]="novaMeta!.motorista!.nome" name="motoristaNome"
+                   (ngModelChange)="novaMeta!.motorista = { id: novaMeta!.motorista?.id || 'tmp', nome: $event }"
+                   placeholder="Ex: João Silva" />
+          </div>
+        </div>
+
+        <div>
+          <label>Descrição</label>
+          <input type="text" [(ngModel)]="novaMeta!.descricao" name="descricao" placeholder="Opcional..." />
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" [(ngModel)]="novaMeta!.renovarAutomaticamente" name="renovarAutomaticamente" />
+          <span>Renovar automaticamente</span>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" type="button" (click)="closeAddModal()">Cancelar</button>
+          <button class="btn-save" type="submit">{{ editando ? 'Salvar' : 'Cadastrar' }}</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
 </div>

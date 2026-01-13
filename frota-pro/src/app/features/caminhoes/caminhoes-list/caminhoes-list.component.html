@@ -1,0 +1,76 @@
+<div class="page">
+  <div class="page-header">
+    <div class="left">
+      <h1>Caminhões</h1>
+      <p>Gestão da frota de caminhões</p>
+    </div>
+
+    <button class="primary-btn" type="button" (click)="novoCaminhao()">
+      <i class="fas fa-plus"></i>
+      Novo Caminhão
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="search">
+        <i class="fas fa-magnifying-glass"></i>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          placeholder="Buscar por placa, modelo..."
+        />
+      </div>
+
+      <select class="select" [(ngModel)]="statusFilter">
+        <option value="Todos">Todos</option>
+        <option value="ATIVO">Ativo</option>
+        <option value="INATIVO">Inativo</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Placa</th>
+          <th>Modelo</th>
+          <th>Categoria</th>
+          <th>Cód. Interno</th>
+          <th>Status</th>
+          <th class="actions-col">Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr *ngFor="let c of filtered">
+          <td class="plate">{{ c.placa }}</td>
+          <td>{{ c.modelo }}</td>
+          <td>{{ c.categoria }}</td>
+          <td class="code">{{ c.id }}</td>
+          <td>
+              <span class="badge" [class.active]="c.status==='ATIVO'" [class.inactive]="c.status==='INATIVO'">
+                {{ c.status }}
+              </span>
+          </td>
+          <td class="actions">
+            <button class="icon-btn" type="button" (click)="ver(c)" title="Ver">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="icon-btn" type="button" (click)="editar(c)" title="Editar">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button class="icon-btn danger" type="button" (click)="excluir(c)" title="Excluir">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="filtered.length === 0">
+          <td colspan="6" class="empty">Nenhum caminhão encontrado.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

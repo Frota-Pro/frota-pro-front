@@ -1,68 +1,101 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { GoogleChartsModule, ChartType } from 'angular-google-charts';
-import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+
+import { StatCardComponent } from '../../../../shared/ui/stat-card/stat-card.component';
+import { ActionButtonComponent } from '../../../../shared/ui/action-button/action-button.component';
 
 @Component({
   selector: 'app-dashboard-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, GoogleChartsModule],
+  imports: [CommonModule, StatCardComponent, ActionButtonComponent],
   templateUrl: './dashboard-home.component.html',
   styleUrls: ['./dashboard-home.component.css'],
 })
 export class DashboardHomeComponent {
-  isClosed = false;
-    toggleSidebar() {
-      this.isClosed = !this.isClosed;
-    }
-  
-    statusFrota = {
-      total: 25,
-      emRota: 8,
-      manutencao: 3,
-    };
-  
-    notificacoes = [
-      { tipo: 'alerta', mensagem: 'Caminhão ABC-1234 está há 5 dias sem movimentação.' },
-      { tipo: 'risco', mensagem: 'Caminhão XYZ-8899 excedeu o limite de km diário.' },
-      { tipo: 'aviso', mensagem: 'Caminhão FGH-5521 está há 12 dias na oficina.' },
-    ];
-  
-    periodoSelecionado = 7;
-  
-    chart = {
-      type: ChartType.ColumnChart,
-      columns: ['Dia', 'Cargas'],
-      data: [] as any[],
-      options: {
-        legend: { position: 'none' },
-        backgroundColor: 'transparent',
-        colors: ['#1e3c72']
-      },
-    };
-  
-    ngOnInit() {
-      this.atualizarGrafico();
-    }
-  
-    atualizarGrafico() {
-      const dados: any[] = [];
-      const dias = this.periodoSelecionado;
-      const hoje = new Date();
-  
-      for (let i = dias - 1; i >= 0; i--) {
-        const data = new Date();
-        data.setDate(hoje.getDate() - i);
-  
-        const dia = data.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-        });
-  
-        const cargas = Math.floor(Math.random() * 20) + 1;
-        dados.push([dia, cargas]);
-      }
-  
-      this.chart.data = dados;
-    }
+  constructor(private router: Router) {}
+
+  // --- Header ---
+  readonly pageTitle = 'Dashboard';
+  readonly pageSubtitle = this.formatToday();
+
+  // --- KPI Cards (igual ao print) ---
+  readonly kpis = [
+    {
+      title: 'Cargas Ativas',
+      value: 1,
+      helper: '+12% vs. mês anterior',
+      icon: 'fas fa-cube',
+      variant: 'primary' as const,
+    },
+    {
+      title: 'Finalizadas Hoje',
+      value: 0,
+      helper: '',
+      icon: 'fas fa-check',
+      variant: 'success' as const,
+    },
+    {
+      title: 'Litros (30d)',
+      value: '350,5L',
+      helper: '',
+      icon: 'fas fa-gas-pump',
+      variant: 'warning' as const,
+    },
+    {
+      title: 'Metas Ativas',
+      value: 1,
+      helper: '',
+      icon: 'fas fa-bullseye',
+      variant: 'info' as const,
+    },
+    {
+      title: 'OS Abertas',
+      value: 0,
+      helper: '',
+      icon: 'fas fa-wrench',
+      variant: 'neutral' as const,
+    },
+  ];
+
+  // --- Cargas recentes ---
+  readonly cargasRecentes = [
+    {
+      numero: 'CARGA-001',
+      origem: 'N/A',
+      destino: 'N/A',
+      valor: 'R$ 15.000,00',
+      peso: '8.500 kg',
+      status: 'EM ANDAMENTO',
+    },
+  ];
+
+  // --- Ações rápidas (ajuste as rotas se necessário) ---
+  novaCarga() {
+    this.router.navigate(['/dashboard/cargas']);
+  }
+
+  novoAbastecimento() {
+    this.router.navigate(['/dashboard/abastecimentos']);
+  }
+
+  novaOS() {
+    this.router.navigate(['/dashboard/manutencoes']);
+  }
+
+  novaMeta() {
+    this.router.navigate(['/dashboard/metas']);
+  }
+
+  verTodasCargas() {
+    this.router.navigate(['/dashboard/cargas']);
+  }
+
+  private formatToday(): string {
+    // "Visão geral • terça-feira, 13 de janeiro"
+    const now = new Date();
+    const weekday = now.toLocaleDateString('pt-BR', { weekday: 'long' });
+    const dayMonth = now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+    return `Visão geral • ${weekday}, ${dayMonth}`;
+  }
 }

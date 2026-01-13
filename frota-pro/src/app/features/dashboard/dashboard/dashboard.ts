@@ -4,7 +4,6 @@ import { GoogleChartsModule, ChartType } from 'angular-google-charts';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { RouterOutlet } from '@angular/router';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,17 +14,20 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     FormsModule,
     RouterOutlet,
     RouterModule,
-    RouterLink,
-    RouterLinkActive
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })
 export class Dashboard {
-
   isClosed = false;
 
-  // ➕ Submenu de Veículos
+  // ✅ Submenus do print
+  submenuOficinaAberto = true;        // no print ele fica aberto
+  submenuIntegracoesAberto = false;
+  submenuAdministracaoAberto = false;
+
+  // (Opcional) Se você ainda usa Veículos em alguma parte antiga, deixe.
+  // Se não usar mais, pode remover.
   submenuVeiculosAberto = false;
 
   ngOnInit() {
@@ -34,51 +36,75 @@ export class Dashboard {
     // 🔒 Sidebar inicia fechado em telas pequenas
     if (window.innerWidth <= 800) {
       this.isClosed = true;
-      this.submenuVeiculosAberto = false;
+      this.fecharTodosSubmenus();
     }
 
     // 🔒 Listener responsivo
     window.addEventListener('resize', () => {
       if (window.innerWidth <= 800) {
         this.isClosed = true;
-        this.submenuVeiculosAberto = false;
+        this.fecharTodosSubmenus();
       }
     });
   }
 
-  // 🔒 Sidebar toggle (bloqueado em telas pequenas)
+  // --------------------------
+  // SIDEBAR TOGGLE
+  // --------------------------
   toggleSidebar() {
     if (window.innerWidth <= 800) {
       this.isClosed = true;
-      this.submenuVeiculosAberto = false;
+      this.fecharTodosSubmenus();
       return;
     }
 
-    // alterna sidebar
     this.isClosed = !this.isClosed;
 
-    // fecha submenu automaticamente se a sidebar fechar
+    // fecha submenus automaticamente se a sidebar fechar
     if (this.isClosed) {
-      this.submenuVeiculosAberto = false;
+      this.fecharTodosSubmenus();
     }
   }
 
-  // --------------------------
-  // SUBMENU VEÍCULOS
-  // --------------------------
-  toggleSubmenuVeiculos() {
-    // não permite abrir submenu se sidebar estiver fechada
-    if (this.isClosed) {
-      return;
-    }
+  private fecharTodosSubmenus() {
+    this.submenuOficinaAberto = false;
+    this.submenuIntegracoesAberto = false;
+    this.submenuAdministracaoAberto = false;
+    this.submenuVeiculosAberto = false; // caso ainda exista
+  }
 
+  // --------------------------
+  // SUBMENUS (não abre se sidebar fechada)
+  // --------------------------
+  toggleSubmenuOficina() {
+    if (this.isClosed) return;
+    this.submenuOficinaAberto = !this.submenuOficinaAberto;
+  }
+
+  toggleSubmenuIntegracoes() {
+    if (this.isClosed) return;
+    this.submenuIntegracoesAberto = !this.submenuIntegracoesAberto;
+  }
+
+  toggleSubmenuAdministracao() {
+    if (this.isClosed) return;
+    this.submenuAdministracaoAberto = !this.submenuAdministracaoAberto;
+  }
+
+  // (Opcional legado)
+  toggleSubmenuVeiculos() {
+    if (this.isClosed) return;
     this.submenuVeiculosAberto = !this.submenuVeiculosAberto;
+  }
+
+  logout() {
+    // coloque sua lógica real aqui (ex: AuthService.logout() + navigate)
+    console.log('logout');
   }
 
   // --------------------------
   // DADOS DO DASHBOARD
   // --------------------------
-
   statusFrota = {
     total: 25,
     emRota: 8,
@@ -100,7 +126,7 @@ export class Dashboard {
     options: {
       legend: { position: 'none' },
       backgroundColor: 'transparent',
-      colors: ['#1e3c72']
+      colors: ['#1e3c72'],
     },
   };
 
