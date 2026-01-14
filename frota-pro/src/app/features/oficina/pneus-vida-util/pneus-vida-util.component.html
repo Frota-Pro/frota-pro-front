@@ -1,0 +1,515 @@
+<div class="page">
+
+  <!-- Cabeçalho -->
+  <div class="page-head">
+    <div class="titles">
+      <h2 class="page-title">Vida Útil do Pneu</h2>
+      <p class="subtitle">Acompanhamento de status, posição, vida útil (km), sulco, recapagens e custos</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn-secondary" type="button" (click)="filtroSomenteAlertas = !filtroSomenteAlertas">
+        <i class="fas fa-bell"></i>
+        {{ filtroSomenteAlertas ? 'Mostrar todos' : 'Somente alertas' }}
+      </button>
+
+      <button class="btn-add" type="button" (click)="openCadastro()">
+        <i class="fas fa-plus"></i>
+        Cadastrar Pneu
+      </button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-icon">🛞</div>
+      <div class="kpi-info">
+        <div class="kpi-title">Total de Pneus</div>
+        <div class="kpi-value">{{ totalPneus }}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon">🚚</div>
+      <div class="kpi-info">
+        <div class="kpi-title">Em uso</div>
+        <div class="kpi-value">{{ emUso }}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon">📦</div>
+      <div class="kpi-info">
+        <div class="kpi-title">Em estoque</div>
+        <div class="kpi-value">{{ emEstoque }}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon">♻️</div>
+      <div class="kpi-info">
+        <div class="kpi-title">Recapagem</div>
+        <div class="kpi-value">{{ emRecapagem }}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-alert">
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-info">
+        <div class="kpi-title">Alertas</div>
+        <div class="kpi-value">{{ emAlerta }}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon">💸</div>
+      <div class="kpi-info">
+        <div class="kpi-title">Custo total</div>
+        <div class="kpi-value">{{ custoTotalFrota | currency:'BRL' }}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon">📏</div>
+      <div class="kpi-info">
+        <div class="kpi-title">Custo por km</div>
+        <div class="kpi-value">{{ custoPorKm | number:'1.4-6' }}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon">🔁</div>
+      <div class="kpi-info">
+        <div class="kpi-title">Recapagens / pneu</div>
+        <div class="kpi-value">{{ taxaMediaRecapagem | number:'1.2-2' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-row">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      placeholder="Buscar por código, fogo, série, marca, placa..."
+    />
+
+    <select [(ngModel)]="filtroStatus">
+      <option value="">Todos status</option>
+      <option value="EM_USO">EM_USO</option>
+      <option value="ESTOQUE">ESTOQUE</option>
+      <option value="RECAPAGEM">RECAPAGEM</option>
+      <option value="DESCARTE">DESCARTE</option>
+    </select>
+
+    <select [(ngModel)]="filtroCaminhao">
+      <option value="">Todos caminhões</option>
+      <option *ngFor="let c of caminhoes" [value]="c.placa">{{ c.placa }}</option>
+    </select>
+
+    <select [(ngModel)]="filtroPosicao">
+      <option value="">Todas posições</option>
+      <option *ngFor="let p of posicoes" [value]="p">{{ p }}</option>
+    </select>
+
+    <input
+      type="text"
+      [(ngModel)]="filtroMarca"
+      placeholder="Marca..."
+      style="min-width: 160px;"
+    />
+  </div>
+
+  <!-- Tabela -->
+  <div class="card">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Código</th>
+          <th>Fogo/Série</th>
+          <th>Marca/Modelo</th>
+          <th>Medida/DOT</th>
+          <th>Status</th>
+          <th>Caminhão/Posição</th>
+          <th>Vida útil</th>
+          <th>Sulco</th>
+          <th>Recap.</th>
+          <th class="num">Custo</th>
+          <th class="actions-col">Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <ng-container *ngFor="let p of pneusFiltrados; trackBy: trackById">
+
+          <tr class="row-click" (click)="toggleExpand(p.id)">
+            <td class="strong mono">{{ p.codigo }}</td>
+
+            <td class="truncate">
+              <div class="stack">
+                <span class="strong">{{ p.fogo }}</span>
+                <span class="muted mono">{{ p.serie || '—' }}</span>
+              </div>
+            </td>
+
+            <td class="truncate">
+              <div class="stack">
+                <span class="strong">{{ p.marca || '—' }}</span>
+                <span class="muted">{{ p.modelo || '—' }}</span>
+              </div>
+            </td>
+
+            <td class="truncate">
+              <div class="stack">
+                <span>{{ p.medida || '—' }}</span>
+                <span class="muted mono">DOT {{ p.dot || '—' }}</span>
+              </div>
+            </td>
+
+            <td>
+              <div class="stack">
+                <span class="pill" [ngClass]="statusClass(p.status)">{{ p.status }}</span>
+                <span class="pill pill-alert" *ngIf="isAlerta(p)">{{ getAlertaLabel(p) }}</span>
+              </div>
+            </td>
+
+            <td class="truncate">
+              <div class="stack">
+                <span class="strong">{{ p.caminhaoAtual?.placa || '—' }}</span>
+                <span class="muted">{{ p.posicaoAtual || '—' }}</span>
+              </div>
+            </td>
+
+            <td style="min-width: 220px;">
+              <div class="progress-wrapper">
+                <div class="progress-info">
+                  <span class="mono">{{ p.kmAtual || 0 }} km</span>
+                  <span class="mono">{{ p.vidaPrevistaKm || 0 }} km</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="progressoVida(p)"></div>
+                </div>
+              </div>
+            </td>
+
+            <td class="mono">
+              {{ p.profundidadeMm != null ? (p.profundidadeMm | number:'1.1-1') + ' mm' : '—' }}
+            </td>
+
+            <td class="mono">{{ p.recapagens || 0 }}</td>
+
+            <td class="num mono">
+              {{ (p.custoTotal || p.custoAquisicao || 0) | currency:'BRL' }}
+            </td>
+
+            <td class="actions" (click)="$event.stopPropagation()">
+              <button class="icon-btn edit" type="button" title="Editar cadastro" (click)="openEditarCadastro(p)">
+                <i class="fas fa-pen"></i>
+              </button>
+
+              <button class="icon-btn" type="button" title="Movimentar pneu" (click)="openMovimentar(p)">
+                <i class="fas fa-exchange-alt"></i>
+              </button>
+
+              <button class="icon-btn danger" type="button" title="Excluir" (click)="excluir(p.id)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+
+          <!-- EXPAND: detalhes ricos -->
+          <tr class="expand-row" *ngIf="expandedId === p.id">
+            <td colspan="11" class="expand-cell">
+              <div class="expand-grid">
+
+                <div class="kv">
+                  <div class="k">Última movimentação</div>
+                  <div class="v">{{ p.dtUltMov ? (p.dtUltMov | date:'dd/MM/yy HH:mm') : '—' }}</div>
+                </div>
+
+                <div class="kv">
+                  <div class="k">Cadastro</div>
+                  <div class="v">{{ p.dtCadastro | date:'dd/MM/yy HH:mm' }}</div>
+                </div>
+
+                <div class="kv">
+                  <div class="k">Km instalação</div>
+                  <div class="v">{{ p.kmInstalacao ?? '—' }}</div>
+                </div>
+
+                <div class="kv">
+                  <div class="k">Vida prevista (km)</div>
+                  <div class="v mono">{{ p.vidaPrevistaKm || 0 }}</div>
+                </div>
+
+                <div class="kv">
+                  <div class="k">Km atual do pneu</div>
+                  <div class="v mono">{{ p.kmAtual || 0 }}</div>
+                </div>
+
+                <div class="kv">
+                  <div class="k">Alerta</div>
+                  <div class="v">
+                    <span *ngIf="isAlerta(p)" class="pill pill-alert">{{ getAlertaLabel(p) }}</span>
+                    <span *ngIf="!isAlerta(p)" class="muted">—</span>
+                  </div>
+                </div>
+
+                <div class="kv">
+                  <div class="k">Sulco atual / mínimo</div>
+                  <div class="v mono">
+                    {{ p.profundidadeMm != null ? (p.profundidadeMm | number:'1.1-1') : '—' }}
+                    /
+                    {{ p.profundidadeMinMm != null ? (p.profundidadeMinMm | number:'1.1-1') : '—' }} mm
+                  </div>
+                </div>
+
+                <div class="kv">
+                  <div class="k">Custo aquisição</div>
+                  <div class="v">{{ (p.custoAquisicao || 0) | currency:'BRL' }}</div>
+                </div>
+
+                <div class="kv">
+                  <div class="k">Custo total (com recapagens)</div>
+                  <div class="v">{{ (p.custoTotal || p.custoAquisicao || 0) | currency:'BRL' }}</div>
+                </div>
+
+                <div class="kv span2">
+                  <div class="k">Observação</div>
+                  <div class="v">{{ p.observacao || '—' }}</div>
+                </div>
+
+                <div class="kv span2">
+                  <div class="k">Histórico de movimentações (mais recente primeiro)</div>
+
+                  <div class="v" *ngIf="(p.historico?.length || 0) > 0; else semHist">
+                    <div class="hist-item" *ngFor="let h of p.historico">
+                      <div class="hist-top">
+                        <span class="pill pill-type">{{ h.acao }}</span>
+                        <span class="muted">{{ h.dt | date:'dd/MM/yy HH:mm' }}</span>
+                      </div>
+
+                      <div class="hist-body">
+                        <div class="hist-col">
+                          <div class="muted">Antes</div>
+                          <div class="mono">{{ h.caminhaoAntes || '—' }} / {{ h.posicaoAntes || '—' }}</div>
+                        </div>
+
+                        <div class="hist-col">
+                          <div class="muted">Depois</div>
+                          <div class="mono">{{ h.caminhaoDepois || '—' }} / {{ h.posicaoDepois || '—' }}</div>
+                        </div>
+
+                        <div class="hist-col">
+                          <div class="muted">Km</div>
+                          <div class="mono">{{ h.kmDepois ?? h.kmAntes ?? '—' }}</div>
+                        </div>
+                      </div>
+
+                      <div class="muted" *ngIf="h.observacao">{{ h.observacao }}</div>
+                    </div>
+                  </div>
+
+                  <ng-template #semHist>
+                    <span class="muted">—</span>
+                  </ng-template>
+                </div>
+
+              </div>
+            </td>
+          </tr>
+
+        </ng-container>
+
+        <tr *ngIf="pneusFiltrados.length === 0">
+          <td colspan="11" class="empty">Nenhum pneu encontrado.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL CADASTRO -->
+  <div class="modal-overlay" *ngIf="showCadastro" (click)="closeCadastro()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-head">
+        <h3>{{ cadastroEditing ? 'Editar Pneu' : 'Cadastrar Pneu' }}</h3>
+      </div>
+
+      <form class="modal-form" (ngSubmit)="salvarCadastro()">
+
+        <div class="form-row">
+          <div>
+            <label>Código</label>
+            <input type="text" [(ngModel)]="formCad.codigo" name="codigo" required />
+          </div>
+
+          <div>
+            <label>Fogo (obrigatório)</label>
+            <input type="text" [(ngModel)]="formCad.fogo" name="fogo" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Série</label>
+            <input type="text" [(ngModel)]="formCad.serie" name="serie" />
+          </div>
+
+          <div>
+            <label>Status</label>
+            <select [(ngModel)]="formCad.status" name="status">
+              <option value="ESTOQUE">ESTOQUE</option>
+              <option value="EM_USO">EM_USO</option>
+              <option value="RECAPAGEM">RECAPAGEM</option>
+              <option value="DESCARTE">DESCARTE</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Marca</label>
+            <input type="text" [(ngModel)]="formCad.marca" name="marca" />
+          </div>
+
+          <div>
+            <label>Modelo</label>
+            <input type="text" [(ngModel)]="formCad.modelo" name="modelo" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Medida</label>
+            <input type="text" [(ngModel)]="formCad.medida" name="medida" />
+          </div>
+
+          <div>
+            <label>DOT</label>
+            <input type="text" [(ngModel)]="formCad.dot" name="dot" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Vida prevista (km)</label>
+            <input type="number" [(ngModel)]="formCad.vidaPrevistaKm" name="vidaPrevistaKm" />
+          </div>
+
+          <div>
+            <label>Km atual do pneu</label>
+            <input type="number" [(ngModel)]="formCad.kmAtual" name="kmAtual" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Sulco atual (mm)</label>
+            <input type="number" step="0.1" [(ngModel)]="formCad.profundidadeMm" name="profundidadeMm" />
+          </div>
+
+          <div>
+            <label>Sulco mínimo (mm)</label>
+            <input type="number" step="0.1" [(ngModel)]="formCad.profundidadeMinMm" name="profundidadeMinMm" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Recapagens</label>
+            <input type="number" [(ngModel)]="formCad.recapagens" name="recapagens" />
+          </div>
+
+          <div>
+            <label>Custo aquisição</label>
+            <input type="number" step="0.01" [(ngModel)]="formCad.custoAquisicao" name="custoAquisicao" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Custo total (opcional)</label>
+            <input type="number" step="0.01" [(ngModel)]="formCad.custoTotal" name="custoTotal" />
+          </div>
+
+          <div>
+            <label>Observação</label>
+            <input type="text" [(ngModel)]="formCad.observacao" name="observacao" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" type="button" (click)="closeCadastro()">Cancelar</button>
+          <button class="btn-save" type="submit">{{ cadastroEditing ? 'Salvar' : 'Cadastrar' }}</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL MOVIMENTAÇÃO -->
+  <div class="modal-overlay" *ngIf="showMov" (click)="closeMovimentar()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-head">
+        <h3>Movimentar Pneu</h3>
+      </div>
+
+      <form class="modal-form" (ngSubmit)="aplicarMovimentacao()">
+
+        <div class="form-row">
+          <div>
+            <label>Ação</label>
+            <select [(ngModel)]="formMov.acao" name="acao">
+              <option value="INSTALADO">INSTALADO</option>
+              <option value="REMOVIDO">REMOVIDO (para estoque)</option>
+              <option value="TROCA_POSICAO">TROCA_POSICAO</option>
+              <option value="ENVIADO_RECAPAGEM">ENVIADO_RECAPAGEM</option>
+              <option value="RETORNO_RECAPAGEM">RETORNO_RECAPAGEM</option>
+              <option value="DESCARTE">DESCARTE</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Km do caminhão (opcional)</label>
+            <input type="number" [(ngModel)]="formMov.kmCaminhao" name="kmCaminhao" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Caminhão</label>
+            <select [(ngModel)]="formMov.caminhaoId" name="caminhaoId">
+              <option value="">—</option>
+              <option *ngFor="let c of caminhoes" [value]="c.id">{{ c.placa }} - {{ c.modelo }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Posição</label>
+            <select [(ngModel)]="formMov.posicao" name="posicao">
+              <option value="">—</option>
+              <option *ngFor="let p of posicoes" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label>Observação</label>
+          <input type="text" [(ngModel)]="formMov.observacao" name="observacao" placeholder="Opcional..." />
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" type="button" (click)="closeMovimentar()">Cancelar</button>
+          <button class="btn-save" type="submit">Aplicar</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>

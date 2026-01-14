@@ -1,0 +1,181 @@
+<div class="page">
+
+  <div class="page-head">
+    <div class="titles">
+      <h2 class="page-title">Oficinas</h2>
+      <p class="subtitle">Cadastro e gestão de fornecedores de manutenção</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn-add" type="button" (click)="openAddModal()">
+        <i class="fas fa-plus"></i>
+        Nova Oficina
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-row">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      placeholder="Buscar por nome, cidade, CNPJ..."
+    />
+
+    <select [(ngModel)]="filtroStatus">
+      <option value="">Todos status</option>
+      <option value="ATIVA">ATIVA</option>
+      <option value="INATIVA">INATIVA</option>
+    </select>
+
+    <select [(ngModel)]="filtroTipo">
+      <option value="">Todos tipos</option>
+      <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
+    </select>
+  </div>
+
+  <!-- Tabela -->
+  <div class="card">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Tipo</th>
+          <th>Cidade/UF</th>
+          <th>Contato</th>
+          <th>Status</th>
+          <th class="actions-col">Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr *ngFor="let o of oficinasFiltradas; trackBy: trackById">
+          <td class="strong truncate">{{ o.nome }}</td>
+
+          <td>
+            <span class="pill pill-type">{{ o.tipo }}</span>
+          </td>
+
+          <td class="truncate">
+            {{ o.cidade || '—' }}<span *ngIf="o.uf">/{{ o.uf }}</span>
+          </td>
+
+          <td class="truncate">
+            {{ o.telefone || o.email || '—' }}
+          </td>
+
+          <td>
+              <span class="pill" [ngClass]="statusClass(o.status)">
+                {{ o.status }}
+              </span>
+          </td>
+
+          <td class="actions">
+            <button class="icon-btn edit" type="button" title="Editar" (click)="openEditModal(o)">
+              <i class="fas fa-pen"></i>
+            </button>
+
+            <button class="icon-btn" type="button" title="Ativar/Inativar" (click)="toggleStatus(o)">
+              <i class="fas fa-power-off"></i>
+            </button>
+
+            <button class="icon-btn danger" type="button" title="Excluir" (click)="excluir(o.id)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="oficinasFiltradas.length === 0">
+          <td colspan="6" class="empty">Nenhuma oficina encontrada.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-head">
+        <h3>{{ isEditing ? 'Editar Oficina' : 'Nova Oficina' }}</h3>
+      </div>
+
+      <form class="modal-form" (ngSubmit)="save()">
+
+        <div class="form-row">
+          <div>
+            <label>Nome</label>
+            <input type="text" [(ngModel)]="form.nome" name="nome" required />
+          </div>
+
+          <div>
+            <label>Tipo</label>
+            <select [(ngModel)]="form.tipo" name="tipo">
+              <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Status</label>
+            <select [(ngModel)]="form.status" name="status">
+              <option value="ATIVA">ATIVA</option>
+              <option value="INATIVA">INATIVA</option>
+            </select>
+          </div>
+
+          <div>
+            <label>CNPJ</label>
+            <input type="text" [(ngModel)]="form.cnpj" name="cnpj" placeholder="Opcional" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Telefone</label>
+            <input type="text" [(ngModel)]="form.telefone" name="telefone" placeholder="Opcional" />
+          </div>
+
+          <div>
+            <label>E-mail</label>
+            <input type="email" [(ngModel)]="form.email" name="email" placeholder="Opcional" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Cidade</label>
+            <input type="text" [(ngModel)]="form.cidade" name="cidade" />
+          </div>
+
+          <div>
+            <label>UF</label>
+            <input type="text" maxlength="2" [(ngModel)]="form.uf" name="uf" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Endereço</label>
+            <input type="text" [(ngModel)]="form.endereco" name="endereco" />
+          </div>
+
+          <div>
+            <label>Observação</label>
+            <input type="text" [(ngModel)]="form.observacao" name="observacao" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" type="button" (click)="closeModal()">Cancelar</button>
+          <button class="btn-save" type="submit">{{ isEditing ? 'Salvar' : 'Cadastrar' }}</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>

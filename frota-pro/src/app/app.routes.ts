@@ -73,8 +73,23 @@ export const routes: Routes = [
       {
         path: 'manutencoes',
         loadComponent: () =>
-          import('./features/manutencao/manutencoes.component').then((m) => m.ManutencoesComponent),
+          import('./features/oficina/manutencoes/manutencoes.component').then((m) => m.ManutencoesComponent),
       },
+
+      {
+        path: 'oficinas',
+        loadComponent: () =>
+          import('./features/oficina/oficinas/oficinas.component')
+            .then(m => m.OficinasComponent),
+      },
+
+      {
+        path: 'pneus-vida-util',
+        loadComponent: () =>
+          import('./features/oficina/pneus-vida-util/pneus-vida-util.component')
+            .then(m => m.PneusVidaUtilComponent),
+      },
+
     ],
   },
 ];
