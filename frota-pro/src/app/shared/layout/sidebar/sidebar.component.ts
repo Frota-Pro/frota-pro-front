@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Observable } from 'rxjs';
 
-type RoleLabel = 'OPERADOR_LOGISTICA' | string;
+import { AuthUserService } from '../../../core/auth/auth-user.service';
+import { AuthMeResponse } from '../../../core/auth/auth-user.model';
 
 @Component({
   selector: 'app-sidebar',
@@ -12,23 +14,25 @@ type RoleLabel = 'OPERADOR_LOGISTICA' | string;
   styleUrls: ['./sidebar.component.css'],
 })
 export class SidebarComponent {
-  // Se você já tem AuthService/UserStore, substitua esses mocks depois
-  userName = 'Arthenyo';
-  userRole: RoleLabel = 'OPERADOR_LOGISTICA';
+  user$!: Observable<AuthMeResponse | null>;
 
-  // Estados dos grupos colapsáveis
   open = {
     oficina: true,
     integracoes: false,
     administracao: false,
   };
 
+  constructor(public authUser: AuthUserService) {
+    this.user$ = this.authUser.user$;
+  }
+
   toggle(key: keyof typeof this.open) {
     this.open[key] = !this.open[key];
   }
 
   logout() {
-    // Troque por sua lógica real
     console.log('logout');
+    this.authUser.clear();
+    // aqui você navega pro login se quiser
   }
 }

@@ -101,14 +101,26 @@
     </div>
   </nav>
 
-  <div class="footer">
-    <div class="user">
-      <div class="avatar">{{ userName?.slice(0,1) }}</div>
-      <div class="meta">
-        <div class="name">{{ userName }}</div>
-        <div class="role">{{ userRole }}</div>
+  <div class="user-chip" *ngIf="(user$ | async) as u; else loadingUser">
+    <div class="avatar">{{ (u.nome || 'U').charAt(0).toUpperCase() }}</div>
+
+    <div class="user-text">
+      <div class="user-name">{{ u.nome }}</div>
+      <div class="user-role">
+        {{ authUser.getRoleLabel(u) }}
       </div>
     </div>
+  </div>
+
+  <ng-template #loadingUser>
+    <div class="user-chip">
+      <div class="avatar">...</div>
+      <div class="user-text">
+        <div class="user-name">Carregando...</div>
+        <div class="user-role">...</div>
+      </div>
+    </div>
+  </ng-template>
 
     <a class="nav-item settings" routerLink="/dashboard/configuracoes" routerLinkActive="active">
       <span class="icon"><i class="fas fa-cog"></i></span>
@@ -118,5 +130,4 @@
     <button class="logout" type="button" (click)="logout()" aria-label="Sair">
       <i class="fas fa-sign-out-alt"></i>
     </button>
-  </div>
 </aside>

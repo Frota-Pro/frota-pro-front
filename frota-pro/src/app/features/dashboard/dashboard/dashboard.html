@@ -1,11 +1,3 @@
-<!-- (Ideal: FontAwesome no src/index.html, mas pode manter aqui por enquanto) -->
-<head>
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-  />
-</head>
-
 <div class="layout">
   <aside class="sidebar" [class.closed]="isClosed">
 
@@ -136,11 +128,22 @@
     <div class="sidebar-footer">
 
       <div class="user-box" *ngIf="!isClosed">
-        <div class="user-avatar">A</div>
-        <div class="user-meta">
-          <div class="user-name">Arthenyo</div>
-          <div class="user-role">OPERADOR_LOGISTICA</div>
-        </div>
+        <ng-container *ngIf="(user$ | async) as u; else loadingUser">
+          <div class="user-avatar">{{ (u.nome || 'U').charAt(0).toUpperCase() }}</div>
+
+          <div class="user-meta">
+            <div class="user-name">{{ u.nome }}</div>
+            <div class="user-role">{{ authUser.getRoleLabel(u) }}</div>
+          </div>
+        </ng-container>
+
+        <ng-template #loadingUser>
+          <div class="user-avatar">...</div>
+          <div class="user-meta">
+            <div class="user-name">Carregando...</div>
+            <div class="user-role">...</div>
+          </div>
+        </ng-template>
       </div>
 
       <a class="menu-item footer-item" routerLink="configuracoes" routerLinkActive="active">

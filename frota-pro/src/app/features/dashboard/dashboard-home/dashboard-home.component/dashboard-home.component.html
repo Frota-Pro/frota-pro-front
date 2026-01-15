@@ -11,96 +11,145 @@
         <span class="dot" aria-hidden="true"></span>
       </button>
 
-      <div class="user-chip" aria-label="Usuário logado">
-        <div class="avatar">A</div>
-        <div class="user-text">
-          <div class="user-name">Arthenyo</div>
-          <div class="user-role">OPERADOR LOGISTICA</div>
-        </div>
+      <div class="user-chip" *ngIf="!isClosed">
+        <ng-container *ngIf="(user$ | async) as u; else loadingUser">
+          <div class="avatar">{{ (u.nome || 'U').charAt(0).toUpperCase() }}</div>
+
+          <div class="user-text">
+            <div class="user-name">{{ u.nome }}</div>
+            <div class="user-role">{{ authUser.getRoleLabel(u) }}</div>
+          </div>
+        </ng-container>
+
+        <ng-template #loadingUser>
+          <div class="avatar">...</div>
+          <div class="user-text">
+            <div class="user-name">Carregando...</div>
+            <div class="user-role">...</div>
+          </div>
+        </ng-template>
       </div>
+
     </div>
   </header>
 
-  <!-- KPI cards -->
-  <section class="kpi-grid">
-    <app-stat-card
-      *ngFor="let kpi of kpis"
-      [title]="kpi.title"
-      [value]="kpi.value"
-      [iconClass]="kpi.icon"
-      [variant]="kpi.variant"
-    ></app-stat-card>
-  </section>
-
-  <!-- Conteúdo principal -->
-  <section class="main-grid">
-    <!-- Cargas recentes -->
-    <div class="panel">
-      <div class="panel-header">
-        <div>
-          <h2 class="panel-title">Cargas Recentes</h2>
-          <p class="panel-subtitle">Últimas cargas cadastradas</p>
-        </div>
-
-        <button class="link-btn" type="button" (click)="verTodasCargas()">
-          Ver todas <i class="fas fa-arrow-right"></i>
-        </button>
+  <!-- Estado: loading -->
+  <div class="panel" *ngIf="loading">
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">Carregando...</h2>
+        <p class="panel-subtitle">Buscando dados do dashboard</p>
       </div>
+    </div>
+    <div class="empty">
+      <div class="empty-title">Aguarde</div>
+      <div class="empty-sub">Estamos carregando seus indicadores.</div>
+    </div>
+  </div>
 
-      <div class="recent-list">
-        <div class="recent-item" *ngFor="let c of cargasRecentes">
-          <div class="recent-left">
-            <div class="recent-icon" aria-hidden="true"><i class="fas fa-cube"></i></div>
+  <!-- Estado: erro -->
+  <div class="panel" *ngIf="!loading && errorMsg">
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">Ops</h2>
+        <p class="panel-subtitle">Não foi possível carregar o dashboard</p>
+      </div>
+    </div>
 
-            <div class="recent-meta">
-              <div class="recent-title">Carga #{{ c.numero }}</div>
-              <div class="recent-sub">{{ c.origem }} &nbsp; • &nbsp; {{ c.destino }}</div>
-            </div>
+    <div class="empty">
+      <div class="empty-title">{{ errorMsg }}</div>
+      <div class="empty-sub">Verifique se a API está online e se o token está válido.</div>
+    </div>
+  </div>
+
+  <!-- Conteúdo normal -->
+  <ng-container *ngIf="!loading && !errorMsg">
+    <!-- KPI cards -->
+    <section class="kpi-grid">
+      <app-stat-card
+        *ngFor="let kpi of kpis"
+        [title]="kpi.title"
+        [value]="kpi.value"
+        [iconClass]="kpi.icon"
+        [variant]="kpi.variant"
+      ></app-stat-card>
+    </section>
+
+    <!-- Conteúdo principal -->
+    <section class="main-grid">
+      <!-- Cargas recentes -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Cargas Recentes</h2>
+            <p class="panel-subtitle">Últimas cargas cadastradas</p>
           </div>
 
-          <div class="recent-right">
-            <div class="recent-values">
-              <div class="value">{{ c.valor }}</div>
-              <div class="sub">{{ c.peso }}</div>
+          <button class="link-btn" type="button" (click)="verTodasCargas()">
+            Ver todas <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <div class="empty" *ngIf="cargasRecentes.length === 0">
+          <div class="empty-title">Nenhuma carga encontrada</div>
+          <div class="empty-sub">Ainda não há cargas cadastradas para mostrar aqui.</div>
+        </div>
+
+        <div class="recent-list" *ngIf="cargasRecentes.length > 0">
+          <div class="recent-item" *ngFor="let c of cargasRecentes">
+            <div class="recent-left">
+              <div class="recent-icon" aria-hidden="true"><i class="fas fa-cube"></i></div>
+
+              <div class="recent-meta">
+                <div class="recent-title">Carga #{{ c.numero }}</div>
+                <div class="recent-sub">{{ c.origem }} &nbsp; • &nbsp; {{ c.destino }}</div>
+              </div>
             </div>
-            <span class="badge warning">{{ c.status }}</span>
+
+            <div class="recent-right">
+              <div class="recent-values">
+                <div class="value">{{ c.valor }}</div>
+                <div class="sub">{{ c.peso }}</div>
+              </div>
+              <span class="badge warning">{{ c.status }}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Ações rápidas -->
-    <div class="panel">
-      <div class="panel-header">
-        <div>
-          <h2 class="panel-title">Ações Rápidas</h2>
-          <p class="panel-subtitle">Acesso rápido às principais funções</p>
+      <!-- Ações rápidas -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Ações Rápidas</h2>
+            <p class="panel-subtitle">Acesso rápido às principais funções</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <app-action-button label="Nova Carga" iconClass="fas fa-cube" (action)="novaCarga()"></app-action-button>
+          <app-action-button label="Novo Abastecimento" iconClass="fas fa-gas-pump" (action)="novoAbastecimento()"></app-action-button>
+          <app-action-button label="Nova OS" iconClass="fas fa-wrench" (action)="novaOS()"></app-action-button>
+          <app-action-button label="Nova Meta" iconClass="fas fa-bullseye" (action)="novaMeta()"></app-action-button>
         </div>
       </div>
+    </section>
 
-      <div class="actions">
-        <app-action-button label="Nova Carga" iconClass="fas fa-cube" (action)="novaCarga()"></app-action-button>
-        <app-action-button label="Novo Abastecimento" iconClass="fas fa-gas-pump" (action)="novoAbastecimento()"></app-action-button>
-        <app-action-button label="Nova OS" iconClass="fas fa-wrench" (action)="novaOS()"></app-action-button>
-        <app-action-button label="Nova Meta" iconClass="fas fa-bullseye" (action)="novaMeta()"></app-action-button>
-      </div>
-    </div>
-  </section>
+    <!-- Placeholder -->
+    <section class="below">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Indicadores de Performance</h2>
+            <p class="panel-subtitle">Visão geral do desempenho operacional</p>
+          </div>
+        </div>
 
-  <!-- Sessão abaixo (deixei como placeholder) -->
-  <section class="below">
-    <div class="panel">
-      <div class="panel-header">
-        <div>
-          <h2 class="panel-title">Indicadores de Performance</h2>
-          <p class="panel-subtitle">Visão geral do desempenho operacional</p>
+        <div class="empty">
+          <div class="empty-title">Em breve</div>
+          <div class="empty-sub">Aqui entraremos com gráficos e análises (refatorado em componentes).</div>
         </div>
       </div>
-
-      <div class="empty">
-        <div class="empty-title">Em breve</div>
-        <div class="empty-sub">Aqui entraremos com gráficos e análises (refatorado em componentes).</div>
-      </div>
-    </div>
-  </section>
+    </section>
+  </ng-container>
 </div>

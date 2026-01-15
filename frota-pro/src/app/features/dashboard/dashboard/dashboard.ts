@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoogleChartsModule, ChartType } from 'angular-google-charts';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { RouterOutlet } from '@angular/router';
+import { RouterModule, RouterOutlet } from '@angular/router';
+import { Observable } from 'rxjs';
+import { AuthMeResponse } from '../../../core/auth/auth-user.model';
+import { AuthUserService } from '../../../core/auth/auth-user.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,89 +20,21 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
+  user$!: Observable<AuthMeResponse | null>;
+
+  constructor(public authUser: AuthUserService) {
+    this.user$ = this.authUser.user$;
+  }
+
   isClosed = false;
 
   // ✅ Submenus do print
-  submenuOficinaAberto = true;        // no print ele fica aberto
+  submenuOficinaAberto = true;
   submenuIntegracoesAberto = false;
   submenuAdministracaoAberto = false;
 
-  // (Opcional) Se você ainda usa Veículos em alguma parte antiga, deixe.
-  // Se não usar mais, pode remover.
   submenuVeiculosAberto = false;
-
-  ngOnInit() {
-    this.atualizarGrafico();
-
-    // 🔒 Sidebar inicia fechado em telas pequenas
-    if (window.innerWidth <= 800) {
-      this.isClosed = true;
-      this.fecharTodosSubmenus();
-    }
-
-    // 🔒 Listener responsivo
-    window.addEventListener('resize', () => {
-      if (window.innerWidth <= 800) {
-        this.isClosed = true;
-        this.fecharTodosSubmenus();
-      }
-    });
-  }
-
-  // --------------------------
-  // SIDEBAR TOGGLE
-  // --------------------------
-  toggleSidebar() {
-    if (window.innerWidth <= 800) {
-      this.isClosed = true;
-      this.fecharTodosSubmenus();
-      return;
-    }
-
-    this.isClosed = !this.isClosed;
-
-    // fecha submenus automaticamente se a sidebar fechar
-    if (this.isClosed) {
-      this.fecharTodosSubmenus();
-    }
-  }
-
-  private fecharTodosSubmenus() {
-    this.submenuOficinaAberto = false;
-    this.submenuIntegracoesAberto = false;
-    this.submenuAdministracaoAberto = false;
-    this.submenuVeiculosAberto = false; // caso ainda exista
-  }
-
-  // --------------------------
-  // SUBMENUS (não abre se sidebar fechada)
-  // --------------------------
-  toggleSubmenuOficina() {
-    if (this.isClosed) return;
-    this.submenuOficinaAberto = !this.submenuOficinaAberto;
-  }
-
-  toggleSubmenuIntegracoes() {
-    if (this.isClosed) return;
-    this.submenuIntegracoesAberto = !this.submenuIntegracoesAberto;
-  }
-
-  toggleSubmenuAdministracao() {
-    if (this.isClosed) return;
-    this.submenuAdministracaoAberto = !this.submenuAdministracaoAberto;
-  }
-
-  // (Opcional legado)
-  toggleSubmenuVeiculos() {
-    if (this.isClosed) return;
-    this.submenuVeiculosAberto = !this.submenuVeiculosAberto;
-  }
-
-  logout() {
-    // coloque sua lógica real aqui (ex: AuthService.logout() + navigate)
-    console.log('logout');
-  }
 
   // --------------------------
   // DADOS DO DASHBOARD
@@ -130,6 +64,30 @@ export class Dashboard {
     },
   };
 
+  ngOnInit() {
+    // ✅ carrega usuário logado (nome + perfil) pra sidebar/header
+    this.authUser.loadMe().subscribe({
+      error: () => {
+        // se quiser tratar: token inválido, redirecionar login etc.
+      },
+    });
+
+    this.atualizarGrafico();
+
+    // 🔒 Sidebar inicia fechado em telas pequenas
+    if (window.innerWidth <= 800) {
+      this.isClosed = true;
+      this.fecharTodosSubmenus();
+    }
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 800) {
+        this.isClosed = true;
+        this.fecharTodosSubmenus();
+      }
+    });
+  }
+
   atualizarGrafico() {
     const dados: any[] = [];
     const dias = this.periodoSelecionado;
@@ -149,5 +107,58 @@ export class Dashboard {
     }
 
     this.chart.data = dados;
+  }
+
+  // --------------------------
+  // SIDEBAR TOGGLE
+  // --------------------------
+  toggleSidebar() {
+    if (window.innerWidth <= 800) {
+      this.isClosed = true;
+      this.fecharTodosSubmenus();
+      return;
+    }
+
+    this.isClosed = !this.isClosed;
+
+    if (this.isClosed) {
+      this.fecharTodosSubmenus();
+    }
+  }
+
+  private fecharTodosSubmenus() {
+    this.submenuOficinaAberto = false;
+    this.submenuIntegracoesAberto = false;
+    this.submenuAdministracaoAberto = false;
+    this.submenuVeiculosAberto = false;
+  }
+
+  // --------------------------
+  // SUBMENUS (não abre se sidebar fechada)
+  // --------------------------
+  toggleSubmenuOficina() {
+    if (this.isClosed) return;
+    this.submenuOficinaAberto = !this.submenuOficinaAberto;
+  }
+
+  toggleSubmenuIntegracoes() {
+    if (this.isClosed) return;
+    this.submenuIntegracoesAberto = !this.submenuIntegracoesAberto;
+  }
+
+  toggleSubmenuAdministracao() {
+    if (this.isClosed) return;
+    this.submenuAdministracaoAberto = !this.submenuAdministracaoAberto;
+  }
+
+  toggleSubmenuVeiculos() {
+    if (this.isClosed) return;
+    this.submenuVeiculosAberto = !this.submenuVeiculosAberto;
+  }
+
+  logout() {
+    // aqui você chamaria AuthService.logout + navigate
+    console.log('logout');
+    this.authUser.clear();
   }
 }
