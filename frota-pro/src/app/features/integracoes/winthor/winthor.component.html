@@ -1,0 +1,265 @@
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-head">
+    <div class="titles">
+      <h2 class="page-title">Integração WinThor</h2>
+      <p class="subtitle">Configuração da sincronização com o ERP WinThor</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="aba === 'CONFIG'" (click)="setAba('CONFIG')">
+      <i class="fas fa-sliders-h"></i>
+      Configuração
+    </button>
+
+    <button class="tab" [class.active]="aba === 'HIST'" (click)="setAba('HIST')">
+      <i class="fas fa-clock"></i>
+      Histórico
+    </button>
+  </div>
+
+  <!-- =========================
+       ABA CONFIGURAÇÃO
+       ========================= -->
+  <ng-container *ngIf="aba === 'CONFIG'">
+
+    <!-- Status da Integração -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <i class="fas fa-plug"></i>
+          <div>
+            <div class="h">Status da Integração</div>
+            <div class="s">Conexão com o banco de dados Oracle do WinThor</div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <span class="pill" [ngClass]="pillClassIntegracao()">{{ pillStatusIntegracao() }}</span>
+
+          <label class="switch" title="Ativar/Desativar">
+            <input type="checkbox" [(ngModel)]="config.ativo" />
+            <span class="slider"></span>
+          </label>
+
+          <button class="btn-secondary" type="button" (click)="testarIntegracao()">
+            <i class="fas fa-play"></i>
+            Testar
+          </button>
+        </div>
+      </div>
+
+      <div class="status-grid">
+        <div class="kv">
+          <div class="k">Ambiente</div>
+          <div class="v">{{ status.ambiente }}</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Banco</div>
+          <div class="v">{{ status.banco }}</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Conectado</div>
+          <div class="v">
+            <span class="pill" [ngClass]="{ 'pill-success': status.conectado, 'pill-danger': !status.conectado }">
+              {{ status.conectado ? 'SIM' : 'NÃO' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Latência</div>
+          <div class="v mono">{{ status.latenciaMs }} ms</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Última verificação</div>
+          <div class="v">{{ status.ultimaVerificacao | date:'dd/MM/yy HH:mm' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dados para sincronizar -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <i class="fas fa-sync"></i>
+          <div>
+            <div class="h">Dados para Sincronizar</div>
+            <div class="s">Selecione quais dados serão importados do WinThor</div>
+          </div>
+        </div>
+
+        <div class="inline">
+          <label class="muted">Intervalo de sincronização (minutos)</label>
+          <input class="input-mini" type="number" min="1" [(ngModel)]="config.intervaloMin" />
+        </div>
+      </div>
+
+      <div class="sync-grid">
+        <div class="sync-item">
+          <div class="sync-left">
+            <div class="sync-ico"><i class="fas fa-truck"></i></div>
+            <div>
+              <div class="sync-title">Caminhões</div>
+              <div class="sync-sub">PVEICUL</div>
+            </div>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="config.syncCaminhoes" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="sync-item">
+          <div class="sync-left">
+            <div class="sync-ico"><i class="fas fa-user"></i></div>
+            <div>
+              <div class="sync-title">Motoristas</div>
+              <div class="sync-sub">PCMOTORISTA</div>
+            </div>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="config.syncMotoristas" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="sync-item">
+          <div class="sync-left">
+            <div class="sync-ico"><i class="fas fa-box"></i></div>
+            <div>
+              <div class="sync-title">Cargas</div>
+              <div class="sync-sub">PCCARREG</div>
+            </div>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="config.syncCargas" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="card-foot">
+        <button class="btn-add" type="button" (click)="salvarConfiguracao()">
+          <i class="fas fa-save"></i>
+          Salvar Configuração
+        </button>
+      </div>
+    </div>
+
+    <!-- Endpoint -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <i class="fas fa-link"></i>
+          <div>
+            <div class="h">Endpoint da API</div>
+            <div class="s">Configure seu middleware para enviar dados para este endpoint</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint">
+        <div class="endpoint-line">
+          <span class="method">POST</span>
+          <span class="path">{{ config.endpointPath }}</span>
+        </div>
+
+        <div class="payload">
+          <div class="payload-title">Payload esperado</div>
+          <pre class="code">{{ payloadEsperado }}</pre>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- =========================
+       ABA HISTÓRICO
+       ========================= -->
+  <ng-container *ngIf="aba === 'HIST'">
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <i class="fas fa-clock"></i>
+          <div>
+            <div class="h">Histórico de Sincronizações</div>
+            <div class="s">Registros de execuções (sucesso, falha, duração e volume)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar no histórico..." />
+
+        <select [(ngModel)]="filtroTipo">
+          <option value="">Todos tipos</option>
+          <option value="CAMINHOES">Caminhões</option>
+          <option value="MOTORISTAS">Motoristas</option>
+          <option value="CARGAS">Cargas</option>
+        </select>
+
+        <select [(ngModel)]="filtroStatus">
+          <option value="">Todos status</option>
+          <option value="SUCESSO">SUCESSO</option>
+          <option value="FALHA">FALHA</option>
+          <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+          <tr>
+            <th>Data/Hora</th>
+            <th>Tipo</th>
+            <th>Status</th>
+            <th class="num">Registros</th>
+            <th class="num">Duração</th>
+            <th>Mensagem</th>
+          </tr>
+          </thead>
+
+          <tbody>
+          <tr *ngFor="let l of logsFiltrados">
+            <td class="mono">{{ l.dt | date:'dd/MM/yy HH:mm' }}</td>
+
+            <td>
+                <span class="pill pill-type">
+                  <i [class]="iconForTipo(l.tipo)"></i>
+                  {{ labelTipo(l.tipo) }}
+                </span>
+            </td>
+
+            <td>
+              <span class="pill" [ngClass]="pillClassLog(l.status)">{{ l.status }}</span>
+            </td>
+
+            <td class="num mono">{{ l.registros ?? '—' }}</td>
+            <td class="num mono">{{ l.duracaoMs != null ? (l.duracaoMs + ' ms') : '—' }}</td>
+
+            <td class="truncate">{{ l.mensagem || '—' }}</td>
+          </tr>
+
+          <tr *ngIf="logsFiltrados.length === 0">
+            <td colspan="6" class="empty">Nenhum log encontrado.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </ng-container>
+
+</div>

@@ -1,0 +1,185 @@
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-head">
+    <div class="titles">
+      <h2 class="page-title">Usuários</h2>
+      <p class="subtitle">Gerencie usuários e permissões do sistema</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn-add" type="button" (click)="openAddModal()">
+        <i class="fas fa-plus"></i>
+        Novo Usuário
+      </button>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-card">
+    <div class="search">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Buscar por nome ou email..."
+      />
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-head">
+      <div class="h">Usuários Cadastrados</div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Roles</th>
+          <th>Status</th>
+          <th>Cadastrado em</th>
+          <th class="actions-col">Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr *ngFor="let u of usuariosFiltrados; trackBy: trackById">
+          <td class="strong">{{ u.nome }}</td>
+          <td class="muted">{{ u.email }}</td>
+
+          <td class="roles">
+              <span class="role-pill" *ngFor="let r of u.roles" [ngClass]="rolePillClass(r)">
+                {{ roleLabel(r) }}
+              </span>
+          </td>
+
+          <td>
+            <span class="pill" [ngClass]="statusClass(u.status)">{{ u.status === 'ATIVO' ? 'Ativo' : 'Inativo' }}</span>
+          </td>
+
+          <td class="mono">{{ u.cadastradoEm | date:'dd/MM/yyyy' }}</td>
+
+          <td class="actions">
+            <button class="icon-btn" title="Resetar senha" (click)="resetarSenha(u)">
+              <i class="fas fa-key"></i>
+            </button>
+
+            <button class="icon-btn" title="Ativar/Inativar" (click)="alternarStatus(u)">
+              <i class="fas" [ngClass]="u.status === 'ATIVO' ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
+            </button>
+
+            <button class="icon-btn edit" title="Editar" (click)="openEditModal(u)">
+              <i class="fas fa-pen"></i>
+            </button>
+
+            <button class="icon-btn danger" title="Excluir" (click)="excluir(u.id)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="usuariosFiltrados.length === 0">
+          <td colspan="6" class="empty">Nenhum usuário encontrado.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-head">
+        <h3>{{ isEditing ? 'Editar Usuário' : 'Novo Usuário' }}</h3>
+        <p>Defina dados do usuário, status e permissões (roles).</p>
+      </div>
+
+      <form class="modal-form" (ngSubmit)="salvar()">
+
+        <div class="form-row">
+          <div>
+            <label>Nome</label>
+            <input type="text" [(ngModel)]="form.nome" name="nome" required />
+          </div>
+
+          <div>
+            <label>Email</label>
+            <input type="email" [(ngModel)]="form.email" name="email" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Status</label>
+            <select [(ngModel)]="form.status" name="status">
+              <option value="ATIVO">ATIVO</option>
+              <option value="INATIVO">INATIVO</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Telefone</label>
+            <input type="text" [(ngModel)]="form.telefone" name="telefone" placeholder="Opcional" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Cargo</label>
+            <input type="text" [(ngModel)]="form.cargo" name="cargo" placeholder="Opcional" />
+          </div>
+
+          <div>
+            <label>Observação</label>
+            <input type="text" [(ngModel)]="form.observacao" name="observacao" placeholder="Opcional" />
+          </div>
+        </div>
+
+        <!-- Senha inicial (apenas quando criar) -->
+        <div class="info-box" *ngIf="!isEditing">
+          <div class="info-title">Senha inicial (mock)</div>
+          <div class="info-sub">
+            Depois você pode trocar por “convite via e-mail”. Por enquanto, já gera uma senha.
+          </div>
+          <input type="text" [(ngModel)]="form.senhaInicial" name="senhaInicial" />
+        </div>
+
+        <!-- Roles -->
+        <div class="roles-box">
+          <div class="roles-title">Roles do usuário</div>
+          <div class="roles-sub">Selecione as permissões que esse usuário terá no sistema.</div>
+
+          <div class="roles-grid">
+            <button
+              type="button"
+              class="role-card"
+              *ngFor="let r of rolesDisponiveis"
+              [class.active]="roleMarcado(r.key)"
+              (click)="toggleRole(r.key)"
+            >
+              <div class="role-head">
+                <span class="role-name">{{ r.label }}</span>
+                <span class="role-mark">
+                  <i class="fas" [ngClass]="roleMarcado(r.key) ? 'fa-check' : 'fa-plus'"></i>
+                </span>
+              </div>
+              <div class="role-desc">{{ r.desc }}</div>
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" type="button" (click)="closeModal()">Cancelar</button>
+          <button class="btn-save" type="submit">{{ isEditing ? 'Salvar' : 'Cadastrar' }}</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>

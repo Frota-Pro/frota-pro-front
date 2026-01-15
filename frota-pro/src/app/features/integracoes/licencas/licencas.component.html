@@ -1,0 +1,196 @@
+<div class="page">
+
+  <!-- header -->
+  <div class="page-head">
+    <div class="titles">
+      <h2 class="page-title">Licenças</h2>
+      <p class="subtitle">Gerencie as licenças do sistema</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn-add" type="button" (click)="openAddModal()">
+        <i class="fas fa-plus"></i>
+        Nova Licença
+      </button>
+    </div>
+  </div>
+
+  <!-- cards -->
+  <div class="cards-row">
+    <div class="kpi-card">
+      <div class="kpi-ico gray"><i class="fas fa-key"></i></div>
+      <div class="kpi-info">
+        <div class="kpi-value">{{ total }}</div>
+        <div class="kpi-label">Total</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-ico green"><i class="fas fa-check"></i></div>
+      <div class="kpi-info">
+        <div class="kpi-value">{{ validas }}</div>
+        <div class="kpi-label">Válidas</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-ico amber"><i class="fas fa-calendar-alt"></i></div>
+      <div class="kpi-info">
+        <div class="kpi-value">{{ expiradas }}</div>
+        <div class="kpi-label">Expiradas</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-ico red"><i class="fas fa-times"></i></div>
+      <div class="kpi-info">
+        <div class="kpi-value">{{ invalidas }}</div>
+        <div class="kpi-label">Inválidas</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- filtros -->
+  <div class="filters-row">
+    <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por chave, empresa, plano..." />
+
+    <select [(ngModel)]="filtroStatus">
+      <option value="">Todos status</option>
+      <option value="VALIDA">VALIDA</option>
+      <option value="EXPIRADA">EXPIRADA</option>
+      <option value="INVALIDA">INVALIDA</option>
+      <option value="REVOGADA">REVOGADA</option>
+    </select>
+  </div>
+
+  <!-- tabela -->
+  <div class="card">
+    <div class="card-head">
+      <div class="h">Licenças Cadastradas</div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Chave</th>
+          <th>Empresa</th>
+          <th>Status</th>
+          <th>Expiração</th>
+          <th>Validação</th>
+          <th>Criado em</th>
+          <th class="actions-col">Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr *ngFor="let l of licencasFiltradas; trackBy: trackById">
+          <td class="mono strong">{{ l.chave }}</td>
+          <td class="truncate">{{ l.empresa }}</td>
+
+          <td>
+            <span class="pill" [ngClass]="pillClass(l.status)">{{ l.status }}</span>
+          </td>
+
+          <td class="mono">{{ l.expiraEm ? (l.expiraEm | date:'dd/MM/yy') : '—' }}</td>
+          <td class="mono">{{ l.validadaEm ? (l.validadaEm | date:'dd/MM/yy HH:mm') : '—' }}</td>
+          <td class="mono">{{ l.criadaEm | date:'dd/MM/yy HH:mm' }}</td>
+
+          <td class="actions">
+            <button class="icon-btn" title="Validar agora" (click)="validarAgora(l)">
+              <i class="fas fa-bolt"></i>
+            </button>
+
+            <button class="icon-btn edit" title="Editar" (click)="openEditModal(l)">
+              <i class="fas fa-pen"></i>
+            </button>
+
+            <button class="icon-btn danger" title="Excluir" (click)="excluir(l.id)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="licencasFiltradas.length === 0">
+          <td colspan="7" class="empty">Nenhuma licença cadastrada.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-head">
+        <h3>{{ isEditing ? 'Editar Licença' : 'Nova Licença' }}</h3>
+        <p>Cadastre a chave, empresa e parâmetros de uso.</p>
+      </div>
+
+      <form class="modal-form" (ngSubmit)="salvar()">
+
+        <div class="form-row">
+          <div>
+            <label>Chave</label>
+            <input type="text" [(ngModel)]="form.chave" name="chave" placeholder="Ex: FROTA-XXXX-YYYY-ZZZZ" required />
+          </div>
+
+          <div>
+            <label>Empresa</label>
+            <input type="text" [(ngModel)]="form.empresa" name="empresa" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Plano</label>
+            <select [(ngModel)]="form.plano" name="plano">
+              <option *ngFor="let p of planos" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Expira em</label>
+            <input type="date" [(ngModel)]="form.expiraEm" name="expiraEm" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Limite de usuários</label>
+            <input type="number" min="1" [(ngModel)]="form.limiteUsuarios" name="limiteUsuarios" />
+          </div>
+
+          <div>
+            <label>Observação</label>
+            <input type="text" [(ngModel)]="form.observacao" name="observacao" placeholder="Opcional" />
+          </div>
+        </div>
+
+        <div class="mods">
+          <div class="mods-title">Módulos liberados</div>
+          <div class="mods-grid">
+            <button
+              type="button"
+              class="mod-chip"
+              *ngFor="let m of modulosDisponiveis"
+              [class.active]="isModuloMarcado(m)"
+              (click)="toggleModulo(m)"
+            >
+              <i class="fas" [ngClass]="isModuloMarcado(m) ? 'fa-check' : 'fa-plus'"></i>
+              {{ m }}
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" type="button" (click)="closeModal()">Cancelar</button>
+          <button class="btn-save" type="submit">{{ isEditing ? 'Salvar' : 'Cadastrar' }}</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>

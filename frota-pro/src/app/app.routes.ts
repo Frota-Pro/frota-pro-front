@@ -90,6 +90,32 @@ export const routes: Routes = [
             .then(m => m.PneusVidaUtilComponent),
       },
 
+      {
+        path: 'integracoes/winthor',
+        loadComponent: () =>
+          import('./features/integracoes/winthor/winthor.component')
+            .then(m => m.WinthorComponent),
+      },
+
+      {
+        path: 'integracoes/licencas',
+        loadComponent: () =>
+          import('./features/integracoes/licencas/licencas.component').then(m => m.LicencasComponent),
+      },
+
+      {
+        path: 'admin/usuarios',
+        loadComponent: () =>
+          import('./features/admin/usuarios/usuarios.component').then(m => m.UsuariosComponent),
+      },
+
+      {
+        path: 'admin/logs',
+        loadComponent: () =>
+          import('./features/admin/logs/logs.component').then(m => m.LogsComponent),
+      },
+
+
     ],
   },
 ];
