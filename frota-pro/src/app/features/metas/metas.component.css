@@ -4,6 +4,35 @@
 .page-title { margin:0; font-size:18px; font-weight:800; color:#0f172a; }
 .subtitle { margin:3px 0 0; font-size:12.5px; color: rgba(15,23,42,.60); }
 
+.state{
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid rgba(15,23,42,.10);
+  background: rgba(15,23,42,.03);
+  color: rgba(15,23,42,.80);
+  font-weight:700;
+}
+.state.error{
+  background: rgba(239,68,68,.08);
+  border-color: rgba(239,68,68,.18);
+  color: rgba(127,29,29,.95);
+}
+
+.btn{
+  border:1px solid rgba(15,23,42,.12);
+  background:#fff;
+  color:#0f172a;
+  font-weight:800;
+  font-size:13px;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+}
+.btn:disabled{ opacity:.6; cursor:not-allowed; }
+
 .actions { display:flex; gap:8px; align-items:center; }
 .btn-add {
   border:0; background:#2563eb; color:#fff; font-weight:700; font-size:13px;
@@ -43,6 +72,9 @@
 .strong{ font-weight:800; }
 .truncate{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 320px; }
 .mono{ font-variant-numeric: tabular-nums; font-weight:700; }
+.muted{ color: rgba(15,23,42,.55); font-weight:700; font-size:12px; }
+.click{ cursor:pointer; }
+.row:hover td{ background: rgba(15,23,42,.015); }
 
 .actions-col{ text-align:right; }
 .actions{ text-align:right; white-space:nowrap; }
@@ -96,6 +128,17 @@
   padding:18px !important;
   color: rgba(15,23,42,.55);
 }
+
+.pager{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px;
+  border-top:1px solid rgba(15,23,42,.06);
+  background: rgba(15,23,42,.02);
+}
+.pager-actions{ display:flex; align-items:center; gap:10px; }
 
 /* Modal */
 .modal-overlay{

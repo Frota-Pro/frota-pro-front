@@ -1,0 +1,346 @@
+<div class="detail-page">
+
+  <div class="topbar">
+    <button class="btn ghost" type="button" (click)="voltar()">
+      <i class="fas fa-arrow-left"></i>
+      Voltar
+    </button>
+
+    <div class="topbar-actions" *ngIf="data">
+      <button class="btn" type="button" (click)="editar()">
+        <i class="fas fa-pen"></i>
+        Editar
+      </button>
+
+      <button class="btn danger" type="button" (click)="excluir()">
+        <i class="fas fa-trash"></i>
+        Excluir
+      </button>
+    </div>
+  </div>
+
+  <div class="state" *ngIf="loading">Carregando detalhamento...</div>
+  <div class="state error" *ngIf="!loading && errorMsg">{{ errorMsg }}</div>
+
+  <ng-container *ngIf="!loading && !errorMsg && data as m">
+
+    <!-- Header -->
+    <div class="header-card">
+      <div class="header-left">
+        <div class="title-row">
+          <h2 class="title">{{ m.tipoMeta || 'Meta' }}</h2>
+
+          <span class="pill"
+                [class.pill-success]="(m.statusMeta || '').toUpperCase() === 'EM_ANDAMENTO'"
+                [class.pill-muted]="(m.statusMeta || '').toUpperCase() !== 'EM_ANDAMENTO'">
+            {{ (m.statusMeta || 'EM_ANDAMENTO').toUpperCase() }}
+          </span>
+        </div>
+
+        <p class="subtitle" *ngIf="m.descricao; else noDesc">
+          {{ m.descricao }}
+        </p>
+        <ng-template #noDesc>
+          <p class="subtitle muted">Sem descrição</p>
+        </ng-template>
+
+        <div class="meta-line">
+          <div class="chip">
+            <i class="fas fa-calendar"></i>
+            <span class="mono">{{ formatDateBr(m.dataIncio) }}</span>
+            <span class="muted">até</span>
+            <span class="mono">{{ formatDateBr(m.dataFim) }}</span>
+          </div>
+
+          <div class="chip" *ngIf="m.unidade">
+            <i class="fas fa-tag"></i>
+            <span class="mono">{{ m.unidade }}</span>
+          </div>
+
+          <div class="chip" *ngIf="m.renovarAutomaticamente">
+            <i class="fas fa-rotate"></i>
+            <span>Renova automaticamente</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-label">Realizado</div>
+            <div class="kpi-value mono">{{ formatNumber(m.valorRealizado, 2) }}</div>
+            <div class="kpi-sub muted">{{ m.unidade || '—' }}</div>
+          </div>
+
+          <div class="kpi">
+            <div class="kpi-label">Meta</div>
+            <div class="kpi-value mono">{{ formatNumber(m.valorMeta, 2) }}</div>
+            <div class="kpi-sub muted">{{ m.unidade || '—' }}</div>
+          </div>
+
+          <div class="kpi">
+            <div class="kpi-label">Progresso</div>
+            <div class="kpi-value mono">{{ formatNumber(progressPercent(), 0) }}%</div>
+            <div class="kpi-sub muted">calculado</div>
+          </div>
+        </div>
+
+        <div class="progress">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="progressPercent()"></div>
+          </div>
+          <div class="progress-caption muted">
+            {{ formatNumber(m.valorRealizado, 2) }} / {{ formatNumber(m.valorMeta, 2) }} {{ m.unidade || '' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Escopo -->
+    <div class="scope-card">
+      <h3>Escopo</h3>
+
+      <div class="scope-grid">
+        <div class="scope-item">
+          <div class="scope-icon">🚚</div>
+          <div class="scope-body">
+            <div class="scope-title">Caminhão</div>
+            <div class="scope-value" *ngIf="m.caminhaoCodigo; else semCaminhao">
+              <span class="mono">{{ m.caminhaoCodigo }}</span>
+              <span class="muted">— {{ m.caminhaoDescricao || 'Sem descrição' }}</span>
+            </div>
+            <ng-template #semCaminhao>
+              <div class="scope-empty">Não vinculado</div>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="scope-item">
+          <div class="scope-icon">🏷️</div>
+          <div class="scope-body">
+            <div class="scope-title">Categoria</div>
+            <div class="scope-value" *ngIf="m.categoriaCodigo; else semCategoria">
+              <span class="mono">{{ m.categoriaCodigo }}</span>
+              <span class="muted">— {{ m.categoriaDescricao || 'Sem descrição' }}</span>
+            </div>
+            <ng-template #semCategoria>
+              <div class="scope-empty">Não vinculado</div>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="scope-item">
+          <div class="scope-icon">👤</div>
+          <div class="scope-body">
+            <div class="scope-title">Motorista</div>
+            <div class="scope-value" *ngIf="m.motoristaCodigo; else semMotorista">
+              <span class="mono">{{ m.motoristaCodigo }}</span>
+              <span class="muted">— {{ m.motoristaDescricao || 'Sem descrição' }}</span>
+            </div>
+            <ng-template #semMotorista>
+              <div class="scope-empty">Não vinculado</div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab" [class.active]="tab==='resumo'" (click)="setTab('resumo')">
+        <i class="fas fa-chart-line"></i>
+        Resumo
+      </button>
+      <button class="tab" [class.active]="tab==='historico'" (click)="setTab('historico')">
+        <i class="fas fa-clock-rotate-left"></i>
+        Histórico do escopo
+      </button>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="tab-card" *ngIf="tab==='resumo'">
+      <h3>Resumo</h3>
+
+      <div class="resume-grid">
+        <div class="resume-item">
+          <div class="resume-label">Status</div>
+          <div class="resume-value mono">{{ (m.statusMeta || '—') }}</div>
+        </div>
+
+        <div class="resume-item">
+          <div class="resume-label">Tipo</div>
+          <div class="resume-value mono">{{ m.tipoMeta || '—' }}</div>
+        </div>
+
+        <div class="resume-item">
+          <div class="resume-label">Renovação</div>
+          <div class="resume-value">{{ m.renovarAutomaticamente ? 'Automática' : 'Manual' }}</div>
+        </div>
+
+        <div class="resume-item">
+          <div class="resume-label">Período</div>
+          <div class="resume-value mono">{{ formatDateBr(m.dataIncio) }} - {{ formatDateBr(m.dataFim) }}</div>
+        </div>
+      </div>
+
+      <div class="tips">
+        <div class="tips-title">Sugestões</div>
+        <ul>
+          <li *ngIf="progressPercent() < 50">Acompanhe o realizado com mais frequência para evitar ficar abaixo da meta.</li>
+          <li *ngIf="progressPercent() >= 50 && progressPercent() < 100">Meta em andamento com bom progresso. Mantenha o ritmo.</li>
+          <li *ngIf="progressPercent() >= 100">Meta atingida. Você pode finalizar quando desejar.</li>
+          <li *ngIf="(m.statusMeta || '').toUpperCase() !== 'FINALIZADA'">Finalize a meta quando o período encerrar e os valores estiverem consolidados.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tab-card" *ngIf="tab==='historico'">
+      <div class="hist-head">
+        <h3>Histórico</h3>
+        <button class="btn" type="button" (click)="carregarHistorico()" [disabled]="histLoading">
+          <i class="fas fa-rotate"></i>
+          Atualizar
+        </button>
+      </div>
+
+      <div class="state" *ngIf="histLoading">Carregando histórico...</div>
+
+      <div class="hist-table" *ngIf="!histLoading">
+        <table>
+          <thead>
+          <tr>
+            <th>Período</th>
+            <th>Tipo</th>
+            <th>Meta</th>
+            <th>Realizado</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+          </thead>
+
+          <tbody>
+          <tr *ngFor="let h of historico">
+            <td class="mono">{{ formatDateBr(h.dataIncio) }} - {{ formatDateBr(h.dataFim) }}</td>
+            <td class="strong">{{ h.tipoMeta }}</td>
+            <td class="mono">{{ formatNumber(h.valorMeta, 2) }} <span class="muted">{{ h.unidade }}</span></td>
+            <td class="mono">{{ formatNumber(h.valorRealizado, 2) }} <span class="muted">{{ h.unidade }}</span></td>
+            <td>
+              <span class="pill small"
+                    [class.pill-success]="(h.statusMeta || '').toUpperCase() === 'EM_ANDAMENTO'"
+                    [class.pill-muted]="(h.statusMeta || '').toUpperCase() !== 'EM_ANDAMENTO'">
+                {{ (h.statusMeta || '—').toUpperCase() }}
+              </span>
+            </td>
+            <td class="right">
+              <button class="btn tiny" type="button" (click)="abrirMeta(h.id)">
+                Abrir
+                <i class="fas fa-up-right-from-square"></i>
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="historico.length === 0">
+            <td colspan="6" class="empty">Nenhum histórico encontrado para este escopo no período.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- MODAL EDIÇÃO -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEdit()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-head">
+        <h3>Editar Meta</h3>
+      </div>
+
+      <form class="modal-form" (ngSubmit)="salvarEdicao()">
+        <div class="form-row">
+          <div>
+            <label>Tipo</label>
+            <input type="text" [(ngModel)]="editForm.tipoMeta" name="tipoMeta" required />
+          </div>
+
+          <div>
+            <label>Status</label>
+            <select [(ngModel)]="editForm.statusMeta" name="statusMeta">
+              <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
+              <option value="FINALIZADA">FINALIZADA</option>
+              <option value="CANCELADA">CANCELADA</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Data Início</label>
+            <input type="date" [(ngModel)]="editForm.dataIncio" name="dataIncio" required />
+          </div>
+
+          <div>
+            <label>Data Fim</label>
+            <input type="date" [(ngModel)]="editForm.dataFim" name="dataFim" required />
+          </div>
+        </div>
+
+        <div class="form-row three">
+          <div>
+            <label>Valor Meta</label>
+            <input type="number" step="0.01" [(ngModel)]="editForm.valorMeta" name="valorMeta" />
+          </div>
+
+          <div>
+            <label>Valor Realizado</label>
+            <input type="number" step="0.01" [(ngModel)]="editForm.valorRealizado" name="valorRealizado" />
+          </div>
+
+          <div>
+            <label>Unidade</label>
+            <input type="text" [(ngModel)]="editForm.unidade" name="unidade" placeholder="Ex: M/LT" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Caminhão (código)</label>
+            <input type="text" [(ngModel)]="editForm.caminhao" name="caminhao" />
+          </div>
+
+          <div>
+            <label>Categoria (código)</label>
+            <input type="text" [(ngModel)]="editForm.categoria" name="categoria" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Motorista (código)</label>
+            <input type="text" [(ngModel)]="editForm.motorista" name="motorista" />
+          </div>
+
+          <div class="checkbox-row">
+            <input type="checkbox" [(ngModel)]="editForm.renovarAutomaticamente" name="renovarAutomaticamente" />
+            <span>Renovar automaticamente</span>
+          </div>
+        </div>
+
+        <div>
+          <label>Descrição</label>
+          <input type="text" [(ngModel)]="editForm.descricao" name="descricao" />
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" type="button" (click)="closeEdit()">Cancelar</button>
+          <button class="btn-save" type="submit" [disabled]="saving">
+            {{ saving ? 'Salvando...' : 'Salvar alterações' }}
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+</div>

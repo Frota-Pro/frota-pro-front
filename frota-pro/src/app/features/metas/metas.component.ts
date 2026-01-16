@@ -1,86 +1,97 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 
-type UUID = string;
+import { MetaApiService } from '../../core/api/meta-api.service';
+import { MetaRequest, MetaResponse } from '../../core/api/meta-api.models';
+import { PageResponse } from '../../core/api/page.models';
 
 type StatusMeta = 'ATIVA' | 'FINALIZADA' | 'CANCELADA' | 'EM_ANDAMENTO' | string;
-
-interface Meta {
-  id: UUID;
-  dataInicio?: string;
-  dataFim?: string;
-  tipoMeta?: string;
-  valorMeta?: number;
-  valorRealizado?: number;
-  unidade?: string;
-  statusMeta?: StatusMeta;
-  descricao?: string;
-  caminhao?: { id: UUID; placa: string } | null;
-  categoria?: { id: UUID; nome: string } | null;
-  motorista?: { id: UUID; nome: string } | null;
-  renovarAutomaticamente: boolean;
-}
 
 @Component({
   selector: 'app-metas',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './metas.component.html',
   styleUrls: ['./metas.component.css'],
 })
-export class MetasComponent {
-  // filtros (layout novo)
+export class MetasComponent implements OnInit {
+  // filtros
   searchTerm = '';
   filtroStatus: '' | 'ATIVA' | 'FINALIZADA' = '';
 
+  // paginação
+  page = 0;
+  size = 10;
+  totalPages = 0;
+  totalElements = 0;
+
+  // estados
+  loading = false;
+  errorMsg: string | null = null;
+
+  // dados
+  metas: MetaResponse[] = [];
+
   // modal/form
-  showAddModal = false;
-  editando = false;
-  editingId: UUID | null = null;
+  showModal = false;
+  saving = false;
+  editing: MetaResponse | null = null;
 
-  novaMeta: Meta | null = null;
+  form: MetaRequest = {
+    dataIncio: '',
+    dataFim: '',
+    tipoMeta: '',
+    valorMeta: 0,
+    valorRealizado: 0,
+    unidade: null,
+    statusMeta: 'EM_ANDAMENTO',
+    descricao: null,
+    caminhao: null,
+    categoria: null,
+    motorista: null,
+    renovarAutomaticamente: false,
+  };
 
-  // mock
-  metas: Meta[] = [
-    {
-      id: 'meta-1',
-      dataInicio: '2026-01-09',
-      dataFim: '2026-02-08',
-      tipoMeta: 'Consumo Combustível',
-      valorMeta: 3.5,
-      valorRealizado: 2.8,
-      unidade: 'km/L',
-      statusMeta: 'ATIVA',
-      descricao: 'Meta de consumo',
-      caminhao: { id: 'c1', placa: 'ABC-1234' },
-      motorista: { id: 'm1', nome: 'João Silva' },
-      renovarAutomaticamente: true,
-    },
-  ];
+  constructor(private api: MetaApiService, private router: Router) {}
 
-  // UUID seguro
-  private gerarUUID(): string {
-    if (typeof crypto !== 'undefined' && (crypto as any).randomUUID) {
-      return (crypto as any).randomUUID();
-    }
-    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+  ngOnInit(): void {
+    this.carregar();
   }
 
-  trackById(_: number, item: Meta) {
-    return item.id;
+  carregar(): void {
+    this.loading = true;
+    this.errorMsg = null;
+
+    this.api
+      .listar({ page: this.page, size: this.size, sort: 'dataIncio,desc' })
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (p: PageResponse<MetaResponse>) => {
+          this.metas = p.content || [];
+          this.totalPages = p.totalPages ?? 0;
+          this.totalElements = p.totalElements ?? 0;
+        },
+        error: (err) => {
+          console.error(err);
+          this.metas = [];
+          this.totalPages = 0;
+          this.totalElements = 0;
+          this.errorMsg = 'Não foi possível carregar as metas.';
+        },
+      });
   }
 
-  // ===== Helpers de UI =====
-
-  getStatusLabel(m: Meta): string {
-    const s = (m.statusMeta || 'ATIVA').toString().toUpperCase();
+  // ===== filtros (client-side) =====
+  getStatusLabel(m: MetaResponse): string {
+    const s = (m.statusMeta || 'EM_ANDAMENTO').toString().toUpperCase();
     if (s === 'EM_ANDAMENTO') return 'ATIVA';
     return s;
   }
 
-  // 0..100
-  getProgressPercent(m: Meta): number {
+  getProgressPercent(m: MetaResponse): number {
     const meta = Number(m.valorMeta || 0);
     const atual = Number(m.valorRealizado || 0);
     if (!meta || meta <= 0) return 0;
@@ -88,27 +99,26 @@ export class MetasComponent {
     return Math.max(0, Math.min(100, pct));
   }
 
-  // ===== Filtros =====
-
-  get metasFiltradas(): Meta[] {
+  get metasFiltradas(): MetaResponse[] {
     const t = (this.searchTerm || '').toLowerCase().trim();
     const st = (this.filtroStatus || '').toUpperCase().trim();
 
-    return this.metas.filter((m) => {
-      // status
+    return (this.metas || []).filter((m) => {
       if (st) {
         const status = this.getStatusLabel(m);
         if (status !== st) return false;
       }
 
-      // busca
       if (t) {
         const hay = [
           m.tipoMeta || '',
           m.descricao || '',
-          m.caminhao?.placa || '',
-          m.motorista?.nome || '',
-          m.categoria?.nome || '',
+          m.caminhaoCodigo || '',
+          m.caminhaoDescricao || '',
+          m.motoristaCodigo || '',
+          m.motoristaDescricao || '',
+          m.categoriaCodigo || '',
+          m.categoriaDescricao || '',
         ]
           .join(' ')
           .toLowerCase();
@@ -120,73 +130,146 @@ export class MetasComponent {
     });
   }
 
-  // ===== Modal =====
+  // ===== navegação =====
+  abrirDetalhe(m: MetaResponse): void {
+    this.router.navigate(['/dashboard/metas', m.id]);
+  }
 
-  openAddModal() {
-    this.editando = false;
-    this.editingId = null;
+  // ===== paginação =====
+  prevPage(): void {
+    if (this.page <= 0) return;
+    this.page--;
+    this.carregar();
+  }
 
-    this.novaMeta = {
-      id: this.gerarUUID(),
-      dataInicio: new Date().toISOString().slice(0, 10),
-      dataFim: new Date().toISOString().slice(0, 10),
+  nextPage(): void {
+    if (this.page >= this.totalPages - 1) return;
+    this.page++;
+    this.carregar();
+  }
+
+  // ===== modal =====
+  openAdd(): void {
+    this.editing = null;
+    const today = new Date().toISOString().slice(0, 10);
+    this.form = {
+      dataIncio: today,
+      dataFim: today,
       tipoMeta: '',
       valorMeta: 0,
       valorRealizado: 0,
-      unidade: '',
-      statusMeta: 'ATIVA',
-      descricao: '',
+      unidade: 'M/LT',
+      statusMeta: 'EM_ANDAMENTO',
+      descricao: null,
       caminhao: null,
       categoria: null,
       motorista: null,
       renovarAutomaticamente: false,
     };
-
-    this.showAddModal = true;
+    this.showModal = true;
   }
 
-  closeAddModal() {
-    this.showAddModal = false;
-    this.editando = false;
-    this.editingId = null;
-    this.novaMeta = null;
+  openEdit(m: MetaResponse): void {
+    this.editing = m;
+    this.form = {
+      dataIncio: m.dataIncio,
+      dataFim: m.dataFim,
+      tipoMeta: m.tipoMeta,
+      valorMeta: Number(m.valorMeta || 0),
+      valorRealizado: Number(m.valorRealizado || 0),
+      unidade: m.unidade || null,
+      statusMeta: (m.statusMeta || 'EM_ANDAMENTO') as StatusMeta,
+      descricao: m.descricao || null,
+      caminhao: m.caminhaoCodigo || null,
+      categoria: m.categoriaCodigo || null,
+      motorista: m.motoristaCodigo || null,
+      renovarAutomaticamente: !!m.renovarAutomaticamente,
+    };
+    this.showModal = true;
   }
 
-  editarMeta(m: Meta) {
-    this.editando = true;
-    this.editingId = m.id;
-    this.novaMeta = JSON.parse(JSON.stringify(m));
-    this.showAddModal = true;
+  closeModal(): void {
+    this.showModal = false;
+    this.saving = false;
+    this.editing = null;
   }
 
-  salvarMeta() {
-    if (!this.novaMeta) return;
+  salvar(): void {
+    if (!this.form.tipoMeta?.trim()) return alert('Informe o tipo da meta.');
+    if (!this.form.dataIncio || !this.form.dataFim) return alert('Informe o período.');
 
-    // validações mínimas
-    if (!this.novaMeta.tipoMeta) {
-      alert('Informe o tipo da meta.');
-      return;
-    }
-    if (!this.novaMeta.dataInicio || !this.novaMeta.dataFim) {
-      alert('Informe o período.');
-      return;
-    }
+    this.saving = true;
 
-    if (this.editando && this.editingId) {
-      this.metas = this.metas.map((m) => (m.id === this.editingId ? this.novaMeta! : m));
-    } else {
-      this.metas.unshift(this.novaMeta);
-    }
+    const req: MetaRequest = {
+      ...this.form,
+      caminhao: this.emptyToNull(this.form.caminhao),
+      categoria: this.emptyToNull(this.form.categoria),
+      motorista: this.emptyToNull(this.form.motorista),
+      unidade: this.emptyToNull(this.form.unidade),
+      descricao: this.emptyToNull(this.form.descricao),
+    };
 
-    this.closeAddModal();
+    const obs = this.editing
+      ? this.api.atualizar(this.editing.id, req)
+      : this.api.criar(req);
+
+    obs
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: () => {
+          this.closeModal();
+          this.carregar();
+        },
+        error: (err) => {
+          console.error(err);
+          alert('Não foi possível salvar a meta.');
+        },
+      });
   }
 
-  finalizarMeta(m: Meta) {
-    m.statusMeta = 'FINALIZADA';
+  concluir(m: MetaResponse): void {
+    if (!confirm('Concluir esta meta?')) return;
+
+    const req: MetaRequest = {
+      dataIncio: m.dataIncio,
+      dataFim: m.dataFim,
+      tipoMeta: m.tipoMeta,
+      valorMeta: Number(m.valorMeta || 0),
+      valorRealizado: Number(m.valorRealizado || 0),
+      unidade: m.unidade || null,
+      statusMeta: 'FINALIZADA',
+      descricao: m.descricao || null,
+      caminhao: m.caminhaoCodigo || null,
+      categoria: m.categoriaCodigo || null,
+      motorista: m.motoristaCodigo || null,
+      renovarAutomaticamente: !!m.renovarAutomaticamente,
+    };
+
+    this.loading = true;
+    this.api
+      .atualizar(m.id, req)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => this.carregar(),
+        error: () => alert('Não foi possível concluir a meta.'),
+      });
   }
 
-  excluirMeta(id: UUID) {
+  excluir(m: MetaResponse): void {
     if (!confirm('Tem certeza que deseja excluir esta meta?')) return;
-    this.metas = this.metas.filter((m) => m.id !== id);
+    this.loading = true;
+    this.api
+      .deletar(m.id)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => this.carregar(),
+        error: () => alert('Não foi possível excluir a meta.'),
+      });
+  }
+
+  private emptyToNull(v: any): any {
+    if (v === undefined || v === null) return null;
+    const s = String(v).trim();
+    return s ? v : null;
   }
 }

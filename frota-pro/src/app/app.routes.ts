@@ -64,6 +64,13 @@ export const routes: Routes = [
       },
 
       {
+        path: 'metas/:id',
+        loadComponent: () =>
+          import('./features/metas/meta-detalhe/meta-detalhe.component')
+            .then(m => m.MetaDetalheComponent),
+      },
+
+      {
         path: 'relatorios',
         loadComponent: () =>
           import('./features/relatorios/relatorios.component').then((m) => m.RelatoriosComponent),

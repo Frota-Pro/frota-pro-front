@@ -8,7 +8,7 @@
     </div>
 
     <div class="actions">
-      <button class="btn-add" type="button" (click)="openAddModal()">
+      <button class="btn-add" type="button" (click)="openAdd()">
         <i class="fas fa-plus"></i>
         Nova Meta
       </button>
@@ -20,7 +20,7 @@
     <input
       type="text"
       [(ngModel)]="searchTerm"
-      placeholder="Buscar por tipo, caminhão ou motorista..."
+      placeholder="Buscar por tipo, caminhão, categoria ou motorista..."
     />
 
     <select [(ngModel)]="filtroStatus">
@@ -28,16 +28,24 @@
       <option value="ATIVA">Ativas</option>
       <option value="FINALIZADA">Finalizadas</option>
     </select>
+
+    <button class="btn" type="button" (click)="carregar()" [disabled]="loading">
+      <i class="fas fa-rotate"></i>
+      Atualizar
+    </button>
   </div>
 
+  <div class="state" *ngIf="loading">Carregando...</div>
+  <div class="state error" *ngIf="!loading && errorMsg">{{ errorMsg }}</div>
+
   <!-- Lista -->
-  <div class="card">
+  <div class="card" *ngIf="!loading && !errorMsg">
     <div class="table-wrap">
       <table class="table">
         <thead>
         <tr>
           <th>Tipo</th>
-          <th>Caminhão/Motorista</th>
+          <th>Escopo</th>
           <th>Período</th>
           <th>Progresso</th>
           <th>Status</th>
@@ -46,16 +54,23 @@
         </thead>
 
         <tbody>
-        <tr *ngFor="let m of metasFiltradas; trackBy: trackById">
-          <td class="strong">{{ m.tipoMeta || '—' }}</td>
-
-          <td class="truncate">
-            {{ m.caminhao?.placa || '—' }}
-            <span *ngIf="m.motorista?.nome"> / {{ m.motorista?.nome }}</span>
+        <tr *ngFor="let m of metasFiltradas" (dblclick)="abrirDetalhe(m)" class="row">
+          <td class="strong">
+            <div class="click" (click)="abrirDetalhe(m)">
+              {{ m.tipoMeta || '—' }}
+            </div>
+            <div class="muted" *ngIf="m.descricao">{{ m.descricao }}</div>
           </td>
 
-          <td>
-            {{ (m.dataInicio || '') | date:'dd/MM/yy' }} -
+          <td class="truncate">
+            <div *ngIf="m.caminhaoCodigo">🚚 <span class="mono">{{ m.caminhaoCodigo }}</span> <span class="muted">{{ m.caminhaoDescricao }}</span></div>
+            <div *ngIf="m.categoriaCodigo">🏷️ <span class="mono">{{ m.categoriaCodigo }}</span> <span class="muted">{{ m.categoriaDescricao }}</span></div>
+            <div *ngIf="m.motoristaCodigo">👤 <span class="mono">{{ m.motoristaCodigo }}</span> <span class="muted">{{ m.motoristaDescricao }}</span></div>
+            <div *ngIf="!m.caminhaoCodigo && !m.categoriaCodigo && !m.motoristaCodigo">—</div>
+          </td>
+
+          <td class="mono">
+            {{ (m.dataIncio || '') | date:'dd/MM/yy' }} -
             {{ (m.dataFim || '') | date:'dd/MM/yy' }}
           </td>
 
@@ -64,12 +79,10 @@
               <div class="progress-info">
                 <span class="mono">{{ m.valorRealizado ?? 0 }}</span>
                 <span class="mono">{{ m.valorMeta ?? 0 }}</span>
+                <span class="muted">{{ m.unidade }}</span>
               </div>
               <div class="progress-bar">
-                <div
-                  class="progress-fill"
-                  [style.width.%]="getProgressPercent(m)"
-                ></div>
+                <div class="progress-fill" [style.width.%]="getProgressPercent(m)"></div>
               </div>
             </div>
           </td>
@@ -85,7 +98,11 @@
           </td>
 
           <td class="actions">
-            <button class="icon-btn edit" type="button" title="Editar" (click)="editarMeta(m)">
+            <button class="icon-btn" type="button" title="Abrir" (click)="abrirDetalhe(m)">
+              <i class="fas fa-up-right-from-square"></i>
+            </button>
+
+            <button class="icon-btn edit" type="button" title="Editar" (click)="openEdit(m)">
               <i class="fas fa-pen"></i>
             </button>
 
@@ -94,12 +111,12 @@
               type="button"
               title="Concluir"
               *ngIf="getStatusLabel(m) === 'ATIVA'"
-              (click)="finalizarMeta(m)"
+              (click)="concluir(m)"
             >
               <i class="fas fa-check"></i>
             </button>
 
-            <button class="icon-btn danger" type="button" title="Excluir" (click)="excluirMeta(m.id)">
+            <button class="icon-btn danger" type="button" title="Excluir" (click)="excluir(m)">
               <i class="fas fa-trash"></i>
             </button>
           </td>
@@ -111,27 +128,40 @@
         </tbody>
       </table>
     </div>
+
+    <!-- paginação -->
+    <div class="pager">
+      <div class="muted">
+        {{ totalElements }} registros
+      </div>
+
+      <div class="pager-actions">
+        <button class="btn" type="button" (click)="prevPage()" [disabled]="page<=0 || loading">Anterior</button>
+        <span class="mono">Página {{ page + 1 }} / {{ totalPages || 1 }}</span>
+        <button class="btn" type="button" (click)="nextPage()" [disabled]="page>=totalPages-1 || loading">Próxima</button>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL -->
-  <div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
     <div class="modal-card" (click)="$event.stopPropagation()">
 
       <div class="modal-head">
-        <h3>{{ editando ? 'Editar Meta' : 'Nova Meta' }}</h3>
+        <h3>{{ editing ? 'Editar Meta' : 'Nova Meta' }}</h3>
       </div>
 
-      <form class="modal-form" (ngSubmit)="salvarMeta()">
+      <form class="modal-form" (ngSubmit)="salvar()">
         <div class="form-row">
           <div>
             <label>Tipo</label>
-            <input type="text" [(ngModel)]="novaMeta!.tipoMeta" name="tipoMeta" required />
+            <input type="text" [(ngModel)]="form.tipoMeta" name="tipoMeta" required />
           </div>
 
           <div>
             <label>Status</label>
-            <select [(ngModel)]="novaMeta!.statusMeta" name="statusMeta">
-              <option value="ATIVA">ATIVA</option>
+            <select [(ngModel)]="form.statusMeta" name="statusMeta">
+              <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
               <option value="FINALIZADA">FINALIZADA</option>
               <option value="CANCELADA">CANCELADA</option>
             </select>
@@ -141,61 +171,66 @@
         <div class="form-row">
           <div>
             <label>Data Início</label>
-            <input type="date" [(ngModel)]="novaMeta!.dataInicio" name="dataInicio" required />
+            <input type="date" [(ngModel)]="form.dataIncio" name="dataIncio" required />
           </div>
 
           <div>
             <label>Data Fim</label>
-            <input type="date" [(ngModel)]="novaMeta!.dataFim" name="dataFim" required />
+            <input type="date" [(ngModel)]="form.dataFim" name="dataFim" required />
           </div>
         </div>
 
         <div class="form-row">
           <div>
             <label>Valor Meta</label>
-            <input type="number" step="0.01" [(ngModel)]="novaMeta!.valorMeta" name="valorMeta" />
+            <input type="number" step="0.01" [(ngModel)]="form.valorMeta" name="valorMeta" />
           </div>
 
           <div>
             <label>Valor Realizado</label>
-            <input type="number" step="0.01" [(ngModel)]="novaMeta!.valorRealizado" name="valorRealizado" />
+            <input type="number" step="0.01" [(ngModel)]="form.valorRealizado" name="valorRealizado" />
           </div>
 
           <div>
             <label>Unidade</label>
-            <input type="text" [(ngModel)]="novaMeta!.unidade" name="unidade" placeholder="Ex: L, km/L, R$" />
+            <input type="text" [(ngModel)]="form.unidade" name="unidade" placeholder="Ex: M/LT" />
           </div>
         </div>
 
         <div class="form-row">
           <div>
-            <label>Caminhão (placa)</label>
-            <input type="text" [(ngModel)]="novaMeta!.caminhao!.placa" name="caminhaoPlaca"
-                   (ngModelChange)="novaMeta!.caminhao = { id: novaMeta!.caminhao?.id || 'tmp', placa: $event }"
-                   placeholder="Ex: ABC-1234" />
+            <label>Caminhão (código)</label>
+            <input type="text" [(ngModel)]="form.caminhao" name="caminhao" placeholder="Ex: CAM-000030" />
           </div>
 
           <div>
-            <label>Motorista</label>
-            <input type="text" [(ngModel)]="novaMeta!.motorista!.nome" name="motoristaNome"
-                   (ngModelChange)="novaMeta!.motorista = { id: novaMeta!.motorista?.id || 'tmp', nome: $event }"
-                   placeholder="Ex: João Silva" />
+            <label>Categoria (código)</label>
+            <input type="text" [(ngModel)]="form.categoria" name="categoria" placeholder="Ex: CAT-000001" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Motorista (código)</label>
+            <input type="text" [(ngModel)]="form.motorista" name="motorista" placeholder="Ex: MOT-000010" />
+          </div>
+
+          <div class="checkbox-row">
+            <input type="checkbox" [(ngModel)]="form.renovarAutomaticamente" name="renovarAutomaticamente" />
+            <span>Renovar automaticamente</span>
           </div>
         </div>
 
         <div>
           <label>Descrição</label>
-          <input type="text" [(ngModel)]="novaMeta!.descricao" name="descricao" placeholder="Opcional..." />
-        </div>
-
-        <div class="checkbox-row">
-          <input type="checkbox" [(ngModel)]="novaMeta!.renovarAutomaticamente" name="renovarAutomaticamente" />
-          <span>Renovar automaticamente</span>
+          <input type="text" [(ngModel)]="form.descricao" name="descricao" placeholder="Opcional..." />
         </div>
 
         <div class="modal-actions">
-          <button class="btn-cancel" type="button" (click)="closeAddModal()">Cancelar</button>
-          <button class="btn-save" type="submit">{{ editando ? 'Salvar' : 'Cadastrar' }}</button>
+          <button class="btn-cancel" type="button" (click)="closeModal()">Cancelar</button>
+          <button class="btn-save" type="submit" [disabled]="saving">
+            {{ saving ? 'Salvando...' : (editing ? 'Salvar' : 'Cadastrar') }}
+          </button>
         </div>
       </form>
 
