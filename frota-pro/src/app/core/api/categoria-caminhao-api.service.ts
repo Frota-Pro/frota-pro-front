@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
-import { CategoriaCaminhaoResponse } from './categoria-caminhao-api.models';
+import { CategoriaCaminhaoRequest, CategoriaCaminhaoResponse } from './categoria-caminhao-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class CategoriaCaminhaoApiService extends BaseApiService {
@@ -18,7 +18,12 @@ export class CategoriaCaminhaoApiService extends BaseApiService {
 
     return this.http.get<PageResponse<CategoriaCaminhaoResponse>>(`${this.apiUrl}/categorias-caminhao`, { params });
   }
+
   listarTodas() {
     return this.listar({ page: 0, size: 2000, sort: 'descricao,asc' });
+  }
+
+  criar(payload: CategoriaCaminhaoRequest) {
+    return this.http.post<CategoriaCaminhaoResponse>(`${this.apiUrl}/categorias-caminhao`, payload);
   }
 }

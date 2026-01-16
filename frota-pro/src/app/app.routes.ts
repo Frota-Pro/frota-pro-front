@@ -44,6 +44,13 @@ export const routes: Routes = [
       },
 
       {
+        path: 'caminhoes/:codigo',
+        loadComponent: () =>
+          import('./features/caminhoes/caminhao-detalhe/caminhao-detalhe.component')
+            .then(m => m.CaminhaoDetalheComponent),
+      },
+
+      {
         path: 'cargas',
         loadComponent: () =>
           import('./features/cargas/cargas-list/cargas-list.component')

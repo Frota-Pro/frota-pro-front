@@ -4,3 +4,8 @@ export interface CategoriaCaminhaoResponse {
   descricao: string;
   ativo: boolean;
 }
+
+export interface CategoriaCaminhaoRequest {
+  codigo: string;
+  descricao: string;
+}

@@ -1,310 +1,194 @@
 <div class="page">
-  <div class="page-header">
-    <div class="left">
+
+  <div class="header">
+    <div>
       <h1>Caminhões</h1>
-      <p>Gerencie sua frota: cadastro, edição, filtros e status.</p>
+      <p>Selecione caminhões, crie categorias e vincule em lote.</p>
     </div>
 
-    <div class="right">
-      <button class="btn primary" type="button" (click)="openAddModal()">
-        + Novo caminhão
-      </button>
-    </div>
-  </div>
-
-  <!-- ALERTAS -->
-  <div class="alerts" *ngIf="errorMsg">
-    <div class="alert error">
-      <span class="dot"></span>
-      <div class="content">
-        <strong>Ops!</strong>
-        <div>{{ errorMsg }}</div>
-      </div>
+    <div class="actions">
+      <button class="btn ghost" type="button" (click)="openCategoriaModal()">+ Nova categoria</button>
+      <button class="btn primary" type="button" (click)="openNovoCaminhao()">+ Novo caminhão</button>
     </div>
   </div>
 
-  <!-- TOOLBAR -->
   <div class="toolbar">
-    <div class="search">
-      <span class="icon">🔎</span>
-      <input
-        type="text"
-        [(ngModel)]="search"
-        placeholder="Buscar por placa, descrição, marca, modelo, código, categoria..."
-      />
-    </div>
+    <input class="search"
+           [(ngModel)]="search"
+           (keyup.enter)="page=0; carregarPagina()"
+           placeholder="Buscar por placa, descrição, marca, modelo, categoria..." />
 
-    <div class="filters">
-      <div class="field">
-        <label>Status</label>
-        <select [(ngModel)]="statusFilter">
-          <option *ngFor="let s of statusOpcoes" [ngValue]="s.value">
-            {{ s.label }}
-          </option>
-        </select>
-      </div>
+    <select [(ngModel)]="ativoFilter" class="select">
+      <option [ngValue]="'ATIVOS'">Ativos</option>
+      <option [ngValue]="'INATIVOS'">Inativos</option>
+      <option [ngValue]="'TODOS'">Todos</option>
+    </select>
 
-      <div class="field">
-        <label>Ativo</label>
-        <select [(ngModel)]="ativoFilter">
-          <option [ngValue]="'ATIVOS'">Ativos</option>
-          <option [ngValue]="'INATIVOS'">Inativos</option>
-          <option [ngValue]="'TODOS'">Todos</option>
-        </select>
-      </div>
+    <div class="bulk">
+      <select [(ngModel)]="categoriaSelecionada" class="select">
+        <option value="">Vincular categoria...</option>
+        <option *ngFor="let c of categorias" [value]="c.codigo">{{ c.descricao }} ({{ c.codigo }})</option>
+      </select>
 
-      <div class="field">
-        <label>Por página</label>
-        <select [ngModel]="size" (ngModelChange)="setPageSize($event)">
-          <option [ngValue]="10">10</option>
-          <option [ngValue]="20">20</option>
-          <option [ngValue]="50">50</option>
-        </select>
-      </div>
-
-      <button class="btn ghost" type="button" (click)="carregarPagina()">
-        Atualizar
+      <button class="btn" type="button" (click)="aplicarCategoria()">
+        Aplicar ({{ selected.size }})
       </button>
     </div>
+
+    <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
   </div>
 
-  <!-- RESUMO -->
-  <div class="summary">
-    <div class="pill">
-      <strong>{{ totalElements }}</strong>&nbsp; registros (API)
-    </div>
-    <div class="pill">
-      <strong>{{ filtered.length }}</strong>&nbsp; exibidos (filtros)
-    </div>
-    <div class="pill">
-      Página <strong>{{ page + 1 }}</strong> de <strong>{{ totalPages || 1 }}</strong>
-    </div>
-  </div>
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
 
-  <!-- LOADING -->
-  <div class="loading" *ngIf="loading">
-    <div class="spinner"></div>
-    <span>Carregando...</span>
-  </div>
-
-  <!-- LISTA -->
-  <div class="table-wrap" *ngIf="!loading">
-    <table class="table" *ngIf="filtered.length > 0; else emptyState">
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="filtered.length > 0; else emptyTpl">
       <thead>
       <tr>
+        <th class="col-check">
+          <input
+            type="checkbox"
+            (change)="toggleAll($any($event.target).checked)"
+            [checked]="selected.size > 0 && selected.size === filtered.length"
+          />
+        </th>
         <th>Código</th>
         <th>Placa</th>
         <th>Descrição</th>
-        <th>Marca / Modelo</th>
+        <th>Marca/Modelo</th>
         <th>Categoria</th>
-        <th>Licenciamento</th>
         <th>Status</th>
         <th class="col-actions">Ações</th>
       </tr>
       </thead>
 
       <tbody>
-      <tr *ngFor="let c of filtered">
-        <td>
-          <div class="code">
-            <span class="mono">{{ c.codigo }}</span>
-            <small *ngIf="c.codigoExterno" class="muted">Ext: {{ c.codigoExterno }}</small>
-          </div>
+      <tr *ngFor="let c of filtered" (dblclick)="abrirDetalhe(c)">
+        <td class="col-check" (click)="$event.stopPropagation()">
+          <input type="checkbox"
+                 [checked]="isSelected(c.codigo)"
+                 (change)="toggleOne(c.codigo, $any($event.target).checked)" />
         </td>
 
-        <td>
-          <span class="plate">{{ c.placa }}</span>
-        </td>
+        <td class="mono">{{ c.codigo }}</td>
+        <td class="plate">{{ c.placa }}</td>
 
         <td>
-          <div class="desc">
+          <div class="stack">
             <strong>{{ c.descricao }}</strong>
-            <small class="muted" *ngIf="c.cor">Cor: {{ c.cor }}</small>
+            <small class="muted" *ngIf="c.codigoExterno">Ext: {{ c.codigoExterno }}</small>
           </div>
         </td>
 
         <td>
-          <div class="mm">
+          <div class="stack">
             <strong>{{ c.marca }}</strong>
             <small class="muted">{{ c.modelo }}</small>
           </div>
         </td>
 
         <td>
-          <div class="cat">
-              <span class="tag" *ngIf="c.categoriaCodigo; else semCategoria">
-                {{ c.categoriaDescricao || c.categoriaCodigo }}
-              </span>
-            <ng-template #semCategoria>
-              <span class="muted">—</span>
-            </ng-template>
-          </div>
+          <span class="tag">{{ c.categoriaDescricao || '—' }}</span>
         </td>
 
         <td>
-          <span>{{ c.dtLicenciamento || '—' }}</span>
+          <span class="status" [class.inactive]="!c.ativo">{{ c.ativo ? 'ATIVO' : 'INATIVO' }}</span>
         </td>
 
-        <td>
-            <span class="badge" [ngClass]="badgeClass(c)">
-              {{ statusLabel(c.status || '') }}
-              <span class="muted" *ngIf="!c.ativo"> • Inativo</span>
-            </span>
-        </td>
+        <td class="row-actions" (click)="$event.stopPropagation()">
+          <button class="btn small" type="button" (click)="abrirDetalhe(c)">Ver</button>
 
-        <td class="actions">
-          <button class="btn small" type="button" (click)="openEditModal(c)">
-            Editar
-          </button>
-          <button class="btn small danger" type="button" (click)="excluir(c)">
+          <button *ngIf="c.ativo" class="btn small danger" type="button" (click)="inativar(c)">
             Inativar
+          </button>
+
+          <button *ngIf="!c.ativo" class="btn small" type="button" (click)="ativar(c)">
+            Ativar
           </button>
         </td>
       </tr>
       </tbody>
     </table>
 
-    <ng-template #emptyState>
+    <ng-template #emptyTpl>
       <div class="empty">
         <div class="icon">🚚</div>
         <h3>Nenhum caminhão encontrado</h3>
-        <p>Tente ajustar os filtros ou cadastre um novo caminhão.</p>
-        <button class="btn primary" type="button" (click)="openAddModal()">
-          + Cadastrar caminhão
-        </button>
+        <p>Cadastre um caminhão ou ajuste os filtros.</p>
       </div>
     </ng-template>
-  </div>
 
-  <!-- PAGINAÇÃO -->
-  <div class="pagination" *ngIf="!loading && totalPages > 0">
-    <button class="btn ghost" type="button" (click)="prevPage()" [disabled]="page <= 0">
-      ◀ Anterior
-    </button>
-
-    <div class="page-info">
-      Página <strong>{{ page + 1 }}</strong> de <strong>{{ totalPages }}</strong>
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn ghost" (click)="prevPage()" [disabled]="page <= 0">◀</button>
+      <div class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</div>
+      <button class="btn ghost" (click)="nextPage()" [disabled]="page + 1 >= totalPages">▶</button>
     </div>
-
-    <button
-      class="btn ghost"
-      type="button"
-      (click)="nextPage()"
-      [disabled]="page + 1 >= totalPages"
-    >
-      Próxima ▶
-    </button>
   </div>
 
-  <!-- MODAL -->
-  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()"></div>
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Carregando...</span>
+    </div>
+  </ng-template>
 
-  <div class="modal" *ngIf="showModal" role="dialog" aria-modal="true">
+  <!-- MODAL CATEGORIA -->
+  <div class="backdrop" *ngIf="showCategoriaModal" (click)="closeCategoriaModal()"></div>
+  <div class="modal" *ngIf="showCategoriaModal">
     <div class="modal-header">
-      <div class="title">
-        <h2>{{ isEditing ? 'Editar caminhão' : 'Novo caminhão' }}</h2>
-        <p class="muted">
-          Preencha os dados abaixo. Campos com <span class="req">*</span> são obrigatórios.
-        </p>
-      </div>
-
-      <button class="icon-btn" type="button" (click)="closeModal()" aria-label="Fechar">
-        ✕
-      </button>
+      <h2>Nova categoria</h2>
+      <button class="icon" (click)="closeCategoriaModal()">✕</button>
     </div>
 
     <div class="modal-body">
-      <div class="grid">
-        <div class="field">
-          <label>Código (somente leitura)</label>
-          <input type="text" [value]="form.codigo || '—'" disabled />
-        </div>
+      <label>Código</label>
+      <input [(ngModel)]="catForm.codigo" placeholder="Ex: CARRETA" />
 
-        <div class="field">
-          <label>Código externo</label>
-          <input type="text" [(ngModel)]="form.codigoExterno" placeholder="Ex: WIN-00123" />
-        </div>
+      <label>Descrição</label>
+      <input [(ngModel)]="catForm.descricao" placeholder="Ex: Carreta" />
 
-        <div class="field span-2">
-          <label>Descrição <span class="req">*</span></label>
-          <input type="text" [(ngModel)]="form.descricao" placeholder="Ex: Caminhão Baú 3/4" />
-        </div>
-
-        <div class="field">
-          <label>Marca <span class="req">*</span></label>
-          <input type="text" [(ngModel)]="form.marca" placeholder="Ex: Volvo" />
-        </div>
-
-        <div class="field">
-          <label>Modelo <span class="req">*</span></label>
-          <input type="text" [(ngModel)]="form.modelo" placeholder="Ex: FH 540" />
-        </div>
-
-        <div class="field">
-          <label>Placa <span class="req">*</span></label>
-          <input type="text" [(ngModel)]="form.placa" placeholder="Ex: ABC1D23" />
-        </div>
-
-        <div class="field">
-          <label>Cor</label>
-          <input type="text" [(ngModel)]="form.cor" placeholder="Ex: Branco" />
-        </div>
-
-        <div class="field">
-          <label>Categoria</label>
-          <select [(ngModel)]="form.categoriaCodigo">
-            <option value="">— Selecione —</option>
-            <option *ngFor="let cat of categorias" [value]="cat.codigo">
-              {{ cat.descricao }} ({{ cat.codigo }})
-            </option>
-          </select>
-          <small class="hint">
-            O back espera o <strong>código</strong> da categoria (ex: <span class="mono">CARRETA</span>).
-          </small>
-        </div>
-
-        <div class="field">
-          <label>Data de licenciamento</label>
-          <input type="date" [(ngModel)]="form.dtLicenciamentoISO" />
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="field">
-          <label>ANTT</label>
-          <input type="text" [(ngModel)]="form.antt" placeholder="Registro ANTT" />
-        </div>
-
-        <div class="field">
-          <label>Renavan</label>
-          <input type="text" [(ngModel)]="form.renavan" placeholder="Renavan" />
-        </div>
-
-        <div class="field span-2">
-          <label>Chassi</label>
-          <input type="text" [(ngModel)]="form.chassi" placeholder="Chassi" />
-        </div>
-
-        <div class="field">
-          <label>Tara (kg)</label>
-          <input type="text" [(ngModel)]="form.tara" placeholder="Ex: 7800" />
-        </div>
-
-        <div class="field">
-          <label>Peso máximo (kg)</label>
-          <input type="text" [(ngModel)]="form.maxPeso" placeholder="Ex: 23000" />
-        </div>
-      </div>
+      <small class="muted">O código é o que será enviado no caminhão: <span class="mono">categoria</span>.</small>
     </div>
 
     <div class="modal-footer">
-      <button class="btn ghost" type="button" (click)="closeModal()">
-        Cancelar
-      </button>
+      <button class="btn ghost" (click)="closeCategoriaModal()">Cancelar</button>
+      <button class="btn primary" (click)="salvarCategoria()">Salvar</button>
+    </div>
+  </div>
 
-      <button class="btn primary" type="button" (click)="salvar()" [disabled]="loading">
-        {{ loading ? 'Salvando...' : (isEditing ? 'Salvar alterações' : 'Cadastrar caminhão') }}
-      </button>
+  <!-- MODAL CAMINHÃO (simples) -->
+  <div class="backdrop" *ngIf="showCaminhaoModal" (click)="closeCaminhaoModal()"></div>
+  <div class="modal" *ngIf="showCaminhaoModal">
+    <div class="modal-header">
+      <h2>Novo caminhão</h2>
+      <button class="icon" (click)="closeCaminhaoModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <label>Descrição</label>
+      <input [(ngModel)]="form.descricao" placeholder="Ex: Caminhão Baú" />
+
+      <label>Marca</label>
+      <input [(ngModel)]="form.marca" placeholder="Ex: Volvo" />
+
+      <label>Modelo</label>
+      <input [(ngModel)]="form.modelo" placeholder="Ex: FH 540" />
+
+      <label>Placa</label>
+      <input [(ngModel)]="form.placa" placeholder="Ex: ABC1D23" />
+
+      <label>Categoria</label>
+      <select [(ngModel)]="form.categoria">
+        <option [ngValue]="null">—</option>
+        <option *ngFor="let c of categorias" [ngValue]="c.codigo">{{ c.descricao }} ({{ c.codigo }})</option>
+      </select>
+
+      <label>Licenciamento (dd/MM/yyyy)</label>
+      <input [(ngModel)]="form.dtLicenciamento" placeholder="Ex: 29/12/2025" />
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" (click)="closeCaminhaoModal()">Cancelar</button>
+      <button class="btn primary" (click)="salvarCaminhao()">Salvar</button>
     </div>
   </div>
 </div>

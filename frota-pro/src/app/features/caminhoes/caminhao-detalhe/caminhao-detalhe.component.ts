@@ -1,0 +1,274 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
+
+import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
+import { CategoriaCaminhaoApiService } from '../../../core/api/categoria-caminhao-api.service';
+import { CaminhaoDetalheResponse, CaminhaoRequest } from '../../../core/api/caminhao-api.models';
+import { CategoriaCaminhaoResponse } from '../../../core/api/categoria-caminhao-api.models';
+
+import { MetaApiService } from '../../../core/api/meta-api.service';
+import { MetaResponse } from '../../../core/api/meta-api.models';
+
+import { CargaApiService } from '../../../core/api/carga-api.service';
+import { CargaResponse } from '../../../core/api/carga-api.models';
+
+import { AbastecimentoApiService } from '../../../core/api/abastecimento-api.service';
+import { AbastecimentoResponse } from '../../../core/api/abastecimento-api.models';
+
+import { ManutencaoApiService } from '../../../core/api/manutencao-api.service';
+import { ManutencaoResponse } from '../../../core/api/manutencao-api.models';
+
+type TabKey = 'cargas' | 'abastecimentos' | 'os';
+
+@Component({
+  selector: 'app-caminhao-detalhe',
+  standalone: true,
+  imports: [CommonModule, RouterModule, FormsModule],
+  templateUrl: './caminhao-detalhe.component.html',
+  styleUrls: ['./caminhao-detalhe.component.css'],
+})
+export class CaminhaoDetalheComponent implements OnInit {
+  codigo!: string;
+
+  loading = false;
+  errorMsg: string | null = null;
+
+  data: CaminhaoDetalheResponse | null = null;
+  tab: TabKey = 'cargas';
+
+  // meta real
+  metaLoading = false;
+  meta: MetaResponse | null = null;
+
+  // histórico real
+  cargasLoading = false;
+  cargas: CargaResponse[] = [];
+
+  abLoading = false;
+  abastecimentos: AbastecimentoResponse[] = [];
+
+  osLoading = false;
+  manutencoes: ManutencaoResponse[] = [];
+
+  // categorias + modal editar
+  categorias: CategoriaCaminhaoResponse[] = [];
+  showEditModal = false;
+
+  editForm: CaminhaoRequest = {
+    descricao: '',
+    modelo: '',
+    marca: '',
+    placa: '',
+    categoria: null,
+    dtLicenciamento: null,
+    codigoExterno: null,
+    cor: null,
+    antt: null,
+    renavan: null,
+    chassi: null,
+    tara: null,
+    maxPeso: null
+  };
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private api: CaminhaoApiService,
+    private categoriaApi: CategoriaCaminhaoApiService,
+    private metaApi: MetaApiService,
+    private cargaApi: CargaApiService,
+    private abastecimentoApi: AbastecimentoApiService,
+    private manutencaoApi: ManutencaoApiService
+  ) {}
+
+  ngOnInit(): void {
+    this.codigo = String(this.route.snapshot.paramMap.get('codigo') || '');
+    if (!this.codigo) {
+      this.router.navigate(['/dashboard/caminhoes']);
+      return;
+    }
+
+    this.carregarCategorias();
+    this.carregarBase();
+    this.carregarMetaAtiva();
+    this.carregarTab(); // carrega a primeira tab
+  }
+
+  carregarCategorias(): void {
+    this.categoriaApi.listarTodas().subscribe({
+      next: (p) => (this.categorias = (p.content || []).filter(c => c.ativo !== false)),
+      error: () => (this.categorias = []),
+    });
+  }
+
+  carregarBase(): void {
+    this.loading = true;
+    this.errorMsg = null;
+
+    this.api
+      .detalhes(this.codigo)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (res) => (this.data = res),
+        error: (err) => {
+          console.error(err);
+          this.errorMsg = 'Não foi possível carregar o detalhamento do caminhão.';
+        },
+      });
+  }
+
+  // ---- META ATIVA (hoje) ----
+  carregarMetaAtiva(): void {
+    this.metaLoading = true;
+
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hojeLocal = `${yyyy}-${mm}-${dd}`; // YYYY-MM-DD
+
+    this.metaApi.metaAtivaCaminhao(this.codigo, hojeLocal)
+      .pipe(finalize(() => (this.metaLoading = false)))
+      .subscribe({
+        next: (m) => (this.meta = m),
+        error: () => (this.meta = null),
+      });
+  }
+
+
+  metaPercent(): number {
+    if (!this.meta) return 0;
+    const meta = Number(this.meta.valorMeta || 0);
+    const real = Number(this.meta.valorRealizado || 0);
+    if (meta <= 0) return 0;
+    const p = (real / meta) * 100;
+    return Math.max(0, Math.min(100, p));
+  }
+
+  // ---- TABS ----
+  setTab(t: TabKey) {
+    this.tab = t;
+    this.carregarTab();
+  }
+
+  carregarTab(): void {
+    if (this.tab === 'cargas') this.carregarCargas();
+    if (this.tab === 'abastecimentos') this.carregarAbastecimentos();
+    if (this.tab === 'os') this.carregarManutencoes();
+  }
+
+  carregarCargas(): void {
+    this.cargasLoading = true;
+    this.cargaApi.listarPorCaminhao(this.codigo, { page: 0, size: 10, sort: 'dtSaida,desc' })
+      .pipe(finalize(() => (this.cargasLoading = false)))
+      .subscribe({
+        next: (p) => (this.cargas = p.content || []),
+        error: () => (this.cargas = []),
+      });
+  }
+
+  carregarAbastecimentos(): void {
+    this.abLoading = true;
+    this.abastecimentoApi.listarPorCaminhao(this.codigo, { page: 0, size: 10, sort: 'dtAbastecimento,desc' })
+      .pipe(finalize(() => (this.abLoading = false)))
+      .subscribe({
+        next: (p) => (this.abastecimentos = p.content || []),
+        error: () => (this.abastecimentos = []),
+      });
+  }
+
+  carregarManutencoes(): void {
+    this.osLoading = true;
+    this.manutencaoApi.listarPorCaminhao(this.codigo, { page: 0, size: 10, sort: 'dataInicioManutencao,desc' })
+      .pipe(finalize(() => (this.osLoading = false)))
+      .subscribe({
+        next: (p) => (this.manutencoes = p.content || []),
+        error: () => (this.manutencoes = []),
+      });
+  }
+
+  // ---- UI ----
+  voltar(): void {
+    this.router.navigate(['/dashboard/caminhoes']);
+  }
+
+  // ---- EDITAR ----
+  editar(): void {
+    if (!this.data) return;
+
+    const c = this.data.caminhao;
+
+    this.editForm = {
+      codigoExterno: c.codigoExterno || null,
+      descricao: c.descricao || '',
+      modelo: c.modelo || '',
+      marca: c.marca || '',
+      placa: c.placa || '',
+      cor: c.cor || null,
+      antt: c.antt || null,
+      renavan: c.renavan || null,
+      chassi: c.chassi || null,
+      tara: c.tara ?? null,
+      maxPeso: c.maxPeso ?? null,
+      categoria: c.categoriaCodigo || null,
+      dtLicenciamento: c.dtLicenciamento || null,
+    };
+
+    this.showEditModal = true;
+  }
+
+  closeEdit(): void {
+    this.showEditModal = false;
+  }
+
+  salvarEdicao(): void {
+    if (!this.editForm.descricao?.trim()) return alert('Informe a descrição.');
+    if (!this.editForm.modelo?.trim()) return alert('Informe o modelo.');
+    if (!this.editForm.marca?.trim()) return alert('Informe a marca.');
+    if (!this.editForm.placa?.trim()) return alert('Informe a placa.');
+
+    this.loading = true;
+    this.api.atualizar(this.codigo, this.editForm)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => {
+          this.showEditModal = false;
+          this.carregarBase();
+        },
+        error: (err) => {
+          console.error(err);
+          alert('Não foi possível salvar as alterações.');
+        },
+      });
+  }
+
+  // ---- format helpers ----
+  formatBRL(v: number | null | undefined): string {
+    const n = Number(v || 0);
+    return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  formatNumber(v: number | null | undefined, dec = 0): string {
+    const n = Number(v || 0);
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+
+  formatDateTimeBr(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString('pt-BR');
+  }
+
+  statusLabel(s: string | null | undefined): string {
+    const v = (s || '').toUpperCase();
+    if (v === 'DISPONIVEL') return 'DISPONÍVEL';
+    if (v === 'EM_ROTA') return 'EM ROTA';
+    if (v === 'SINCRONIZADA') return 'SINCRONIZADA';
+    if (v === 'FINALIZADA') return 'FINALIZADA';
+    return s || '—';
+  }
+}

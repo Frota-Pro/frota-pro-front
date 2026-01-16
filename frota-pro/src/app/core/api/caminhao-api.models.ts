@@ -20,7 +20,6 @@ export interface CaminhaoResponse {
   categoriaCodigo?: string | null;
   categoriaDescricao?: string | null;
 
-  // API envia no padrão dd/MM/yyyy
   dtLicenciamento?: string | null;
 
   status?: StatusCaminhao | null;
@@ -41,8 +40,25 @@ export interface CaminhaoRequest {
   tara?: number | null;
   maxPeso?: number | null;
 
-  categoria?: string | null;
+  categoria?: string | null; // CODIGO da categoria
+  dtLicenciamento?: string | null; // dd/MM/yyyy
+}
 
-  // dd/MM/yyyy
-  dtLicenciamento?: string | null;
+export interface CaminhaoDetalheResponse {
+  caminhao: CaminhaoResponse;
+
+  totalCargas: number;
+  cargasFinalizadas: number;
+
+  combustivelLitros: number;
+  combustivelValor: number;
+
+  pesoTransportado: number;
+
+  ordensServicoAbertas: number;
+}
+
+export interface VincularCategoriaCaminhaoEmLoteRequest {
+  categoriaCodigo: string;
+  caminhoesCodigo: string[];
 }

@@ -1,0 +1,372 @@
+<div class="wrap" *ngIf="data as d; else loadingTpl">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="left">
+      <div class="title">
+        <h1>Caminhão {{ d.caminhao.placa }}</h1>
+        <p>{{ d.caminhao.marca }} {{ d.caminhao.modelo }}</p>
+      </div>
+    </div>
+
+    <div class="right">
+      <button class="btn ghost" type="button" (click)="voltar()">← Voltar</button>
+      <button class="btn primary" type="button" (click)="editar()">Editar</button>
+    </div>
+  </div>
+
+  <!-- ALERTA -->
+  <div class="alert error" *ngIf="errorMsg">
+    {{ errorMsg }}
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-head">
+        <span class="kpi-label">Total de Cargas</span>
+      </div>
+      <div class="kpi-value">{{ d.totalCargas }}</div>
+      <div class="kpi-sub">{{ d.cargasFinalizadas }} finalizadas</div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-head">
+        <span class="kpi-label">Combustível</span>
+      </div>
+      <div class="kpi-value">
+        {{ formatNumber(d.combustivelLitros, 1) }} L
+      </div>
+      <div class="kpi-sub">{{ formatBRL(d.combustivelValor) }}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-head">
+        <span class="kpi-label">Peso Transportado</span>
+      </div>
+      <div class="kpi-value">{{ formatNumber(d.pesoTransportado, 3) }} kg</div>
+      <div class="kpi-sub">Somatório das cargas</div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-head">
+        <span class="kpi-label">Ordens de Serviço</span>
+      </div>
+      <div class="kpi-value">{{ d.ordensServicoAbertas }}</div>
+      <div class="kpi-sub">Abertas</div>
+    </div>
+  </div>
+
+  <!-- INFO CARDS -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Informações Básicas</div>
+
+      <div class="info-grid">
+        <div class="info">
+          <span class="label">Placa</span>
+          <span class="value">{{ d.caminhao.placa }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Modelo</span>
+          <span class="value">{{ d.caminhao.marca }} {{ d.caminhao.modelo }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Categoria</span>
+          <span class="value">{{ d.caminhao.categoriaDescricao || '—' }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Status</span>
+          <span class="badge active">{{ statusLabel(d.caminhao.status || '') }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Código Interno</span>
+          <span class="value mono">{{ d.caminhao.codigo }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Código Externo</span>
+          <span class="value mono">{{ d.caminhao.codigoExterno || '—' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Especificações Técnicas</div>
+
+      <div class="info-grid">
+        <div class="info">
+          <span class="label">Tara</span>
+          <span class="value">{{ d.caminhao.tara ?? '—' }} kg</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Peso Máximo</span>
+          <span class="value">{{ d.caminhao.maxPeso ?? '—' }} kg</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Renavan</span>
+          <span class="value">{{ d.caminhao.renavan || '—' }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">ANTT</span>
+          <span class="value">{{ d.caminhao.antt || '—' }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Chassi</span>
+          <span class="value">{{ d.caminhao.chassi || '—' }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Licenciamento</span>
+          <span class="value">{{ d.caminhao.dtLicenciamento || '—' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- METAS (REAL) -->
+  <div class="card">
+    <div class="card-title">Metas</div>
+
+    <div class="meta-box" *ngIf="meta as m; else metaEmpty">
+      <div class="meta-head">
+        <div class="meta-name">{{ m.tipoMeta }}</div>
+        <span class="badge ok">{{ m.statusMeta }}</span>
+      </div>
+
+      <div class="meta-sub">{{ m.descricao || 'Progresso' }}</div>
+
+      <div class="progress">
+        <div class="bar" [style.width.%]="metaPercent()"></div>
+      </div>
+
+      <div class="meta-foot">
+        <span>{{ formatNumber(m.valorRealizado, 2) }} {{ m.unidade }}</span>
+        <span>{{ formatNumber(m.valorMeta, 2) }} {{ m.unidade }}</span>
+      </div>
+    </div>
+
+    <ng-template #metaEmpty>
+      <div class="empty small">
+        <div class="txt">
+          <span *ngIf="metaLoading">Carregando meta...</span>
+          <span *ngIf="!metaLoading">Nenhuma meta ativa para hoje</span>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- HISTÓRICO (REAL) -->
+  <div class="card">
+    <div class="card-title">Histórico Operacional</div>
+
+    <div class="tabs">
+      <button class="tab" [class.active]="tab==='cargas'" (click)="setTab('cargas')">Cargas</button>
+      <button class="tab" [class.active]="tab==='abastecimentos'" (click)="setTab('abastecimentos')">Abastecimentos</button>
+      <button class="tab" [class.active]="tab==='os'" (click)="setTab('os')">OS</button>
+    </div>
+
+    <!-- CARGAS -->
+    <div *ngIf="tab==='cargas'">
+      <div class="subloading" *ngIf="cargasLoading">Carregando cargas...</div>
+
+      <table class="mini-table" *ngIf="!cargasLoading && cargas.length > 0; else cargasEmpty">
+        <thead>
+        <tr>
+          <th>Nº</th>
+          <th>Saída</th>
+          <th>Status</th>
+          <th>Peso</th>
+          <th>Motorista</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let c of cargas">
+          <td class="mono">{{ c.numeroCarga }}</td>
+          <td>{{ c.dtSaida || '—' }}</td>
+          <td><span class="tag">{{ c.statusCarga }}</span></td>
+          <td>{{ formatNumber(c.pesoCarga, 3) }} kg</td>
+          <td>{{ c.nomeMotorista || '—' }}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <ng-template #cargasEmpty>
+        <div class="empty small">
+          <div class="txt">Nenhuma carga encontrada</div>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- ABASTECIMENTOS -->
+    <div *ngIf="tab==='abastecimentos'">
+      <div class="subloading" *ngIf="abLoading">Carregando abastecimentos...</div>
+
+      <table class="mini-table" *ngIf="!abLoading && abastecimentos.length > 0; else abEmpty">
+        <thead>
+        <tr>
+          <th>Data</th>
+          <th>Litros</th>
+          <th>Total</th>
+          <th>Combustível</th>
+          <th>Posto</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let a of abastecimentos">
+          <td>{{ formatDateTimeBr(a.dtAbastecimento) }}</td>
+          <td>{{ formatNumber(a.qtLitros, 1) }} L</td>
+          <td>{{ formatBRL(a.valorTotal) }}</td>
+          <td><span class="tag">{{ a.tipoCombustivel || '—' }}</span></td>
+          <td>{{ a.posto || (a.cidade ? (a.cidade + '/' + (a.uf || '')) : '—') }}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <ng-template #abEmpty>
+        <div class="empty small">
+          <div class="txt">Nenhum abastecimento encontrado</div>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- MANUTENÇÕES / OS -->
+    <div *ngIf="tab==='os'">
+      <div class="subloading" *ngIf="osLoading">Carregando OS...</div>
+
+      <table class="mini-table" *ngIf="!osLoading && manutencoes.length > 0; else osEmpty">
+        <thead>
+        <tr>
+          <th>Código</th>
+          <th>Início</th>
+          <th>Status</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let m of manutencoes">
+          <td class="mono">{{ m.codigo }}</td>
+          <td>{{ m.dataInicioManutencao || '—' }}</td>
+          <td><span class="tag">{{ m.statusManutencao }}</span></td>
+          <td>{{ m.tipoManutencao }}</td>
+          <td>{{ formatBRL(m.valor || 0) }}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <ng-template #osEmpty>
+        <div class="empty small">
+          <div class="txt">Nenhuma ordem de serviço encontrada</div>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- MODAL EDIÇÃO -->
+  <div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEdit()"></div>
+
+  <div class="modal" *ngIf="showEditModal">
+    <div class="modal-header">
+      <h2>Editar caminhão</h2>
+      <button class="icon-btn" type="button" (click)="closeEdit()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="grid">
+        <div class="field span-2">
+          <label>Descrição *</label>
+          <input [(ngModel)]="editForm.descricao" />
+        </div>
+
+        <div class="field">
+          <label>Marca *</label>
+          <input [(ngModel)]="editForm.marca" />
+        </div>
+
+        <div class="field">
+          <label>Modelo *</label>
+          <input [(ngModel)]="editForm.modelo" />
+        </div>
+
+        <div class="field">
+          <label>Placa *</label>
+          <input [(ngModel)]="editForm.placa" />
+        </div>
+
+        <div class="field">
+          <label>Código Externo</label>
+          <input [(ngModel)]="editForm.codigoExterno" />
+        </div>
+
+        <div class="field">
+          <label>Categoria</label>
+          <select [(ngModel)]="editForm.categoria">
+            <option [ngValue]="null">—</option>
+            <option *ngFor="let cat of categorias" [ngValue]="cat.codigo">
+              {{ cat.descricao }} ({{ cat.codigo }})
+            </option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Licenciamento (dd/MM/yyyy)</label>
+          <input [(ngModel)]="editForm.dtLicenciamento" placeholder="29/12/2025" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label>ANTT</label>
+          <input [(ngModel)]="editForm.antt" />
+        </div>
+
+        <div class="field">
+          <label>Renavan</label>
+          <input [(ngModel)]="editForm.renavan" />
+        </div>
+
+        <div class="field span-2">
+          <label>Chassi</label>
+          <input [(ngModel)]="editForm.chassi" />
+        </div>
+
+        <div class="field">
+          <label>Tara (kg)</label>
+          <input [(ngModel)]="editForm.tara" />
+        </div>
+
+        <div class="field">
+          <label>Peso Máximo (kg)</label>
+          <input [(ngModel)]="editForm.maxPeso" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" type="button" (click)="closeEdit()">Cancelar</button>
+      <button class="btn primary" type="button" (click)="salvarEdicao()" [disabled]="loading">
+        {{ loading ? 'Salvando...' : 'Salvar' }}
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- TEMPLATE DE LOADING / ERRO -->
+<ng-template #loadingTpl>
+  <div class="state">
+    <div class="spinner"></div>
+    <span *ngIf="loading">Carregando...</span>
+    <span *ngIf="!loading && errorMsg" class="error">{{ errorMsg }}</span>
+    <span *ngIf="!loading && !errorMsg">Nenhum dado para exibir.</span>
+  </div>
+</ng-template>

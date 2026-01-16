@@ -122,7 +122,7 @@ export class DashboardHomeComponent implements OnInit {
 
   private formatKg(value: number | null): string {
     const v = value ?? 0;
-    return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(v)} kg`;
+    return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(v)} kg`;
   }
 
   private formatStatus(status: string | null): string {
