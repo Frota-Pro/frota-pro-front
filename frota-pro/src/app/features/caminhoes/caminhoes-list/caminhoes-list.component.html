@@ -2,75 +2,309 @@
   <div class="page-header">
     <div class="left">
       <h1>Caminhões</h1>
-      <p>Gestão da frota de caminhões</p>
+      <p>Gerencie sua frota: cadastro, edição, filtros e status.</p>
     </div>
 
-    <button class="primary-btn" type="button" (click)="novoCaminhao()">
-      <i class="fas fa-plus"></i>
-      Novo Caminhão
+    <div class="right">
+      <button class="btn primary" type="button" (click)="openAddModal()">
+        + Novo caminhão
+      </button>
+    </div>
+  </div>
+
+  <!-- ALERTAS -->
+  <div class="alerts" *ngIf="errorMsg">
+    <div class="alert error">
+      <span class="dot"></span>
+      <div class="content">
+        <strong>Ops!</strong>
+        <div>{{ errorMsg }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search">
+      <span class="icon">🔎</span>
+      <input
+        type="text"
+        [(ngModel)]="search"
+        placeholder="Buscar por placa, descrição, marca, modelo, código, categoria..."
+      />
+    </div>
+
+    <div class="filters">
+      <div class="field">
+        <label>Status</label>
+        <select [(ngModel)]="statusFilter">
+          <option *ngFor="let s of statusOpcoes" [ngValue]="s.value">
+            {{ s.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Ativo</label>
+        <select [(ngModel)]="ativoFilter">
+          <option [ngValue]="'ATIVOS'">Ativos</option>
+          <option [ngValue]="'INATIVOS'">Inativos</option>
+          <option [ngValue]="'TODOS'">Todos</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Por página</label>
+        <select [ngModel]="size" (ngModelChange)="setPageSize($event)">
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="20">20</option>
+          <option [ngValue]="50">50</option>
+        </select>
+      </div>
+
+      <button class="btn ghost" type="button" (click)="carregarPagina()">
+        Atualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- RESUMO -->
+  <div class="summary">
+    <div class="pill">
+      <strong>{{ totalElements }}</strong>&nbsp; registros (API)
+    </div>
+    <div class="pill">
+      <strong>{{ filtered.length }}</strong>&nbsp; exibidos (filtros)
+    </div>
+    <div class="pill">
+      Página <strong>{{ page + 1 }}</strong> de <strong>{{ totalPages || 1 }}</strong>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Carregando...</span>
+  </div>
+
+  <!-- LISTA -->
+  <div class="table-wrap" *ngIf="!loading">
+    <table class="table" *ngIf="filtered.length > 0; else emptyState">
+      <thead>
+      <tr>
+        <th>Código</th>
+        <th>Placa</th>
+        <th>Descrição</th>
+        <th>Marca / Modelo</th>
+        <th>Categoria</th>
+        <th>Licenciamento</th>
+        <th>Status</th>
+        <th class="col-actions">Ações</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let c of filtered">
+        <td>
+          <div class="code">
+            <span class="mono">{{ c.codigo }}</span>
+            <small *ngIf="c.codigoExterno" class="muted">Ext: {{ c.codigoExterno }}</small>
+          </div>
+        </td>
+
+        <td>
+          <span class="plate">{{ c.placa }}</span>
+        </td>
+
+        <td>
+          <div class="desc">
+            <strong>{{ c.descricao }}</strong>
+            <small class="muted" *ngIf="c.cor">Cor: {{ c.cor }}</small>
+          </div>
+        </td>
+
+        <td>
+          <div class="mm">
+            <strong>{{ c.marca }}</strong>
+            <small class="muted">{{ c.modelo }}</small>
+          </div>
+        </td>
+
+        <td>
+          <div class="cat">
+              <span class="tag" *ngIf="c.categoriaCodigo; else semCategoria">
+                {{ c.categoriaDescricao || c.categoriaCodigo }}
+              </span>
+            <ng-template #semCategoria>
+              <span class="muted">—</span>
+            </ng-template>
+          </div>
+        </td>
+
+        <td>
+          <span>{{ c.dtLicenciamento || '—' }}</span>
+        </td>
+
+        <td>
+            <span class="badge" [ngClass]="badgeClass(c)">
+              {{ statusLabel(c.status || '') }}
+              <span class="muted" *ngIf="!c.ativo"> • Inativo</span>
+            </span>
+        </td>
+
+        <td class="actions">
+          <button class="btn small" type="button" (click)="openEditModal(c)">
+            Editar
+          </button>
+          <button class="btn small danger" type="button" (click)="excluir(c)">
+            Inativar
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyState>
+      <div class="empty">
+        <div class="icon">🚚</div>
+        <h3>Nenhum caminhão encontrado</h3>
+        <p>Tente ajustar os filtros ou cadastre um novo caminhão.</p>
+        <button class="btn primary" type="button" (click)="openAddModal()">
+          + Cadastrar caminhão
+        </button>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- PAGINAÇÃO -->
+  <div class="pagination" *ngIf="!loading && totalPages > 0">
+    <button class="btn ghost" type="button" (click)="prevPage()" [disabled]="page <= 0">
+      ◀ Anterior
+    </button>
+
+    <div class="page-info">
+      Página <strong>{{ page + 1 }}</strong> de <strong>{{ totalPages }}</strong>
+    </div>
+
+    <button
+      class="btn ghost"
+      type="button"
+      (click)="nextPage()"
+      [disabled]="page + 1 >= totalPages"
+    >
+      Próxima ▶
     </button>
   </div>
 
-  <div class="card">
-    <div class="toolbar">
-      <div class="search">
-        <i class="fas fa-magnifying-glass"></i>
-        <input
-          type="text"
-          [(ngModel)]="search"
-          placeholder="Buscar por placa, modelo..."
-        />
+  <!-- MODAL -->
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()"></div>
+
+  <div class="modal" *ngIf="showModal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div class="title">
+        <h2>{{ isEditing ? 'Editar caminhão' : 'Novo caminhão' }}</h2>
+        <p class="muted">
+          Preencha os dados abaixo. Campos com <span class="req">*</span> são obrigatórios.
+        </p>
       </div>
 
-      <select class="select" [(ngModel)]="statusFilter">
-        <option value="Todos">Todos</option>
-        <option value="ATIVO">Ativo</option>
-        <option value="INATIVO">Inativo</option>
-      </select>
+      <button class="icon-btn" type="button" (click)="closeModal()" aria-label="Fechar">
+        ✕
+      </button>
     </div>
 
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-        <tr>
-          <th>Placa</th>
-          <th>Modelo</th>
-          <th>Categoria</th>
-          <th>Cód. Interno</th>
-          <th>Status</th>
-          <th class="actions-col">Ações</th>
-        </tr>
-        </thead>
+    <div class="modal-body">
+      <div class="grid">
+        <div class="field">
+          <label>Código (somente leitura)</label>
+          <input type="text" [value]="form.codigo || '—'" disabled />
+        </div>
 
-        <tbody>
-        <tr *ngFor="let c of filtered">
-          <td class="plate">{{ c.placa }}</td>
-          <td>{{ c.modelo }}</td>
-          <td>{{ c.categoria }}</td>
-          <td class="code">{{ c.id }}</td>
-          <td>
-              <span class="badge" [class.active]="c.status==='ATIVO'" [class.inactive]="c.status==='INATIVO'">
-                {{ c.status }}
-              </span>
-          </td>
-          <td class="actions">
-            <button class="icon-btn" type="button" (click)="ver(c)" title="Ver">
-              <i class="fas fa-eye"></i>
-            </button>
-            <button class="icon-btn" type="button" (click)="editar(c)" title="Editar">
-              <i class="fas fa-pen"></i>
-            </button>
-            <button class="icon-btn danger" type="button" (click)="excluir(c)" title="Excluir">
-              <i class="fas fa-trash"></i>
-            </button>
-          </td>
-        </tr>
+        <div class="field">
+          <label>Código externo</label>
+          <input type="text" [(ngModel)]="form.codigoExterno" placeholder="Ex: WIN-00123" />
+        </div>
 
-        <tr *ngIf="filtered.length === 0">
-          <td colspan="6" class="empty">Nenhum caminhão encontrado.</td>
-        </tr>
-        </tbody>
-      </table>
+        <div class="field span-2">
+          <label>Descrição <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.descricao" placeholder="Ex: Caminhão Baú 3/4" />
+        </div>
+
+        <div class="field">
+          <label>Marca <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.marca" placeholder="Ex: Volvo" />
+        </div>
+
+        <div class="field">
+          <label>Modelo <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.modelo" placeholder="Ex: FH 540" />
+        </div>
+
+        <div class="field">
+          <label>Placa <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.placa" placeholder="Ex: ABC1D23" />
+        </div>
+
+        <div class="field">
+          <label>Cor</label>
+          <input type="text" [(ngModel)]="form.cor" placeholder="Ex: Branco" />
+        </div>
+
+        <div class="field">
+          <label>Categoria</label>
+          <select [(ngModel)]="form.categoriaCodigo">
+            <option value="">— Selecione —</option>
+            <option *ngFor="let cat of categorias" [value]="cat.codigo">
+              {{ cat.descricao }} ({{ cat.codigo }})
+            </option>
+          </select>
+          <small class="hint">
+            O back espera o <strong>código</strong> da categoria (ex: <span class="mono">CARRETA</span>).
+          </small>
+        </div>
+
+        <div class="field">
+          <label>Data de licenciamento</label>
+          <input type="date" [(ngModel)]="form.dtLicenciamentoISO" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label>ANTT</label>
+          <input type="text" [(ngModel)]="form.antt" placeholder="Registro ANTT" />
+        </div>
+
+        <div class="field">
+          <label>Renavan</label>
+          <input type="text" [(ngModel)]="form.renavan" placeholder="Renavan" />
+        </div>
+
+        <div class="field span-2">
+          <label>Chassi</label>
+          <input type="text" [(ngModel)]="form.chassi" placeholder="Chassi" />
+        </div>
+
+        <div class="field">
+          <label>Tara (kg)</label>
+          <input type="text" [(ngModel)]="form.tara" placeholder="Ex: 7800" />
+        </div>
+
+        <div class="field">
+          <label>Peso máximo (kg)</label>
+          <input type="text" [(ngModel)]="form.maxPeso" placeholder="Ex: 23000" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" type="button" (click)="closeModal()">
+        Cancelar
+      </button>
+
+      <button class="btn primary" type="button" (click)="salvar()" [disabled]="loading">
+        {{ loading ? 'Salvando...' : (isEditing ? 'Salvar alterações' : 'Cadastrar caminhão') }}
+      </button>
     </div>
   </div>
 </div>
