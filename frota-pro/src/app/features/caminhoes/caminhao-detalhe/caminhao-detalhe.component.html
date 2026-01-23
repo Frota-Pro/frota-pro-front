@@ -15,10 +15,7 @@
     </div>
   </div>
 
-  <!-- ALERTA -->
-  <div class="alert error" *ngIf="errorMsg">
-    {{ errorMsg }}
-  </div>
+  <div class="alert error" *ngIf="errorMsg">{{ errorMsg }}</div>
 
   <!-- KPI CARDS -->
   <div class="kpis">
@@ -34,9 +31,7 @@
       <div class="kpi-head">
         <span class="kpi-label">Combustível</span>
       </div>
-      <div class="kpi-value">
-        {{ formatNumber(d.combustivelLitros, 1) }} L
-      </div>
+      <div class="kpi-value">{{ formatNumber(d.combustivelLitros, 1) }} L</div>
       <div class="kpi-sub">{{ formatBRL(d.combustivelValor) }}</div>
     </div>
 
@@ -44,7 +39,7 @@
       <div class="kpi-head">
         <span class="kpi-label">Peso Transportado</span>
       </div>
-      <div class="kpi-value">{{ formatNumber(d.pesoTransportado, 3) }} kg</div>
+      <div class="kpi-value">{{ formatNumber(d.pesoTransportado, 0) }} kg</div>
       <div class="kpi-sub">Somatório das cargas</div>
     </div>
 
@@ -132,7 +127,7 @@
     </div>
   </div>
 
-  <!-- METAS (REAL) -->
+  <!-- METAS -->
   <div class="card">
     <div class="card-title">Metas</div>
 
@@ -158,13 +153,13 @@
       <div class="empty small">
         <div class="txt">
           <span *ngIf="metaLoading">Carregando meta...</span>
-          <span *ngIf="!metaLoading">Nenhuma meta ativa para hoje</span>
+          <span *ngIf="!metaLoading">Nenhuma meta ativa para a data atual</span>
         </div>
       </div>
     </ng-template>
   </div>
 
-  <!-- HISTÓRICO (REAL) -->
+  <!-- HISTÓRICO -->
   <div class="card">
     <div class="card-title">Histórico Operacional</div>
 
@@ -193,7 +188,7 @@
           <td class="mono">{{ c.numeroCarga }}</td>
           <td>{{ c.dtSaida || '—' }}</td>
           <td><span class="tag">{{ c.statusCarga }}</span></td>
-          <td>{{ formatNumber(c.pesoCarga, 3) }} kg</td>
+          <td>{{ formatNumber(c.pesoCarga, 0) }} kg</td>
           <td>{{ c.nomeMotorista || '—' }}</td>
         </tr>
         </tbody>
@@ -238,7 +233,7 @@
       </ng-template>
     </div>
 
-    <!-- MANUTENÇÕES / OS -->
+    <!-- MANUTENÇÕES -->
     <div *ngIf="tab==='os'">
       <div class="subloading" *ngIf="osLoading">Carregando OS...</div>
 
@@ -268,6 +263,125 @@
           <div class="txt">Nenhuma ordem de serviço encontrada</div>
         </div>
       </ng-template>
+    </div>
+  </div>
+
+  <!-- DOCUMENTAÇÃO -->
+  <!-- DOCUMENTAÇÃO -->
+  <div class="card">
+    <div class="card-title">Documentação</div>
+
+    <div class="doc-uploader">
+      <div class="doc-left">
+        <label class="doc-label">Arquivo *</label>
+        <input type="file" (change)="onFileSelected($event)" />
+        <small class="muted">Envie documentos do caminhão (PDF, imagem, etc.)</small>
+      </div>
+
+      <div class="doc-mid">
+        <label class="doc-label">Tipo do Documento *</label>
+        <select [(ngModel)]="tipoDocumento">
+          <option *ngFor="let t of tiposAnexo" [ngValue]="t.value">
+            {{ t.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="doc-mid">
+        <label class="doc-label">Observação</label>
+        <input [(ngModel)]="observacao" placeholder="Ex: CRLV atualizado 2026" />
+      </div>
+
+      <div class="doc-right">
+        <button class="btn primary" type="button" (click)="uploadDocumento()" [disabled]="uploading">
+          {{ uploading ? 'Enviando...' : 'Enviar' }}
+        </button>
+        <button class="btn ghost" type="button" (click)="carregarDocumentos()" [disabled]="docsLoading">
+          Atualizar
+        </button>
+      </div>
+    </div>
+
+    <div class="alert error" *ngIf="docsError">{{ docsError }}</div>
+    <div class="subloading" *ngIf="docsLoading">Carregando documentos...</div>
+
+    <table class="mini-table" *ngIf="!docsLoading && docs.length > 0; else docsEmpty">
+      <thead>
+      <tr>
+        <th>Arquivo</th>
+        <th>Tipo</th>
+        <th>Tamanho</th>
+        <th>Criado em</th>
+        <th class="col-actions">Ações</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let doc of docs">
+        <td>
+          <div class="stack">
+            <strong>{{ doc.arquivo?.nomeOriginal || '—' }}</strong>
+            <small class="muted" *ngIf="doc.observacao">{{ doc.observacao }}</small>
+            <small class="muted" *ngIf="doc.criadoPor">por {{ doc.criadoPor }}</small>
+          </div>
+        </td>
+
+        <td><span class="tag">{{ tipoAnexoLabel(doc.tipoDocumento) }}</span></td>
+
+        <td>{{ formatBytes(doc.arquivo?.tamanhoBytes) }}</td>
+
+        <td>{{ formatDateTimeBr(doc.criadoEm || '') }}</td>
+
+        <td class="row-actions">
+          <button class="btn small" type="button" (click)="openPreview(doc)">Preview</button>
+          <button class="btn small" type="button" (click)="download(doc)">Download</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #docsEmpty>
+      <div class="empty small">
+        <div class="txt">Nenhum documento anexado</div>
+        <small class="muted">Envie o primeiro documento acima.</small>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- PREVIEW MODAL -->
+  <div class="modal-backdrop" *ngIf="showPreview" (click)="closePreview()"></div>
+
+  <div class="modal modal-preview" *ngIf="showPreview">
+    <div class="modal-header">
+      <h2>Preview: {{ previewDoc?.arquivo?.nomeOriginal || previewDoc?.id }}</h2>
+      <button class="icon-btn" type="button" (click)="closePreview()">✕</button>
+    </div>
+
+    <div class="modal-body preview-body">
+      <!-- IMG -->
+      <img
+        *ngIf="previewDoc && isImage(previewDoc) && previewUrl"
+        [src]="previewUrl"
+        class="preview-img"
+        alt="Preview do documento"
+      />
+
+      <!-- IFRAME -->
+      <iframe
+        *ngIf="previewDoc && !isImage(previewDoc) && previewSafeUrl"
+        [src]="previewSafeUrl"
+        class="preview-frame"
+        title="Preview do documento">
+      </iframe>
+
+      <div class="empty small" *ngIf="previewDoc && (isImage(previewDoc) ? !previewUrl : !previewSafeUrl)">
+        <div class="txt">Não foi possível gerar o preview.</div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" type="button" (click)="closePreview()">Fechar</button>
+      <button class="btn primary" type="button" (click)="previewDoc && download(previewDoc)">Download</button>
     </div>
   </div>
 
@@ -361,7 +475,6 @@
 
 </div>
 
-<!-- TEMPLATE DE LOADING / ERRO -->
 <ng-template #loadingTpl>
   <div class="state">
     <div class="spinner"></div>
