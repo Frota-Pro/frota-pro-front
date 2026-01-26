@@ -37,6 +37,13 @@ export const routes: Routes = [
       },
 
       {
+        path: 'motoristas/:codigo',
+        loadComponent: () =>
+          import('./features/motoristas/motorista-detalhe/motorista-detalhe.component')
+            .then(m => m.MotoristaDetalheComponent),
+      },
+
+      {
         path: 'caminhoes',
         loadComponent: () =>
           import('./features/caminhoes/caminhoes-list/caminhoes-list.component')

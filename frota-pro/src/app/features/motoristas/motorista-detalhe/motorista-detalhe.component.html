@@ -1,0 +1,339 @@
+<div class="wrap" *ngIf="motorista as m; else loadingTpl">
+
+  <div class="topbar">
+    <div class="left">
+      <div class="title">
+        <h1>{{ m.nome }}</h1>
+        <p>Motorista {{ m.codigo }} • CNH: {{ m.cnh }}</p>
+      </div>
+    </div>
+
+    <div class="right">
+      <button class="btn ghost" type="button" (click)="voltar()">← Voltar</button>
+      <button class="btn primary" type="button" (click)="editar()">Editar</button>
+    </div>
+  </div>
+
+  <div class="alert error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-head"><span class="kpi-label">Total de Cargas</span></div>
+      <div class="kpi-value">{{ totalCargas }}</div>
+      <div class="kpi-sub">{{ cargasFinalizadas }} finalizadas (últimas 10 carregadas)</div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-head"><span class="kpi-label">Status Operacional</span></div>
+      <div class="kpi-value">{{ (m.status || '—') }}</div>
+      <div class="kpi-sub">{{ m.ativo ? 'Ativo' : 'Inativo' }}</div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-head"><span class="kpi-label">CNH</span></div>
+      <div class="kpi-value">{{ m.validadeCnh || '—' }}</div>
+      <div class="kpi-sub">
+        <span *ngIf="diasParaVencerCNH() !== null">Faltam {{ diasParaVencerCNH() }} dias</span>
+        <span *ngIf="diasParaVencerCNH() === null">Validade não informada</span>
+      </div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-head"><span class="kpi-label">Código Externo</span></div>
+      <div class="kpi-value mono">{{ m.codigoExterno || '—' }}</div>
+      <div class="kpi-sub">Integração/ERP</div>
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Informações do Motorista</div>
+
+      <div class="info-grid">
+        <div class="info">
+          <span class="label">Nome</span>
+          <span class="value">{{ m.nome }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">E-mail</span>
+          <span class="value">{{ m.email }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Data Nascimento</span>
+          <span class="value">{{ m.dataNascimento || '—' }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">CNH</span>
+          <span class="value mono">{{ m.cnh }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Validade CNH</span>
+          <span class="value">{{ m.validadeCnh || '—' }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Código Interno</span>
+          <span class="value mono">{{ m.codigo }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Ações Rápidas</div>
+
+      <div class="quick">
+        <button class="btn" type="button" (click)="setTab('cargas')">Ver cargas</button>
+        <button class="btn" type="button" (click)="setTab('meta')">Meta mensal</button>
+        <button class="btn" type="button" (click)="setTab('docs')">Documentos</button>
+      </div>
+
+      <div class="hint">
+        Dica: dê duplo clique na listagem para abrir este detalhe. Aqui você edita e gerencia anexos.
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="card">
+    <div class="card-title">Painel do Motorista</div>
+
+    <div class="tabs">
+      <button class="tab" [class.active]="tab==='cargas'" (click)="setTab('cargas')">Cargas</button>
+      <button class="tab" [class.active]="tab==='meta'" (click)="setTab('meta')">Meta mensal</button>
+      <button class="tab" [class.active]="tab==='docs'" (click)="setTab('docs')">Documentos</button>
+    </div>
+
+    <!-- CARGAS -->
+    <div *ngIf="tab==='cargas'">
+      <div class="subloading" *ngIf="cargasLoading">Carregando cargas...</div>
+
+      <table class="mini-table" *ngIf="!cargasLoading && cargas.length > 0; else cargasEmpty">
+        <thead>
+        <tr>
+          <th>Nº</th>
+          <th>Saída</th>
+          <th>Status</th>
+          <th>Peso</th>
+          <th>Caminhão</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let c of cargas">
+          <td class="mono">{{ c.numeroCarga }}</td>
+          <td>{{ c.dtSaida || '—' }}</td>
+          <td><span class="tag">{{ c.statusCarga }}</span></td>
+          <td>{{ formatNumber(c.pesoCarga, 0) }} kg</td>
+          <td>{{ c.placaCaminhao || '—' }}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <ng-template #cargasEmpty>
+        <div class="empty small">
+          <div class="txt">Nenhuma carga encontrada</div>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- META -->
+    <div *ngIf="tab==='meta'">
+      <div class="subloading" *ngIf="metaLoading">Carregando relatório...</div>
+
+      <div class="meta-grid" *ngIf="!metaLoading && meta as r; else metaEmpty">
+        <div class="kpi small">
+          <div class="kpi-head"><span class="kpi-label">Toneladas (total)</span></div>
+          <div class="kpi-value">{{ formatNumber(r.totalTonelada, 2) }}</div>
+          <div class="kpi-sub">Objetivo: {{ formatNumber(r.objetivoMesTonelada, 2) }}</div>
+        </div>
+
+        <div class="kpi small">
+          <div class="kpi-head"><span class="kpi-label">KM rodado</span></div>
+          <div class="kpi-value">{{ formatNumber(r.totalKmRodado, 0) }}</div>
+          <div class="kpi-sub">Período do mês</div>
+        </div>
+
+        <div class="kpi small">
+          <div class="kpi-head"><span class="kpi-label">Média Km/L</span></div>
+          <div class="kpi-value">{{ formatNumber(r.mediaGeralKmPorLitro, 2) }}</div>
+          <div class="kpi-sub">Meta: {{ formatNumber(r.metaConsumoKmPorLitro, 2) }}</div>
+        </div>
+
+        <div class="kpi small">
+          <div class="kpi-head"><span class="kpi-label">Realizado (%)</span></div>
+          <div class="kpi-value">{{ formatNumber(r.realizadoToneladaPercentual, 2) }}%</div>
+          <div class="kpi-sub">Tonelagem</div>
+        </div>
+
+        <div class="meta-table-wrap" *ngIf="(r.linhas || []).length > 0">
+          <table class="mini-table">
+            <thead>
+            <tr>
+              <th>Data</th>
+              <th>Cidade</th>
+              <th>Tonelagem</th>
+              <th>KM</th>
+              <th>Litros</th>
+              <th>Média</th>
+              <th>Valor Abast.</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let l of (r.linhas || [])">
+              <td>{{ l.data || '—' }}</td>
+              <td>{{ l.cidade || '—' }}</td>
+              <td>{{ formatNumber(l.tonelagem, 2) }}</td>
+              <td>{{ formatNumber(l.kmRodado, 0) }}</td>
+              <td>{{ formatNumber(l.litros, 2) }}</td>
+              <td>{{ formatNumber(l.mediaKmLitro, 2) }}</td>
+              <td>{{ formatBRL(l.valorAbastecimento || 0) }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <ng-template #metaEmpty>
+        <div class="empty small">
+          <div class="txt">Nenhum relatório disponível para o mês atual</div>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- DOCS -->
+    <div *ngIf="tab==='docs'">
+      <div class="docs-box">
+        <div class="docs-head">
+          <div class="docs-title">Documentos do Motorista</div>
+          <div class="docs-sub">Upload, preview e download com segurança (via BLOB + Authorization)</div>
+        </div>
+
+        <div class="docs-form">
+          <select [(ngModel)]="tipoDocumento">
+            <option *ngFor="let t of tiposAnexo" [ngValue]="t.value">{{ t.label }}</option>
+          </select>
+
+          <input [(ngModel)]="observacao" placeholder="Observação (opcional)" />
+
+          <input type="file" (change)="onFileSelected($event)" />
+
+          <button class="btn primary" type="button" (click)="uploadDocumento()" [disabled]="uploading">
+            {{ uploading ? 'Enviando...' : 'Enviar' }}
+          </button>
+        </div>
+
+        <div class="alert error" *ngIf="docsError">{{ docsError }}</div>
+        <div class="subloading" *ngIf="docsLoading">Carregando documentos...</div>
+
+        <table class="mini-table" *ngIf="!docsLoading && docs.length > 0; else docsEmpty">
+          <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Arquivo</th>
+            <th>Tamanho</th>
+            <th>Obs.</th>
+            <th class="col-actions">Ações</th>
+          </tr>
+          </thead>
+
+          <tbody>
+          <tr *ngFor="let d of docs">
+            <td><span class="tag">{{ tipoAnexoLabel(d.tipoDocumento) }}</span></td>
+            <td>
+              <div class="stack">
+                <strong>{{ d.arquivo?.nomeOriginal || '—' }}</strong>
+                <small class="muted">{{ d.arquivo?.contentType || '—' }}</small>
+              </div>
+            </td>
+            <td>{{ formatBytes(d.arquivo?.tamanhoBytes) }}</td>
+            <td>{{ d.observacao || '—' }}</td>
+            <td class="row-actions">
+              <button class="btn small" type="button" (click)="openPreview(d)">Preview</button>
+              <button class="btn small" type="button" (click)="download(d)">Baixar</button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+
+        <ng-template #docsEmpty>
+          <div class="empty small">
+            <div class="txt">Nenhum documento anexado</div>
+          </div>
+        </ng-template>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT -->
+  <div class="backdrop" *ngIf="showEditModal" (click)="closeEdit()"></div>
+  <div class="modal" *ngIf="showEditModal">
+    <div class="modal-header">
+      <h2>Editar motorista</h2>
+      <button class="icon" (click)="closeEdit()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <label>Nome</label>
+      <input [(ngModel)]="editForm.nome" />
+
+      <label>E-mail</label>
+      <input [(ngModel)]="editForm.email" />
+
+      <label>Código Externo</label>
+      <input [(ngModel)]="editForm.codigoExterno" />
+
+      <label>Data Nascimento (dd/MM/yyyy)</label>
+      <input [(ngModel)]="editForm.dataNascimento" />
+
+      <label>CNH</label>
+      <input [(ngModel)]="editForm.cnh" />
+
+      <label>Validade CNH (dd/MM/yyyy)</label>
+      <input [(ngModel)]="editForm.validadeCnh" />
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" (click)="closeEdit()">Cancelar</button>
+      <button class="btn primary" (click)="salvarEdicao()">Salvar</button>
+    </div>
+  </div>
+
+  <!-- MODAL PREVIEW -->
+  <div class="backdrop" *ngIf="showPreview" (click)="closePreview()"></div>
+  <div class="modal preview" *ngIf="showPreview">
+    <div class="modal-header">
+      <h2>Preview</h2>
+      <button class="icon" (click)="closePreview()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="preview-empty" *ngIf="!previewUrl">
+        Não foi possível carregar o preview. Tente baixar o arquivo.
+      </div>
+
+      <img *ngIf="previewUrl && previewDoc && isImage(previewDoc)" [src]="previewUrl" class="img" />
+
+      <iframe *ngIf="previewUrl && previewDoc && !isImage(previewDoc)"
+              [src]="previewSafeUrl"
+              class="frame"></iframe>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" (click)="closePreview()">Fechar</button>
+    </div>
+  </div>
+
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading">
+    <div class="spinner"></div>
+    <span>Carregando...</span>
+  </div>
+</ng-template>

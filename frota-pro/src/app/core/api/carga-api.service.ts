@@ -16,4 +16,13 @@ export class CargaApiService extends BaseApiService {
 
     return this.http.get<PageResponse<CargaResponse>>(`${this.apiUrl}/carga/caminhao`, { params });
   }
+
+  listarPorMotorista(codigoMotorista: string, opts: { page?: number; size?: number; sort?: string } = {}) {
+    let params = new HttpParams().set('codigo', codigoMotorista);
+    if (opts.page != null) params = params.set('page', String(opts.page));
+    if (opts.size != null) params = params.set('size', String(opts.size));
+    if (opts.sort) params = params.set('sort', opts.sort);
+
+    return this.http.get<PageResponse<CargaResponse>>(`${this.apiUrl}/carga/motorista`, { params });
+  }
 }

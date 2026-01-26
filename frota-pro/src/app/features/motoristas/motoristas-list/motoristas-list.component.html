@@ -1,80 +1,156 @@
 <div class="page">
-  <div class="page-header">
-    <div class="left">
+
+  <div class="header">
+    <div>
       <h1>Motoristas</h1>
-      <p>Gestão de motoristas</p>
+      <p>Pesquise por código interno, código externo, CNH e gerencie cadastros.</p>
     </div>
 
-    <button class="primary-btn" type="button" (click)="novoMotorista()">
-      <i class="fas fa-plus"></i>
-      Novo Motorista
-    </button>
+    <div class="actions">
+      <button class="btn primary" type="button" (click)="openNovoMotorista()">+ Novo motorista</button>
+    </div>
   </div>
 
-  <div class="card">
-    <div class="toolbar">
-      <div class="search">
-        <i class="fas fa-magnifying-glass"></i>
-        <input
-          type="text"
-          [(ngModel)]="search"
-          placeholder="Buscar por nome, CPF, CNH..."
-        />
-      </div>
+  <div class="toolbar">
+    <input class="search"
+           [(ngModel)]="codigoInterno"
+           (keyup.enter)="page=0; carregarPagina()"
+           placeholder="Código interno (ex: MOT-000123)" />
 
-      <select class="select" [(ngModel)]="statusFilter">
-        <option value="Todos">Todos</option>
-        <option value="ATIVO">Ativo</option>
-        <option value="INATIVO">Inativo</option>
-      </select>
+    <input class="search"
+           [(ngModel)]="codigoExterno"
+           (keyup.enter)="page=0; carregarPagina()"
+           placeholder="Código externo (ERP/WinThor)" />
+
+    <input class="search"
+           [(ngModel)]="cnh"
+           (keyup.enter)="page=0; carregarPagina()"
+           placeholder="CNH" />
+
+    <input class="search"
+           [(ngModel)]="nomeEmail"
+           (keyup.enter)="page=0; carregarPagina()"
+           placeholder="Nome/E-mail" />
+
+    <select [(ngModel)]="ativoFilter" class="select">
+      <option [ngValue]="'ATIVOS'">Ativos</option>
+      <option [ngValue]="'INATIVOS'">Inativos</option>
+      <option [ngValue]="'TODOS'">Todos</option>
+    </select>
+
+    <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="filtered.length > 0; else emptyTpl">
+      <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>CNH</th>
+        <th>E-mail</th>
+        <th>Cód. Externo</th>
+        <th>Status</th>
+        <th class="col-actions">Ações</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let m of filtered" (dblclick)="abrirDetalhe(m)">
+        <td class="mono">{{ m.codigo }}</td>
+
+        <td>
+          <div class="stack">
+            <strong>{{ m.nome }}</strong>
+            <small class="muted" *ngIf="m.dataNascimento">Nasc: {{ m.dataNascimento }}</small>
+          </div>
+        </td>
+
+        <td class="mono">{{ m.cnh }}</td>
+
+        <td>
+          <div class="stack">
+            <strong>{{ m.email }}</strong>
+            <small class="muted" *ngIf="m.validadeCnh">Validade CNH: {{ m.validadeCnh }}</small>
+          </div>
+        </td>
+
+        <td class="mono">{{ m.codigoExterno || '—' }}</td>
+
+        <td>
+          <span class="status" [class.inactive]="!m.ativo">{{ m.ativo ? 'ATIVO' : 'INATIVO' }}</span>
+        </td>
+
+        <td class="row-actions" (click)="$event.stopPropagation()">
+          <button class="btn small" type="button" (click)="abrirDetalhe(m)">Ver</button>
+
+          <button *ngIf="m.ativo" class="btn small danger" type="button" (click)="inativar(m)">
+            Inativar
+          </button>
+
+          <button *ngIf="!m.ativo" class="btn small" type="button" (click)="ativar(m)">
+            Ativar
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <div class="icon">🧑‍✈️</div>
+        <h3>Nenhum motorista encontrado</h3>
+        <p>Cadastre um motorista ou ajuste os filtros.</p>
+      </div>
+    </ng-template>
+
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn ghost" (click)="prevPage()" [disabled]="page <= 0">◀</button>
+      <div class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</div>
+      <button class="btn ghost" (click)="nextPage()" [disabled]="page + 1 >= totalPages">▶</button>
+    </div>
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Carregando...</span>
+    </div>
+  </ng-template>
+
+  <!-- MODAL MOTORISTA -->
+  <div class="backdrop" *ngIf="showMotoristaModal" (click)="closeMotoristaModal()"></div>
+  <div class="modal" *ngIf="showMotoristaModal">
+    <div class="modal-header">
+      <h2>Novo motorista</h2>
+      <button class="icon" (click)="closeMotoristaModal()">✕</button>
     </div>
 
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-        <tr>
-          <th>Nome</th>
-          <th>CPF</th>
-          <th>CNH</th>
-          <th>Categoria</th>
-          <th>Telefone</th>
-          <th>Status</th>
-          <th class="actions-col">Ações</th>
-        </tr>
-        </thead>
+    <div class="modal-body">
+      <label>Nome</label>
+      <input [(ngModel)]="form.nome" placeholder="Ex: JOÃO SILVA" />
 
-        <tbody>
-        <tr *ngFor="let m of filtered">
-          <td class="name">{{ m.nome }}</td>
-          <td>{{ m.cpf }}</td>
-          <td>{{ m.cnh }}</td>
-          <td>{{ m.categoriaCnh }}</td>
-          <td>{{ m.telefone }}</td>
-          <td>
-              <span class="badge" [class.active]="m.status==='ATIVO'" [class.inactive]="m.status==='INATIVO'">
-                {{ m.status }}
-              </span>
-          </td>
-          <td class="actions">
-            <button class="icon-btn" type="button" (click)="ver(m)" title="Ver">
-              <i class="fas fa-eye"></i>
-            </button>
-            <button class="icon-btn" type="button" (click)="editar(m)" title="Editar">
-              <i class="fas fa-pen"></i>
-            </button>
-            <button class="icon-btn danger" type="button" (click)="excluir(m)" title="Excluir">
-              <i class="fas fa-trash"></i>
-            </button>
-          </td>
-        </tr>
+      <label>E-mail</label>
+      <input [(ngModel)]="form.email" placeholder="Ex: joao@empresa.com" />
 
-        <tr *ngIf="filtered.length === 0">
-          <td colspan="7" class="empty">
-            Nenhum motorista encontrado.
-          </td>
-        </tr>
-        </tbody>
-      </table>
+      <label>Código Externo</label>
+      <input [(ngModel)]="form.codigoExterno" placeholder="Ex: 12345 (WinThor)" />
+
+      <label>Data de Nascimento (dd/MM/yyyy)</label>
+      <input [(ngModel)]="form.dataNascimento" placeholder="Ex: 29/12/1995" />
+
+      <label>CNH</label>
+      <input [(ngModel)]="form.cnh" placeholder="Ex: 01234567890" />
+
+      <label>Validade CNH (dd/MM/yyyy)</label>
+      <input [(ngModel)]="form.validadeCnh" placeholder="Ex: 29/12/2030" />
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" (click)="closeMotoristaModal()">Cancelar</button>
+      <button class="btn primary" (click)="salvarMotorista()">Salvar</button>
     </div>
   </div>
 </div>
