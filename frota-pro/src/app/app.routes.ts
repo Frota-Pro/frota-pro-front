@@ -65,6 +65,13 @@ export const routes: Routes = [
       },
 
       {
+        path: 'cargas/:numeroCarga',
+        loadComponent: () =>
+          import('./features/cargas/carga-detalhe/carga-detalhe.component')
+            .then(m => m.CargaDetalheComponent),
+      },
+
+      {
         path: 'metas',
         loadComponent: () =>
           import('./features/metas/metas.component').then((m) => m.MetasComponent),

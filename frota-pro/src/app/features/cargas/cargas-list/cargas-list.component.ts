@@ -1,78 +1,134 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 
-type StatusCarga = 'EM_ANDAMENTO' | 'FINALIZADA' | 'CANCELADA';
-
-interface CargaVM {
-  numero: string;        // ex: CARGA-001
-  caminhao: string;      // ex: ABC-1234 (ou nome/modelo)
-  motorista: string;     // ex: João Silva
-  dataFat: string;       // ex: 09/01/2026 (string por enquanto)
-  valor: number;         // ex: 15000
-  status: StatusCarga;
-}
+import { CargaApiService } from '../../../core/api/carga-api.service';
+import { CargaMinResponse } from '../../../core/api/carga-api.models';
 
 @Component({
   selector: 'app-cargas-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './cargas-list.component.html',
   styleUrls: ['./cargas-list.component.css'],
 })
-export class CargasListComponent {
-  search = '';
-  statusFilter: 'Todos' | StatusCarga = 'Todos';
+export class CargasListComponent implements OnInit {
+  loading = false;
+  errorMsg: string | null = null;
 
-  // Mock inicial (depois liga na API)
-  cargas: CargaVM[] = [
-    {
-      numero: 'CARGA-001',
-      caminhao: '-',
-      motorista: '-',
-      dataFat: '09/01/2026',
-      valor: 15000,
-      status: 'EM_ANDAMENTO',
-    },
-  ];
+  page = 0;
+  size = 10;
+  totalPages = 0;
 
-  get filtered(): CargaVM[] {
-    const q = this.search.trim().toLowerCase();
+  q = '';
+  inicio: string | null = null; // yyyy-MM-dd
+  fim: string | null = null; // yyyy-MM-dd
 
-    return this.cargas.filter(c => {
-      const matchText =
-        !q ||
-        c.numero.toLowerCase().includes(q) ||
-        c.caminhao.toLowerCase().includes(q) ||
-        c.motorista.toLowerCase().includes(q);
+  rows: CargaMinResponse[] = [];
 
-      const matchStatus =
-        this.statusFilter === 'Todos' ? true : c.status === this.statusFilter;
+  constructor(private api: CargaApiService, private router: Router) {}
 
-      return matchText && matchStatus;
-    });
+  ngOnInit(): void {
+    this.carregarPagina();
   }
 
-  // Ações (depois liga em rotas/modais)
-  novaCarga() {
-    console.log('Nova Carga');
+  carregarPagina(): void {
+    this.loading = true;
+    this.errorMsg = null;
+
+    const q = this.q?.trim() ? this.q.trim() : null;
+
+    this.api
+      .listar({
+        q,
+        inicio: this.inicio || null,
+        fim: this.fim || null,
+        page: this.page,
+        size: this.size,
+        sort: 'dtSaida,desc',
+      })
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (p) => {
+          this.rows = p.content || [];
+          this.totalPages = p.totalPages ?? 0;
+        },
+        error: (err) => {
+          console.error(err);
+          this.rows = [];
+          this.totalPages = 0;
+          this.errorMsg = 'Não foi possível carregar as cargas.';
+        },
+      });
   }
 
-  ver(c: CargaVM) {
-    console.log('Ver', c);
+  aplicarFiltros(): void {
+    this.page = 0;
+    this.carregarPagina();
   }
 
-  editar(c: CargaVM) {
-    console.log('Editar', c);
+  limparFiltros(): void {
+    this.q = '';
+    this.inicio = null;
+    this.fim = null;
+    this.page = 0;
+    this.carregarPagina();
   }
 
-  formatMoneyBRL(v: number): string {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  nextPage(): void {
+    if (this.page + 1 >= this.totalPages) return;
+    this.page++;
+    this.carregarPagina();
   }
 
-  labelStatus(s: StatusCarga): string {
-    if (s === 'EM_ANDAMENTO') return 'Em Andamento';
-    if (s === 'FINALIZADA') return 'Finalizada';
-    return 'Cancelada';
+  prevPage(): void {
+    if (this.page <= 0) return;
+    this.page--;
+    this.carregarPagina();
+  }
+
+  abrirDetalhe(c: CargaMinResponse): void {
+    this.router.navigate(['/dashboard/cargas', c.numeroCarga]);
+  }
+
+  labelStatus(status: string): string {
+    switch (status) {
+      case 'EM_ROTA':
+        return 'Em rota';
+      case 'FINALIZADA':
+        return 'Finalizada';
+      case 'CANCELADA':
+        return 'Cancelada';
+      default:
+        return status;
+    }
+  }
+
+  formatMoneyBRL(v?: number | string | null): string {
+    if (v === null || v === undefined) {
+      return (0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    let n: number;
+
+    if (typeof v === 'number') {
+      n = v;
+    } else {
+      // limpa "R$", espaços e separadores
+      const raw = v
+        .trim()
+        .replace(/\s/g, '')
+        .replace(/^R\$/i, '')
+        .replace(/\./g, '')   // remove separador de milhar
+        .replace(',', '.');   // troca decimal pt-BR para padrão JS
+
+      n = Number(raw);
+    }
+
+    if (!Number.isFinite(n)) n = 0;
+
+    return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 }

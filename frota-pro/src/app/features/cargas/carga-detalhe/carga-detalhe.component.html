@@ -1,0 +1,588 @@
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="left">
+      <button class="btn ghost" type="button" (click)="voltar()">← Voltar</button>
+
+      <div class="titlebox">
+        <h1>Detalhes da Carga</h1>
+        <p class="subtitle" *ngIf="carga">
+          <span class="mono">{{ carga.numeroCarga }}</span>
+          <span class="dot">•</span>
+          <span *ngIf="carga.numeroCargaExterno; else semExterno">Ext: {{ carga.numeroCargaExterno }}</span>
+          <ng-template #semExterno><span class="muted">Sem código externo</span></ng-template>
+        </p>
+      </div>
+    </div>
+
+    <div class="right">
+      <button class="btn" type="button" (click)="carregar()" [disabled]="loading">Atualizar</button>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Carregando detalhes...</span>
+  </div>
+
+  <ng-container *ngIf="!loading && carga">
+
+    <!-- KPIs -->
+    <div class="kpis">
+      <div class="kpi-card">
+        <div class="kpi-label">Status</div>
+        <div class="kpi-value">
+          <span class="badge">{{ labelStatus(carga.statusCarga) }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Saída</div>
+        <div class="kpi-value">{{ carga.dtSaida ? (carga.dtSaida | date:'dd/MM/yyyy') : '—' }}</div>
+        <div class="kpi-sub">
+          Prev.: {{ carga.dtPrevista ? (carga.dtPrevista | date:'dd/MM/yyyy') : '—' }}
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Chegada</div>
+        <div class="kpi-value">{{ carga.dtChegada ? (carga.dtChegada | date:'dd/MM/yyyy') : '—' }}</div>
+        <div class="kpi-sub" *ngIf="carga.diasAtraso != null">
+          Atraso: <strong>{{ carga.diasAtraso }}</strong> dia(s)
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Valor total</div>
+        <div class="kpi-value">{{ formatMoneyBRL(carga.valorTotal) }}</div>
+        <div class="kpi-sub">
+          Peso: <strong>{{ (carga.pesoCarga ?? 0) | number:'1.0-3' }}</strong>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">KM</div>
+        <div class="kpi-value">
+          {{ carga.kmTotal != null ? carga.kmTotal : '—' }}
+        </div>
+        <div class="kpi-sub">
+          Ini: {{ carga.kmInicial ?? '—' }} | Fim: {{ carga.kmFinal ?? '—' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid Principal -->
+    <div class="grid">
+
+      <!-- Coluna Esquerda -->
+      <div class="col">
+
+        <!-- Card: Resumo -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Resumo</h2>
+          </div>
+
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">Motorista</div>
+                <div class="info-value">{{ carga.nomeMotorista || '—' }}</div>
+                <div class="info-sub muted">Código: {{ carga.codigoMotorista || '—' }}</div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">Caminhão</div>
+                <div class="info-value">{{ carga.placaCaminhao || '—' }}</div>
+                <div class="info-sub muted">Código: {{ carga.codigoCaminhao || '—' }}</div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">Rota</div>
+                <div class="info-value">{{ carga.codigoRota || '—' }}</div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">Ajudantes</div>
+                <div class="info-value">
+                  <ng-container *ngIf="(carga.codigosAjudantes?.length || 0) > 0; else semAjudantes">
+                    <span class="tag" *ngFor="let a of carga.codigosAjudantes">{{ a }}</span>
+                  </ng-container>
+                  <ng-template #semAjudantes><span class="muted">Nenhum</span></ng-template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Clientes e Notas -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Clientes e Notas</h2>
+            <span class="muted" *ngIf="(carga.clientes?.length || 0) > 0">
+              {{ carga.clientes?.length }} cliente(s)
+            </span>
+          </div>
+
+          <div class="card-body">
+            <div class="clientes" *ngIf="(carga.clientes?.length || 0) > 0; else semClientes">
+              <div class="cliente" *ngFor="let cl of carga.clientes">
+                <div class="cliente-head">
+                  <strong>{{ cl.cliente }}</strong>
+                  <span class="pill">{{ (cl.notas?.length || 0) }} nota(s)</span>
+                </div>
+
+                <div class="notas">
+                  <span class="nota mono" *ngFor="let n of cl.notas">{{ n }}</span>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #semClientes>
+              <div class="empty-sm">
+                <h3>Nenhum cliente/notas</h3>
+                <p>Esta carga não possui notas vinculadas no retorno.</p>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Card: Paradas -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Paradas</h2>
+            <div class="card-actions">
+              <button class="btn primary" type="button" (click)="abrirNovaParada()">+ Nova parada</button>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="loading-sm" *ngIf="loadingParadas">
+              <div class="spinner small"></div>
+              <span>Carregando paradas...</span>
+            </div>
+
+            <div *ngIf="!loadingParadas && (paradas.length > 0); else semParadas">
+              <div class="parada-row" *ngFor="let p of paradas" (click)="abrirParada(p)">
+                <div class="parada-left">
+                  <div class="parada-tipo">
+                    <span class="badge">{{ p.tipoParada || '—' }}</span>
+                    <span class="muted" *ngIf="p.cidade">• {{ p.cidade }}</span>
+                  </div>
+                  <div class="parada-sub muted">
+                    Início: {{ p.dtInicio ? (p.dtInicio | date:'dd/MM/yyyy HH:mm') : '—' }}
+                    <span class="dot">•</span>
+                    Fim: {{ p.dtFim ? (p.dtFim | date:'dd/MM/yyyy HH:mm') : '—' }}
+                  </div>
+                </div>
+
+                <div class="parada-right">
+                  <div class="muted">KM: {{ p.kmOdometro ?? '—' }}</div>
+                  <div class="arrow">›</div>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #semParadas>
+              <div class="empty-sm">
+                <h3>Nenhuma parada cadastrada</h3>
+                <p>Cadastre uma parada para registrar eventos (abastecimento, manutenção, alimentação, pernoite, etc.).</p>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Coluna Direita -->
+      <div class="col">
+
+        <!-- Card: Ordem de entrega -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Ordem de Entrega</h2>
+            <div class="card-actions">
+              <button class="btn primary"
+                      type="button"
+                      (click)="salvarOrdem()"
+                      [disabled]="savingOrdem || !ordemDirty">
+                {{ savingOrdem ? 'Salvando...' : 'Salvar ordem' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <p class="muted help">
+              Defina a ordem em que os clientes serão atendidos. Use as setas para reordenar.
+            </p>
+
+            <div *ngIf="ordem.length > 0; else semOrdem">
+              <div class="ordem-item" *ngFor="let c of ordem; let i = index">
+                <div class="ordem-left">
+                  <span class="ordem-index">{{ i + 1 }}</span>
+                  <div class="ordem-cliente">
+                    <strong>{{ c }}</strong>
+                  </div>
+                </div>
+
+                <div class="ordem-actions">
+                  <button class="btn small ghost" type="button" (click)="moverCliente(i, -1)" [disabled]="i === 0">↑</button>
+                  <button class="btn small ghost" type="button" (click)="moverCliente(i, 1)" [disabled]="i === ordem.length - 1">↓</button>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #semOrdem>
+              <div class="empty-sm">
+                <h3>Sem clientes para ordenar</h3>
+                <p>Quando houver clientes no JSON da carga, eles aparecerão aqui para você ordenar.</p>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Card: Observação do motorista -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Observação do Motorista</h2>
+            <div class="card-actions">
+              <button class="btn primary"
+                      type="button"
+                      (click)="salvarObservacao()"
+                      [disabled]="savingObs">
+                {{ savingObs ? 'Salvando...' : 'Salvar' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <p class="muted help">
+              Registre ocorrências e observações sobre a execução da carga.
+            </p>
+
+            <textarea class="textarea"
+                      rows="7"
+                      [(ngModel)]="observacao"
+                      placeholder="Ex.: Atraso por trânsito, cliente não recebeu, divergência de nota, etc."></textarea>
+
+            <div class="muted smallline" *ngIf="carga.observacaoMotorista">
+              Última observação salva está carregada no campo.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </ng-container>
+</div>
+
+<!-- =============== MODAL: PREVIEW PARADA =============== -->
+<div class="modal-backdrop" *ngIf="showParadaModal" (click)="fecharParada()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h3>Detalhes da Parada</h3>
+        <p class="muted" *ngIf="paradaSelecionada">
+          {{ paradaSelecionada.tipoParada || '—' }}
+          <span class="dot">•</span>
+          {{ paradaSelecionada.cidade || '—' }}
+        </p>
+      </div>
+      <button class="btn ghost" type="button" (click)="fecharParada()">✕</button>
+    </div>
+
+    <div class="modal-body" *ngIf="paradaSelecionada">
+
+      <div class="modal-grid">
+        <div class="mini-card">
+          <div class="mini-label">Início</div>
+          <div class="mini-value">{{ paradaSelecionada.dtInicio ? (paradaSelecionada.dtInicio | date:'dd/MM/yyyy HH:mm') : '—' }}</div>
+        </div>
+
+        <div class="mini-card">
+          <div class="mini-label">Fim</div>
+          <div class="mini-value">{{ paradaSelecionada.dtFim ? (paradaSelecionada.dtFim | date:'dd/MM/yyyy HH:mm') : '—' }}</div>
+        </div>
+
+        <div class="mini-card">
+          <div class="mini-label">KM</div>
+          <div class="mini-value">{{ paradaSelecionada.kmOdometro ?? '—' }}</div>
+        </div>
+
+        <div class="mini-card">
+          <div class="mini-label">Local</div>
+          <div class="mini-value">{{ paradaSelecionada.local || '—' }}</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-title">Observação</div>
+        <div class="block-body muted">
+          {{ paradaSelecionada.observacao || '—' }}
+        </div>
+      </div>
+
+      <!-- Despesas -->
+      <div class="block" *ngIf="(paradaSelecionada.despesaParadas?.length || 0) > 0">
+        <div class="block-title">Despesas</div>
+        <div class="block-body">
+          <div class="table-mini">
+            <div class="trow thead">
+              <div>Tipo</div>
+              <div>Data/Hora</div>
+              <div>Valor</div>
+              <div>Descrição</div>
+            </div>
+            <div class="trow" *ngFor="let d of paradaSelecionada.despesaParadas">
+              <div class="mono">{{ d.tipoDespesa || '—' }}</div>
+              <div>{{ d.dataHora ? (d.dataHora | date:'dd/MM/yyyy HH:mm') : '—' }}</div>
+              <div>{{ formatMoneyBRL(d.valor) }}</div>
+              <div class="muted">{{ d.descricao || '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manutenção (quando existir no payload) -->
+      <div class="block" *ngIf="paradaSelecionada.manutencao">
+        <div class="block-title">Manutenção</div>
+        <div class="block-body">
+          <div class="info-grid two">
+            <div class="info-item">
+              <div class="info-label">Tipo</div>
+              <div class="info-value">{{ paradaSelecionada.manutencao.tipoManutencao || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Status</div>
+              <div class="info-value">{{ paradaSelecionada.manutencao.statusManutencao || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Início</div>
+              <div class="info-value">{{ paradaSelecionada.manutencao.dataInicioManutencao ? (paradaSelecionada.manutencao.dataInicioManutencao | date:'dd/MM/yyyy HH:mm') : '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Fim</div>
+              <div class="info-value">{{ paradaSelecionada.manutencao.dataFimManutencao ? (paradaSelecionada.manutencao.dataFimManutencao | date:'dd/MM/yyyy HH:mm') : '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Valor</div>
+              <div class="info-value">{{ formatMoneyBRL(paradaSelecionada.manutencao.valor) }}</div>
+            </div>
+          </div>
+
+          <div class="muted" *ngIf="(paradaSelecionada.manutencao.itensTrocados?.length || 0) > 0">
+            Itens: <span class="tag" *ngFor="let it of paradaSelecionada.manutencao.itensTrocados">{{ it }}</span>
+          </div>
+
+          <div class="muted" style="margin-top: 8px;">
+            {{ paradaSelecionada.manutencao.observacoes || '' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Anexos -->
+      <div class="block">
+        <div class="block-title">Anexos</div>
+
+        <div class="block-body">
+
+          <div class="loading-sm" *ngIf="loadingAnexos">
+            <div class="spinner small"></div>
+            <span>Carregando anexos...</span>
+          </div>
+
+          <div class="anexos" *ngIf="!loadingAnexos">
+
+            <div class="anexo-row" *ngFor="let a of anexosParada">
+              <div class="anexo-left">
+                <div class="anexo-title">
+                  <strong>{{ a.tipoAnexo }}</strong>
+                  <span class="muted" *ngIf="a.observacao">• {{ a.observacao }}</span>
+                </div>
+                <div class="anexo-sub muted">
+                  {{ a.arquivo?.nomeOriginal || 'arquivo' }}
+                </div>
+              </div>
+
+              <div class="anexo-actions">
+                <button class="btn small ghost"
+                        type="button"
+                        (click)="abrirPreviewArquivo(a.arquivo.id, a.arquivo.contentType)">
+                  Preview
+                </button>
+                <button class="btn small"
+                        type="button"
+                        (click)="downloadArquivo(a.arquivo.id, a.arquivo.nomeOriginal)">
+                  Baixar
+                </button>
+              </div>
+            </div>
+
+            <div class="upload-box">
+              <div class="upload-grid">
+                <label>
+                  <span class="muted">Tipo</span>
+                  <select class="select" [(ngModel)]="anexoTipo">
+                    <option value="COMPROVANTE">COMPROVANTE</option>
+                    <option value="FOTO">FOTO</option>
+                    <option value="NF">NF</option>
+                    <option value="BOLETIM">BOLETIM</option>
+                    <option value="OUTROS">OUTROS</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span class="muted">Observação</span>
+                  <input class="input" [(ngModel)]="anexoObs" placeholder="Opcional" />
+                </label>
+
+                <label>
+                  <span class="muted">Arquivo</span>
+                  <input class="input" type="file" (change)="onFileSelected($event)" />
+                </label>
+
+                <button class="btn primary"
+                        type="button"
+                        (click)="uploadAnexoParada()"
+                        [disabled]="loadingAnexos">
+                  Enviar
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- =============== MODAL: NOVA PARADA =============== -->
+<div class="modal-backdrop" *ngIf="showNovaParadaModal" (click)="fecharNovaParada()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h3>Nova Parada</h3>
+        <p class="muted">Cadastre um evento durante a execução da carga.</p>
+      </div>
+      <button class="btn ghost" type="button" (click)="fecharNovaParada()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-grid">
+
+        <label>
+          <span class="muted">Tipo de parada</span>
+          <select class="select" [(ngModel)]="paradaForm.tipoParada">
+            <option value="ABASTECIMENTO">ABASTECIMENTO</option>
+            <option value="MANUTENCAO">MANUTENCAO</option>
+            <option value="ALIMENTACAO">ALIMENTACAO</option>
+            <option value="PERNOITE">PERNOITE</option>
+            <option value="OUTROS">OUTROS</option>
+          </select>
+        </label>
+
+        <label>
+          <span class="muted">Início</span>
+          <input class="input" type="datetime-local" [(ngModel)]="paradaForm.dtInicio" />
+        </label>
+
+        <label>
+          <span class="muted">Fim</span>
+          <input class="input" type="datetime-local" [(ngModel)]="paradaForm.dtFim" />
+        </label>
+
+        <label>
+          <span class="muted">Cidade</span>
+          <input class="input" [(ngModel)]="paradaForm.cidade" placeholder="Ex.: Fortaleza" />
+        </label>
+
+        <label>
+          <span class="muted">Local</span>
+          <input class="input" [(ngModel)]="paradaForm.local" placeholder="Ex.: Posto X / Oficina Y" />
+        </label>
+
+        <label>
+          <span class="muted">KM (odômetro)</span>
+          <input class="input" type="number" [(ngModel)]="paradaForm.kmOdometro" />
+        </label>
+
+        <label class="span2">
+          <span class="muted">Observação</span>
+          <textarea class="textarea" rows="4" [(ngModel)]="paradaForm.observacao"></textarea>
+        </label>
+
+        <label>
+          <span class="muted">Valor despesa (opcional)</span>
+          <input class="input" type="number" [(ngModel)]="paradaForm.valorDespesa" />
+        </label>
+
+        <label class="span2">
+          <span class="muted">Descrição despesa (opcional)</span>
+          <input class="input" [(ngModel)]="paradaForm.descricaoDespesa" />
+        </label>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn ghost" type="button" (click)="fecharNovaParada()">Cancelar</button>
+        <button class="btn primary" type="button" (click)="salvarParada()" [disabled]="savingParada">
+          {{ savingParada ? 'Salvando...' : 'Salvar parada' }}
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- =============== MODAL: PREVIEW ARQUIVO =============== -->
+<div class="modal-backdrop" *ngIf="showArquivoModal" (click)="fecharPreviewArquivo()">
+  <div class="modal big" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h3>Preview do Arquivo</h3>
+        <p class="muted">Visualização rápida</p>
+      </div>
+      <button class="btn ghost" type="button" (click)="fecharPreviewArquivo()">✕</button>
+    </div>
+
+    <div class="modal-body preview-body">
+      <ng-container *ngIf="previewUrl; else noPreview">
+        <ng-container *ngIf="previewMime?.includes('pdf'); else notPdf">
+          <iframe class="iframe" [src]="previewUrl" title="Preview PDF"></iframe>
+        </ng-container>
+
+        <ng-template #notPdf>
+          <ng-container *ngIf="previewMime?.startsWith('image/'); else otherFile">
+            <img class="img" [src]="previewUrl" alt="Preview imagem" />
+          </ng-container>
+
+          <ng-template #otherFile>
+            <div class="fallback">
+              <h4>Arquivo não suportado para preview completo</h4>
+              <p class="muted">Você ainda pode baixar este arquivo.</p>
+              <a class="link" [href]="previewUrl" target="_blank" rel="noreferrer">Abrir em nova aba</a>
+            </div>
+          </ng-template>
+        </ng-template>
+      </ng-container>
+
+      <ng-template #noPreview>
+        <div class="fallback">
+          <h4>Nenhum preview disponível</h4>
+        </div>
+      </ng-template>
+    </div>
+
+  </div>
+</div>
