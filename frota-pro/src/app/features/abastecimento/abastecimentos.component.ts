@@ -1,61 +1,49 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
+
+import { AbastecimentoApiService } from '../../core/api/abastecimento-api.service';
+import { AbastecimentoRequest, AbastecimentoResponse } from '../../core/api/abastecimento-api.models';
+import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
+import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
+import { MotoristaApiService } from '../../core/api/motorista-api.service';
+import { MotoristaResponse } from '../../core/api/motorista-api.models';
 
 type UUID = string;
 
 type TipoCombustivel = 'DIESEL' | 'GASOLINA' | 'ETANOL' | 'DIESEL_S10' | 'GNV' | string;
+type FormaPagamento = 'DINHEIRO' | 'CARTAO' | 'PIX' | 'BOLETO' | 'TRANSFERENCIA' | string;
 
-interface CaminhaoMini {
-  id: UUID;
-  codigo: string;
-  placa: string;
-  modelo?: string;
-}
-interface MotoristaMini {
-  id: UUID;
-  nome: string;
-  codigo: string;
-}
-
-interface Abastecimento {
+interface AbastecimentoVM {
   id: UUID;
   codigo: string;
   dtAbastecimento: string; // ISO
-  caminhao: CaminhaoMini;
-  motorista?: MotoristaMini | null;
-  kmOdometro?: number | null;
-  qtLitros?: number;
-  valorLitro?: number;
-  valorTotal?: number;
-  tipoCombustivel?: TipoCombustivel;
-  formaPagamento?: string;
-  posto?: string;
-  cidade?: string;
-  uf?: string;
-  numNotaOuCupom?: string;
-  mediaKmLitro?: number | null;
-}
 
-/* =============================
-   NOVO TIPO — evita erros
-   ============================= */
-interface NovoAbastecimento {
-  codigo: string;
-  dtAbastecimento: string;
-  tipoCombustivel: TipoCombustivel;
-  qtLitros: number;
-  valorLitro: number;
-  valorTotal: number;
-  caminhao: CaminhaoMini;
-  motorista: MotoristaMini;
+  caminhao: {
+    codigo?: string | null;
+    placa?: string | null;
+  };
+
+  motorista?: {
+    codigo?: string | null;
+    nome?: string | null;
+  } | null;
+
   kmOdometro?: number | null;
-  formaPagamento?: string;
-  posto?: string;
-  cidade?: string;
-  uf?: string;
-  numNotaOuCupom?: string;
+  qtLitros?: number | null;
+  valorLitro?: number | null;
+  valorTotal?: number | null;
   mediaKmLitro?: number | null;
+
+  tipoCombustivel?: string | null;
+  formaPagamento?: string | null;
+
+  posto?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+
+  numNotaOuCupom?: string | null;
 }
 
 @Component({
@@ -65,512 +53,462 @@ interface NovoAbastecimento {
   templateUrl: './abastecimentos.component.html',
   styleUrls: ['./abastecimentos.component.css'],
 })
-export class AbastecimentosComponent {
-
-  /* ======================================================
-     ALIASES para o HTML “novo” (sem quebrar sua estrutura)
-     ====================================================== */
-
-  // 🔎 filtros (HTML novo)
-  searchText: string = '';              // alias de searchTerm
-  combustivelSelecionado: string = '';  // alias de filtroTipo
-  dataInicio: string = '';              // alias de filtroDataInicio
-  dataFim: string = '';                 // alias de filtroDataFim
-
-  // 🔎 filtros (seus antigos — mantidos)
-  filtroMotorista: string = '';
-  filtroCaminhao: string = '';
+export class AbastecimentosComponent implements OnInit {
+  // filtros
+  searchTerm: string = '';
   filtroTipo: string = '';
+  filtroCaminhao: string = '';
+  filtroMotorista: string = '';
   filtroDataInicio: string = '';
   filtroDataFim: string = '';
-  searchTerm: string = '';
 
-  // 🧩 Expand (HTML novo usa expandId)
-  expandId: string | null = null; // alias do expanded
+  // expand
   expanded: string | null = null;
 
-  // 🪟 Modal (HTML novo usa isModalOpen/isEditMode/form)
-  isModalOpen = false; // alias de showAddModal
+  // modal
   showAddModal = false;
-
-  isEditMode = false;  // alias de isEditing
   isEditing = false;
+  editingCodigo: string | null = null; // (back usa "codigo" no PUT)
 
-  editingId: string | null = null;
-
-  // form (HTML novo usa "form.*")
-  form: any = {
-    codigo: '',
-    dtAbastecimento: '',
-    tipoCombustivel: 'DIESEL',
-    qtLitros: 0,
-    valorLitro: 0,
-    valorTotal: 0,
-    precoLitro: 0,
-    odometro: null,
-    posto: '',
-    observacao: '',
-    caminhaoId: '',
-    motoristaId: '',
-    mediaKmLitro: null,
-    formaPagamento: '',
-    cidade: '',
-    uf: '',
-    numNotaOuCupom: ''
-  };
-
-  // ✅ listas para selects do modal
+  // combos
   combustiveis: TipoCombustivel[] = ['DIESEL', 'DIESEL_S10', 'GASOLINA', 'ETANOL', 'GNV'];
+  formasPagamento: FormaPagamento[] = ['DINHEIRO', 'CARTAO', 'PIX', 'BOLETO', 'TRANSFERENCIA'];
 
-  // (mock) - você pode substituir por dados da API depois
-  caminhoes: CaminhaoMini[] = [
-    { id: 'v-1', codigo: 'CAM-001', placa: 'ABC1D23', modelo: 'Volvo FH 540' },
-    { id: 'v-2', codigo: 'CAM-002', placa: 'XYZ9A87', modelo: 'Scania R450' },
-  ];
+  caminhoes: CaminhaoResponse[] = [];
+  motoristas: MotoristaResponse[] = [];
 
-  motoristas: MotoristaMini[] = [
-    { id: 'm-1', nome: 'Carlos Silva', codigo: 'MTR-001' },
-    { id: 'm-2', nome: 'Mariana Costa', codigo: 'MTR-002' },
-  ];
+  // listagem
+  carregando = false;
+  erro: string | null = null;
 
-  // Dados (mock)
-  abastecimentos: Abastecimento[] = [
-    {
-      id: 'ab-1',
-      codigo: 'AB-2025-0001',
-      dtAbastecimento: '2025-12-01T09:30:00',
-      caminhao: { id: 'v-1', codigo: 'CAM-001', placa: 'ABC1D23', modelo: 'Volvo FH 540' },
-      motorista: { id: 'm-1', nome: 'Carlos Silva', codigo: 'MTR-001' },
-      kmOdometro: 12034,
-      qtLitros: 150.345,
-      valorLitro: 6.59,
-      valorTotal: 150.345 * 6.59,
-      tipoCombustivel: 'DIESEL',
-      formaPagamento: 'CARTAO',
-      posto: 'Posto Central',
-      cidade: 'Campina',
-      uf: 'PB',
-      numNotaOuCupom: 'NF12345',
-      mediaKmLitro: 3.2,
-    },
-    {
-      id: 'ab-2',
-      codigo: 'AB-2025-0002',
-      dtAbastecimento: '2025-12-05T15:10:00',
-      caminhao: { id: 'v-2', codigo: 'CAM-002', placa: 'XYZ9A87', modelo: 'Scania R450' },
-      motorista: { id: 'm-2', nome: 'Mariana Costa', codigo: 'MTR-002' },
-      kmOdometro: 20120,
-      qtLitros: 80,
-      valorLitro: 6.79,
-      valorTotal: 80 * 6.79,
-      tipoCombustivel: 'DIESEL_S10',
-      formaPagamento: 'DINHEIRO',
-      posto: 'Posto Norte',
-      cidade: 'João Pessoa',
-      uf: 'PB',
-      numNotaOuCupom: 'NF54321',
-      mediaKmLitro: 4.1,
-    },
-  ];
+  page = 0;
+  size = 20;
+  totalPages = 0;
+  totalElements = 0;
 
-  /* =============================
-     Modelo “novo” (mantido)
-     ============================= */
-  novo: NovoAbastecimento = {
-    codigo: '',
-    dtAbastecimento: '',
-    tipoCombustivel: 'DIESEL',
-    qtLitros: 0,
-    valorLitro: 0,
-    valorTotal: 0,
-    caminhao: { id: '', codigo: '', placa: '' },
-    motorista: { id: '', nome: '', codigo: '' },
-  };
+  abastecimentos: AbastecimentoVM[] = [];
 
-  /* =============================
-     KPI getters (HTML novo usa kpi*)
-     ============================= */
-  get kpiLitrosMes() {
-    return this.litersThisMonth;
+  // form (modal) -> exatamente como seu HTML espera
+  novo: any = this.novoVazio();
+
+  constructor(
+    private abastecimentoApi: AbastecimentoApiService,
+    private caminhaoApi: CaminhaoApiService,
+    private motoristaApi: MotoristaApiService,
+  ) {}
+
+  ngOnInit(): void {
+    this.preloadCombos();
+    this.buscar();
   }
 
-  get kpiGastoTotal() {
-    return this.totalSpent;
+  private preloadCombos(): void {
+    // carrega alguns itens (não depende disso para salvar, só ajuda a mapear nome etc.)
+    this.caminhaoApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
+      next: (res) => (this.caminhoes = res.content || []),
+      error: () => (this.caminhoes = []),
+    });
+
+    this.motoristaApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
+      next: (res) => (this.motoristas = res.content || []),
+      error: () => (this.motoristas = []),
+    });
   }
 
-  get kpiPrecoMedio() {
-    return this.avgPricePerLiter;
+  // =========================
+  // LISTAGEM (API)
+  // =========================
+
+  buscar(page: number = 0): void {
+    this.page = page;
+    this.carregando = true;
+    this.erro = null;
+
+    // Mantive sua UX: motorista no filtro entra como texto geral também
+    const qParts: string[] = [];
+    if (this.searchTerm?.trim()) qParts.push(this.searchTerm.trim());
+    if (this.filtroMotorista?.trim()) qParts.push(this.filtroMotorista.trim());
+    const q = qParts.length ? qParts.join(' ') : null;
+
+    const inicio = this.filtroDataInicio ? `${this.filtroDataInicio}T00:00:00` : null;
+    const fim = this.filtroDataFim ? `${this.filtroDataFim}T23:59:59` : null;
+
+    this.abastecimentoApi
+      .filtrar({
+        q,
+        caminhao: this.filtroCaminhao?.trim() || null,
+        tipo: this.filtroTipo || null,
+        inicio,
+        fim,
+        page: this.page,
+        size: this.size,
+        sort: 'dtAbastecimento,desc',
+      })
+      .pipe(finalize(() => (this.carregando = false)))
+      .subscribe({
+        next: (res) => {
+          this.totalPages = res.totalPages ?? 0;
+          this.totalElements = res.totalElements ?? 0;
+          this.abastecimentos = (res.content || []).map((a) => this.toVM(a));
+        },
+        error: (err) => {
+          this.erro = err?.error?.message || 'Falha ao carregar abastecimentos.';
+          this.abastecimentos = [];
+        },
+      });
   }
 
-  get kpiConsumoMedio() {
-    return this.avgConsumption;
+  limparFiltros(): void {
+    this.searchTerm = '';
+    this.filtroTipo = '';
+    this.filtroCaminhao = '';
+    this.filtroMotorista = '';
+    this.filtroDataInicio = '';
+    this.filtroDataFim = '';
+    this.buscar(0);
   }
 
-  /* =============================
-     IDs
-     ============================= */
-  private generateId(): string {
-    if (typeof crypto !== 'undefined' && (crypto as any).randomUUID) {
-      try {
-        return (crypto as any).randomUUID();
-      } catch {}
-    }
-    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
-  }
+  private toVM(a: AbastecimentoResponse): AbastecimentoVM {
+    const motoristaNome =
+      this.motoristas.find((m) => m.codigo === a.motoristaCodigo)?.nome
+      ?? this.motoristas.find((m) => m.codigoExterno === a.motoristaCodigo)?.nome
+      ?? null;
 
-  /* ======================================================
-     MODAL — Wrappers compatíveis com HTML novo
-     ====================================================== */
+    return {
+      id: a.id,
+      codigo: a.codigo,
+      dtAbastecimento: a.dtAbastecimento,
 
-  openModal() {
-    // abre como "novo"
-    this.openAddModal();
-  }
+      caminhao: {
+        codigo: a.caminhaoCodigo ?? null,
+        placa: a.caminhaoPlaca ?? null,
+      },
 
-  closeModal() {
-    this.closeAddModal();
-  }
+      motorista: a.motoristaCodigo
+        ? { codigo: a.motoristaCodigo ?? null, nome: motoristaNome }
+        : null,
 
-  openAddModal() {
-    this.isEditing = false;
-    this.isEditMode = false;
-    this.editingId = null;
+      kmOdometro: a.kmOdometro ?? null,
+      qtLitros: a.qtLitros ?? null,
+      valorLitro: a.valorLitro ?? null,
+      valorTotal: a.valorTotal ?? null,
+      mediaKmLitro: a.mediaKmLitro ?? null,
 
-    const codigo = `AB-${new Date().getFullYear()}-${(this.abastecimentos.length + 1)
-      .toString()
-      .padStart(4, '0')}`;
+      tipoCombustivel: a.tipoCombustivel ?? null,
+      formaPagamento: a.formaPagamento ?? null,
 
-    const dt = new Date().toISOString().slice(0, 16);
+      posto: a.posto ?? null,
+      cidade: a.cidade ?? null,
+      uf: a.uf ?? null,
 
-    this.novo = {
-      codigo,
-      dtAbastecimento: dt,
-      tipoCombustivel: 'DIESEL',
-      qtLitros: 0,
-      valorLitro: 0,
-      valorTotal: 0,
-      caminhao: { id: '', codigo: '', placa: '' },
-      motorista: { id: '', nome: '', codigo: '' },
-    };
-
-    // preenche form para o HTML novo
-    this.form = {
-      codigo,
-      dtAbastecimento: dt,
-      tipoCombustivel: 'DIESEL',
-      qtLitros: 0,
-      valorLitro: 0,
-      precoLitro: 0,
-      valorTotal: 0,
-      odometro: null,
-      posto: '',
-      observacao: '',
-      caminhaoId: '',
-      motoristaId: '',
-      mediaKmLitro: null,
-      formaPagamento: '',
-      cidade: '',
-      uf: '',
-      numNotaOuCupom: '',
-    };
-
-    this.showAddModal = true;
-    this.isModalOpen = true;
-  }
-
-  openEditModal(ab: Abastecimento) {
-    this.isEditing = true;
-    this.isEditMode = true;
-    this.editingId = ab.id;
-
-    const dt = ab.dtAbastecimento ? ab.dtAbastecimento.slice(0, 16) : '';
-
-    this.novo = {
-      codigo: ab.codigo,
-      dtAbastecimento: dt,
-      tipoCombustivel: ab.tipoCombustivel || 'DIESEL',
-      qtLitros: ab.qtLitros ?? 0,
-      valorLitro: ab.valorLitro ?? 0,
-      valorTotal: ab.valorTotal ?? 0,
-      caminhao: { ...ab.caminhao },
-      motorista: ab.motorista ? { ...ab.motorista } : { id: '', nome: '', codigo: '' },
-      kmOdometro: ab.kmOdometro ?? null,
-      formaPagamento: ab.formaPagamento ?? '',
-      posto: ab.posto ?? '',
-      cidade: ab.cidade ?? '',
-      uf: ab.uf ?? '',
-      numNotaOuCupom: ab.numNotaOuCupom ?? '',
-      mediaKmLitro: ab.mediaKmLitro ?? null,
-    };
-
-    // form para o HTML novo
-    this.form = {
-      codigo: ab.codigo,
-      dtAbastecimento: dt,
-      tipoCombustivel: ab.tipoCombustivel || 'DIESEL',
-      qtLitros: ab.qtLitros ?? 0,
-      valorLitro: ab.valorLitro ?? 0,
-      precoLitro: ab.valorLitro ?? 0,
-      valorTotal: ab.valorTotal ?? 0,
-      odometro: ab.kmOdometro ?? null,
-      posto: ab.posto ?? '',
-      observacao: '', // você não tem observacao no modelo; deixe opcional
-      caminhaoId: ab.caminhao?.id || '',
-      motoristaId: ab.motorista?.id || '',
-      mediaKmLitro: ab.mediaKmLitro ?? null,
-      formaPagamento: ab.formaPagamento ?? '',
-      cidade: ab.cidade ?? '',
-      uf: ab.uf ?? '',
-      numNotaOuCupom: ab.numNotaOuCupom ?? '',
-    };
-
-    this.showAddModal = true;
-    this.isModalOpen = true;
-  }
-
-  closeAddModal() {
-    this.showAddModal = false;
-    this.isModalOpen = false;
-
-    this.isEditing = false;
-    this.isEditMode = false;
-
-    this.editingId = null;
-
-    this.novo = {
-      codigo: '',
-      dtAbastecimento: '',
-      tipoCombustivel: 'DIESEL',
-      qtLitros: 0,
-      valorLitro: 0,
-      valorTotal: 0,
-      caminhao: { id: '', codigo: '', placa: '' },
-      motorista: { id: '', nome: '', codigo: '' },
-    };
-
-    this.form = {
-      codigo: '',
-      dtAbastecimento: '',
-      tipoCombustivel: 'DIESEL',
-      qtLitros: 0,
-      valorLitro: 0,
-      precoLitro: 0,
-      valorTotal: 0,
-      odometro: null,
-      posto: '',
-      observacao: '',
-      caminhaoId: '',
-      motoristaId: '',
-      mediaKmLitro: null,
-      formaPagamento: '',
-      cidade: '',
-      uf: '',
-      numNotaOuCupom: '',
+      numNotaOuCupom: a.numNotaOuCupom ?? null,
     };
   }
 
-  saveAbastecimento() {
-    // Se o HTML novo está usando this.form, calculamos a partir dele
-    const qt = Number(this.form.qtLitros || 0);
-    const vl = Number(this.form.valorLitro || this.form.precoLitro || 0);
-    const total = qt * vl;
+  // =========================
+  // FILTRO LOCAL (mantém HTML usando abastecimentosFiltrados)
+  // =========================
 
-    const caminhao = this.caminhoes.find(c => c.id === this.form.caminhaoId) || null;
-    const motorista = this.motoristas.find(m => m.id === this.form.motoristaId) || null;
+  get abastecimentosFiltrados(): AbastecimentoVM[] {
+    const term = (this.searchTerm || '').trim().toLowerCase();
+    const tipo = (this.filtroTipo || '').trim().toLowerCase();
+    const caminhao = (this.filtroCaminhao || '').trim().toLowerCase();
+    const motorista = (this.filtroMotorista || '').trim().toLowerCase();
 
-    if (!caminhao) {
-      alert('Selecione um caminhão.');
-      return;
-    }
-    if (!this.form.dtAbastecimento) {
-      alert('Informe a data do abastecimento.');
-      return;
-    }
+    const ini = this.filtroDataInicio ? new Date(`${this.filtroDataInicio}T00:00:00`) : null;
+    const fim = this.filtroDataFim ? new Date(`${this.filtroDataFim}T23:59:59`) : null;
 
-    if (this.isEditing && this.editingId) {
-      const idx = this.abastecimentos.findIndex(x => x.id === this.editingId);
-      if (idx >= 0) {
-        this.abastecimentos[idx] = {
-          id: this.editingId,
-          codigo: this.form.codigo,
-          dtAbastecimento: this.form.dtAbastecimento,
-          caminhao: { ...caminhao },
-          motorista: motorista ? { ...motorista } : null,
-          kmOdometro: this.form.odometro ?? null,
-          qtLitros: qt,
-          valorLitro: vl,
-          valorTotal: total,
-          tipoCombustivel: this.form.tipoCombustivel,
-          formaPagamento: this.form.formaPagamento || '',
-          posto: this.form.posto || '',
-          cidade: this.form.cidade || '',
-          uf: this.form.uf || '',
-          numNotaOuCupom: this.form.numNotaOuCupom || '',
-          mediaKmLitro: this.form.mediaKmLitro ?? null,
-        };
-      }
-    } else {
-      const ab: Abastecimento = {
-        id: this.generateId(),
-        codigo: this.form.codigo,
-        dtAbastecimento: this.form.dtAbastecimento,
-        caminhao: { ...caminhao },
-        motorista: motorista ? { ...motorista } : null,
-        kmOdometro: this.form.odometro ?? null,
-        qtLitros: qt,
-        valorLitro: vl,
-        valorTotal: total,
-        tipoCombustivel: this.form.tipoCombustivel,
-        formaPagamento: this.form.formaPagamento || '',
-        posto: this.form.posto || '',
-        cidade: this.form.cidade || '',
-        uf: this.form.uf || '',
-        numNotaOuCupom: this.form.numNotaOuCupom || '',
-        mediaKmLitro: this.form.mediaKmLitro ?? null,
-      };
+    return (this.abastecimentos || []).filter((a) => {
+      // tipo
+      if (tipo && String(a.tipoCombustivel || '').toLowerCase() !== tipo) return false;
 
-      this.abastecimentos.unshift(ab);
-    }
-
-    this.closeAddModal();
-  }
-
-  deleteAbastecimento(id: UUID) {
-    if (!confirm('Tem certeza que deseja excluir este abastecimento?')) return;
-    this.abastecimentos = this.abastecimentos.filter(a => a.id !== id);
-    if (this.expanded === id) this.expanded = null;
-    if (this.expandId === id) this.expandId = null;
-  }
-
-  /* ======================================================
-     EXPAND — compatível com HTML novo
-     ====================================================== */
-  toggleExpand(id: UUID) {
-    this.expanded = this.expanded === id ? null : id;
-    this.expandId = this.expanded; // mantém sincronizado
-  }
-
-  isExpanded(id: UUID) {
-    return this.expanded === id;
-  }
-
-  trackById(index: number, item: Abastecimento) {
-    return item.id;
-  }
-
-  /* ======================================================
-     FILTROS — compatível com HTML novo
-     ====================================================== */
-  applyFilters() {
-    // Só sincroniza aliases para o getter usar
-    this.searchTerm = this.searchText || '';
-    this.filtroTipo = this.combustivelSelecionado || '';
-    this.filtroDataInicio = this.dataInicio || '';
-    this.filtroDataFim = this.dataFim || '';
-  }
-
-  get abastecimentosFiltrados() {
-    // garante sincronização mesmo se não chamar applyFilters
-    this.applyFilters();
-
-    const t = (this.searchTerm || '').toLowerCase().trim();
-    const mot = (this.filtroMotorista || '').toLowerCase().trim();
-    const cam = (this.filtroCaminhao || '').toLowerCase().trim();
-    const tipo = (this.filtroTipo || '').toLowerCase().trim();
-
-    // 🔥 normaliza datas (sem fuso)
-    const inicio = this.filtroDataInicio
-      ? new Date(
-        Number(this.filtroDataInicio.slice(0, 4)),
-        Number(this.filtroDataInicio.slice(5, 7)) - 1,
-        Number(this.filtroDataInicio.slice(8, 10)),
-        0, 0, 0, 0
-      )
-      : null;
-
-    const fim = this.filtroDataFim
-      ? new Date(
-        Number(this.filtroDataFim.slice(0, 4)),
-        Number(this.filtroDataFim.slice(5, 7)) - 1,
-        Number(this.filtroDataFim.slice(8, 10)),
-        23, 59, 59, 999
-      )
-      : null;
-
-    return this.abastecimentos.filter((a) => {
-      const dt = new Date(a.dtAbastecimento);
-
-      if (inicio && dt < inicio) return false;
-      if (fim && dt > fim) return false;
-
-      if (mot) {
-        if (!`${a.motorista?.nome || ''} ${a.motorista?.codigo || ''}`.toLowerCase().includes(mot)) {
-          return false;
-        }
+      // caminhao (placa/codigo)
+      if (caminhao) {
+        const c1 = String(a.caminhao?.placa || '').toLowerCase();
+        const c2 = String(a.caminhao?.codigo || '').toLowerCase();
+        if (!c1.includes(caminhao) && !c2.includes(caminhao)) return false;
       }
 
-      if (cam) {
-        if (!`${a.caminhao.placa} ${a.caminhao.codigo}`.toLowerCase().includes(cam)) {
-          return false;
-        }
+      // motorista (nome/codigo)
+      if (motorista) {
+        const m1 = String(a.motorista?.nome || '').toLowerCase();
+        const m2 = String(a.motorista?.codigo || '').toLowerCase();
+        if (!m1.includes(motorista) && !m2.includes(motorista)) return false;
       }
 
-      if (tipo && !String(a.tipoCombustivel || '').toLowerCase().includes(tipo)) {
-        return false;
+      // data
+      if (ini || fim) {
+        const d = this.safeDate(a.dtAbastecimento);
+        if (!d) return false;
+        if (ini && d < ini) return false;
+        if (fim && d > fim) return false;
       }
 
-      if (t) {
+      // term geral
+      if (term) {
         const hay = [
-          a.codigo || '',
-          a.posto || '',
-          a.motorista?.nome || '',
-          a.motorista?.codigo || '',
-          a.caminhao.placa || '',
-          a.caminhao.codigo || '',
-          a.numNotaOuCupom || '',
-        ].join(' ').toLowerCase();
+          a.codigo,
+          a.tipoCombustivel,
+          a.formaPagamento,
+          a.posto,
+          a.cidade,
+          a.uf,
+          a.numNotaOuCupom,
+          a.caminhao?.placa,
+          a.caminhao?.codigo,
+          a.motorista?.nome,
+          a.motorista?.codigo,
+        ]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
 
-        if (!hay.includes(t)) return false;
+        if (!hay.includes(term)) return false;
       }
 
       return true;
     });
   }
 
-  /* ======================================================
-     KPIs (mantidos)
-     ====================================================== */
-  get litersThisMonth() {
+  private safeDate(iso: string | null | undefined): Date | null {
+    if (!iso) return null;
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // =========================
+  // KPIs (baseado no que está carregado)
+  // =========================
+
+  get litersThisMonth(): number {
     const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
     return this.abastecimentos
       .filter((a) => {
         const d = new Date(a.dtAbastecimento);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        return d.getFullYear() === y && d.getMonth() === m;
       })
-      .reduce((s, a) => s + (a.qtLitros || 0), 0);
+      .reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
   }
 
-  get totalSpent() {
-    return this.abastecimentos.reduce((s, a) => s + (a.valorTotal || 0), 0);
+  get totalSpent(): number {
+    return this.abastecimentos.reduce((acc, a) => acc + Number(a.valorTotal || 0), 0);
   }
 
-  get avgPricePerLiter() {
-    const totalLiters = this.abastecimentos.reduce((s, a) => s + (a.qtLitros || 0), 0);
-    if (!totalLiters) return 0;
-    return this.totalSpent / totalLiters;
+  get avgPricePerLiter(): number {
+    const litros = this.abastecimentos.reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
+    if (!litros) return 0;
+    return this.totalSpent / litros;
   }
 
-  get avgConsumption() {
-    const records = this.abastecimentos
-      .map((a) => a.mediaKmLitro)
-      .filter((v) => v != null) as number[];
-
-    if (!records.length) return 0;
-
-    return records.reduce((s, v) => s + v, 0) / records.length;
+  get avgConsumption(): number {
+    const vals = this.abastecimentos.map((a) => Number(a.mediaKmLitro || 0)).filter((x) => x > 0);
+    if (!vals.length) return 0;
+    return vals.reduce((acc, x) => acc + x, 0) / vals.length;
   }
 
-  formatCurrency(value: number) {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  // =========================
+  // EXPAND
+  // =========================
+
+  toggleExpand(id: UUID) {
+    this.expanded = this.expanded === id ? null : id;
+  }
+
+  isExpanded(id: UUID) {
+    return this.expanded === id;
+  }
+
+  trackById(index: number, item: AbastecimentoVM) {
+    return item.id;
+  }
+
+  // =========================
+  // MODAL / CRUD
+  // =========================
+
+  openAddModal() {
+    this.isEditing = false;
+    this.editingCodigo = null;
+
+    this.novo = this.novoVazio();
+    this.novo.dtAbastecimento = this.nowAsDatetimeLocal(); // datetime-local
+
+    this.showAddModal = true;
+  }
+
+  openEditModal(a: AbastecimentoVM) {
+    this.isEditing = true;
+    this.editingCodigo = a.codigo; // PUT usa /{codigo}
+
+    this.novo = this.novoVazio();
+
+    // codigo existe no template (required). No back ele não existe no request (não tem problema).
+    this.novo.codigo = a.codigo || '';
+    this.novo.dtAbastecimento = this.toDatetimeLocal(a.dtAbastecimento);
+    this.novo.tipoCombustivel = a.tipoCombustivel || 'DIESEL';
+
+    this.novo.qtLitros = a.qtLitros ?? null;
+    this.novo.valorLitro = a.valorLitro ?? null;
+    this.novo.valorTotal = a.valorTotal ?? null;
+    this.novo.kmOdometro = a.kmOdometro ?? null;
+
+    this.novo.caminhao.placa = a.caminhao?.placa || '';
+    this.novo.caminhao.codigo = a.caminhao?.codigo || '';
+
+    // HTML usa novo.motorista.nome (mantive assim)
+    this.novo.motorista.nome = a.motorista?.codigo || a.motorista?.nome || '';
+
+    this.novo.formaPagamento = a.formaPagamento || 'CARTAO';
+    this.novo.posto = a.posto || '';
+    this.novo.cidade = a.cidade || '';
+    this.novo.uf = a.uf || '';
+    this.novo.numNotaOuCupom = a.numNotaOuCupom || '';
+    this.novo.mediaKmLitro = a.mediaKmLitro ?? null;
+
+    this.showAddModal = true;
+  }
+
+  closeAddModal() {
+    this.showAddModal = false;
+  }
+
+  saveAbastecimento() {
+    if (!this.novo.dtAbastecimento) {
+      alert('Informe a data/hora.');
+      return;
+    }
+
+    // caminhão: no HTML tem placa e código -> a API espera um identificador (codigo/codigoExterno/placa)
+    const caminhaoIdent = String(this.novo?.caminhao?.codigo || this.novo?.caminhao?.placa || '').trim();
+    if (!caminhaoIdent) {
+      alert('Informe a placa ou o código do caminhão.');
+      return;
+    }
+
+    // motorista: HTML usa "novo.motorista.nome" (mantive), mas a API espera codigo/codigoExterno
+    const motoristaIdent = String(this.novo?.motorista?.nome || '').trim();
+
+    const payload: AbastecimentoRequest = {
+      caminhao: caminhaoIdent,
+      motorista: motoristaIdent ? motoristaIdent : null,
+      dtAbastecimento: this.normalizeDatetimeLocalToIso(this.novo.dtAbastecimento),
+
+      kmOdometro: this.novo.kmOdometro ?? null,
+      qtLitros: this.novo.qtLitros != null ? Number(this.novo.qtLitros) : null,
+      valorLitro: this.novo.valorLitro != null ? Number(this.novo.valorLitro) : null,
+
+      // se não vier, o back calcula (qtLitros * valorLitro)
+      valorTotal: this.novo.valorTotal != null ? Number(this.novo.valorTotal) : null,
+
+      tipoCombustivel: String(this.novo.tipoCombustivel),
+      formaPagamento: String(this.novo.formaPagamento),
+
+      posto: this.novo.posto || null,
+      cidade: this.novo.cidade || null,
+      uf: this.novo.uf || null,
+      numNotaOuCupom: this.novo.numNotaOuCupom || null,
+    };
+
+    this.carregando = true;
+
+    const req$ =
+      this.isEditing && this.editingCodigo
+        ? this.abastecimentoApi.atualizar(this.editingCodigo, payload)
+        : this.abastecimentoApi.criar(payload);
+
+    req$
+      .pipe(finalize(() => (this.carregando = false)))
+      .subscribe({
+        next: () => {
+          this.closeAddModal();
+          this.buscar(0);
+        },
+        error: (err) => {
+          alert(err?.error?.message || 'Falha ao salvar abastecimento.');
+        },
+      });
+  }
+
+  /**
+   * HTML chama deleteAbastecimento(a.id)
+   * Porém o BACK deleta por {codigo}
+   * Então resolvemos aqui: recebe ID -> encontra o item -> deleta pelo codigo
+   */
+  deleteAbastecimento(id: string) {
+    const item = (this.abastecimentos || []).find((x) => x.id === id);
+    if (!item?.codigo) {
+      alert('Não foi possível identificar o código do abastecimento para excluir.');
+      return;
+    }
+
+    if (!confirm('Tem certeza que deseja excluir este abastecimento?')) return;
+
+    this.carregando = true;
+    this.abastecimentoApi
+      .deletar(item.codigo)
+      .pipe(finalize(() => (this.carregando = false)))
+      .subscribe({
+        next: () => this.buscar(0),
+        error: (err) => alert(err?.error?.message || 'Falha ao excluir abastecimento.'),
+      });
+  }
+
+  private normalizeDatetimeLocalToIso(dtLocal: string): string {
+    // input: yyyy-MM-ddTHH:mm
+    if (!dtLocal) return dtLocal;
+    return dtLocal.length === 16 ? `${dtLocal}:00` : dtLocal; // yyyy-MM-ddTHH:mm:ss
+  }
+
+  private toDatetimeLocal(iso: string): string {
+    // iso: yyyy-MM-ddTHH:mm:ss (ou com timezone)
+    if (!iso) return '';
+    // Se vier com timezone, Date() pode ajustar; aqui queremos somente "texto" local para o input
+    // então tentamos manter a parte inicial "yyyy-MM-ddTHH:mm"
+    const base = String(iso).slice(0, 16);
+    return base;
+  }
+
+  private nowAsDatetimeLocal(): string {
+    const dt = new Date();
+    // converte para "local" (sem Z) no padrão do datetime-local
+    const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16); // yyyy-MM-ddTHH:mm
+  }
+
+  private novoVazio(): any {
+    return {
+      codigo: '',
+      dtAbastecimento: '',
+      tipoCombustivel: 'DIESEL',
+      qtLitros: null,
+      valorLitro: null,
+      valorTotal: null,
+      kmOdometro: null,
+
+      caminhao: { placa: '', codigo: '' },
+      motorista: { nome: '' },
+
+      formaPagamento: 'CARTAO',
+      posto: '',
+      cidade: '',
+      uf: '',
+      numNotaOuCupom: '',
+      mediaKmLitro: null,
+    };
+  }
+
+  // =========================
+  // PAGINAÇÃO
+  // =========================
+
+  prevPage(): void {
+    if (this.page <= 0) return;
+    this.buscar(this.page - 1);
+  }
+
+  nextPage(): void {
+    if (this.page + 1 >= this.totalPages) return;
+    this.buscar(this.page + 1);
   }
 }
