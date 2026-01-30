@@ -20,7 +20,7 @@
     <div class="card">
       <div class="card-icon">⛽</div>
       <div class="card-info">
-        <div class="card-title">Litros (mês)</div>
+        <div class="card-title">{{ (filtroDataInicio || filtroDataFim) ? 'Litros (período)' : 'Litros (mês)' }}</div>
         <div class="card-value">{{ litersThisMonth | number : '1.0-3' }}</div>
       </div>
     </div>
@@ -55,10 +55,11 @@
     <input
       type="text"
       [(ngModel)]="searchTerm"
+      (ngModelChange)="scheduleBuscar()"
       placeholder="Pesquisar geral..."
     />
 
-    <select [(ngModel)]="filtroTipo">
+    <select [(ngModel)]="filtroTipo" (ngModelChange)="scheduleBuscar()">
       <option value="">Todos combustíveis</option>
       <option *ngFor="let c of combustiveis" [value]="c">{{ c }}</option>
     </select>
@@ -66,23 +67,25 @@
     <input
       type="text"
       [(ngModel)]="filtroCaminhao"
+      (ngModelChange)="scheduleBuscar()"
       placeholder="Filtrar por caminhão (placa/código)"
     />
 
     <input
       type="text"
       [(ngModel)]="filtroMotorista"
+      (ngModelChange)="scheduleBuscar()"
       placeholder="Filtrar por motorista"
     />
 
     <div class="date-inline">
       <span>De</span>
-      <input type="date" [(ngModel)]="filtroDataInicio" />
+      <input type="date" [(ngModel)]="filtroDataInicio" (ngModelChange)="scheduleBuscar()" />
     </div>
 
     <div class="date-inline">
       <span>Até</span>
-      <input type="date" [(ngModel)]="filtroDataFim" />
+      <input type="date" [(ngModel)]="filtroDataFim" (ngModelChange)="scheduleBuscar()" />
     </div>
   </div>
 
@@ -93,7 +96,6 @@
       <span class="count">{{ abastecimentosFiltrados.length || 0 }}</span>
     </div>
 
-    <!-- Cabeçalho “tabela” -->
     <div class="list-header">
       <span>Data</span>
       <span>Caminhão</span>
@@ -108,7 +110,6 @@
     <ul class="abaste-list">
       <li class="abaste-item" *ngFor="let a of abastecimentosFiltrados; trackBy: trackById">
 
-        <!-- Linha -->
         <div class="row" (click)="toggleExpand(a.id)">
           <span>{{ a.dtAbastecimento | date : 'dd/MM/yyyy HH:mm' }}</span>
 
@@ -126,7 +127,6 @@
 
           <span class="truncate">{{ a.posto || '—' }}</span>
 
-          <!-- Ações -->
           <div class="row-actions">
             <button
               class="icon-btn edit"
@@ -148,7 +148,6 @@
           </div>
         </div>
 
-        <!-- Expand -->
         <div class="expand-container" [class.expanded]="isExpanded(a.id)">
           <div class="details">
             <div><strong>Código:</strong> {{ a.codigo || '—' }}</div>
@@ -177,109 +176,155 @@
     </ul>
   </div>
 
-  <!-- MODAL -->
-  <div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
-    <div class="modal-card" (click)="$event.stopPropagation()">
+  <!-- ✅ MODAL MELHORADO -->
+  <div class="ab-modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+    <div class="ab-modal" (click)="$event.stopPropagation()">
 
-      <h3>{{ isEditing ? 'Editar Abastecimento' : 'Novo Abastecimento' }}</h3>
-
-      <form class="modal-form" (ngSubmit)="saveAbastecimento()">
-
-        <div class="form-row">
-          <div>
-            <label>Código</label>
-            <input type="text" [(ngModel)]="novo.codigo" name="codigo" required />
-          </div>
-
-          <div>
-            <label>Data/Hora</label>
-            <input
-              type="datetime-local"
-              [(ngModel)]="novo.dtAbastecimento"
-              name="dtAbastecimento"
-              required
-            />
-          </div>
-
-          <div>
-            <label>Combustível</label>
-            <select [(ngModel)]="novo.tipoCombustivel" name="tipoCombustivel" required>
-              <option *ngFor="let c of combustiveis" [value]="c">{{ c }}</option>
-            </select>
-          </div>
+      <div class="ab-modal__header">
+        <div class="ab-modal__title">
+          <h3>{{ isEditing ? 'Editar Abastecimento' : 'Novo Abastecimento' }}</h3>
+          <p>Registre os dados do abastecimento com precisão.</p>
         </div>
+        <button class="ab-modal__close" type="button" (click)="closeAddModal()" aria-label="Fechar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
-        <div class="form-row">
-          <div>
-            <label>Litros</label>
-            <input type="number" step="0.001" [(ngModel)]="novo.qtLitros" name="qtLitros" required />
+      <form class="ab-modal__body" (ngSubmit)="saveAbastecimento()">
+
+        <!-- Seção 1 -->
+        <section class="ab-section">
+          <div class="ab-section__head">
+            <span class="ab-section__dot"></span>
+            <div class="ab-section__texts">
+              <div class="ab-section__title">Dados do abastecimento</div>
+              <div class="ab-section__desc">Data, combustível, litros e odômetro.</div>
+            </div>
           </div>
 
-          <div>
-            <label>Valor/L</label>
-            <input type="number" step="0.001" [(ngModel)]="novo.valorLitro" name="valorLitro" required />
+          <div class="ab-grid">
+            <div class="ab-field">
+              <label>Código</label>
+              <input type="text" [(ngModel)]="novo.codigo" name="codigo" required />
+            </div>
+
+            <div class="ab-field">
+              <label>Data/Hora</label>
+              <input
+                type="datetime-local"
+                [(ngModel)]="novo.dtAbastecimento"
+                name="dtAbastecimento"
+                required
+              />
+            </div>
+
+            <div class="ab-field">
+              <label>Combustível</label>
+              <select [(ngModel)]="novo.tipoCombustivel" name="tipoCombustivel" required>
+                <option *ngFor="let c of combustiveis" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+
+            <div class="ab-field">
+              <label>Litros</label>
+              <input type="number" step="0.001" [(ngModel)]="novo.qtLitros" name="qtLitros" required />
+            </div>
+
+            <div class="ab-field">
+              <label>Valor/L</label>
+              <input type="number" step="0.001" [(ngModel)]="novo.valorLitro" name="valorLitro" required />
+            </div>
+
+            <div class="ab-field">
+              <label>Odômetro (km)</label>
+              <input type="number" [(ngModel)]="novo.kmOdometro" name="kmOdometro" />
+              <small class="ab-hint">Ajuda a calcular o consumo médio (km/L).</small>
+            </div>
+
+            <div class="ab-field">
+              <label>Média km/L (opcional)</label>
+              <input type="number" step="0.01" [(ngModel)]="novo.mediaKmLitro" name="mediaKmLitro" />
+              <small class="ab-hint">Se vazio, o sistema tenta calcular pelo odômetro.</small>
+            </div>
+          </div>
+        </section>
+
+        <!-- Seção 2 -->
+        <section class="ab-section">
+          <div class="ab-section__head">
+            <span class="ab-section__dot"></span>
+            <div class="ab-section__texts">
+              <div class="ab-section__title">Veículo e motorista</div>
+              <div class="ab-section__desc">Vínculo do abastecimento ao caminhão.</div>
+            </div>
           </div>
 
-          <div>
-            <label>Odômetro</label>
-            <input type="number" [(ngModel)]="novo.kmOdometro" name="kmOdometro" />
-          </div>
-        </div>
+          <div class="ab-grid">
+            <div class="ab-field">
+              <label>Placa do Caminhão</label>
+              <input type="text" [(ngModel)]="novo.caminhao.placa" name="placa" placeholder="Ex: ABC1D23" />
+            </div>
 
-        <div class="form-row">
-          <div>
-            <label>Placa do Caminhão</label>
-            <input type="text" [(ngModel)]="novo.caminhao.placa" name="placa" placeholder="Ex: ABC1D23" />
-          </div>
+            <div class="ab-field">
+              <label>Código do Caminhão</label>
+              <input type="text" [(ngModel)]="novo.caminhao.codigo" name="codigoCaminhao" placeholder="Ex: CAM-001" />
+            </div>
 
-          <div>
-            <label>Código do Caminhão</label>
-            <input type="text" [(ngModel)]="novo.caminhao.codigo" name="codigoCaminhao" placeholder="Ex: CAM-001" />
+            <div class="ab-field">
+              <label>Motorista</label>
+              <input type="text" [(ngModel)]="novo.motorista.nome" name="nomeMotorista" placeholder="Ex: Carlos Silva" />
+            </div>
           </div>
+        </section>
 
-          <div>
-            <label>Motorista</label>
-            <input type="text" [(ngModel)]="novo.motorista.nome" name="nomeMotorista" placeholder="Ex: Carlos Silva" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label>Posto</label>
-            <input type="text" [(ngModel)]="novo.posto" name="posto" placeholder="Ex: Posto Central" />
-          </div>
-
-          <div>
-            <label>Forma Pgto</label>
-            <input type="text" [(ngModel)]="novo.formaPagamento" name="formaPagamento" placeholder="Ex: CARTAO" />
+        <!-- Seção 3 -->
+        <section class="ab-section">
+          <div class="ab-section__head">
+            <span class="ab-section__dot"></span>
+            <div class="ab-section__texts">
+              <div class="ab-section__title">Pagamento e local</div>
+              <div class="ab-section__desc">Posto, nota e localização.</div>
+            </div>
           </div>
 
-          <div>
-            <label>Nota/Cupom</label>
-            <input type="text" [(ngModel)]="novo.numNotaOuCupom" name="numNotaOuCupom" placeholder="Ex: NF12345" />
-          </div>
-        </div>
+          <div class="ab-grid">
+            <div class="ab-field">
+              <label>Posto</label>
+              <input type="text" [(ngModel)]="novo.posto" name="posto" placeholder="Ex: Posto Central" />
+            </div>
 
-        <div class="form-row">
-          <div>
-            <label>Cidade</label>
-            <input type="text" [(ngModel)]="novo.cidade" name="cidade" />
-          </div>
+            <div class="ab-field">
+              <label>Forma Pgto</label>
+              <select [(ngModel)]="novo.formaPagamento" name="formaPagamento">
+                <option value="">Selecione...</option>
+                <option value="DINHEIRO">DINHEIRO</option>
+                <option value="CARTAO">CARTÃO</option>
+                <option value="PIX">PIX</option>
+                <option value="FATURADO">FATURADO</option>
+              </select>
+            </div>
 
-          <div>
-            <label>UF</label>
-            <input type="text" [(ngModel)]="novo.uf" name="uf" maxlength="2" />
-          </div>
+            <div class="ab-field">
+              <label>Nota/Cupom</label>
+              <input type="text" [(ngModel)]="novo.numNotaOuCupom" name="numNotaOuCupom" placeholder="Ex: NF12345" />
+            </div>
 
-          <div>
-            <label>Média km/L</label>
-            <input type="number" step="0.01" [(ngModel)]="novo.mediaKmLitro" name="mediaKmLitro" />
-          </div>
-        </div>
+            <div class="ab-field">
+              <label>Cidade</label>
+              <input type="text" [(ngModel)]="novo.cidade" name="cidade" />
+            </div>
 
-        <div class="modal-actions">
-          <button class="btn-cancel" type="button" (click)="closeAddModal()">Cancelar</button>
-          <button class="btn-save" type="submit">{{ isEditing ? 'Salvar' : 'Cadastrar' }}</button>
+            <div class="ab-field">
+              <label>UF</label>
+              <input type="text" [(ngModel)]="novo.uf" name="uf" maxlength="2" placeholder="Ex: PB" />
+            </div>
+          </div>
+        </section>
+
+        <!-- footer fixo -->
+        <div class="ab-modal__footer">
+          <button class="ab-btn ghost" type="button" (click)="closeAddModal()">Cancelar</button>
+          <button class="ab-btn primary" type="submit">{{ isEditing ? 'Salvar' : 'Cadastrar' }}</button>
         </div>
 
       </form>

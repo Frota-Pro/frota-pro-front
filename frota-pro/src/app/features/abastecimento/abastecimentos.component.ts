@@ -88,6 +88,9 @@ export class AbastecimentosComponent implements OnInit {
 
   abastecimentos: AbastecimentoVM[] = [];
 
+  // debounce para disparar buscar() quando filtros mudarem
+  private filtroTimer: any = null;
+
   // form (modal) -> exatamente como seu HTML espera
   novo: any = this.novoVazio();
 
@@ -100,6 +103,17 @@ export class AbastecimentosComponent implements OnInit {
   ngOnInit(): void {
     this.preloadCombos();
     this.buscar();
+  }
+
+  /**
+   * Dispara a busca no BACK sempre que um filtro muda (com debounce).
+   * Evita ficar chamando a API a cada tecla.
+   */
+  scheduleBuscar(): void {
+    if (this.filtroTimer) clearTimeout(this.filtroTimer);
+    this.filtroTimer = setTimeout(() => {
+      this.buscar(0);
+    }, 350);
   }
 
   private preloadCombos(): void {
@@ -124,11 +138,8 @@ export class AbastecimentosComponent implements OnInit {
     this.carregando = true;
     this.erro = null;
 
-    // Mantive sua UX: motorista no filtro entra como texto geral também
-    const qParts: string[] = [];
-    if (this.searchTerm?.trim()) qParts.push(this.searchTerm.trim());
-    if (this.filtroMotorista?.trim()) qParts.push(this.filtroMotorista.trim());
-    const q = qParts.length ? qParts.join(' ') : null;
+    const q = this.searchTerm?.trim() ? this.searchTerm.trim() : null;
+    const motorista = this.filtroMotorista?.trim() ? this.filtroMotorista.trim() : null;
 
     const inicio = this.filtroDataInicio ? `${this.filtroDataInicio}T00:00:00` : null;
     const fim = this.filtroDataFim ? `${this.filtroDataFim}T23:59:59` : null;
@@ -137,6 +148,7 @@ export class AbastecimentosComponent implements OnInit {
       .filtrar({
         q,
         caminhao: this.filtroCaminhao?.trim() || null,
+        motorista,
         tipo: this.filtroTipo || null,
         inicio,
         fim,
@@ -276,33 +288,104 @@ export class AbastecimentosComponent implements OnInit {
   }
 
   // =========================
-  // KPIs (baseado no que está carregado)
+  // KPIs (sempre respeitam os filtros do usuário)
   // =========================
 
+  private get kpiBase(): AbastecimentoVM[] {
+    return this.abastecimentosFiltrados || [];
+  }
+
   get litersThisMonth(): number {
+    const base = this.kpiBase;
+
+    // Se o usuário definiu período, o KPI vira "litros no período".
+    if (this.filtroDataInicio || this.filtroDataFim) {
+      return base.reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
+    }
+
+    // Caso contrário mantém a ideia do card: "litros do mês atual" (mas respeitando os demais filtros)
     const now = new Date();
     const y = now.getFullYear();
     const m = now.getMonth();
-    return this.abastecimentos
+    return base
       .filter((a) => {
-        const d = new Date(a.dtAbastecimento);
-        return d.getFullYear() === y && d.getMonth() === m;
+        const d = this.safeDate(a.dtAbastecimento);
+        return !!d && d.getFullYear() === y && d.getMonth() === m;
       })
       .reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
   }
 
   get totalSpent(): number {
-    return this.abastecimentos.reduce((acc, a) => acc + Number(a.valorTotal || 0), 0);
+    return this.kpiBase.reduce((acc, a) => acc + Number(a.valorTotal || 0), 0);
   }
 
   get avgPricePerLiter(): number {
-    const litros = this.abastecimentos.reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
+    const litros = this.kpiBase.reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
     if (!litros) return 0;
     return this.totalSpent / litros;
   }
 
   get avgConsumption(): number {
-    const vals = this.abastecimentos.map((a) => Number(a.mediaKmLitro || 0)).filter((x) => x > 0);
+    return this.calcAvgConsumption(this.kpiBase);
+  }
+
+  /**
+   * Consumo médio (km/L): calcula por diferença de odômetro entre abastecimentos consecutivos.
+   * - Agrupa por caminhão
+   * - Ordena por data
+   * - Soma km rodado e litros do abastecimento "atual" (o que reabasteceu)
+   * - Fallback: usa média simples do mediaKmLitro do back quando existir
+   */
+  private calcAvgConsumption(items: AbastecimentoVM[]): number {
+    if (!items?.length) return 0;
+
+    const byTruck = new Map<string, AbastecimentoVM[]>();
+    for (const a of items) {
+      const key = String(a.caminhao?.codigo || a.caminhao?.placa || '—');
+      if (!byTruck.has(key)) byTruck.set(key, []);
+      byTruck.get(key)!.push(a);
+    }
+
+    let totalKm = 0;
+    let totalLitros = 0;
+
+    for (const arr of byTruck.values()) {
+      const sorted = [...arr].sort((x, y) => {
+        const tx = this.safeDate(x.dtAbastecimento)?.getTime() ?? 0;
+        const ty = this.safeDate(y.dtAbastecimento)?.getTime() ?? 0;
+        if (tx !== ty) return tx - ty;
+
+        // desempate 1: odômetro (se ambos existirem)
+        const kx = Number(x.kmOdometro ?? NaN);
+        const ky = Number(y.kmOdometro ?? NaN);
+        if (Number.isFinite(kx) && Number.isFinite(ky) && kx !== ky) return kx - ky;
+
+        // desempate 2: código/id (mantém ordenação estável)
+        return String(x.codigo || '').localeCompare(String(y.codigo || ''));
+      });
+
+      for (let i = 1; i < sorted.length; i++) {
+        const prev = sorted[i - 1];
+        const cur = sorted[i];
+
+        const kmPrev = Number(prev.kmOdometro ?? NaN);
+        const kmCur = Number(cur.kmOdometro ?? NaN);
+        const litrosCur = Number(cur.qtLitros ?? 0);
+
+        if (!Number.isFinite(kmPrev) || !Number.isFinite(kmCur)) continue;
+        const delta = kmCur - kmPrev;
+        if (delta <= 0) continue;
+        if (litrosCur <= 0) continue;
+
+        totalKm += delta;
+        totalLitros += litrosCur;
+      }
+    }
+
+    if (totalLitros > 0) return totalKm / totalLitros;
+
+    // fallback: quando não dá pra calcular por odômetro, tenta usar o campo do back
+    const vals = items.map((a) => Number(a.mediaKmLitro || 0)).filter((x) => x > 0);
     if (!vals.length) return 0;
     return vals.reduce((acc, x) => acc + x, 0) / vals.length;
   }
