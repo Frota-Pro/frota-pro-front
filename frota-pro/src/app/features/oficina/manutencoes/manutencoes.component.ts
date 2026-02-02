@@ -1,333 +1,322 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 
-type UUID = string;
+import { ManutencaoApiService } from '../../../core/api/manutencao-api.service';
+import { ManutencaoRequest, ManutencaoResponse, ManutencaoItemRequest } from '../../../core/api/manutencao-api.models';
 
 type StatusManutencao = 'ABERTA' | 'EM_ANDAMENTO' | 'FINALIZADA' | 'CANCELADA' | string;
 type TipoManutencao = 'PREVENTIVA' | 'CORRETIVA' | string;
+type TipoItemManutencao = 'PECA' | 'SERVICO' | string;
 
-interface Manutencao {
-  id: UUID;
-  os: string; // OS-000001
-  caminhao: { id: UUID; placa: string; modelo?: string };
-  oficina?: { id: UUID; nome: string } | null;
-
-  tipo: TipoManutencao;
-  status: StatusManutencao;
-
-  dtAbertura: string;       // ISO (yyyy-MM-ddTHH:mm)
-  dtPrevisao?: string | null;
-  dtFechamento?: string | null;
-
-  kmEntrada?: number | null;
-  kmSaida?: number | null;
-
-  valorTotal?: number | null;
-
-  servicos?: string[];
-  pecas?: { descricao: string; qtd: number; valor?: number }[];
-
-  observacao?: string;
+interface ManutencaoVM extends ManutencaoResponse {
+  _inicio?: string; // yyyy-MM-dd
+  _fim?: string;    // yyyy-MM-dd
 }
 
 @Component({
   selector: 'app-manutencoes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './manutencoes.component.html',
   styleUrls: ['./manutencoes.component.css'],
 })
-export class ManutencoesComponent {
+export class ManutencoesComponent implements OnInit {
 
   // filtros
-  searchTerm = '';
-  filtroStatus: '' | 'ABERTA' | 'EM_ANDAMENTO' | 'FINALIZADA' | 'CANCELADA' = '';
-  filtroTipo: '' | 'PREVENTIVA' | 'CORRETIVA' = '';
-  filtroDataInicio = '';
-  filtroDataFim = '';
+  search = '';
+  statusFilter: '' | StatusManutencao = '';
+  tipoFilter: '' | TipoManutencao = '';
+  dataInicio = '';
+  dataFim = '';
+  caminhaoFilter = '';
 
-  // expand
-  expandedId: UUID | null = null;
+  // paginação
+  page = 0;
+  size = 20;
+  totalPages = 0;
+  totalElements = 0;
 
-  // modal/form
+  // estado
+  loading = false;
+  errorMsg: string | null = null;
+
+  // dados
+  rows: ManutencaoVM[] = [];
+  filtered: ManutencaoVM[] = [];
+
+  // modal
   showModal = false;
   isEditing = false;
-  editingId: UUID | null = null;
+  editingCodigo: string | null = null;
 
-  // mocks (depois liga no backend)
-  caminhoes = [
-    { id: 'c1', placa: 'ABC-1234', modelo: 'Volvo FH 540' },
-    { id: 'c2', placa: 'DEF-5678', modelo: 'Scania R450' },
-  ];
+  // form
+  form = this.emptyForm();
 
-  oficinas = [
-    { id: 'o1', nome: 'Oficina Central' },
-    { id: 'o2', nome: 'Borracharia Norte' },
-  ];
+  // debounce
+  private filtroTimer: any = null;
 
-  manutencoes: Manutencao[] = [
-    {
-      id: 'm-1',
-      os: 'OS-000001',
-      caminhao: { id: 'c1', placa: 'ABC-1234', modelo: 'Volvo FH 540' },
-      oficina: { id: 'o1', nome: 'Oficina Central' },
-      tipo: 'CORRETIVA',
-      status: 'EM_ANDAMENTO',
-      dtAbertura: '2026-01-10T09:10',
-      dtPrevisao: '2026-01-15T18:00',
-      kmEntrada: 120340,
-      valorTotal: 1850.0,
-      servicos: ['Troca de pastilhas', 'Revisão sistema de freio'],
-      pecas: [
-        { descricao: 'Pastilha de freio', qtd: 1, valor: 450 },
-        { descricao: 'Fluido de freio', qtd: 2, valor: 35 },
-      ],
-      observacao: 'Prioridade alta: caminhão escalado para rota longa.',
-    },
-    {
-      id: 'm-2',
-      os: 'OS-000002',
-      caminhao: { id: 'c2', placa: 'DEF-5678', modelo: 'Scania R450' },
-      oficina: { id: 'o2', nome: 'Borracharia Norte' },
-      tipo: 'PREVENTIVA',
-      status: 'ABERTA',
-      dtAbertura: '2026-01-12T14:30',
-      dtPrevisao: '2026-01-13T12:00',
-      kmEntrada: 201200,
-      valorTotal: 320.0,
-      servicos: ['Balanceamento', 'Alinhamento'],
-      pecas: [{ descricao: 'Peso balanceamento', qtd: 4, valor: 5 }],
-      observacao: '',
-    },
-  ];
+  constructor(
+    private api: ManutencaoApiService,
+    private router: Router,
+  ) {}
 
-  form: any = this.emptyForm();
-
-  // =========================
-  // UI helpers
-  // =========================
-  private emptyForm() {
-    return {
-      os: '',
-      caminhaoId: '',
-      oficinaId: '',
-      tipo: 'CORRETIVA' as TipoManutencao,
-      status: 'ABERTA' as StatusManutencao,
-      dtAbertura: new Date().toISOString().slice(0, 16),
-      dtPrevisao: '',
-      dtFechamento: '',
-      kmEntrada: null as number | null,
-      kmSaida: null as number | null,
-      valorTotal: null as number | null,
-      servicosText: '',
-      pecasText: '',
-      observacao: '',
-    };
+  ngOnInit(): void {
+    this.carregarPagina();
   }
 
-  private generateId(): UUID {
-    if (typeof crypto !== 'undefined' && (crypto as any).randomUUID) {
-      try {
-        return (crypto as any).randomUUID();
-      } catch {}
-    }
-    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+  scheduleBuscar(): void {
+    if (this.filtroTimer) clearTimeout(this.filtroTimer);
+    this.filtroTimer = setTimeout(() => {
+      this.page = 0;
+      this.carregarPagina();
+    }, 350);
   }
 
-  private nextOs(): string {
-    const nums = this.manutencoes
-      .map(m => Number((m.os || '').replace(/\D/g, '')))
-      .filter(n => !Number.isNaN(n));
-    const next = (nums.length ? Math.max(...nums) : 0) + 1;
-    return `OS-${String(next).padStart(6, '0')}`;
-  }
+  carregarPagina(page?: number): void {
+    if (page != null) this.page = page;
 
-  trackById(_: number, m: Manutencao) {
-    return m.id;
-  }
+    this.loading = true;
+    this.errorMsg = null;
 
-  toggleExpand(id: UUID) {
-    this.expandedId = this.expandedId === id ? null : id;
-  }
+    // Se seu back não tiver filtros na rota /manutencao, ainda funciona:
+    // a gente busca paginado e filtra local.
+    this.api.listar({
+      page: this.page,
+      size: this.size,
+      sort: 'dataInicioManutencao,desc',
+      q: this.search || null,
+      inicio: this.dataInicio || null,
+      fim: this.dataFim || null,
+      status: this.statusFilter || null,
+      tipo: this.tipoFilter || null,
+      caminhao: this.caminhaoFilter || null,
+    })
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (res) => {
+          this.totalPages = res.totalPages ?? 0;
+          this.totalElements = res.totalElements ?? 0;
 
-  // =========================
-  // Modal
-  // =========================
-  openAddModal() {
-    this.isEditing = false;
-    this.editingId = null;
+          this.rows = (res.content ?? []).map(r => ({
+            ...r,
+            _inicio: (r.dataInicioManutencao || '')?.slice(0, 10),
+            _fim: (r.dataFimManutencao || '')?.slice(0, 10),
+          }));
 
-    this.form = this.emptyForm();
-    this.form.os = this.nextOs();
-
-    this.showModal = true;
-  }
-
-  openEditModal(m: Manutencao) {
-    this.isEditing = true;
-    this.editingId = m.id;
-
-    this.form = this.emptyForm();
-    this.form.os = m.os;
-    this.form.caminhaoId = m.caminhao?.id || '';
-    this.form.oficinaId = m.oficina?.id || '';
-    this.form.tipo = m.tipo || 'CORRETIVA';
-    this.form.status = m.status || 'ABERTA';
-    this.form.dtAbertura = (m.dtAbertura || '').slice(0, 16);
-    this.form.dtPrevisao = (m.dtPrevisao || '').slice(0, 16);
-    this.form.dtFechamento = (m.dtFechamento || '').slice(0, 16);
-    this.form.kmEntrada = m.kmEntrada ?? null;
-    this.form.kmSaida = m.kmSaida ?? null;
-    this.form.valorTotal = m.valorTotal ?? null;
-    this.form.servicosText = (m.servicos || []).join('\n');
-    this.form.pecasText = (m.pecas || [])
-      .map(p => `${p.descricao};${p.qtd};${p.valor ?? ''}`)
-      .join('\n');
-    this.form.observacao = m.observacao || '';
-
-    this.showModal = true;
-  }
-
-  closeModal() {
-    this.showModal = false;
-    this.isEditing = false;
-    this.editingId = null;
-    this.form = this.emptyForm();
-  }
-
-  save() {
-    // validações mínimas
-    if (!this.form.caminhaoId) {
-      alert('Selecione o caminhão.');
-      return;
-    }
-    if (!this.form.dtAbertura) {
-      alert('Informe a data de abertura.');
-      return;
-    }
-
-    const caminhao = this.caminhoes.find(c => c.id === this.form.caminhaoId)!;
-    const oficina = this.oficinas.find(o => o.id === this.form.oficinaId) || null;
-
-    const servicos = (this.form.servicosText || '')
-      .split('\n')
-      .map((s: string) => s.trim())
-      .filter(Boolean);
-
-    // pecasText formato: "descricao;qtd;valor"
-    const pecas = (this.form.pecasText || '')
-      .split('\n')
-      .map((line: string) => line.trim())
-      .filter(Boolean)
-      .map((line: string) => {
-        const [descricao, qtd, valor] = line.split(';').map(x => (x ?? '').trim());
-        return {
-          descricao: descricao || 'Item',
-          qtd: Number(qtd || 1),
-          valor: valor ? Number(valor) : undefined,
-        };
+          this.applyLocalFilter();
+        },
+        error: (err) => {
+          this.errorMsg = err?.error?.message || 'Erro ao carregar manutenções.';
+        },
       });
-
-    const payload: Manutencao = {
-      id: this.isEditing && this.editingId ? this.editingId : this.generateId(),
-      os: this.form.os || this.nextOs(),
-      caminhao: { ...caminhao },
-      oficina: oficina ? { ...oficina } : null,
-      tipo: this.form.tipo,
-      status: this.form.status,
-      dtAbertura: this.form.dtAbertura,
-      dtPrevisao: this.form.dtPrevisao || null,
-      dtFechamento: this.form.dtFechamento || null,
-      kmEntrada: this.form.kmEntrada ?? null,
-      kmSaida: this.form.kmSaida ?? null,
-      valorTotal: this.form.valorTotal ?? null,
-      servicos,
-      pecas,
-      observacao: this.form.observacao || '',
-    };
-
-    if (this.isEditing && this.editingId) {
-      this.manutencoes = this.manutencoes.map(m => (m.id === this.editingId ? payload : m));
-    } else {
-      this.manutencoes.unshift(payload);
-    }
-
-    this.closeModal();
   }
 
-  finalizar(m: Manutencao) {
-    m.status = 'FINALIZADA';
-    m.dtFechamento = new Date().toISOString().slice(0, 16);
-  }
+  applyLocalFilter(): void {
+    const q = (this.search || '').trim().toLowerCase();
+    const st = (this.statusFilter || '').trim();
+    const tp = (this.tipoFilter || '').trim();
+    const di = this.dataInicio || '';
+    const df = this.dataFim || '';
+    const cam = (this.caminhaoFilter || '').trim().toLowerCase();
 
-  excluir(id: UUID) {
-    if (!confirm('Tem certeza que deseja excluir esta manutenção?')) return;
-    this.manutencoes = this.manutencoes.filter(m => m.id !== id);
-    if (this.expandedId === id) this.expandedId = null;
-  }
+    this.filtered = this.rows.filter(r => {
+      const blob = [
+        r.codigo,
+        r.descricao,
+        r.codigoCaminhao,
+        r.caminhao,
+        r.codigoOficina,
+        r.oficina,
+        r.parada?.numeroCarga,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
 
-  // =========================
-  // Filtro
-  // =========================
-  get manutencoesFiltradas(): Manutencao[] {
-    const t = (this.searchTerm || '').toLowerCase().trim();
-    const st = (this.filtroStatus || '').toUpperCase().trim();
-    const tp = (this.filtroTipo || '').toUpperCase().trim();
+      if (q && !blob.includes(q)) return false;
+      if (cam && !blob.includes(cam)) return false;
+      if (st && (r.statusManutencao || '') !== st) return false;
+      if (tp && (r.tipoManutencao || '') !== tp) return false;
 
-    const inicio = this.filtroDataInicio
-      ? new Date(
-        Number(this.filtroDataInicio.slice(0, 4)),
-        Number(this.filtroDataInicio.slice(5, 7)) - 1,
-        Number(this.filtroDataInicio.slice(8, 10)),
-        0, 0, 0, 0
-      )
-      : null;
-
-    const fim = this.filtroDataFim
-      ? new Date(
-        Number(this.filtroDataFim.slice(0, 4)),
-        Number(this.filtroDataFim.slice(5, 7)) - 1,
-        Number(this.filtroDataFim.slice(8, 10)),
-        23, 59, 59, 999
-      )
-      : null;
-
-    return this.manutencoes.filter(m => {
-      if (st && (m.status || '').toUpperCase() !== st) return false;
-      if (tp && (m.tipo || '').toUpperCase() !== tp) return false;
-
-      const dt = new Date(m.dtAbertura);
-      if (inicio && dt < inicio) return false;
-      if (fim && dt > fim) return false;
-
-      if (t) {
-        const hay = [
-          m.os || '',
-          m.caminhao?.placa || '',
-          m.caminhao?.modelo || '',
-          m.oficina?.nome || '',
-          m.tipo || '',
-          m.status || '',
-          ...(m.servicos || []),
-          ...(m.pecas || []).map(p => p.descricao),
-        ].join(' ').toLowerCase();
-
-        if (!hay.includes(t)) return false;
-      }
+      if (di && (!r._inicio || r._inicio < di)) return false;
+      if (df && (!r._inicio || r._inicio > df)) return false;
 
       return true;
     });
   }
 
-  // status visual
-  statusClass(s: string) {
-    const v = (s || '').toUpperCase();
+  abrirDetalhe(m: ManutencaoVM): void {
+    this.router.navigate(['/dashboard/manutencoes', m.codigo]);
+  }
+
+  // ====== modal ======
+
+  openNovaManutencao(): void {
+    this.isEditing = false;
+    this.editingCodigo = null;
+    this.form = this.emptyForm();
+    this.showModal = true;
+  }
+
+  openEditar(m: ManutencaoVM): void {
+    this.isEditing = true;
+    this.editingCodigo = m.codigo;
+
+    this.form = this.emptyForm();
+    this.form.descricao = m.descricao || '';
+    this.form.caminhao = m.codigoCaminhao || '';
+    this.form.oficina = m.codigoOficina || '';
+    this.form.tipoManutencao = m.tipoManutencao || 'CORRETIVA';
+    this.form.statusManutencao = m.statusManutencao || 'ABERTA';
+    this.form.dataInicioManutencao = (m.dataInicioManutencao || '').slice(0, 10);
+    this.form.dataFimManutencao = (m.dataFimManutencao || '').slice(0, 10);
+    this.form.observacoes = m.observacoes || '';
+    this.form.paradaId = m.parada?.id || '';
+
+    // itens
+    this.form.itens = (m.itens || []).map(i => ({
+      tipo: i.tipo,
+      descricao: i.descricao,
+      quantidade: Number(i.quantidade || 0),
+      valorUnitario: Number(i.valorUnitario || 0),
+    }));
+
+    if (!this.form.itens?.length) {
+      this.form.itens = [this.emptyItem()];
+    }
+
+    this.recalcularTotal();
+    this.showModal = true;
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.isEditing = false;
+    this.editingCodigo = null;
+    this.form = this.emptyForm();
+  }
+
+  emptyItem(): ManutencaoItemRequest {
+    return { tipo: 'SERVICO', descricao: '', quantidade: 1, valorUnitario: 0 };
+  }
+
+  emptyForm(): ManutencaoRequest {
     return {
-      'pill-info': v === 'ABERTA',
-      'pill-warn': v === 'EM_ANDAMENTO',
-      'pill-success': v === 'FINALIZADA',
-      'pill-muted': v === 'CANCELADA',
+      descricao: '',
+      dataInicioManutencao: new Date().toISOString().slice(0, 10),
+      dataFimManutencao: null,
+      tipoManutencao: 'CORRETIVA',
+      statusManutencao: 'ABERTA',
+      caminhao: '',
+      oficina: '',
+      paradaId: '',
+      observacoes: '',
+      itens: [this.emptyItem()],
+      valor: 0,
     };
+  }
+
+  addItem(): void {
+    this.form.itens = this.form.itens || [];
+    this.form.itens.push(this.emptyItem());
+    this.recalcularTotal();
+  }
+
+  removeItem(idx: number): void {
+    this.form.itens = this.form.itens || [];
+    if (this.form.itens.length <= 1) return;
+    this.form.itens.splice(idx, 1);
+    this.recalcularTotal();
+  }
+
+  onItemChange(): void {
+    this.recalcularTotal();
+  }
+
+  recalcularTotal(): void {
+    const itens = (this.form.itens || [])
+      .filter(i => (i.descricao || '').trim().length > 0);
+
+    let total = 0;
+    for (const it of itens) {
+      const qtd = Number(it.quantidade || 0);
+      const v = Number(it.valorUnitario || 0);
+      total += (qtd * v);
+    }
+    this.form.valor = total;
+  }
+
+  salvar(): void {
+    if (!this.form.descricao || !this.form.descricao.trim()) {
+      alert('Informe a descrição.');
+      return;
+    }
+    if (!this.form.caminhao || !this.form.caminhao.trim()) {
+      alert('Informe o código do caminhão.');
+      return;
+    }
+    if (!this.form.dataInicioManutencao) {
+      alert('Informe a data de início.');
+      return;
+    }
+
+    // normaliza
+    const payload: ManutencaoRequest = {
+      ...this.form,
+      oficina: this.form.oficina?.trim() ? this.form.oficina.trim() : null,
+      paradaId: this.form.paradaId?.trim() ? this.form.paradaId.trim() : null,
+      dataFimManutencao: this.form.dataFimManutencao?.trim() ? this.form.dataFimManutencao : null,
+      itens: (this.form.itens || []).map(i => ({
+        tipo: (i.tipo || 'SERVICO') as TipoItemManutencao,
+        descricao: i.descricao,
+        quantidade: Number(i.quantidade || 0),
+        valorUnitario: Number(i.valorUnitario || 0),
+      })),
+      valor: Number(this.form.valor || 0),
+    };
+
+    this.loading = true;
+    this.errorMsg = null;
+
+    const req$ = (this.isEditing && this.editingCodigo)
+      ? this.api.atualizar(this.editingCodigo, payload)
+      : this.api.criar(payload);
+
+    req$.pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => {
+          this.closeModal();
+          this.carregarPagina();
+        },
+        error: (err) => {
+          this.errorMsg = err?.error?.message || 'Erro ao salvar manutenção.';
+        }
+      });
+  }
+
+  deletar(m: ManutencaoVM): void {
+    const ok = confirm(`Deseja excluir a manutenção ${m.codigo}?`);
+    if (!ok) return;
+
+    this.loading = true;
+    this.errorMsg = null;
+
+    this.api.deletar(m.codigo)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => this.carregarPagina(),
+        error: (err) => {
+          this.errorMsg = err?.error?.message || 'Erro ao excluir manutenção.';
+        },
+      });
+  }
+
+  formatMoneyBRL(v?: number | null): string {
+    const n = Number(v || 0);
+    if (!Number.isFinite(n)) return 'R$ 0,00';
+    return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 }

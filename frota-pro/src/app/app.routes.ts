@@ -105,6 +105,13 @@ export const routes: Routes = [
       },
 
       {
+        path: 'manutencoes/:codigo',
+        loadComponent: () =>
+          import('./features/oficina/manutencao-detalhe/manutencao-detalhe.component')
+            .then(m => m.ManutencaoDetalheComponent),
+      },
+
+      {
         path: 'oficinas',
         loadComponent: () =>
           import('./features/oficina/oficinas/oficinas.component')

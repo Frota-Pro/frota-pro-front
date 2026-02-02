@@ -1,0 +1,166 @@
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>Manutenção {{ manutencao?.codigo || codigo }}</h1>
+      <p>Detalhes da OS, itens e documentos.</p>
+    </div>
+
+    <div class="actions">
+      <a class="btn ghost" routerLink="/dashboard/manutencoes">← Voltar</a>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="erro">{{ erro }}</div>
+
+  <div class="grid" *ngIf="!loading && manutencao; else loadingTpl">
+
+    <div class="card">
+      <h3>Resumo</h3>
+
+      <div class="kv">
+        <div><span class="k">Descrição</span><span class="v">{{ manutencao.descricao }}</span></div>
+        <div><span class="k">Tipo</span><span class="v tag">{{ manutencao.tipoManutencao }}</span></div>
+        <div><span class="k">Status</span><span class="v status">{{ manutencao.statusManutencao }}</span></div>
+
+        <div><span class="k">Início</span><span class="v mono">{{ manutencao.dataInicioManutencao?.slice(0,10) || '—' }}</span></div>
+        <div><span class="k">Fim</span><span class="v mono">{{ manutencao.dataFimManutencao?.slice(0,10) || '—' }}</span></div>
+
+        <div><span class="k">Caminhão</span><span class="v">{{ manutencao.caminhao || '—' }} <span class="muted">({{ manutencao.codigoCaminhao }})</span></span></div>
+        <div><span class="k">Oficina</span><span class="v">{{ manutencao.oficina || '—' }} <span class="muted" *ngIf="manutencao.codigoOficina">({{ manutencao.codigoOficina }})</span></span></div>
+
+        <div><span class="k">Carga</span><span class="v">{{ manutencao.parada?.numeroCarga || '—' }}</span></div>
+        <div><span class="k">Parada</span><span class="v mono">{{ manutencao.parada?.id || '—' }}</span></div>
+
+        <div class="total">
+          <span class="k">Total</span>
+          <span class="v mono">{{ formatMoneyBRL(manutencao.valor) }}</span>
+        </div>
+      </div>
+
+      <div class="obs" *ngIf="manutencao.observacoes">
+        <span class="k">Observações</span>
+        <div class="v">{{ manutencao.observacoes }}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Itens</h3>
+
+      <table class="table" *ngIf="(manutencao.itens?.length || 0) > 0; else semItens">
+        <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Descrição</th>
+          <th class="right">Qtd</th>
+          <th class="right">V. Unit</th>
+          <th class="right">Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let it of manutencao.itens">
+          <td><span class="tag">{{ it.tipo }}</span></td>
+          <td>{{ it.descricao }}</td>
+          <td class="right mono">{{ it.quantidade }}</td>
+          <td class="right mono">{{ formatMoneyBRL(it.valorUnitario) }}</td>
+          <td class="right mono">{{ formatMoneyBRL(it.valorTotal) }}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <ng-template #semItens>
+        <div class="empty">
+          <div class="icon">📦</div>
+          <h4>Sem itens detalhados</h4>
+          <p>Edite a manutenção e adicione peças/serviços.</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="card full">
+      <h3>Documentos</h3>
+
+      <div class="doc-upload">
+        <select class="select" [(ngModel)]="tipoDoc">
+          <option value="ORDEM_SERVICO">ORDEM_SERVICO</option>
+          <option value="NOTA_FISCAL">NOTA_FISCAL</option>
+          <option value="ORCAMENTO">ORCAMENTO</option>
+          <option value="FOTO">FOTO</option>
+          <option value="OUTRO">OUTRO</option>
+        </select>
+
+        <input class="input" [(ngModel)]="obsDoc" placeholder="Observação (opcional)" />
+
+        <input class="file" type="file" (change)="onFileChange($event)" />
+        <button class="btn primary" type="button" (click)="uploadDoc()" [disabled]="docsLoading">Enviar</button>
+      </div>
+
+      <div class="loading" *ngIf="docsLoading">
+        <div class="spinner"></div>
+        <div>Carregando documentos...</div>
+      </div>
+
+      <table class="table" *ngIf="!docsLoading && docs.length > 0; else semDocs">
+        <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Arquivo</th>
+          <th>Obs</th>
+          <th class="right">Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let d of docs">
+          <td><span class="tag">{{ d.tipoDocumento }}</span></td>
+          <td>{{ d.arquivo?.nomeOriginal || '—' }}</td>
+          <td class="muted">{{ d.observacao || '—' }}</td>
+          <td class="right actions">
+            <button class="btn small" type="button" (click)="preview(d)">Preview</button>
+            <button class="btn small" type="button" (click)="download(d)">Baixar</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+
+      <ng-template #semDocs>
+        <div class="empty">
+          <div class="icon">📎</div>
+          <h4>Nenhum documento</h4>
+          <p>Envie um arquivo para anexar à manutenção.</p>
+        </div>
+      </ng-template>
+    </div>
+
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Carregando manutenção...</div>
+    </div>
+  </ng-template>
+
+  <!-- PREVIEW MODAL -->
+  <div class="backdrop" *ngIf="showPreview" (click)="closePreview()"></div>
+
+  <div class="modal" *ngIf="showPreview">
+    <div class="modal-header">
+      <h2>Preview — {{ previewName }}</h2>
+      <button class="iconbtn" type="button" (click)="closePreview()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <ng-container *ngIf="previewUrl; else noPrev">
+        <iframe [src]="previewUrl" class="frame"></iframe>
+      </ng-container>
+
+      <ng-template #noPrev>
+        <div class="empty">
+          <div class="icon">🖼️</div>
+          <h4>Sem preview</h4>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+</div>

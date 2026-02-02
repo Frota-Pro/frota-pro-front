@@ -1,290 +1,240 @@
 <div class="page">
 
-  <!-- Cabeçalho -->
-  <div class="page-head">
-    <div class="titles">
-      <h2 class="page-title">Manutenções</h2>
-      <p class="subtitle">Controle de OS, serviços e custos da frota</p>
+  <div class="header">
+    <div>
+      <h1>Manutenções</h1>
+      <p>Registre OS, itens (peças/serviços) e acompanhe status.</p>
     </div>
 
     <div class="actions">
-      <button class="btn-add" type="button" (click)="openAddModal()">
-        <i class="fas fa-plus"></i>
-        Nova Manutenção
-      </button>
+      <button class="btn primary" type="button" (click)="openNovaManutencao()">+ Nova manutenção</button>
     </div>
   </div>
 
-  <!-- Filtros -->
-  <div class="filters-row">
-    <input
-      type="text"
-      [(ngModel)]="searchTerm"
-      placeholder="Buscar por OS, placa, oficina, serviço..."
-    />
+  <div class="toolbar">
+    <input class="search"
+           [(ngModel)]="search"
+           (ngModelChange)="scheduleBuscar()"
+           placeholder="Buscar por código, descrição, caminhão, oficina, carga..." />
 
-    <select [(ngModel)]="filtroStatus">
-      <option value="">Todos status</option>
-      <option value="ABERTA">ABERTA</option>
-      <option value="EM_ANDAMENTO">EM ANDAMENTO</option>
-      <option value="FINALIZADA">FINALIZADA</option>
-      <option value="CANCELADA">CANCELADA</option>
+    <input class="search"
+           style="min-width:220px; flex:0;"
+           [(ngModel)]="caminhaoFilter"
+           (ngModelChange)="applyLocalFilter()"
+           placeholder="Filtro caminhão (cód/placa)" />
+
+    <select [(ngModel)]="statusFilter" class="select" (change)="applyLocalFilter()">
+      <option [ngValue]="''">Status (todos)</option>
+      <option [ngValue]="'ABERTA'">ABERTA</option>
+      <option [ngValue]="'EM_ANDAMENTO'">EM ANDAMENTO</option>
+      <option [ngValue]="'FINALIZADA'">FINALIZADA</option>
+      <option [ngValue]="'CANCELADA'">CANCELADA</option>
     </select>
 
-    <select [(ngModel)]="filtroTipo">
-      <option value="">Todos tipos</option>
-      <option value="PREVENTIVA">PREVENTIVA</option>
-      <option value="CORRETIVA">CORRETIVA</option>
+    <select [(ngModel)]="tipoFilter" class="select" (change)="applyLocalFilter()">
+      <option [ngValue]="''">Tipo (todos)</option>
+      <option [ngValue]="'PREVENTIVA'">PREVENTIVA</option>
+      <option [ngValue]="'CORRETIVA'">CORRETIVA</option>
     </select>
 
-    <div class="date-inline">
-      <span>De</span>
-      <input type="date" [(ngModel)]="filtroDataInicio" />
+    <div class="bulk">
+      <input class="select" type="date" [(ngModel)]="dataInicio" (change)="applyLocalFilter()" />
+      <input class="select" type="date" [(ngModel)]="dataFim" (change)="applyLocalFilter()" />
     </div>
 
-    <div class="date-inline">
-      <span>Até</span>
-      <input type="date" [(ngModel)]="filtroDataFim" />
+    <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="filtered.length > 0; else emptyTpl">
+      <thead>
+      <tr>
+        <th>Código</th>
+        <th>Descrição</th>
+        <th>Caminhão</th>
+        <th>Oficina</th>
+        <th>Tipo</th>
+        <th>Status</th>
+        <th>Início</th>
+        <th>Fim</th>
+        <th>Total</th>
+        <th>Carga/Parada</th>
+        <th class="col-actions">Ações</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let m of filtered" (dblclick)="abrirDetalhe(m)">
+        <td class="mono">{{ m.codigo }}</td>
+
+        <td>
+          <div class="stack">
+            <strong>{{ m.descricao }}</strong>
+            <small class="muted" *ngIf="m.codigoCaminhao">Cód Caminhão: {{ m.codigoCaminhao }}</small>
+          </div>
+        </td>
+
+        <td>
+          <div class="stack">
+            <strong>{{ m.caminhao || '—' }}</strong>
+            <small class="muted">{{ m.codigoCaminhao }}</small>
+          </div>
+        </td>
+
+        <td>
+          <div class="stack">
+            <strong>{{ m.oficina || '—' }}</strong>
+            <small class="muted" *ngIf="m.codigoOficina">{{ m.codigoOficina }}</small>
+          </div>
+        </td>
+
+        <td><span class="tag">{{ m.tipoManutencao }}</span></td>
+
+        <td>
+            <span class="status"
+                  [class.inactive]="m.statusManutencao === 'CANCELADA'">
+              {{ m.statusManutencao }}
+            </span>
+        </td>
+
+        <td class="mono">{{ m._inicio || '—' }}</td>
+        <td class="mono">{{ m._fim || '—' }}</td>
+
+        <td class="mono">{{ formatMoneyBRL(m.valor) }}</td>
+
+        <td>
+          <div class="stack">
+            <strong>{{ m.parada?.numeroCarga || '—' }}</strong>
+            <small class="muted" *ngIf="m.parada?.id">Parada: {{ m.parada?.id }}</small>
+          </div>
+        </td>
+
+        <td class="row-actions" (click)="$event.stopPropagation()">
+          <button class="btn small" type="button" (click)="abrirDetalhe(m)">Ver</button>
+          <button class="btn small" type="button" (click)="openEditar(m)">Editar</button>
+          <button class="btn small danger" type="button" (click)="deletar(m)">Excluir</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <div class="icon">🧰</div>
+        <h3>Nenhuma manutenção encontrada</h3>
+        <p>Cadastre uma manutenção ou ajuste os filtros.</p>
+      </div>
+    </ng-template>
+
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn small" [disabled]="page<=0" (click)="carregarPagina(page-1)">Anterior</button>
+      <span class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</span>
+      <button class="btn small" [disabled]="page+1>=totalPages" (click)="carregarPagina(page+1)">Próxima</button>
     </div>
   </div>
 
-  <!-- Tabela -->
-  <div class="card">
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-        <tr>
-          <th>OS</th>
-          <th>Caminhão</th>
-          <th>Oficina</th>
-          <th>Tipo</th>
-          <th>Status</th>
-          <th>Aberta em</th>
-          <th>Previsão</th>
-          <th class="num">Valor</th>
-          <th class="actions-col">Ações</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        <ng-container *ngFor="let m of manutencoesFiltradas; trackBy: trackById">
-          <tr class="row-click" (click)="toggleExpand(m.id)">
-            <td class="strong mono">{{ m.os }}</td>
-            <td class="truncate">{{ m.caminhao.placa }}</td>
-            <td class="truncate">{{ m.oficina?.nome || '—' }}</td>
-            <td><span class="pill pill-type">{{ m.tipo }}</span></td>
-
-            <td>
-                <span class="pill" [ngClass]="statusClass(m.status)">
-                  {{ m.status }}
-                </span>
-            </td>
-
-            <td>{{ m.dtAbertura | date:'dd/MM/yy HH:mm' }}</td>
-            <td>{{ m.dtPrevisao ? (m.dtPrevisao | date:'dd/MM/yy HH:mm') : '—' }}</td>
-
-            <td class="num">{{ (m.valorTotal || 0) | currency:'BRL' }}</td>
-
-            <td class="actions" (click)="$event.stopPropagation()">
-              <button class="icon-btn edit" type="button" title="Editar" (click)="openEditModal(m)">
-                <i class="fas fa-pen"></i>
-              </button>
-
-              <button
-                class="icon-btn success"
-                type="button"
-                title="Finalizar"
-                *ngIf="(m.status || '').toUpperCase() !== 'FINALIZADA'"
-                (click)="finalizar(m)"
-              >
-                <i class="fas fa-check"></i>
-              </button>
-
-              <button class="icon-btn danger" type="button" title="Excluir" (click)="excluir(m.id)">
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-
-          <!-- Expand -->
-          <tr class="expand-row" *ngIf="expandedId === m.id">
-            <td colspan="9" class="expand-cell">
-              <div class="expand-grid">
-
-                <div class="kv">
-                  <div class="k">Km Entrada</div>
-                  <div class="v">{{ m.kmEntrada ?? '—' }}</div>
-                </div>
-
-                <div class="kv">
-                  <div class="k">Km Saída</div>
-                  <div class="v">{{ m.kmSaida ?? '—' }}</div>
-                </div>
-
-                <div class="kv">
-                  <div class="k">Fechamento</div>
-                  <div class="v">{{ m.dtFechamento ? (m.dtFechamento | date:'dd/MM/yy HH:mm') : '—' }}</div>
-                </div>
-
-                <div class="kv span2">
-                  <div class="k">Serviços</div>
-                  <div class="v">
-                    <ul class="chips" *ngIf="(m.servicos?.length || 0) > 0; else semServicos">
-                      <li class="chip" *ngFor="let s of m.servicos">{{ s }}</li>
-                    </ul>
-                    <ng-template #semServicos><span class="muted">—</span></ng-template>
-                  </div>
-                </div>
-
-                <div class="kv span2">
-                  <div class="k">Peças</div>
-                  <div class="v">
-                    <div *ngIf="(m.pecas?.length || 0) > 0; else semPecas">
-                      <div class="peca" *ngFor="let p of m.pecas">
-                        <span class="truncate">{{ p.descricao }}</span>
-                        <span class="mono">x{{ p.qtd }}</span>
-                        <span class="mono">{{ (p.valor || 0) | currency:'BRL' }}</span>
-                      </div>
-                    </div>
-                    <ng-template #semPecas><span class="muted">—</span></ng-template>
-                  </div>
-                </div>
-
-                <div class="kv span2">
-                  <div class="k">Observação</div>
-                  <div class="v">{{ m.observacao || '—' }}</div>
-                </div>
-
-              </div>
-            </td>
-          </tr>
-        </ng-container>
-
-        <tr *ngIf="manutencoesFiltradas.length === 0">
-          <td colspan="9" class="empty">Nenhuma manutenção encontrada.</td>
-        </tr>
-        </tbody>
-      </table>
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Carregando manutenções...</div>
     </div>
-  </div>
+  </ng-template>
 
   <!-- MODAL -->
-  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
-    <div class="modal-card" (click)="$event.stopPropagation()">
+  <div class="backdrop" *ngIf="showModal" (click)="closeModal()"></div>
 
-      <div class="modal-head">
-        <h3>{{ isEditing ? 'Editar Manutenção' : 'Nova Manutenção' }}</h3>
+  <div class="modal" *ngIf="showModal">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar manutenção' : 'Nova manutenção' }}</h2>
+      <button class="icon" type="button" (click)="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <label>Descrição</label>
+      <input [(ngModel)]="form.descricao" placeholder="Ex.: Troca de óleo, freio, etc." />
+
+      <div class="row">
+        <div class="col">
+          <label>Data início</label>
+          <input type="date" [(ngModel)]="form.dataInicioManutencao" />
+        </div>
+        <div class="col">
+          <label>Data fim</label>
+          <input type="date" [(ngModel)]="form.dataFimManutencao" />
+        </div>
       </div>
 
-      <form class="modal-form" (ngSubmit)="save()">
-
-        <div class="form-row">
-          <div>
-            <label>OS</label>
-            <input type="text" [(ngModel)]="form.os" name="os" required />
-          </div>
-
-          <div>
-            <label>Status</label>
-            <select [(ngModel)]="form.status" name="status">
-              <option value="ABERTA">ABERTA</option>
-              <option value="EM_ANDAMENTO">EM ANDAMENTO</option>
-              <option value="FINALIZADA">FINALIZADA</option>
-              <option value="CANCELADA">CANCELADA</option>
-            </select>
-          </div>
+      <div class="row">
+        <div class="col">
+          <label>Caminhão (código ou externo)</label>
+          <input [(ngModel)]="form.caminhao" placeholder="CAM-000001" />
         </div>
-
-        <div class="form-row">
-          <div>
-            <label>Caminhão</label>
-            <select [(ngModel)]="form.caminhaoId" name="caminhaoId" required>
-              <option value="">Selecione...</option>
-              <option *ngFor="let c of caminhoes" [value]="c.id">{{ c.placa }} - {{ c.modelo }}</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Oficina</label>
-            <select [(ngModel)]="form.oficinaId" name="oficinaId">
-              <option value="">—</option>
-              <option *ngFor="let o of oficinas" [value]="o.id">{{ o.nome }}</option>
-            </select>
-          </div>
+        <div class="col">
+          <label>Oficina (código)</label>
+          <input [(ngModel)]="form.oficina" placeholder="OFI-000001 (opcional)" />
         </div>
+      </div>
 
-        <div class="form-row">
-          <div>
-            <label>Tipo</label>
-            <select [(ngModel)]="form.tipo" name="tipo">
-              <option value="CORRETIVA">CORRETIVA</option>
-              <option value="PREVENTIVA">PREVENTIVA</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Data Abertura</label>
-            <input type="datetime-local" [(ngModel)]="form.dtAbertura" name="dtAbertura" required />
-          </div>
+      <div class="row">
+        <div class="col">
+          <label>Tipo</label>
+          <select [(ngModel)]="form.tipoManutencao">
+            <option value="CORRETIVA">CORRETIVA</option>
+            <option value="PREVENTIVA">PREVENTIVA</option>
+          </select>
         </div>
-
-        <div class="form-row">
-          <div>
-            <label>Previsão</label>
-            <input type="datetime-local" [(ngModel)]="form.dtPrevisao" name="dtPrevisao" />
-          </div>
-
-          <div>
-            <label>Fechamento</label>
-            <input type="datetime-local" [(ngModel)]="form.dtFechamento" name="dtFechamento" />
-          </div>
+        <div class="col">
+          <label>Status</label>
+          <select [(ngModel)]="form.statusManutencao">
+            <option value="ABERTA">ABERTA</option>
+            <option value="EM_ANDAMENTO">EM ANDAMENTO</option>
+            <option value="FINALIZADA">FINALIZADA</option>
+            <option value="CANCELADA">CANCELADA</option>
+          </select>
         </div>
+      </div>
 
-        <div class="form-row">
-          <div>
-            <label>Km Entrada</label>
-            <input type="number" [(ngModel)]="form.kmEntrada" name="kmEntrada" />
-          </div>
+      <label>Parada (UUID)</label>
+      <input [(ngModel)]="form.paradaId" placeholder="Opcional (UUID da parada)" />
 
-          <div>
-            <label>Km Saída</label>
-            <input type="number" [(ngModel)]="form.kmSaida" name="kmSaida" />
-          </div>
-        </div>
+      <label>Observações</label>
+      <input [(ngModel)]="form.observacoes" placeholder="Opcional" />
 
-        <div class="form-row">
-          <div>
-            <label>Valor Total</label>
-            <input type="number" step="0.01" [(ngModel)]="form.valorTotal" name="valorTotal" />
-          </div>
+      <div class="divider"></div>
 
-          <div>
-            <label>Serviços (1 por linha)</label>
-            <textarea rows="4" [(ngModel)]="form.servicosText" name="servicosText"
-                      placeholder="Ex: Troca de óleo&#10;Revisão freios"></textarea>
-          </div>
-        </div>
+      <div class="items-head">
+        <strong>Itens (peças/serviços)</strong>
+        <button class="btn small" type="button" (click)="addItem()">+ Item</button>
+      </div>
 
-        <div class="form-row">
-          <div>
-            <label>Peças (linha: descricao;qtd;valor)</label>
-            <textarea rows="4" [(ngModel)]="form.pecasText" name="pecasText"
-                      placeholder="Ex: Filtro de óleo;1;45&#10;Óleo 15w40;3;35"></textarea>
-          </div>
+      <div class="item-row" *ngFor="let it of form.itens; let i = index">
+        <select class="select" style="width:140px" [(ngModel)]="it.tipo" (change)="onItemChange()">
+          <option value="SERVICO">SERVIÇO</option>
+          <option value="PECA">PEÇA</option>
+        </select>
 
-          <div>
-            <label>Observação</label>
-            <textarea rows="4" [(ngModel)]="form.observacao" name="observacao"
-                      placeholder="Opcional..."></textarea>
-          </div>
-        </div>
+        <input style="flex:1" [(ngModel)]="it.descricao" (ngModelChange)="onItemChange()" placeholder="Descrição do item" />
 
-        <div class="modal-actions">
-          <button class="btn-cancel" type="button" (click)="closeModal()">Cancelar</button>
-          <button class="btn-save" type="submit">{{ isEditing ? 'Salvar' : 'Cadastrar' }}</button>
-        </div>
+        <input style="width:110px" type="number" [(ngModel)]="it.quantidade" (ngModelChange)="onItemChange()" placeholder="Qtd" />
 
-      </form>
+        <input style="width:140px" type="number" [(ngModel)]="it.valorUnitario" (ngModelChange)="onItemChange()" placeholder="Valor unit." />
+
+        <button class="btn small danger" type="button" (click)="removeItem(i)">–</button>
+      </div>
+
+      <div class="total">
+        <span class="muted">Total calculado</span>
+        <strong class="mono">{{ formatMoneyBRL(form.valor) }}</strong>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="closeModal()">Cancelar</button>
+      <button class="btn primary" type="button" (click)="salvar()">
+        {{ isEditing ? 'Salvar' : 'Criar' }}
+      </button>
     </div>
   </div>
 
