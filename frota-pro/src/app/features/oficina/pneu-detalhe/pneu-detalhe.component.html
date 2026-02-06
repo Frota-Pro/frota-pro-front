@@ -1,0 +1,232 @@
+<div class="page">
+
+  <div class="header">
+    <div class="title">
+      <div class="breadcrumb">
+        <a routerLink="/dashboard/pneus">Pneus</a>
+        <span class="sep">/</span>
+        <span class="mono">#{{ pneu?.codigo || codigo }}</span>
+      </div>
+
+      <h1>Pneu <span class="mono">{{ pneu?.codigo || codigo }}</span></h1>
+      <p>{{ (pneu?.marca || '-') + ' ' + (pneu?.modelo || '') }} • {{ pneu?.medida || '-' }}</p>
+    </div>
+
+    <div class="actions">
+      <a class="btn ghost" routerLink="/dashboard/pneus">← Voltar</a>
+      <button class="btn primary" type="button" (click)="openEvento()">+ Registrar evento</button>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">
+    <div class="alert-title">Ops…</div>
+    <div class="alert-msg">{{ errorMsg }}</div>
+  </div>
+
+  <ng-container *ngIf="!loading; else loadingTpl">
+    <div class="grid" *ngIf="pneu">
+
+      <div class="card kpi">
+        <div class="k">Status</div>
+        <div class="v">{{ pneu.status }}</div>
+        <div class="s">Recapagem: <span class="mono">{{ pneu.nivelRecapagem }}</span></div>
+      </div>
+
+      <div class="card kpi">
+        <div class="k">Meta (KM)</div>
+        <div class="v mono">{{ formatKm(pneu.kmMetaAtual) }}</div>
+        <div class="s">Total acumulado: <span class="mono">{{ formatKm(pneu.kmTotalAcumulado) }}</span></div>
+      </div>
+
+      <div class="card kpi">
+        <div class="k">Série / DOT</div>
+        <div class="v mono">{{ pneu.numeroSerie || '-' }}</div>
+        <div class="s">Medida: <span class="mono">{{ pneu.medida || '-' }}</span></div>
+      </div>
+
+      <div class="card kpi">
+        <div class="k">Marca / Modelo</div>
+        <div class="v">{{ (pneu.marca || '-') }}</div>
+        <div class="s">{{ pneu.modelo || '-' }}</div>
+      </div>
+
+      <div class="card full" *ngIf="vida">
+        <div class="top">
+          <h3>Vida útil</h3>
+          <span class="pill"
+                [class.ok]="alertaLabel()==='OK'"
+                [class.warn]="alertaLabel()==='PRÓXIMO DO FIM'"
+                [class.bad]="alertaLabel()==='VENCIDO'">
+            {{ alertaLabel() }}
+          </span>
+        </div>
+
+        <div class="life">
+          <div class="bar">
+            <div class="fill" [style.width.%]="percent() * 100"></div>
+          </div>
+
+          <div class="life-grid">
+            <div>
+              <div class="lbl">Rodado</div>
+              <div class="val mono">{{ formatKm(vida.kmRodadoAtual) }}</div>
+            </div>
+            <div>
+              <div class="lbl">Restante</div>
+              <div class="val mono">{{ formatKm(vida.kmRestante) }}</div>
+            </div>
+            <div>
+              <div class="lbl">% Vida</div>
+              <div class="val mono">{{ (percent()*100).toFixed(1) }}%</div>
+            </div>
+          </div>
+
+          <div class="inst" *ngIf="vida.caminhaoAtual">
+            <div class="lbl">Instalação atual</div>
+            <div class="val">
+              Caminhão (UUID): <span class="mono">{{ vida.caminhaoAtual }}</span>
+              <span class="dot">•</span>
+              Eixo <span class="mono">{{ vida.eixoNumero }}</span>
+              <span class="dot">•</span>
+              {{ vida.lado }} / {{ vida.posicao }}
+            </div>
+            <div class="muted small">
+              Km instalação: <span class="mono">{{ formatKm(vida.kmInstalacao) }}</span>
+            </div>
+          </div>
+
+          <div class="muted small" *ngIf="!vida.caminhaoAtual">
+            Pneu não está instalado no momento.
+          </div>
+        </div>
+      </div>
+
+      <div class="card full">
+        <div class="top">
+          <h3>Movimentações</h3>
+          <div class="actions-inline">
+            <button class="btn small" type="button" (click)="openEvento('INSTALACAO')">Instalar</button>
+            <button class="btn small" type="button" (click)="openEvento('REMOVER')">Remover</button>
+            <button class="btn small" type="button" (click)="openEvento('ENVIO_RECAPAGEM')">Enviar recapagem</button>
+            <button class="btn small" type="button" (click)="openEvento('RETORNO_RECAPAGEM')">Retorno recapagem</button>
+            <button class="btn small danger" type="button" (click)="openEvento('DESCARTE')">Descartar</button>
+          </div>
+        </div>
+
+        <div class="muted small" *ngIf="movimentacoes.length===0">
+          Nenhuma movimentação encontrada para este pneu.
+        </div>
+
+        <div class="timeline" *ngIf="movimentacoes.length > 0">
+          <div class="item" *ngFor="let m of movimentacoes">
+            <div class="dotball"></div>
+            <div class="content">
+              <div class="row">
+                <strong>{{ m.tipo }}</strong>
+                <span class="muted mono">{{ m.dataEvento | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+
+              <div class="muted small" *ngIf="m.kmEvento != null">
+                Km evento: <span class="mono">{{ formatKm(m.kmEvento) }}</span>
+              </div>
+
+              <div class="muted small" *ngIf="m.observacao">
+                {{ m.observacao }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pagination" *ngIf="movTotalPages > 0">
+          <button class="btn small" [disabled]="movPage<=0" (click)="carregarMovimentacoes(movPage-1)">Anterior</button>
+          <span class="pageinfo">Página {{ movPage + 1 }} de {{ movTotalPages }}</span>
+          <button class="btn small" [disabled]="movPage+1>=movTotalPages" (click)="carregarMovimentacoes(movPage+1)">Próxima</button>
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>
+        <strong>Carregando pneu…</strong>
+        <div class="muted small">Buscando dados e vida útil.</div>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- MODAL EVENTO -->
+  <div class="backdrop" *ngIf="showEvento" (click)="closeEvento()"></div>
+
+  <div class="modal" *ngIf="showEvento">
+    <div class="modal-header">
+      <h2>Registrar evento</h2>
+      <button class="iconbtn" type="button" (click)="closeEvento()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="grid2">
+        <div>
+          <label>Tipo</label>
+          <select [(ngModel)]="evento.tipo">
+            <option value="INSTALACAO">INSTALACAO</option>
+            <option value="REMOVER">REMOVER</option>
+            <option value="RODIZIO">RODIZIO</option>
+            <option value="TROCA_MANUTENCAO">TROCA_MANUTENCAO</option>
+            <option value="ENVIO_RECAPAGEM">ENVIO_RECAPAGEM</option>
+            <option value="RETORNO_RECAPAGEM">RETORNO_RECAPAGEM</option>
+            <option value="DESCARTE">DESCARTE</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Km evento</label>
+          <input type="number" [(ngModel)]="evento.kmEvento" placeholder="Ex: 248500" />
+        </div>
+
+        <div class="span2" *ngIf="evento.tipo==='INSTALACAO'">
+          <div class="grid3">
+            <div>
+              <label>Caminhão (UUID)</label>
+              <input [(ngModel)]="evento.caminhaoId" placeholder="UUID do caminhão" />
+            </div>
+            <div>
+              <label>Km instalação</label>
+              <input type="number" [(ngModel)]="evento.kmInstalacao" placeholder="Ex: 200000" />
+            </div>
+            <div></div>
+
+            <div>
+              <label>Eixo</label>
+              <input type="number" [(ngModel)]="evento.eixoNumero" />
+            </div>
+            <div>
+              <label>Lado</label>
+              <select [(ngModel)]="evento.lado">
+                <option value="E">E</option>
+                <option value="D">D</option>
+              </select>
+            </div>
+            <div>
+              <label>Posição</label>
+              <input [(ngModel)]="evento.posicao" placeholder="EXTERNO / INTERNO" />
+            </div>
+          </div>
+        </div>
+
+        <div class="span2">
+          <label>Observação</label>
+          <input [(ngModel)]="evento.observacao" placeholder="Ex.: Troca por desgaste, enviado p/ recapagem..." />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="closeEvento()">Cancelar</button>
+      <button class="btn primary" type="button" (click)="salvarEvento()">Salvar</button>
+    </div>
+  </div>
+
+</div>

@@ -1,180 +1,90 @@
 <div class="page">
 
-  <div class="page-head">
-    <div class="titles">
-      <h2 class="page-title">Oficinas</h2>
-      <p class="subtitle">Cadastro e gestão de fornecedores de manutenção</p>
+  <div class="header">
+    <div>
+      <h1>Oficinas</h1>
+      <p>Cadastre oficinas e acesse o dashboard com custos e orçamentos.</p>
     </div>
 
     <div class="actions">
-      <button class="btn-add" type="button" (click)="openAddModal()">
-        <i class="fas fa-plus"></i>
-        Nova Oficina
-      </button>
+      <button class="btn primary" type="button" (click)="openNova()">+ Nova oficina</button>
     </div>
   </div>
 
-  <!-- Filtros -->
-  <div class="filters-row">
-    <input
-      type="text"
-      [(ngModel)]="searchTerm"
-      placeholder="Buscar por nome, cidade, CNPJ..."
-    />
+  <div class="toolbar">
+    <input class="search"
+           [(ngModel)]="search"
+           (ngModelChange)="applyLocalFilter()"
+           placeholder="Buscar por código ou nome..." />
 
-    <select [(ngModel)]="filtroStatus">
-      <option value="">Todos status</option>
-      <option value="ATIVA">ATIVA</option>
-      <option value="INATIVA">INATIVA</option>
-    </select>
-
-    <select [(ngModel)]="filtroTipo">
-      <option value="">Todos tipos</option>
-      <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
-    </select>
+    <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
   </div>
 
-  <!-- Tabela -->
-  <div class="card">
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Tipo</th>
-          <th>Cidade/UF</th>
-          <th>Contato</th>
-          <th>Status</th>
-          <th class="actions-col">Ações</th>
-        </tr>
-        </thead>
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
 
-        <tbody>
-        <tr *ngFor="let o of oficinasFiltradas; trackBy: trackById">
-          <td class="strong truncate">{{ o.nome }}</td>
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="filtered.length > 0; else emptyTpl">
+      <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th class="col-actions">Ações</th>
+      </tr>
+      </thead>
 
-          <td>
-            <span class="pill pill-type">{{ o.tipo }}</span>
-          </td>
+      <tbody>
+      <tr *ngFor="let o of filtered" (dblclick)="abrirDetalhe(o)">
+        <td class="mono">{{ o.codigo }}</td>
+        <td><strong>{{ o.nome }}</strong></td>
 
-          <td class="truncate">
-            {{ o.cidade || '—' }}<span *ngIf="o.uf">/{{ o.uf }}</span>
-          </td>
+        <td class="row-actions" (click)="$event.stopPropagation()">
+          <button class="btn small" type="button" (click)="abrirDetalhe(o)">Dashboard</button>
+          <button class="btn small" type="button" (click)="openEditar(o)">Editar</button>
+          <button class="btn small danger" type="button" (click)="deletar(o)">Excluir</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
 
-          <td class="truncate">
-            {{ o.telefone || o.email || '—' }}
-          </td>
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <div class="icon">🏭</div>
+        <h3>Nenhuma oficina encontrada</h3>
+        <p>Cadastre uma oficina para começar.</p>
+      </div>
+    </ng-template>
 
-          <td>
-              <span class="pill" [ngClass]="statusClass(o.status)">
-                {{ o.status }}
-              </span>
-          </td>
-
-          <td class="actions">
-            <button class="icon-btn edit" type="button" title="Editar" (click)="openEditModal(o)">
-              <i class="fas fa-pen"></i>
-            </button>
-
-            <button class="icon-btn" type="button" title="Ativar/Inativar" (click)="toggleStatus(o)">
-              <i class="fas fa-power-off"></i>
-            </button>
-
-            <button class="icon-btn danger" type="button" title="Excluir" (click)="excluir(o.id)">
-              <i class="fas fa-trash"></i>
-            </button>
-          </td>
-        </tr>
-
-        <tr *ngIf="oficinasFiltradas.length === 0">
-          <td colspan="6" class="empty">Nenhuma oficina encontrada.</td>
-        </tr>
-        </tbody>
-      </table>
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn small" [disabled]="page<=0" (click)="carregarPagina(page-1)">Anterior</button>
+      <span class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</span>
+      <button class="btn small" [disabled]="page+1>=totalPages" (click)="carregarPagina(page+1)">Próxima</button>
     </div>
   </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Carregando oficinas...</div>
+    </div>
+  </ng-template>
 
   <!-- MODAL -->
-  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
-    <div class="modal-card" (click)="$event.stopPropagation()">
+  <div class="backdrop" *ngIf="showModal" (click)="closeModal()"></div>
 
-      <div class="modal-head">
-        <h3>{{ isEditing ? 'Editar Oficina' : 'Nova Oficina' }}</h3>
-      </div>
+  <div class="modal" *ngIf="showModal">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar oficina' : 'Nova oficina' }}</h2>
+      <button class="icon" type="button" (click)="closeModal()">✕</button>
+    </div>
 
-      <form class="modal-form" (ngSubmit)="save()">
+    <div class="modal-body">
+      <label>Nome</label>
+      <input [(ngModel)]="form.nome" placeholder="Ex.: Oficina Central" />
+    </div>
 
-        <div class="form-row">
-          <div>
-            <label>Nome</label>
-            <input type="text" [(ngModel)]="form.nome" name="nome" required />
-          </div>
-
-          <div>
-            <label>Tipo</label>
-            <select [(ngModel)]="form.tipo" name="tipo">
-              <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label>Status</label>
-            <select [(ngModel)]="form.status" name="status">
-              <option value="ATIVA">ATIVA</option>
-              <option value="INATIVA">INATIVA</option>
-            </select>
-          </div>
-
-          <div>
-            <label>CNPJ</label>
-            <input type="text" [(ngModel)]="form.cnpj" name="cnpj" placeholder="Opcional" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label>Telefone</label>
-            <input type="text" [(ngModel)]="form.telefone" name="telefone" placeholder="Opcional" />
-          </div>
-
-          <div>
-            <label>E-mail</label>
-            <input type="email" [(ngModel)]="form.email" name="email" placeholder="Opcional" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label>Cidade</label>
-            <input type="text" [(ngModel)]="form.cidade" name="cidade" />
-          </div>
-
-          <div>
-            <label>UF</label>
-            <input type="text" maxlength="2" [(ngModel)]="form.uf" name="uf" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label>Endereço</label>
-            <input type="text" [(ngModel)]="form.endereco" name="endereco" />
-          </div>
-
-          <div>
-            <label>Observação</label>
-            <input type="text" [(ngModel)]="form.observacao" name="observacao" />
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn-cancel" type="button" (click)="closeModal()">Cancelar</button>
-          <button class="btn-save" type="submit">{{ isEditing ? 'Salvar' : 'Cadastrar' }}</button>
-        </div>
-
-      </form>
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="closeModal()">Cancelar</button>
+      <button class="btn primary" type="button" (click)="salvar()">Salvar</button>
     </div>
   </div>
 

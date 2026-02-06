@@ -119,11 +119,24 @@ export const routes: Routes = [
       },
 
       {
-        path: 'pneus-vida-util',
+        path: 'oficinas/:codigo',
         loadComponent: () =>
-          import('./features/oficina/pneus-vida-util/pneus-vida-util.component')
-            .then(m => m.PneusVidaUtilComponent),
+          import('./features/oficina/oficina-detalhe/oficina-detalhe.component')
+            .then(m => m.OficinaDetalheComponent),
       },
+
+
+      {
+        path: 'pneus',
+        loadComponent: () =>
+          import('./features/oficina/pneus/pneus.component').then(m => m.PneusComponent),
+      },
+      {
+        path: 'pneus/:codigo',
+        loadComponent: () =>
+          import('./features/oficina/pneu-detalhe/pneu-detalhe.component').then(m => m.PneuDetalheComponent),
+      },
+
 
       {
         path: 'integracoes/winthor',

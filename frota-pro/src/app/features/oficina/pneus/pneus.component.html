@@ -1,0 +1,261 @@
+<div class="page">
+
+  <div class="header">
+    <div class="title">
+      <h1>Pneus</h1>
+      <p>Controle de vida útil por pneu, meta de KM configurável e eventos.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" type="button" (click)="openNovo()">+ Novo pneu</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="tool">
+      <input class="search" [(ngModel)]="q" (keyup.enter)="aplicarFiltros()"
+             placeholder="Buscar por código, série, marca, modelo, medida..." />
+      <span class="kbd">Enter</span>
+    </div>
+
+    <select class="select" [(ngModel)]="statusFilter" (change)="aplicarFiltros()">
+      <option value="TODOS">Todos status</option>
+      <option value="ESTOQUE">Estoque</option>
+      <option value="EM_USO">Em uso</option>
+      <option value="EM_RECAPAGEM">Em recapagem</option>
+      <option value="DESCARTADO">Descartado</option>
+    </select>
+
+    <select class="select" [(ngModel)]="alertaFilter" (change)="aplicarFiltros()">
+      <option value="TODOS">Todos alertas</option>
+      <option value="OK">OK</option>
+      <option value="PROXIMO_FIM">Próximo do fim</option>
+      <option value="VENCIDO">Vencido</option>
+    </select>
+
+    <button class="btn ghost" type="button" (click)="aplicarFiltros()">Aplicar</button>
+    <button class="btn" type="button" (click)="limparFiltros()">Limpar</button>
+
+    <div class="toolbar-right">
+      <span class="meta">
+        <strong class="mono">{{ totalElements }}</strong>
+        <span class="muted">registros</span>
+      </span>
+      <span class="dot">•</span>
+      <span class="meta">
+        <span class="muted">Página</span>
+        <strong>{{ page + 1 }}</strong>/<strong>{{ totalPages || 1 }}</strong>
+      </span>
+    </div>
+  </div>
+
+  <div class="kpis" *ngIf="rows.length > 0">
+    <div class="kpi">
+      <div class="k">Nesta página</div>
+      <div class="v">{{ rows.length }}</div>
+      <div class="s">pneus carregados</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k">Em uso</div>
+      <div class="v">{{ countStatus('EM_USO') }}</div>
+      <div class="s">com vida útil ativa</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k">Estoque</div>
+      <div class="v">{{ countStatus('ESTOQUE') }}</div>
+      <div class="s">prontos p/ instalar</div>
+    </div>
+
+    <div class="kpi">
+      <div class="k">Recapagem</div>
+      <div class="v">{{ countStatus('EM_RECAPAGEM') }}</div>
+      <div class="s">em processo</div>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">
+    <div class="alert-title">Ops…</div>
+    <div class="alert-msg">{{ errorMsg }}</div>
+  </div>
+
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="rows.length > 0; else emptyTpl">
+      <thead>
+      <tr>
+        <th>Código</th>
+        <th>Pneu</th>
+        <th>Status</th>
+        <th>Vida útil</th>
+        <th class="col-actions">Ações</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <ng-container *ngFor="let p of rows; trackBy: trackByCodigo">
+        <tr *ngIf="passaFiltroAlerta(p)"
+            (dblclick)="abrirDetalhe(p)">
+
+          <td class="mono">{{ p.codigo }}</td>
+
+          <td>
+            <div class="stack">
+              <strong>{{ (p.marca || '-') + ' ' + (p.modelo || '') }}</strong>
+              <small class="muted mono">
+                {{ p.medida || '-' }} <span class="dot">•</span> Série: {{ p.numeroSerie || '-' }}
+              </small>
+              <small class="muted">Compra: <span class="mono">{{ p.dtCompra || '-' }}</span></small>
+            </div>
+          </td>
+
+          <td>
+            <span class="badge"
+                  [class.good]="p.status==='EM_USO'"
+                  [class.warn]="p.status==='EM_RECAPAGEM'"
+                  [class.neutral]="p.status==='ESTOQUE'"
+                  [class.danger]="p.status==='DESCARTADO'">
+              {{ p.status }}
+            </span>
+            <div class="muted small">Recapagem: <span class="mono">{{ p.nivelRecapagem }}</span></div>
+          </td>
+
+          <td>
+            <ng-container *ngIf="p.status === 'EM_USO'; else semVida">
+              <div class="life-top">
+                <span class="pill"
+                      [class.ok]="getAlerta(p.codigo)==='OK'"
+                      [class.warn]="getAlerta(p.codigo)==='PROXIMO_FIM'"
+                      [class.bad]="getAlerta(p.codigo)==='VENCIDO'">
+                  {{ getAlerta(p.codigo) }}
+                </span>
+
+                <span class="muted mono">
+                  {{ formatKm(vidaMap[p.codigo]?.kmRestante) }} restantes
+                </span>
+              </div>
+
+              <div class="bar">
+                <div class="fill" [style.width.%]="getPercent(p.codigo) * 100"></div>
+              </div>
+
+              <div class="muted small">
+                Rodado: <span class="mono">{{ formatKm(vidaMap[p.codigo]?.kmRodadoAtual) }}</span>
+                <span class="dot">•</span>
+                Meta: <span class="mono">{{ formatKm(p.kmMetaAtual) }}</span>
+              </div>
+            </ng-container>
+
+            <ng-template #semVida>
+              <div class="muted small">Sem vida útil ativa (não instalado).</div>
+              <div class="muted small">Meta: <span class="mono">{{ formatKm(p.kmMetaAtual) }}</span></div>
+            </ng-template>
+          </td>
+
+          <td class="row-actions" (click)="$event.stopPropagation()">
+            <button class="btn small" type="button" (click)="abrirDetalhe(p)">Detalhe</button>
+            <button class="btn small" type="button" (click)="openEditar(p)">Editar</button>
+            <button class="btn small danger" type="button" (click)="deletar(p)">Excluir</button>
+          </td>
+
+        </tr>
+      </ng-container>
+      </tbody>
+    </table>
+
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <div class="empty-icon">🛞</div>
+        <div>
+          <h3>Nenhum pneu encontrado</h3>
+          <p>Tente ajustar os filtros ou cadastre um novo pneu.</p>
+        </div>
+        <div class="empty-actions">
+          <button class="btn primary" type="button" (click)="openNovo()">+ Novo pneu</button>
+        </div>
+      </div>
+    </ng-template>
+
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn small" [disabled]="page<=0" (click)="carregarPagina(page-1)">Anterior</button>
+      <span class="pageinfo">Página <strong>{{ page + 1 }}</strong> de <strong>{{ totalPages }}</strong></span>
+      <button class="btn small" [disabled]="page+1>=totalPages" (click)="carregarPagina(page+1)">Próxima</button>
+    </div>
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>
+        <strong>Carregando pneus…</strong>
+        <div class="muted small">Aguarde um instante.</div>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- MODAL -->
+  <div class="backdrop" *ngIf="showModal" (click)="closeModal()"></div>
+
+  <div class="modal" *ngIf="showModal">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar pneu' : 'Novo pneu' }}</h2>
+      <button class="iconbtn" type="button" (click)="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="grid2">
+        <div>
+          <label>Série / DOT</label>
+          <input [(ngModel)]="form.numeroSerie" placeholder="Ex: DOT-ABC-123" />
+        </div>
+
+        <div>
+          <label>Medida</label>
+          <input [(ngModel)]="form.medida" placeholder="Ex: 295/80R22.5" />
+        </div>
+
+        <div>
+          <label>Marca</label>
+          <input [(ngModel)]="form.marca" placeholder="Ex: Bridgestone" />
+        </div>
+
+        <div>
+          <label>Modelo</label>
+          <input [(ngModel)]="form.modelo" placeholder="Ex: R268" />
+        </div>
+
+        <div>
+          <label>Status</label>
+          <select [(ngModel)]="form.status">
+            <option value="ESTOQUE">ESTOQUE</option>
+            <option value="EM_USO">EM_USO</option>
+            <option value="EM_RECAPAGEM">EM_RECAPAGEM</option>
+            <option value="DESCARTADO">DESCARTADO</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Nível recapagem</label>
+          <input type="number" [(ngModel)]="form.nivelRecapagem" />
+        </div>
+
+        <div>
+          <label>Meta KM (vida útil)</label>
+          <input type="number" [(ngModel)]="form.kmMetaAtual" />
+          <small class="hint">Usado para calcular alerta e barra de vida útil.</small>
+        </div>
+
+        <div>
+          <label>Data compra</label>
+          <input type="date" [(ngModel)]="form.dtCompra" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="closeModal()">Cancelar</button>
+      <button class="btn primary" type="button" (click)="salvar()">Salvar</button>
+    </div>
+  </div>
+
+</div>

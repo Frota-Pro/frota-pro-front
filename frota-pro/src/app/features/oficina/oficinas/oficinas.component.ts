@@ -1,212 +1,148 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 
-type UUID = string;
-type StatusOficina = 'ATIVA' | 'INATIVA' | string;
-type TipoOficina = 'MECANICA' | 'BORRACHARIA' | 'ELETRICA' | 'SUSPENSAO' | 'FUNILARIA' | 'OUTROS' | string;
-
-interface Oficina {
-  id: UUID;
-  nome: string;
-  tipo: TipoOficina;
-  status: StatusOficina;
-
-  cnpj?: string;
-  telefone?: string;
-  email?: string;
-
-  cidade?: string;
-  uf?: string;
-
-  endereco?: string;
-  observacao?: string;
-}
+import { OficinaApiService } from '../../../core/api/oficina-api.service';
+import { OficinaRequest, OficinaResponse } from '../../../core/api/oficina-api.models';
 
 @Component({
   selector: 'app-oficinas',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './oficinas.component.html',
   styleUrls: ['./oficinas.component.css'],
 })
-export class OficinasComponent {
-  // filtros
-  searchTerm = '';
-  filtroStatus: '' | 'ATIVA' | 'INATIVA' = '';
-  filtroTipo: '' | TipoOficina = '';
+export class OficinasComponent implements OnInit {
+
+  search = '';
+
+  // paginação
+  page = 0;
+  size = 20;
+  totalPages = 0;
+  totalElements = 0;
+
+  loading = false;
+  errorMsg: string | null = null;
+
+  rows: OficinaResponse[] = [];
+  filtered: OficinaResponse[] = [];
 
   // modal
   showModal = false;
   isEditing = false;
-  editingId: UUID | null = null;
+  editingCodigo: string | null = null;
 
-  tipos: TipoOficina[] = ['MECANICA', 'BORRACHARIA', 'ELETRICA', 'SUSPENSAO', 'FUNILARIA', 'OUTROS'];
+  form: OficinaRequest = { nome: '' };
 
-  oficinas: Oficina[] = [
-    {
-      id: 'o1',
-      nome: 'Oficina Central',
-      tipo: 'MECANICA',
-      status: 'ATIVA',
-      cnpj: '12.345.678/0001-99',
-      telefone: '(83) 99999-9999',
-      cidade: 'Campina Grande',
-      uf: 'PB',
-      endereco: 'Rua A, 123 - Centro',
-      observacao: 'Atende freio e motor.',
-    },
-    {
-      id: 'o2',
-      nome: 'Borracharia Norte',
-      tipo: 'BORRACHARIA',
-      status: 'ATIVA',
-      telefone: '(83) 98888-7777',
-      cidade: 'João Pessoa',
-      uf: 'PB',
-      endereco: 'Av. Norte, 900',
-      observacao: '',
-    },
-  ];
+  private filtroTimer: any = null;
 
-  form: any = this.emptyForm();
+  constructor(
+    private api: OficinaApiService,
+    private router: Router,
+  ) {}
 
-  private emptyForm() {
-    return {
-      nome: '',
-      tipo: 'MECANICA' as TipoOficina,
-      status: 'ATIVA' as StatusOficina,
-      cnpj: '',
-      telefone: '',
-      email: '',
-      cidade: '',
-      uf: '',
-      endereco: '',
-      observacao: '',
-    };
+  ngOnInit(): void {
+    this.carregarPagina();
   }
 
-  private generateId(): UUID {
-    if (typeof crypto !== 'undefined' && (crypto as any).randomUUID) {
-      try {
-        return (crypto as any).randomUUID();
-      } catch {}
-    }
-    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+  scheduleBuscar(): void {
+    if (this.filtroTimer) clearTimeout(this.filtroTimer);
+    this.filtroTimer = setTimeout(() => {
+      this.page = 0;
+      this.carregarPagina();
+    }, 300);
   }
 
-  trackById(_: number, o: Oficina) {
-    return o.id;
+  carregarPagina(page?: number): void {
+    if (page != null) this.page = page;
+
+    this.loading = true;
+    this.errorMsg = null;
+
+    this.api.listar({ page: this.page, size: this.size, sort: 'nome,asc' })
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (res) => {
+          this.totalPages = res.totalPages ?? 0;
+          this.totalElements = res.totalElements ?? 0;
+          this.rows = res.content ?? [];
+          this.applyLocalFilter();
+        },
+        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao carregar oficinas.',
+      });
+  }
+
+  applyLocalFilter(): void {
+    const q = (this.search || '').trim().toLowerCase();
+    this.filtered = this.rows.filter(o => {
+      if (!q) return true;
+      const hay = `${o.codigo} ${o.nome}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  abrirDetalhe(o: OficinaResponse): void {
+    this.router.navigate(['/dashboard/oficinas', o.codigo]);
   }
 
   // modal
-  openAddModal() {
+  openNova(): void {
     this.isEditing = false;
-    this.editingId = null;
-    this.form = this.emptyForm();
+    this.editingCodigo = null;
+    this.form = { nome: '' };
     this.showModal = true;
   }
 
-  openEditModal(o: Oficina) {
+  openEditar(o: OficinaResponse): void {
     this.isEditing = true;
-    this.editingId = o.id;
-    this.form = {
-      nome: o.nome,
-      tipo: o.tipo,
-      status: o.status,
-      cnpj: o.cnpj || '',
-      telefone: o.telefone || '',
-      email: o.email || '',
-      cidade: o.cidade || '',
-      uf: o.uf || '',
-      endereco: o.endereco || '',
-      observacao: o.observacao || '',
-    };
+    this.editingCodigo = o.codigo;
+    this.form = { nome: o.nome };
     this.showModal = true;
   }
 
-  closeModal() {
+  closeModal(): void {
     this.showModal = false;
     this.isEditing = false;
-    this.editingId = null;
-    this.form = this.emptyForm();
+    this.editingCodigo = null;
+    this.form = { nome: '' };
   }
 
-  save() {
-    if (!this.form.nome) {
+  salvar(): void {
+    if (!this.form.nome || !this.form.nome.trim()) {
       alert('Informe o nome da oficina.');
       return;
     }
 
-    const payload: Oficina = {
-      id: this.isEditing && this.editingId ? this.editingId : this.generateId(),
-      nome: this.form.nome.trim(),
-      tipo: this.form.tipo,
-      status: this.form.status,
-      cnpj: (this.form.cnpj || '').trim() || undefined,
-      telefone: (this.form.telefone || '').trim() || undefined,
-      email: (this.form.email || '').trim() || undefined,
-      cidade: (this.form.cidade || '').trim() || undefined,
-      uf: (this.form.uf || '').trim().toUpperCase() || undefined,
-      endereco: (this.form.endereco || '').trim() || undefined,
-      observacao: (this.form.observacao || '').trim() || undefined,
-    };
+    this.loading = true;
+    this.errorMsg = null;
 
-    if (this.isEditing && this.editingId) {
-      this.oficinas = this.oficinas.map((x) => (x.id === this.editingId ? payload : x));
-    } else {
-      this.oficinas.unshift(payload);
-    }
+    const payload: OficinaRequest = { nome: this.form.nome.trim() };
+    const req$ = (this.isEditing && this.editingCodigo)
+      ? this.api.atualizar(this.editingCodigo, payload)
+      : this.api.criar(payload);
 
-    this.closeModal();
+    req$
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => { this.closeModal(); this.carregarPagina(); },
+        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao salvar oficina.',
+      });
   }
 
-  toggleStatus(o: Oficina) {
-    o.status = (o.status || '').toUpperCase() === 'ATIVA' ? 'INATIVA' : 'ATIVA';
-  }
+  deletar(o: OficinaResponse): void {
+    if (!confirm(`Deseja excluir a oficina ${o.codigo}?`)) return;
 
-  excluir(id: UUID) {
-    if (!confirm('Tem certeza que deseja excluir esta oficina?')) return;
-    this.oficinas = this.oficinas.filter((o) => o.id !== id);
-  }
+    this.loading = true;
+    this.errorMsg = null;
 
-  // filtros
-  get oficinasFiltradas(): Oficina[] {
-    const t = (this.searchTerm || '').toLowerCase().trim();
-    const st = (this.filtroStatus || '').toUpperCase().trim();
-    const tp = (this.filtroTipo || '').toUpperCase().trim();
-
-    return this.oficinas.filter((o) => {
-      if (st && (o.status || '').toUpperCase() !== st) return false;
-      if (tp && (o.tipo || '').toUpperCase() !== tp) return false;
-
-      if (t) {
-        const hay = [
-          o.nome,
-          o.cnpj || '',
-          o.telefone || '',
-          o.email || '',
-          o.cidade || '',
-          o.uf || '',
-          o.endereco || '',
-          o.tipo || '',
-          o.status || '',
-        ]
-          .join(' ')
-          .toLowerCase();
-
-        if (!hay.includes(t)) return false;
-      }
-
-      return true;
-    });
-  }
-
-  statusClass(s: string) {
-    const v = (s || '').toUpperCase();
-    return {
-      'pill-success': v === 'ATIVA',
-      'pill-muted': v !== 'ATIVA',
-    };
+    this.api.deletar(o.codigo)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => this.carregarPagina(),
+        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao excluir oficina.',
+      });
   }
 }

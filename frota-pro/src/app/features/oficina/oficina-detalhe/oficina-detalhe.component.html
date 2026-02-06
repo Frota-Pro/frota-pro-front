@@ -1,0 +1,107 @@
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>Oficina {{ oficina?.codigo || codigo }}</h1>
+      <p>{{ oficina?.nome || 'Dashboard e indicadores por período' }}</p>
+    </div>
+
+    <div class="actions">
+      <a class="btn ghost" routerLink="/dashboard/oficinas">← Voltar</a>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="erro">{{ erro }}</div>
+
+  <div class="toolbar">
+    <div class="filters">
+      <div class="col">
+        <label>Início</label>
+        <input type="date" [(ngModel)]="inicio" />
+      </div>
+
+      <div class="col">
+        <label>Fim</label>
+        <input type="date" [(ngModel)]="fim" />
+      </div>
+
+      <button class="btn primary" type="button" (click)="carregarDashboard()">Aplicar</button>
+    </div>
+  </div>
+
+  <div class="grid" *ngIf="dash">
+
+    <div class="card kpi">
+      <div class="k">Total em Orçamentos</div>
+      <div class="v mono">{{ formatMoneyBRL(dash.totalOrcamentos) }}</div>
+      <div class="s">Ticket médio: {{ formatMoneyBRL(dash.ticketMedio) }}</div>
+    </div>
+
+    <div class="card kpi">
+      <div class="k">Manutenções</div>
+      <div class="v mono">{{ dash.qtdManutencoes }}</div>
+      <div class="s">Período selecionado</div>
+    </div>
+
+    <div class="card kpi">
+      <div class="k">Peças</div>
+      <div class="v mono">{{ formatMoneyBRL(dash.totalPecas) }}</div>
+      <div class="s">Soma dos itens PEÇA</div>
+    </div>
+
+    <div class="card kpi">
+      <div class="k">Serviços</div>
+      <div class="v mono">{{ formatMoneyBRL(dash.totalServicos) }}</div>
+      <div class="s">Soma dos itens SERVIÇO</div>
+    </div>
+
+    <div class="card full">
+      <h3>Status</h3>
+      <div class="status-grid">
+        <div class="pill">AGENDADA <strong class="mono">{{ dash.qtdAgendadas }}</strong></div>
+        <div class="pill">EM ANDAMENTO <strong class="mono">{{ dash.qtdEmAndamento }}</strong></div>
+        <div class="pill">CONCLUÍDA <strong class="mono">{{ dash.qtdConcluidas }}</strong></div>
+        <div class="pill danger">CANCELADA <strong class="mono">{{ dash.qtdCanceladas }}</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Série mensal (R$)</h3>
+      <table class="table" *ngIf="dash.serieMensal?.length; else semSerie">
+        <thead><tr><th>Mês</th><th class="right">Total</th></tr></thead>
+        <tbody>
+        <tr *ngFor="let s of dash.serieMensal">
+          <td class="mono">{{ s.mes }}</td>
+          <td class="right mono">{{ formatMoneyBRL(s.total) }}</td>
+        </tr>
+        </tbody>
+      </table>
+      <ng-template #semSerie>
+        <div class="empty">Sem dados no período.</div>
+      </ng-template>
+    </div>
+
+    <div class="card">
+      <h3>Top caminhões (custo)</h3>
+      <table class="table" *ngIf="dash.topCaminhoes?.length; else semTop">
+        <thead><tr><th>Caminhão</th><th class="right">Total</th></tr></thead>
+        <tbody>
+        <tr *ngFor="let t of dash.topCaminhoes">
+          <td>
+            <div class="stack">
+              <strong>{{ t.descricaoCaminhao }}</strong>
+              <small class="muted mono">{{ t.codigoCaminhao }}</small>
+            </div>
+          </td>
+          <td class="right mono">{{ formatMoneyBRL(t.total) }}</td>
+        </tr>
+        </tbody>
+      </table>
+      <ng-template #semTop>
+        <div class="empty">Sem ranking no período.</div>
+      </ng-template>
+    </div>
+
+  </div>
+
+</div>
