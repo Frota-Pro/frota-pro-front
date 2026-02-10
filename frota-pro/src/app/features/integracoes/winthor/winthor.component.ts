@@ -1,225 +1,337 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
 
-type Aba = 'CONFIG' | 'HIST';
+import { IntegracaoWinthorApiService } from '../../../core/api/integracao-winthor-api.service';
+import {
+  IntegracaoWinthorConfigResponse,
+  IntegracaoWinthorConfigUpdateRequest,
+  IntegracaoWinthorJobResponse,
+  IntegracaoWinthorStatusResponse,
+  StatusSincronizacao,
+  IntegracaoJobTipo,
+} from '../../../core/api/integracao-winthor-api.models';
 
-type SyncTipo = 'CAMINHOES' | 'MOTORISTAS' | 'CARGAS';
-
-interface WinThorConfig {
-  ativo: boolean;
-  intervaloMin: number;
-
-  syncCaminhoes: boolean;
-  syncMotoristas: boolean;
-  syncCargas: boolean;
-
-  endpointPath: string; // exibido como referência
-}
-
-type LogStatus = 'SUCESSO' | 'FALHA' | 'EM_ANDAMENTO';
-
-interface WinThorSyncLog {
-  id: string;
-  dt: string; // ISO
-  tipo: SyncTipo;
-  status: LogStatus;
-  duracaoMs?: number;
-  registros?: number;
-  mensagem?: string;
-}
+type TabKey = 'overview' | 'jobs' | 'logs';
 
 @Component({
   selector: 'app-winthor',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './winthor.component.html',
-  styleUrls: ['./winthor.component.css'],
+  styleUrl: './winthor.component.css',
 })
-export class WinthorComponent {
-  aba: Aba = 'CONFIG';
+export class WinthorComponent implements OnInit {
 
-  // ======== estado/config ========
-  config: WinThorConfig = {
-    ativo: false,
-    intervaloMin: 60,
+  tab: TabKey = 'overview';
+
+  loading = false;
+  saving = false;
+  refreshing = false;
+
+  // Config
+  config?: IntegracaoWinthorConfigResponse;
+  form: IntegracaoWinthorConfigUpdateRequest = {
+    ativo: true,
+    intervaloMin: null,
     syncCaminhoes: true,
     syncMotoristas: true,
     syncCargas: true,
-    endpointPath: '/functions/v1/winthor-sync',
   };
 
-  // status conexão (mock)
-  status = {
-    conectado: true,
-    ultimaVerificacao: '2026-01-15T11:10',
-    ambiente: 'Produção',
-    banco: 'Oracle (WinThor)',
-    latenciaMs: 48,
-  };
+  // Status (API -> Integradora -> Oracle)
+  status?: IntegracaoWinthorStatusResponse;
+  statusLoading = false;
 
-  // logs (mock)
-  logs: WinThorSyncLog[] = [
-    {
-      id: 'lg1',
-      dt: '2026-01-15T10:10',
-      tipo: 'CAMINHOES',
-      status: 'SUCESSO',
-      duracaoMs: 2120,
-      registros: 148,
-      mensagem: 'Sincronização concluída.',
-    },
-    {
-      id: 'lg2',
-      dt: '2026-01-15T09:10',
-      tipo: 'MOTORISTAS',
-      status: 'SUCESSO',
-      duracaoMs: 1540,
-      registros: 62,
-      mensagem: 'Sincronização concluída.',
-    },
-    {
-      id: 'lg3',
-      dt: '2026-01-15T08:10',
-      tipo: 'CARGAS',
-      status: 'FALHA',
-      duracaoMs: 980,
-      registros: 0,
-      mensagem: 'Timeout ao consultar PCCARREG.',
-    },
-  ];
+  // Manual sync inputs
+  codFilial: number | null = null;
+  dataCargas: string = this.todayISO();
 
-  // filtros histórico
-  filtroTipo: '' | SyncTipo = '';
-  filtroStatus: '' | LogStatus = '';
-  searchTerm = '';
+  // Jobs
+  jobsLoading = false;
+  jobsPendente: IntegracaoWinthorJobResponse[] = [];
+  jobsConcluido: IntegracaoWinthorJobResponse[] = [];
+  jobsErro: IntegracaoWinthorJobResponse[] = [];
 
-  // ======== UI ========
-  setAba(a: Aba) {
-    this.aba = a;
+  jobsTipo: IntegracaoJobTipo = 'TODOS';
+  pageSize = 50;
+
+  // UI feedback
+  toast: { type: 'success' | 'error' | 'info'; text: string } | null = null;
+
+  constructor(
+    private api: IntegracaoWinthorApiService
+  ) {}
+
+  ngOnInit(): void {
+    this.bootstrap();
   }
 
-  toggleAtivo() {
-    this.config.ativo = !this.config.ativo;
+  bootstrap(): void {
+    this.loading = true;
+    this.toast = null;
+
+    this.api.getConfig()
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (cfg) => {
+          this.config = cfg;
+          this.form = {
+            ativo: cfg.ativo,
+            intervaloMin: cfg.intervaloMin ?? null,
+            syncCaminhoes: cfg.syncCaminhoes,
+            syncMotoristas: cfg.syncMotoristas,
+            syncCargas: cfg.syncCargas,
+          };
+
+          // Carrega status e jobs em seguida
+          this.refreshStatus();
+          this.refreshJobs();
+        },
+        error: (err) => this.showError('Falha ao carregar configuração da integração.', err),
+      });
   }
 
-  salvarConfiguracao() {
-    // aqui você depois conecta no backend
-    alert('Configuração salva (mock).');
+  // =========================
+  // Tabs
+  // =========================
+  setTab(t: TabKey): void {
+    this.tab = t;
+    if (t === 'jobs') this.refreshJobs();
+    if (t === 'overview') this.refreshStatus();
   }
 
-  testarIntegracao() {
-    // mock de “rodar agora”
-    const tipo: SyncTipo =
-      this.config.syncCargas ? 'CARGAS' : this.config.syncMotoristas ? 'MOTORISTAS' : 'CAMINHOES';
+  // =========================
+  // Config
+  // =========================
+  saveConfig(): void {
+    this.saving = true;
+    this.toast = null;
 
-    const now = new Date().toISOString().slice(0, 16);
+    const payload: IntegracaoWinthorConfigUpdateRequest = {
+      ativo: !!this.form.ativo,
+      intervaloMin: this.form.intervaloMin ?? null,
+      syncCaminhoes: !!this.form.syncCaminhoes,
+      syncMotoristas: !!this.form.syncMotoristas,
+      syncCargas: !!this.form.syncCargas,
+    };
 
-    this.logs.unshift({
-      id: this.generateId(),
-      dt: now,
-      tipo,
-      status: 'EM_ANDAMENTO',
-      mensagem: 'Execução manual iniciada...',
-    });
+    this.api.updateConfig(payload)
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: (cfg) => {
+          this.config = cfg;
+          this.form = {
+            ativo: cfg.ativo,
+            intervaloMin: cfg.intervaloMin ?? null,
+            syncCaminhoes: cfg.syncCaminhoes,
+            syncMotoristas: cfg.syncMotoristas,
+            syncCargas: cfg.syncCargas,
+          };
+          this.showToast('success', 'Configuração salva com sucesso.');
+          this.refreshStatus();
+        },
+        error: (err) => this.showError('Falha ao salvar configuração.', err),
+      });
+  }
 
-    // simula final
+  // =========================
+  // Status
+  // =========================
+  refreshStatus(): void {
+    this.statusLoading = true;
+    this.api.getStatus()
+      .pipe(finalize(() => (this.statusLoading = false)))
+      .subscribe({
+        next: (st) => (this.status = st),
+        error: (err) => {
+          // Se status falhar, não quebra tela
+          this.status = {
+            apiOk: true,
+            integradoraOk: false,
+            oracleOk: false,
+            integradoraStatus: 'DOWN',
+            oracleStatus: 'UNKNOWN',
+            latenciaMs: null,
+            verificadoEm: new Date().toISOString(),
+          };
+          this.showError('Não foi possível verificar status da integradora.', err);
+        }
+      });
+  }
+
+  // =========================
+  // Manual Sync
+  // =========================
+  syncMotoristas(): void {
+    this.refreshing = true;
+    this.toast = null;
+    this.api.syncMotoristas()
+      .pipe(finalize(() => (this.refreshing = false)))
+      .subscribe({
+        next: (res) => {
+          this.showToast('success', `Sincronização de motoristas solicitada. Job: ${res?.jobId ?? '-'}`);
+          this.refreshJobs();
+        },
+        error: (err) => this.showError('Falha ao solicitar sincronização de motoristas.', err),
+      });
+  }
+
+  syncCaminhoes(): void {
+    this.refreshing = true;
+    this.toast = null;
+    this.api.syncCaminhoes(this.codFilial)
+      .pipe(finalize(() => (this.refreshing = false)))
+      .subscribe({
+        next: (res) => {
+          this.showToast('success', `Sincronização de caminhões solicitada. Job: ${res?.jobId ?? '-'}`);
+          this.refreshJobs();
+        },
+        error: (err) => this.showError('Falha ao solicitar sincronização de caminhões.', err),
+      });
+  }
+
+  syncCargas(): void {
+    this.refreshing = true;
+    this.toast = null;
+    const data = (this.dataCargas || '').trim() || null;
+
+    this.api.syncCargas(data)
+      .pipe(finalize(() => (this.refreshing = false)))
+      .subscribe({
+        next: (res) => {
+          this.showToast('success', `Sincronização de cargas solicitada. Job: ${res?.jobId ?? '-'}`);
+          this.refreshJobs();
+        },
+        error: (err) => this.showError('Falha ao solicitar sincronização de cargas.', err),
+      });
+  }
+
+  // =========================
+  // Jobs
+  // =========================
+  refreshJobs(): void {
+    this.jobsLoading = true;
+    this.toast = null;
+
+    const pendentes: StatusSincronizacao[] = ['PENDENTE', 'PROCESSANDO'];
+    const erros: StatusSincronizacao[] = ['ERRO'];
+    const concluidos: StatusSincronizacao[] = ['CONCLUIDO'];
+
+    // Carrega em paralelo (3 chamadas)
+    let done = 0;
+    const finish = () => {
+      done += 1;
+      if (done >= 3) this.jobsLoading = false;
+    };
+
+    this.api.listJobs({ tipo: this.jobsTipo, status: pendentes, page: 0, size: this.pageSize })
+      .pipe(finalize(() => finish()))
+      .subscribe({
+        next: (rows) => (this.jobsPendente = rows || []),
+        error: (err) => {
+          this.jobsPendente = [];
+          this.showError('Falha ao carregar jobs pendentes/processando.', err);
+        }
+      });
+
+    this.api.listJobs({ tipo: this.jobsTipo, status: erros, page: 0, size: this.pageSize })
+      .pipe(finalize(() => finish()))
+      .subscribe({
+        next: (rows) => (this.jobsErro = rows || []),
+        error: (err) => {
+          this.jobsErro = [];
+          this.showError('Falha ao carregar jobs com erro.', err);
+        }
+      });
+
+    this.api.listJobs({ tipo: this.jobsTipo, status: concluidos, page: 0, size: this.pageSize })
+      .pipe(finalize(() => finish()))
+      .subscribe({
+        next: (rows) => (this.jobsConcluido = rows || []),
+        error: (err) => {
+          this.jobsConcluido = [];
+          this.showError('Falha ao carregar jobs concluídos.', err);
+        }
+      });
+  }
+
+  retryJob(row: IntegracaoWinthorJobResponse): void {
+    if (!row?.jobId || !row?.tipo) return;
+
+    const tipo = row.tipo; // 'CARGAS' | 'CAMINHOES' | 'MOTORISTAS'
+    this.toast = null;
+
+    this.api.retryJob(tipo, row.jobId)
+      .subscribe({
+        next: () => {
+          this.showToast('success', `Job reenfileirado (${tipo}).`);
+          this.refreshJobs();
+        },
+        error: (err) => this.showError(`Falha ao reenfileirar job (${tipo}).`, err),
+      });
+  }
+
+  // =========================
+  // Helpers UI
+  // =========================
+  chipClass(status?: StatusSincronizacao | null): string {
+    const s = (status || '').toUpperCase();
+    if (s === 'CONCLUIDO') return 'chip ok';
+    if (s === 'PROCESSANDO') return 'chip warn';
+    if (s === 'PENDENTE') return 'chip info';
+    if (s === 'ERRO') return 'chip err';
+    return 'chip';
+  }
+
+  pillClass(ok?: boolean): string {
+    if (ok === true) return 'pill ok';
+    if (ok === false) return 'pill err';
+    return 'pill';
+  }
+
+  formatDateTime(iso?: string | null): string {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString('pt-BR');
+  }
+
+  formatDate(iso?: string | null): string {
+    if (!iso) return '-';
+    // LocalDate (yyyy-MM-dd)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+      const [y, m, day] = iso.split('-').map(Number);
+      const d = new Date(y, m - 1, day);
+      return d.toLocaleDateString('pt-BR');
+    }
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('pt-BR');
+  }
+
+  private todayISO(): string {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  showToast(type: 'success' | 'error' | 'info', text: string): void {
+    this.toast = { type, text };
+    // auto-hide
     setTimeout(() => {
-      const idx = this.logs.findIndex((l) => l.dt === now && l.status === 'EM_ANDAMENTO');
-      if (idx >= 0) {
-        this.logs[idx] = {
-          ...this.logs[idx],
-          status: 'SUCESSO',
-          duracaoMs: 1800,
-          registros: Math.floor(Math.random() * 200) + 10,
-          mensagem: 'Execução manual concluída.',
-        };
-      }
-    }, 900);
+      if (this.toast?.text === text) this.toast = null;
+    }, 5000);
   }
 
-  private generateId(): string {
-    if (typeof crypto !== 'undefined' && (crypto as any).randomUUID) {
-      try {
-        return (crypto as any).randomUUID();
-      } catch {}
-    }
-    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
-  }
-
-  // ======== helpers UI ========
-  pillStatusIntegracao() {
-    return this.config.ativo ? 'ATIVA' : 'INATIVA';
-  }
-
-  pillClassIntegracao() {
-    return {
-      'pill-success': this.config.ativo,
-      'pill-muted': !this.config.ativo,
-    };
-  }
-
-  pillClassLog(s: LogStatus) {
-    const v = (s || '').toUpperCase();
-    return {
-      'pill-success': v === 'SUCESSO',
-      'pill-danger': v === 'FALHA',
-      'pill-warn': v === 'EM_ANDAMENTO',
-    };
-  }
-
-  iconForTipo(t: SyncTipo) {
-    switch ((t || '').toUpperCase()) {
-      case 'CAMINHOES':
-        return 'fas fa-truck';
-      case 'MOTORISTAS':
-        return 'fas fa-user';
-      case 'CARGAS':
-        return 'fas fa-box';
-      default:
-        return 'fas fa-database';
-    }
-  }
-
-  labelTipo(t: SyncTipo) {
-    switch ((t || '').toUpperCase()) {
-      case 'CAMINHOES':
-        return 'Caminhões';
-      case 'MOTORISTAS':
-        return 'Motoristas';
-      case 'CARGAS':
-        return 'Cargas';
-      default:
-        return t;
-    }
-  }
-
-  get logsFiltrados(): WinThorSyncLog[] {
-    const t = (this.searchTerm || '').toLowerCase().trim();
-    const ft = (this.filtroTipo || '').toUpperCase().trim();
-    const fs = (this.filtroStatus || '').toUpperCase().trim();
-
-    return this.logs.filter((l) => {
-      if (ft && (l.tipo || '').toUpperCase() !== ft) return false;
-      if (fs && (l.status || '').toUpperCase() !== fs) return false;
-
-      if (t) {
-        const hay = [l.tipo, l.status, l.mensagem || '', l.dt].join(' ').toLowerCase();
-        if (!hay.includes(t)) return false;
-      }
-
-      return true;
-    });
-  }
-
-  // payload exibido
-  get payloadEsperado(): string {
-    return `{
-  "empresaId": "uuid",
-  "tipo": "caminhoes | motoristas | cargas",
-  "dados": [
-    // Array de registros do WinThor
-  ]
-}`;
+  showError(userMsg: string, err: any): void {
+    const apiMsg = err?.error?.message || err?.error?.erro || err?.message;
+    const text = apiMsg ? `${userMsg} (${apiMsg})` : userMsg;
+    this.showToast('error', text);
+    // eslint-disable-next-line no-console
+    console.error(userMsg, err);
   }
 }

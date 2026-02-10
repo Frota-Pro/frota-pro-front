@@ -1,265 +1,386 @@
 <div class="page">
-
-  <!-- Header -->
-  <div class="page-head">
-    <div class="titles">
-      <h2 class="page-title">Integração WinThor</h2>
-      <p class="subtitle">Configuração da sincronização com o ERP WinThor</p>
+  <div class="header">
+    <div>
+      <h1>Integração WinThor</h1>
+      <p>Controle sincronizações manuais/automáticas, monitore jobs e valide conectividade com Integradora/Oracle.</p>
     </div>
+
+    <div class="actions">
+      <button class="btn ghost" type="button" (click)="bootstrap()" [disabled]="loading">
+        {{ loading ? 'Carregando...' : 'Recarregar' }}
+      </button>
+      <button class="btn primary" type="button" (click)="saveConfig()" [disabled]="saving || loading">
+        {{ saving ? 'Salvando...' : 'Salvar configurações' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div *ngIf="toast" class="toast" [class.ok]="toast.type==='success'" [class.err]="toast.type==='error'" [class.info]="toast.type==='info'">
+    <span class="dot"></span>
+    <span>{{ toast.text }}</span>
+    <button class="toast-x" type="button" (click)="toast=null">×</button>
   </div>
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab" [class.active]="aba === 'CONFIG'" (click)="setAba('CONFIG')">
-      <i class="fas fa-sliders-h"></i>
-      Configuração
-    </button>
-
-    <button class="tab" [class.active]="aba === 'HIST'" (click)="setAba('HIST')">
-      <i class="fas fa-clock"></i>
-      Histórico
-    </button>
+    <button class="tab" [class.active]="tab==='overview'" (click)="setTab('overview')" type="button">Visão geral</button>
+    <button class="tab" [class.active]="tab==='jobs'" (click)="setTab('jobs')" type="button">Jobs</button>
+    <button class="tab" [class.active]="tab==='logs'" (click)="setTab('logs')" type="button">Logs</button>
   </div>
 
-  <!-- =========================
-       ABA CONFIGURAÇÃO
-       ========================= -->
-  <ng-container *ngIf="aba === 'CONFIG'">
-
-    <!-- Status da Integração -->
-    <div class="card">
-      <div class="card-head">
-        <div class="card-title">
-          <i class="fas fa-plug"></i>
+  <!-- ========================= -->
+  <!-- OVERVIEW -->
+  <!-- ========================= -->
+  <ng-container *ngIf="tab==='overview'">
+    <div class="grid-2">
+      <!-- Config card -->
+      <div class="card">
+        <div class="card-h">
           <div>
-            <div class="h">Status da Integração</div>
-            <div class="s">Conexão com o banco de dados Oracle do WinThor</div>
+            <h3>Configuração</h3>
+            <p class="muted">Liga/desliga automação e escolhe o que sincronizar.</p>
           </div>
+          <span class="badge" [class.on]="form.ativo" [class.off]="!form.ativo">
+            {{ form.ativo ? 'ATIVA' : 'DESATIVADA' }}
+          </span>
         </div>
 
-        <div class="card-actions">
-          <span class="pill" [ngClass]="pillClassIntegracao()">{{ pillStatusIntegracao() }}</span>
-
-          <label class="switch" title="Ativar/Desativar">
-            <input type="checkbox" [(ngModel)]="config.ativo" />
-            <span class="slider"></span>
+        <div class="form">
+          <label class="row">
+            <span>Sincronização automática</span>
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="form.ativo" />
+              <span class="slider"></span>
+            </label>
           </label>
 
-          <button class="btn-secondary" type="button" (click)="testarIntegracao()">
-            <i class="fas fa-play"></i>
-            Testar
-          </button>
+          <label class="row">
+            <span>Intervalo (min)</span>
+            <input class="input" type="number" min="1" step="1" [(ngModel)]="form.intervaloMin" placeholder="Opcional" />
+          </label>
+
+          <div class="sep"></div>
+
+          <label class="row">
+            <span>Sincronizar Caminhões</span>
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="form.syncCaminhoes" />
+              <span class="slider"></span>
+            </label>
+          </label>
+
+          <label class="row">
+            <span>Sincronizar Motoristas</span>
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="form.syncMotoristas" />
+              <span class="slider"></span>
+            </label>
+          </label>
+
+          <label class="row">
+            <span>Sincronizar Cargas</span>
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="form.syncCargas" />
+              <span class="slider"></span>
+            </label>
+          </label>
+
+          <div class="meta">
+            <div class="meta-line">
+              <span class="muted">Empresa</span>
+              <span class="mono">{{ config?.empresaId || '-' }}</span>
+            </div>
+            <div class="meta-line">
+              <span class="muted">Atualizado</span>
+              <span>{{ formatDateTime(config?.atualizadoEm || null) }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="status-grid">
-        <div class="kv">
-          <div class="k">Ambiente</div>
-          <div class="v">{{ status.ambiente }}</div>
+      <!-- Status card -->
+      <div class="card">
+        <div class="card-h">
+          <div>
+            <h3>Status & Conectividade</h3>
+            <p class="muted">API → Integradora → Oracle (via actuator health).</p>
+          </div>
+          <button class="btn small" type="button" (click)="refreshStatus()" [disabled]="statusLoading">
+            {{ statusLoading ? 'Verificando...' : 'Atualizar status' }}
+          </button>
         </div>
 
-        <div class="kv">
-          <div class="k">Banco</div>
-          <div class="v">{{ status.banco }}</div>
-        </div>
+        <div class="status-grid">
+          <div class="status-item">
+            <div class="label muted">API</div>
+            <div class="value">
+              <span class="pill ok">UP</span>
+            </div>
+          </div>
 
-        <div class="kv">
-          <div class="k">Conectado</div>
-          <div class="v">
-            <span class="pill" [ngClass]="{ 'pill-success': status.conectado, 'pill-danger': !status.conectado }">
-              {{ status.conectado ? 'SIM' : 'NÃO' }}
-            </span>
+          <div class="status-item">
+            <div class="label muted">Integradora</div>
+            <div class="value">
+              <span class="{{ pillClass(status?.integradoraOk) }}">{{ status?.integradoraStatus || 'UNKNOWN' }}</span>
+            </div>
+          </div>
+
+          <div class="status-item">
+            <div class="label muted">Oracle</div>
+            <div class="value">
+              <span class="{{ pillClass(status?.oracleOk) }}">{{ status?.oracleStatus || 'UNKNOWN' }}</span>
+            </div>
+          </div>
+
+          <div class="status-item">
+            <div class="label muted">Latência</div>
+            <div class="value">
+              <span class="mono">{{ status?.latenciaMs != null ? (status?.latenciaMs + 'ms') : '-' }}</span>
+            </div>
+          </div>
+
+          <div class="status-item">
+            <div class="label muted">Verificado</div>
+            <div class="value">
+              <span>{{ formatDateTime(status?.verificadoEm || null) }}</span>
+            </div>
           </div>
         </div>
 
-        <div class="kv">
-          <div class="k">Latência</div>
-          <div class="v mono">{{ status.latenciaMs }} ms</div>
-        </div>
-
-        <div class="kv">
-          <div class="k">Última verificação</div>
-          <div class="v">{{ status.ultimaVerificacao | date:'dd/MM/yy HH:mm' }}</div>
+        <div class="hint">
+          <span class="muted">
+            Dica: se a integradora estiver DOWN, verifique a URL em <span class="mono">frotapro.integracao.integradora-base-url</span>.
+          </span>
         </div>
       </div>
     </div>
 
-    <!-- Dados para sincronizar -->
+    <!-- Manual sync -->
     <div class="card">
-      <div class="card-head">
-        <div class="card-title">
-          <i class="fas fa-sync"></i>
-          <div>
-            <div class="h">Dados para Sincronizar</div>
-            <div class="s">Selecione quais dados serão importados do WinThor</div>
-          </div>
+      <div class="card-h">
+        <div>
+          <h3>Sincronização manual</h3>
+          <p class="muted">Dispara sincronização sob demanda e acompanha nos Jobs.</p>
         </div>
-
-        <div class="inline">
-          <label class="muted">Intervalo de sincronização (minutos)</label>
-          <input class="input-mini" type="number" min="1" [(ngModel)]="config.intervaloMin" />
-        </div>
+        <button class="btn ghost small" type="button" (click)="refreshJobs()" [disabled]="jobsLoading">
+          {{ jobsLoading ? 'Atualizando...' : 'Atualizar jobs' }}
+        </button>
       </div>
 
-      <div class="sync-grid">
-        <div class="sync-item">
-          <div class="sync-left">
-            <div class="sync-ico"><i class="fas fa-truck"></i></div>
-            <div>
-              <div class="sync-title">Caminhões</div>
-              <div class="sync-sub">PVEICUL</div>
-            </div>
-          </div>
-
-          <label class="switch">
-            <input type="checkbox" [(ngModel)]="config.syncCaminhoes" />
-            <span class="slider"></span>
-          </label>
+      <div class="manual-grid">
+        <div class="manual-box">
+          <h4>Motoristas</h4>
+          <p class="muted">Sincroniza motoristas do WinThor para o FrotaPRO.</p>
+          <button class="btn primary" type="button" (click)="syncMotoristas()" [disabled]="refreshing">
+            {{ refreshing ? 'Enviando...' : 'Sincronizar motoristas' }}
+          </button>
         </div>
 
-        <div class="sync-item">
-          <div class="sync-left">
-            <div class="sync-ico"><i class="fas fa-user"></i></div>
-            <div>
-              <div class="sync-title">Motoristas</div>
-              <div class="sync-sub">PCMOTORISTA</div>
-            </div>
-          </div>
+        <div class="manual-box">
+          <h4>Caminhões</h4>
+          <p class="muted">Sincroniza caminhões (opcional: filial).</p>
 
-          <label class="switch">
-            <input type="checkbox" [(ngModel)]="config.syncMotoristas" />
-            <span class="slider"></span>
-          </label>
+          <div class="inline">
+            <input class="input" type="number" min="1" step="1" [(ngModel)]="codFilial" placeholder="Cod. Filial (opcional)" />
+            <button class="btn primary" type="button" (click)="syncCaminhoes()" [disabled]="refreshing">
+              {{ refreshing ? 'Enviando...' : 'Sincronizar caminhões' }}
+            </button>
+          </div>
         </div>
 
-        <div class="sync-item">
-          <div class="sync-left">
-            <div class="sync-ico"><i class="fas fa-box"></i></div>
-            <div>
-              <div class="sync-title">Cargas</div>
-              <div class="sync-sub">PCCARREG</div>
-            </div>
-          </div>
+        <div class="manual-box">
+          <h4>Cargas</h4>
+          <p class="muted">Sincroniza cargas por data (padrão: hoje).</p>
 
-          <label class="switch">
-            <input type="checkbox" [(ngModel)]="config.syncCargas" />
-            <span class="slider"></span>
-          </label>
+          <div class="inline">
+            <input class="input" type="date" [(ngModel)]="dataCargas" />
+            <button class="btn primary" type="button" (click)="syncCargas()" [disabled]="refreshing">
+              {{ refreshing ? 'Enviando...' : 'Sincronizar cargas' }}
+            </button>
+          </div>
         </div>
       </div>
+    </div>
+  </ng-container>
 
-      <div class="card-foot">
-        <button class="btn-add" type="button" (click)="salvarConfiguracao()">
-          <i class="fas fa-save"></i>
-          Salvar Configuração
+  <!-- ========================= -->
+  <!-- JOBS -->
+  <!-- ========================= -->
+  <ng-container *ngIf="tab==='jobs'">
+    <div class="toolbar">
+      <div class="left">
+        <span class="muted">Tipo</span>
+        <select class="select" [(ngModel)]="jobsTipo" (change)="refreshJobs()">
+          <option value="TODOS">Todos</option>
+          <option value="CARGAS">Cargas</option>
+          <option value="CAMINHOES">Caminhões</option>
+          <option value="MOTORISTAS">Motoristas</option>
+        </select>
+
+        <span class="muted">Limite</span>
+        <select class="select" [(ngModel)]="pageSize" (change)="refreshJobs()">
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+          <option [ngValue]="200">200</option>
+        </select>
+      </div>
+
+      <div class="right">
+        <button class="btn ghost" type="button" (click)="refreshJobs()" [disabled]="jobsLoading">
+          {{ jobsLoading ? 'Atualizando...' : 'Atualizar' }}
         </button>
       </div>
     </div>
 
-    <!-- Endpoint -->
-    <div class="card">
-      <div class="card-head">
-        <div class="card-title">
-          <i class="fas fa-link"></i>
+    <div class="grid-3">
+      <!-- PENDENTES -->
+      <div class="card">
+        <div class="card-h">
           <div>
-            <div class="h">Endpoint da API</div>
-            <div class="s">Configure seu middleware para enviar dados para este endpoint</div>
+            <h3>Pendentes / Processando</h3>
+            <p class="muted">Fila ativa (Kafka + integradora).</p>
           </div>
+          <span class="counter">{{ jobsPendente.length }}</span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th class="right">Total</th>
+              <th>Atualizado</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let r of jobsPendente">
+              <td class="mono">{{ r.tipo }}</td>
+              <td><span class="{{ chipClass(r.status) }}">{{ r.status }}</span></td>
+              <td>{{ formatDate(r.dataReferencia || null) }}</td>
+              <td class="right">{{ r.totalRegistros ?? '-' }}</td>
+              <td>{{ formatDateTime(r.atualizadoEm || r.criadoEm || null) }}</td>
+            </tr>
+
+            <tr *ngIf="!jobsLoading && jobsPendente.length===0">
+              <td colspan="5" class="muted center">Sem pendências.</td>
+            </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div class="endpoint">
-        <div class="endpoint-line">
-          <span class="method">POST</span>
-          <span class="path">{{ config.endpointPath }}</span>
+      <!-- ERROS -->
+      <div class="card">
+        <div class="card-h">
+          <div>
+            <h3>Erros</h3>
+            <p class="muted">Falhas que podem ser reenfileiradas.</p>
+          </div>
+          <span class="counter err">{{ jobsErro.length }}</span>
         </div>
 
-        <div class="payload">
-          <div class="payload-title">Payload esperado</div>
-          <pre class="code">{{ payloadEsperado }}</pre>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th>Erro</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let r of jobsErro">
+              <td class="mono">{{ r.tipo }}</td>
+              <td><span class="{{ chipClass(r.status) }}">{{ r.status }}</span></td>
+              <td>{{ formatDate(r.dataReferencia || null) }}</td>
+              <td class="truncate" [title]="r.mensagemErro || ''">{{ r.mensagemErro || '-' }}</td>
+              <td class="right">
+                <button class="btn small danger" type="button" (click)="retryJob(r)">
+                  Reenfileirar
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="!jobsLoading && jobsErro.length===0">
+              <td colspan="5" class="muted center">Nenhum erro.</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CONCLUÍDOS -->
+      <div class="card">
+        <div class="card-h">
+          <div>
+            <h3>Concluídos</h3>
+            <p class="muted">Sincronizações finalizadas.</p>
+          </div>
+          <span class="counter ok">{{ jobsConcluido.length }}</span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th class="right">Total</th>
+              <th>Finalizado</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let r of jobsConcluido">
+              <td class="mono">{{ r.tipo }}</td>
+              <td><span class="{{ chipClass(r.status) }}">{{ r.status }}</span></td>
+              <td>{{ formatDate(r.dataReferencia || null) }}</td>
+              <td class="right">{{ r.totalRegistros ?? '-' }}</td>
+              <td>{{ formatDateTime(r.atualizadoEm || r.criadoEm || null) }}</td>
+            </tr>
+
+            <tr *ngIf="!jobsLoading && jobsConcluido.length===0">
+              <td colspan="5" class="muted center">Nenhum concluído.</td>
+            </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
 
+    <div class="note">
+      <span class="muted">
+        Ação “Reenfileirar” marca o job como pendente e reenviará o evento com o mesmo <span class="mono">jobId</span>.
+      </span>
+    </div>
   </ng-container>
 
-  <!-- =========================
-       ABA HISTÓRICO
-       ========================= -->
-  <ng-container *ngIf="aba === 'HIST'">
-
+  <!-- ========================= -->
+  <!-- LOGS -->
+  <!-- ========================= -->
+  <ng-container *ngIf="tab==='logs'">
     <div class="card">
-      <div class="card-head">
-        <div class="card-title">
-          <i class="fas fa-clock"></i>
-          <div>
-            <div class="h">Histórico de Sincronizações</div>
-            <div class="s">Registros de execuções (sucesso, falha, duração e volume)</div>
-          </div>
+      <div class="card-h">
+        <div>
+          <h3>Logs</h3>
+          <p class="muted">
+            Esta aba pode ser ligada com os logs do backend e da integradora (Loki/ELK/tabela).
+          </p>
         </div>
       </div>
 
-      <div class="filters-row">
-        <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar no histórico..." />
-
-        <select [(ngModel)]="filtroTipo">
-          <option value="">Todos tipos</option>
-          <option value="CAMINHOES">Caminhões</option>
-          <option value="MOTORISTAS">Motoristas</option>
-          <option value="CARGAS">Cargas</option>
-        </select>
-
-        <select [(ngModel)]="filtroStatus">
-          <option value="">Todos status</option>
-          <option value="SUCESSO">SUCESSO</option>
-          <option value="FALHA">FALHA</option>
-          <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
-        </select>
+      <div class="empty">
+        <div class="empty-title">Ainda não conectado</div>
+        <div class="muted">
+          Quer que eu integre essa aba com os logs reais do seu backend + integradora (por período, nível, busca)?
+        </div>
       </div>
-
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-          <tr>
-            <th>Data/Hora</th>
-            <th>Tipo</th>
-            <th>Status</th>
-            <th class="num">Registros</th>
-            <th class="num">Duração</th>
-            <th>Mensagem</th>
-          </tr>
-          </thead>
-
-          <tbody>
-          <tr *ngFor="let l of logsFiltrados">
-            <td class="mono">{{ l.dt | date:'dd/MM/yy HH:mm' }}</td>
-
-            <td>
-                <span class="pill pill-type">
-                  <i [class]="iconForTipo(l.tipo)"></i>
-                  {{ labelTipo(l.tipo) }}
-                </span>
-            </td>
-
-            <td>
-              <span class="pill" [ngClass]="pillClassLog(l.status)">{{ l.status }}</span>
-            </td>
-
-            <td class="num mono">{{ l.registros ?? '—' }}</td>
-            <td class="num mono">{{ l.duracaoMs != null ? (l.duracaoMs + ' ms') : '—' }}</td>
-
-            <td class="truncate">{{ l.mensagem || '—' }}</td>
-          </tr>
-
-          <tr *ngIf="logsFiltrados.length === 0">
-            <td colspan="6" class="empty">Nenhum log encontrado.</td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-
     </div>
-
   </ng-container>
-
 </div>
