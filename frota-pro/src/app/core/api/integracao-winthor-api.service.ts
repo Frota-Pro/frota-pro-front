@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { IntegracaoWinthorLogsResponse, IntegracaoLogSource } from './integracao-winthor-api.models';
+
 
 import { BaseApiService } from './base-api.service';
 import {
@@ -60,4 +62,12 @@ export class IntegracaoWinthorApiService extends BaseApiService {
     if (data) params = params.set('data', data);
     return this.http.post<any>(`${this.apiUrl}${this.base}/sync/cargas`, {}, { params });
   }
+
+  getLogs(source: IntegracaoLogSource, lines: number) {
+    let params = new HttpParams()
+      .set('source', source)
+      .set('lines', String(lines));
+    return this.http.get<IntegracaoWinthorLogsResponse>(`${this.apiUrl}${this.base}/logs`, { params });
+  }
+
 }

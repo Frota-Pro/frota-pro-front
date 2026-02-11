@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
@@ -11,6 +11,8 @@ import {
   IntegracaoWinthorStatusResponse,
   StatusSincronizacao,
   IntegracaoJobTipo,
+  IntegracaoLogSource,
+  IntegracaoWinthorLogsResponse,
 } from '../../../core/api/integracao-winthor-api.models';
 
 type TabKey = 'overview' | 'jobs' | 'logs';
@@ -22,7 +24,7 @@ type TabKey = 'overview' | 'jobs' | 'logs';
   templateUrl: './winthor.component.html',
   styleUrl: './winthor.component.css',
 })
-export class WinthorComponent implements OnInit {
+export class WinthorComponent implements OnInit, OnDestroy {
 
   tab: TabKey = 'overview';
 
@@ -40,7 +42,7 @@ export class WinthorComponent implements OnInit {
     syncCargas: true,
   };
 
-  // Status (API -> Integradora -> Oracle)
+  // Status
   status?: IntegracaoWinthorStatusResponse;
   statusLoading = false;
 
@@ -57,15 +59,28 @@ export class WinthorComponent implements OnInit {
   jobsTipo: IntegracaoJobTipo = 'TODOS';
   pageSize = 50;
 
+  // Logs
+  logsLoading = false;
+  logSource: IntegracaoLogSource = 'API';
+  logLines = 300;
+  logSearch = '';
+  autoRefreshLogs = false;
+  private logsTimer?: any;
+
+  rawLogs?: IntegracaoWinthorLogsResponse;
+  filteredLogLines: string[] = [];
+
   // UI feedback
   toast: { type: 'success' | 'error' | 'info'; text: string } | null = null;
 
-  constructor(
-    private api: IntegracaoWinthorApiService
-  ) {}
+  constructor(private api: IntegracaoWinthorApiService) {}
 
   ngOnInit(): void {
     this.bootstrap();
+  }
+
+  ngOnDestroy(): void {
+    this.stopLogsAutoRefresh();
   }
 
   bootstrap(): void {
@@ -98,8 +113,16 @@ export class WinthorComponent implements OnInit {
   // =========================
   setTab(t: TabKey): void {
     this.tab = t;
+
     if (t === 'jobs') this.refreshJobs();
     if (t === 'overview') this.refreshStatus();
+
+    if (t === 'logs') {
+      this.refreshLogs();
+      this.startLogsAutoRefresh();
+    } else {
+      this.stopLogsAutoRefresh();
+    }
   }
 
   // =========================
@@ -141,12 +164,13 @@ export class WinthorComponent implements OnInit {
   // =========================
   refreshStatus(): void {
     this.statusLoading = true;
+
     this.api.getStatus()
       .pipe(finalize(() => (this.statusLoading = false)))
       .subscribe({
         next: (st) => (this.status = st),
         error: (err) => {
-          // Se status falhar, não quebra tela
+          // não quebra tela
           this.status = {
             apiOk: true,
             integradoraOk: false,
@@ -167,6 +191,7 @@ export class WinthorComponent implements OnInit {
   syncMotoristas(): void {
     this.refreshing = true;
     this.toast = null;
+
     this.api.syncMotoristas()
       .pipe(finalize(() => (this.refreshing = false)))
       .subscribe({
@@ -181,6 +206,7 @@ export class WinthorComponent implements OnInit {
   syncCaminhoes(): void {
     this.refreshing = true;
     this.toast = null;
+
     this.api.syncCaminhoes(this.codFilial)
       .pipe(finalize(() => (this.refreshing = false)))
       .subscribe({
@@ -195,6 +221,7 @@ export class WinthorComponent implements OnInit {
   syncCargas(): void {
     this.refreshing = true;
     this.toast = null;
+
     const data = (this.dataCargas || '').trim() || null;
 
     this.api.syncCargas(data)
@@ -213,13 +240,11 @@ export class WinthorComponent implements OnInit {
   // =========================
   refreshJobs(): void {
     this.jobsLoading = true;
-    this.toast = null;
 
     const pendentes: StatusSincronizacao[] = ['PENDENTE', 'PROCESSANDO'];
     const erros: StatusSincronizacao[] = ['ERRO'];
     const concluidos: StatusSincronizacao[] = ['CONCLUIDO'];
 
-    // Carrega em paralelo (3 chamadas)
     let done = 0;
     const finish = () => {
       done += 1;
@@ -274,6 +299,75 @@ export class WinthorComponent implements OnInit {
   }
 
   // =========================
+  // Logs
+  // =========================
+  refreshLogs(): void {
+    this.logsLoading = true;
+
+    this.api.getLogs(this.logSource, this.logLines)
+      .pipe(finalize(() => (this.logsLoading = false)))
+      .subscribe({
+        next: (res) => {
+          this.rawLogs = res;
+          this.applyLogFilter();
+        },
+        error: (err) => {
+          this.rawLogs = {
+            source: this.logSource,
+            fetchedAt: new Date().toISOString(),
+            linesRequested: this.logLines,
+            linesReturned: 1,
+            lines: ['[LOG] Falha ao buscar logs. Veja console/rede.'],
+          };
+          this.applyLogFilter();
+          this.showError('Falha ao buscar logs.', err);
+        }
+      });
+  }
+
+  applyLogFilter(): void {
+    const base = this.rawLogs?.lines || [];
+    const q = (this.logSearch || '').trim().toLowerCase();
+
+    if (!q) {
+      this.filteredLogLines = base;
+      return;
+    }
+    this.filteredLogLines = base.filter(l => (l || '').toLowerCase().includes(q));
+  }
+
+  toggleAutoRefreshLogs(): void {
+    this.autoRefreshLogs = !this.autoRefreshLogs;
+    if (this.autoRefreshLogs) this.startLogsAutoRefresh();
+    else this.stopLogsAutoRefresh();
+  }
+
+  startLogsAutoRefresh(): void {
+    this.stopLogsAutoRefresh();
+    if (!this.autoRefreshLogs) return;
+
+    this.logsTimer = setInterval(() => {
+      if (this.tab === 'logs') this.refreshLogs();
+    }, 5000);
+  }
+
+  stopLogsAutoRefresh(): void {
+    if (this.logsTimer) {
+      clearInterval(this.logsTimer);
+      this.logsTimer = undefined;
+    }
+  }
+
+  copyLogs(): void {
+    const txt = (this.filteredLogLines || []).join('\n');
+    if (!txt) return;
+
+    navigator.clipboard.writeText(txt)
+      .then(() => this.showToast('success', 'Logs copiados para a área de transferência.'))
+      .catch(() => this.showToast('error', 'Não foi possível copiar os logs.'));
+  }
+
+  // =========================
   // Helpers UI
   // =========================
   chipClass(status?: StatusSincronizacao | null): string {
@@ -300,7 +394,6 @@ export class WinthorComponent implements OnInit {
 
   formatDate(iso?: string | null): string {
     if (!iso) return '-';
-    // LocalDate (yyyy-MM-dd)
     if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
       const [y, m, day] = iso.split('-').map(Number);
       const d = new Date(y, m - 1, day);
@@ -321,7 +414,6 @@ export class WinthorComponent implements OnInit {
 
   showToast(type: 'success' | 'error' | 'info', text: string): void {
     this.toast = { type, text };
-    // auto-hide
     setTimeout(() => {
       if (this.toast?.text === text) this.toast = null;
     }, 5000);

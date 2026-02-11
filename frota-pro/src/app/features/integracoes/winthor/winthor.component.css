@@ -4,7 +4,7 @@
 
 :host{
   display:block;
-  color:#0f172a; /* slate-900 */
+  color:#0f172a;
 }
 
 .page{
@@ -30,7 +30,7 @@
 
 .header p{
   margin:6px 0 0;
-  color:#64748b; /* slate-500 */
+  color:#64748b;
   font-size:13px;
 }
 
@@ -44,7 +44,7 @@
 .btn{
   height:38px;
   border-radius:12px;
-  border:1px solid #e2e8f0; /* slate-200 */
+  border:1px solid #e2e8f0;
   background:#ffffff;
   color:#0f172a;
   padding:0 12px;
@@ -55,8 +55,8 @@
 }
 
 .btn:hover{
-  background:#f8fafc; /* slate-50 */
-  border-color:#cbd5e1; /* slate-300 */
+  background:#f8fafc;
+  border-color:#cbd5e1;
   box-shadow:0 6px 18px rgba(15, 23, 42, .06);
 }
 
@@ -162,7 +162,7 @@
   border-radius:12px;
   border:1px solid #e2e8f0;
   background:#ffffff;
-  color:#334155; /* slate-700 */
+  color:#334155;
   cursor:pointer;
   font-size:13px;
 }
@@ -556,4 +556,28 @@
   border-radius:14px;
   border:1px dashed #cbd5e1;
   background:#ffffff;
+}
+
+/* Logs area */
+.log-wrap{
+  padding: 12px 14px 14px;
+}
+
+.log-pre{
+  margin:0;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid #e2e8f0;
+  background:#0b1220;
+  color:#e5e7eb;
+  font-size:12px;
+  line-height:1.4;
+  overflow:auto;
+  max-height:520px;
+  white-space:pre;
+}
+
+.dot{
+  margin: 0 8px;
+  color: #94a3b8;
 }

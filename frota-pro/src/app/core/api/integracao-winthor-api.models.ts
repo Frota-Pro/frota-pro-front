@@ -40,3 +40,14 @@ export interface IntegracaoWinthorStatusResponse {
   latenciaMs?: number | null;
   verificadoEm?: string | null;
 }
+
+export type IntegracaoLogSource = 'API' | 'INTEGRADORA';
+
+export interface IntegracaoWinthorLogsResponse {
+  source: IntegracaoLogSource;
+  fetchedAt: string;
+  linesRequested: number;
+  linesReturned: number;
+  lines: string[];
+}
+

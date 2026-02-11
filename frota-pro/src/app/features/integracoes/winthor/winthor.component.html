@@ -9,6 +9,7 @@
       <button class="btn ghost" type="button" (click)="bootstrap()" [disabled]="loading">
         {{ loading ? 'Carregando...' : 'Recarregar' }}
       </button>
+
       <button class="btn primary" type="button" (click)="saveConfig()" [disabled]="saving || loading">
         {{ saving ? 'Salvando...' : 'Salvar configurações' }}
       </button>
@@ -16,7 +17,10 @@
   </div>
 
   <!-- Toast -->
-  <div *ngIf="toast" class="toast" [class.ok]="toast.type==='success'" [class.err]="toast.type==='error'" [class.info]="toast.type==='info'">
+  <div *ngIf="toast" class="toast"
+       [class.ok]="toast.type==='success'"
+       [class.err]="toast.type==='error'"
+       [class.info]="toast.type==='info'">
     <span class="dot"></span>
     <span>{{ toast.text }}</span>
     <button class="toast-x" type="button" (click)="toast=null">×</button>
@@ -57,7 +61,8 @@
 
           <label class="row">
             <span>Intervalo (min)</span>
-            <input class="input" type="number" min="1" step="1" [(ngModel)]="form.intervaloMin" placeholder="Opcional" />
+            <input class="input" type="number" min="1" step="1"
+                   [(ngModel)]="form.intervaloMin" placeholder="Opcional" />
           </label>
 
           <div class="sep"></div>
@@ -182,7 +187,8 @@
           <p class="muted">Sincroniza caminhões (opcional: filial).</p>
 
           <div class="inline">
-            <input class="input" type="number" min="1" step="1" [(ngModel)]="codFilial" placeholder="Cod. Filial (opcional)" />
+            <input class="input" type="number" min="1" step="1"
+                   [(ngModel)]="codFilial" placeholder="Cod. Filial (opcional)" />
             <button class="btn primary" type="button" (click)="syncCaminhoes()" [disabled]="refreshing">
               {{ refreshing ? 'Enviando...' : 'Sincronizar caminhões' }}
             </button>
@@ -365,20 +371,67 @@
   <!-- LOGS -->
   <!-- ========================= -->
   <ng-container *ngIf="tab==='logs'">
+    <div class="toolbar">
+      <div class="left">
+        <span class="muted">Fonte</span>
+        <select class="select" [(ngModel)]="logSource" (change)="refreshLogs()">
+          <option value="API">API</option>
+          <option value="INTEGRADORA">Integradora</option>
+        </select>
+
+        <span class="muted">Linhas</span>
+        <select class="select" [(ngModel)]="logLines" (change)="refreshLogs()">
+          <option [ngValue]="200">200</option>
+          <option [ngValue]="300">300</option>
+          <option [ngValue]="500">500</option>
+          <option [ngValue]="1000">1000</option>
+          <option [ngValue]="2000">2000</option>
+        </select>
+
+        <span class="muted">Buscar</span>
+        <input class="input" style="max-width:260px"
+               [(ngModel)]="logSearch" (input)="applyLogFilter()"
+               placeholder="Ex.: ERROR, jobId, Oracle, Kafka..." />
+      </div>
+
+      <div class="right">
+        <button class="btn ghost" type="button" (click)="toggleAutoRefreshLogs()">
+          {{ autoRefreshLogs ? 'Auto: ON' : 'Auto: OFF' }}
+        </button>
+
+        <button class="btn ghost" type="button" (click)="copyLogs()"
+                [disabled]="(filteredLogLines?.length||0)===0">
+          Copiar
+        </button>
+
+        <button class="btn primary" type="button" (click)="refreshLogs()" [disabled]="logsLoading">
+          {{ logsLoading ? 'Atualizando...' : 'Atualizar' }}
+        </button>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-h">
         <div>
-          <h3>Logs</h3>
+          <h3>Logs — {{ logSource }}</h3>
           <p class="muted">
-            Esta aba pode ser ligada com os logs do backend e da integradora (Loki/ELK/tabela).
+            Atualizado em: {{ formatDateTime(rawLogs?.fetchedAt || null) }}
+            <span class="dot">•</span>
+            Retornadas: {{ rawLogs?.linesReturned ?? 0 }}/{{ rawLogs?.linesRequested ?? logLines }}
+            <span class="dot">•</span>
+            Filtradas: {{ filteredLogLines?.length ?? 0 }}
           </p>
         </div>
       </div>
 
-      <div class="empty">
-        <div class="empty-title">Ainda não conectado</div>
-        <div class="muted">
-          Quer que eu integre essa aba com os logs reais do seu backend + integradora (por período, nível, busca)?
+      <div class="log-wrap">
+        <pre class="log-pre" *ngIf="(filteredLogLines?.length||0) > 0">{{ filteredLogLines.join('\n') }}</pre>
+
+        <div class="empty" *ngIf="(filteredLogLines?.length||0) === 0">
+          <div class="empty-title">Sem logs para mostrar</div>
+          <div class="muted">
+            Troque a fonte, aumente o número de linhas ou limpe o filtro de busca.
+          </div>
         </div>
       </div>
     </div>
