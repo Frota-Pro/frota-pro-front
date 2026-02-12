@@ -48,6 +48,12 @@
         <span *ngIf="!isClosed">Metas</span>
       </a>
 
+      <!-- ✅ RELATÓRIOS (NOVO) -->
+      <a class="menu-item" routerLink="relatorios" routerLinkActive="active">
+        <i class="icon fas fa-file-pdf"></i>
+        <span *ngIf="!isClosed">Relatórios</span>
+      </a>
+
       <!-- OFICINA -->
       <li class="menu-item submenu-wrapper" [class.open]="submenuOficinaAberto">
 
@@ -94,7 +100,7 @@
 
         <ul class="submenu" *ngIf="submenuIntegracoesAberto && !isClosed">
           <li routerLink="/dashboard/integracoes/winthor" routerLinkActive="active">WinThor</li>
-          <li routerLink="/dashboard/integracoes/licencas" routerLinkActive="active">Licenças</li>
+          <!-- ❌ removido: Licenças -->
         </ul>
       </li>
 
@@ -117,8 +123,8 @@
         </button>
 
         <ul class="submenu" *ngIf="submenuAdministracaoAberto && !isClosed">
-          <li routerLink="/dashboard/admin/usuarios" routerLinkActive="active">Usuários</li>
-          <li routerLink="/dashboard/admin/logs" routerLinkActive="active">Logs</li>
+          <li routerLink="/dashboard/usuarios" routerLinkActive="active">Usuários</li>
+          <!-- ❌ removido: Logs -->
         </ul>
       </li>
 

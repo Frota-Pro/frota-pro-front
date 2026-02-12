@@ -1,0 +1,146 @@
+<div class="container">
+  <h2>Usuários</h2>
+
+  <!-- filtros -->
+  <div class="card">
+    <div class="card-title">
+      <h3>Filtros</h3>
+      <span class="sub">Busque por nome/login e status</span>
+    </div>
+
+    <div class="filters">
+      <div class="field">
+        <label>Buscar</label>
+        <input type="text" [(ngModel)]="filtro" placeholder="Buscar por nome ou login">
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <select [(ngModel)]="filtroAtivo">
+          <option [ngValue]="undefined">Todos</option>
+          <option [ngValue]="true">Ativos</option>
+          <option [ngValue]="false">Inativos</option>
+        </select>
+      </div>
+
+      <button class="btn btn-ghost" (click)="carregar()" [disabled]="loading">
+        {{ loading ? 'Carregando...' : 'Filtrar' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- form -->
+  <div class="card">
+    <div class="card-title">
+      <h3>{{ modoEdicao ? 'Editar Usuário' : 'Novo Usuário' }}</h3>
+      <span class="sub">{{ modoEdicao ? 'Atualize dados/roles e status' : 'Cadastre um novo usuário' }}</span>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Login</label>
+        <input [(ngModel)]="form.login" placeholder="ex: arthenyo@empresa.com">
+      </div>
+
+      <div class="field">
+        <label>Nome</label>
+        <input [(ngModel)]="form.nome" placeholder="Nome completo">
+      </div>
+
+      <div class="field" *ngIf="!modoEdicao">
+        <label>Senha</label>
+        <input type="password" [(ngModel)]="form.senha" placeholder="mínimo 6 caracteres">
+      </div>
+    </div>
+
+    <div class="roles">
+      <label class="role-item" *ngFor="let role of rolesDisponiveis">
+        <input type="checkbox"
+               [checked]="form.acessos?.includes(role)"
+               (change)="toggleRole(role)">
+        {{ role }}
+      </label>
+    </div>
+
+    <div class="row-actions">
+      <label class="role-item">
+        <input type="checkbox" [(ngModel)]="form.ativo">
+        Ativo
+      </label>
+
+      <button class="btn btn-primary" (click)="salvar()">
+        {{ modoEdicao ? 'Atualizar' : 'Cadastrar' }}
+      </button>
+
+      <button class="btn btn-ghost" *ngIf="modoEdicao" (click)="cancelar()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- ✅ criar usuário para motorista -->
+  <div class="card">
+    <div class="card-title">
+      <h3>Criar usuário para motorista</h3>
+      <span class="sub">Cria usuário padrão (ROLE_MOTORISTA) para uma matrícula</span>
+    </div>
+
+    <div class="filters motorista-filters">
+      <div class="field">
+        <label>Matrícula</label>
+        <input [(ngModel)]="matriculaMotorista" placeholder="Ex: MOT-000164">
+      </div>
+
+      <button class="btn btn-primary" (click)="criarUsuarioParaMotorista()">
+        Criar
+      </button>
+    </div>
+  </div>
+
+  <!-- tabela -->
+  <div class="card">
+    <div class="card-title">
+      <h3>Lista</h3>
+      <span class="sub">{{ usuarios.length }} registro(s)</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Login</th>
+          <th>Status</th>
+          <th>Roles</th>
+          <th style="text-align:right;">Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let u of usuarios">
+          <td>{{ u.nome }}</td>
+          <td class="mono">{{ u.login }}</td>
+          <td>
+              <span class="pill" [class.ok]="u.ativo" [class.off]="!u.ativo">
+                {{ u.ativo ? 'Ativo' : 'Inativo' }}
+              </span>
+          </td>
+          <td>{{ (u.acessos || []).join(', ') }}</td>
+          <td>
+            <div class="actions">
+              <button class="btn btn-ghost" (click)="editar(u)">Editar</button>
+              <button class="btn btn-danger" (click)="alternarAtivo(u)">
+                {{ u.ativo ? 'Inativar' : 'Ativar' }}
+              </button>
+              <button class="btn btn-ghost" (click)="resetarSenha(u)">Resetar Senha</button>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="!loading && usuarios.length === 0">
+          <td colspan="5" style="text-align:center; color:#64748b; padding: 18px;">
+            Nenhum usuário encontrado.
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

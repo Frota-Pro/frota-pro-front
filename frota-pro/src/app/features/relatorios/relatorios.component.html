@@ -1,91 +1,98 @@
-<div class="relatorios-page">
-  <h2 class="page-title">Relatórios</h2>
-
-  <div class="filters">
-    <div class="filter-item">
-      <label>Data Início</label>
-      <input type="date" [(ngModel)]="filtro.inicio" />
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>Relatórios</h1>
+      <p>Gere, visualize e baixe PDFs.</p>
     </div>
 
-    <div class="filter-item">
-      <label>Data Fim</label>
-      <input type="date" [(ngModel)]="filtro.fim" />
+    <div class="header-actions">
+      <button class="btn ghost" type="button" (click)="limparPreview()" [disabled]="!pdfSafeUrl">Limpar</button>
+      <button class="btn primary" type="button" (click)="gerar()" [disabled]="loading">
+        {{ loading ? 'Gerando...' : 'Gerar' }}
+      </button>
     </div>
-
-    <div class="filter-item">
-      <label>Tipo de Relatório</label>
-      <select [(ngModel)]="filtro.tipoRelatorio">
-        <option value="">Selecione...</option>
-        <option value="GASTO_COMBUSTIVEL">Gasto por Tipo de Combustível</option>
-        <option value="RESUMO_CAMINHAO">Resumo por Caminhão</option>
-        <option value="MANUTENCOES_CAMINHAO">Manutenções do Caminhão</option>
-        <option value="VIDA_UTIL_PNEU">Vida Útil do Pneu</option>
-        <option value="RELATORIO_MOTORISTA">Mensal do Motorista</option>
-      </select>
-    </div>
-
-    <!-- 🔹 CAMPO EXTRA PARA CAMINHÃO -->
-    <div
-      class="filter-item"
-      *ngIf="relatoriosQuePedemCaminhao.includes(filtro.tipoRelatorio)"
-    >
-      <label>Caminhão</label>
-      <input
-        type="text"
-        placeholder="Digite o código do caminhão"
-        [(ngModel)]="codigoCaminhao"
-      />
-    </div>
-
-    <!-- 🔹 CAMPO EXTRA PARA MOTORISTA -->
-    <div
-      class="filter-item"
-      *ngIf="relatoriosQuePedemMotorista.includes(filtro.tipoRelatorio)"
-    >
-      <label>Motorista</label>
-      <input
-        type="text"
-        placeholder="Digite o código do motorista"
-        [(ngModel)]="codigoMotorista"
-      />
-    </div>
-
-    <button class="btn-gerar" (click)="gerarRelatorio()">Gerar Relatório</button>
   </div>
 
-  <!-- RESULTADO DO RELATÓRIO -->
-  <section class="relatorio-block" *ngIf="relatorioGerado">
-    <div class="block-header">
-      <h3>Visualização do Relatório</h3>
-      <button class="btn-download" (click)="baixarRelatorio()">Baixar PDF</button>
-    </div>
+  <div class="grid">
+    <!-- filtros -->
+    <section class="card">
+      <h3>Filtros</h3>
 
-    <div class="preview">
-      <h4>{{ tituloRelatorio }}</h4>
-      <p class="periodo">
-        Período: {{ filtro.inicio | date:'dd/MM/yyyy' }} →
-        {{ filtro.fim | date:'dd/MM/yyyy' }}
-      </p>
+      <div class="form">
+        <div class="field">
+          <label>Tipo</label>
+          <select [(ngModel)]="form.tipo" (ngModelChange)="onTipoChange()">
+            <option value="">Selecione...</option>
+            <option *ngFor="let r of reports" [ngValue]="r.key" [disabled]="r.enabled === false">
+              {{ r.title }}
+            </option>
+          </select>
+        </div>
 
-      <!-- MOSTRA CAMINHÃO SE HOUVER -->
-      <p
-        class="periodo"
-        *ngIf="relatoriosQuePedemCaminhao.includes(filtro.tipoRelatorio)"
-      >
-        Caminhão: {{ codigoCaminhao }}
-      </p>
+        <div class="field" *ngIf="selectedDef?.needsPeriodo">
+          <label>Início</label>
+          <input type="date" [(ngModel)]="form.inicio" />
+        </div>
 
-      <!-- MOSTRA MOTORISTA SE HOUVER -->
-      <p
-        class="periodo"
-        *ngIf="relatoriosQuePedemMotorista.includes(filtro.tipoRelatorio)"
-      >
-        Motorista: {{ codigoMotorista }}
-      </p>
+        <div class="field" *ngIf="selectedDef?.needsPeriodo">
+          <label>Fim</label>
+          <input type="date" [(ngModel)]="form.fim" />
+        </div>
 
-      <div class="preview-area">
-        <p>Pré-visualização disponível em breve...</p>
+        <!-- ✅ ABASTECIMENTOS: filtros opcionais -->
+        <div class="field" *ngIf="form.tipo === 'ABASTECIMENTOS'">
+          <label>Caminhão (opcional)</label>
+          <input type="text" placeholder="Ex: CAM-000030" [(ngModel)]="form.codigoCaminhao" />
+        </div>
+
+        <div class="field" *ngIf="form.tipo === 'ABASTECIMENTOS'">
+          <label>Motorista (opcional)</label>
+          <input type="text" placeholder="Ex: MOT-000001" [(ngModel)]="form.codigoMotorista" />
+        </div>
+
+        <!-- 🔒 outros relatórios: obrigatórios quando o tipo exigir -->
+        <div class="field" *ngIf="selectedDef?.needsCaminhao && form.tipo !== 'ABASTECIMENTOS'">
+          <label>Caminhão (código)</label>
+          <input type="text" placeholder="Ex: CAM-000030" [(ngModel)]="form.codigoCaminhao" />
+        </div>
+
+        <div class="field" *ngIf="selectedDef?.needsMotorista && form.tipo !== 'ABASTECIMENTOS'">
+          <label>Motorista (código)</label>
+          <input type="text" placeholder="Ex: MOT-000001" [(ngModel)]="form.codigoMotorista" />
+        </div>
+
+        <div class="field" *ngIf="selectedDef?.needsNumeroCarga">
+          <label>Número da Carga</label>
+          <input type="text" placeholder="Ex: 000001" [(ngModel)]="form.numeroCarga" />
+        </div>
+
+        <div class="alert" *ngIf="errorMsg">
+          {{ errorMsg }}
+        </div>
+
+        <div class="mini-actions">
+          <button class="btn" type="button" (click)="abrirNovaAba()" [disabled]="!pdfSafeUrl">Abrir</button>
+          <button class="btn success" type="button" (click)="baixar()" [disabled]="!pdfSafeUrl">Download</button>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <!-- preview -->
+    <section class="card preview-card">
+      <div class="preview-head">
+        <h3>Pré-visualização</h3>
+        <span class="hint" *ngIf="lastFilename">{{ lastFilename }}</span>
+      </div>
+
+      <div class="preview-wrap" *ngIf="pdfSafeUrl; else empty">
+        <iframe class="pdf-frame" [src]="pdfSafeUrl"></iframe>
+      </div>
+
+      <ng-template #empty>
+        <div class="empty">
+          Gere um relatório para visualizar aqui.
+        </div>
+      </ng-template>
+    </section>
+  </div>
 </div>
