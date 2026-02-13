@@ -1,0 +1,19 @@
+<div class="toast-stack" *ngIf="(toast.toasts$ | async) as toasts">
+  <div
+    class="toast"
+    *ngFor="let t of toasts"
+    [class.ok]="t.type==='ok'"
+    [class.err]="t.type==='err'"
+    [class.info]="t.type==='info'"
+    [class.warn]="t.type==='warn'"
+  >
+    <span class="dot"></span>
+
+    <div class="txt">
+      <div class="title" *ngIf="t.title">{{ t.title }}</div>
+      <div class="msg">{{ t.message }}</div>
+    </div>
+
+    <button class="toast-x" type="button" (click)="toast.dismiss(t.id)">×</button>
+  </div>
+</div>

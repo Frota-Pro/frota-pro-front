@@ -1,5 +1,14 @@
 <div class="page">
 
+  <!-- TOASTS -->
+  <div class="toast-stack" *ngIf="toasts.length">
+    <div class="toast" *ngFor="let t of toasts" [class]="'toast ' + t.type" (click)="dismissToast(t.id)">
+      <span class="dot" aria-hidden="true"></span>
+      <div class="msg">{{ t.message }}</div>
+      <button class="close" type="button" aria-label="Fechar" (click)="dismissToast(t.id); $event.stopPropagation()">✕</button>
+    </div>
+  </div>
+
   <div class="header">
     <div>
       <h1>Caminhões</h1>
@@ -155,7 +164,7 @@
     </div>
   </div>
 
-  <!-- MODAL CAMINHÃO (simples) -->
+  <!-- MODAL CAMINHÃO -->
   <div class="backdrop" *ngIf="showCaminhaoModal" (click)="closeCaminhaoModal()"></div>
   <div class="modal" *ngIf="showCaminhaoModal">
     <div class="modal-header">
@@ -174,7 +183,12 @@
       <input [(ngModel)]="form.modelo" placeholder="Ex: FH 540" />
 
       <label>Placa</label>
-      <input [(ngModel)]="form.placa" placeholder="Ex: ABC1D23" />
+      <input
+        [(ngModel)]="form.placa"
+        maxlength="8"
+        placeholder="Ex: ABC1D23 ou ABC-1234"
+      />
+      <small class="muted">Padrões aceitos: <span class="mono">ABC-1234</span> (antiga) ou <span class="mono">ABC1D23</span> (Mercosul).</small>
 
       <label>Categoria</label>
       <select [(ngModel)]="form.categoria">

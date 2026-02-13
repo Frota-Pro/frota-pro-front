@@ -11,7 +11,7 @@ import { GoogleChartsModule } from 'angular-google-charts';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { authErrorInterceptor } from './core/auth/auth-error.interceptor';
-
+import { apiErrorInterceptor } from './core/api/api-error.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -21,7 +21,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withInterceptors([
         authInterceptor,
-        authErrorInterceptor
+        authErrorInterceptor,
+        apiErrorInterceptor
       ])
     ),
 

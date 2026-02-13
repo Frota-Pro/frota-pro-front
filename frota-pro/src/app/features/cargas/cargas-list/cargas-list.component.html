@@ -1,5 +1,20 @@
 <div class="page">
 
+  <!-- TOASTS -->
+  <div class="toast-wrap" aria-live="polite" aria-atomic="true">
+    <div class="toast"
+         *ngFor="let t of toasts"
+         [class.success]="t.type === 'success'"
+         [class.error]="t.type === 'error'"
+         [class.info]="t.type === 'info'">
+      <div class="toast-left">
+        <div class="toast-title" *ngIf="t.title">{{ t.title }}</div>
+        <div class="toast-msg">{{ t.message }}</div>
+      </div>
+      <button class="toast-x" type="button" (click)="dismissToast(t.id)">✕</button>
+    </div>
+  </div>
+
   <div class="header">
     <div>
       <h1>Cargas</h1>
@@ -31,6 +46,7 @@
     </div>
   </div>
 
+  <div class="alert" *ngIf="periodoErro">{{ periodoErro }}</div>
   <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
 
   <div class="table-wrap" *ngIf="!loading; else loadingTpl">

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
 import { CategoriaCaminhaoApiService } from '../../../core/api/categoria-caminhao-api.service';
@@ -14,6 +15,14 @@ import {
 import { CategoriaCaminhaoRequest, CategoriaCaminhaoResponse } from '../../../core/api/categoria-caminhao-api.models';
 
 type AtivoFiltro = 'TODOS' | 'ATIVOS' | 'INATIVOS';
+
+type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+interface ToastItem {
+  id: string;
+  type: ToastType;
+  message: string;
+}
 
 @Component({
   selector: 'app-caminhoes-list',
@@ -45,6 +54,9 @@ export class CaminhoesListComponent implements OnInit {
   loading = false;
   errorMsg: string | null = null;
 
+  // toasts
+  toasts: ToastItem[] = [];
+
   // modal criar categoria
   showCategoriaModal = false;
   catForm: CategoriaCaminhaoRequest = { codigo: '', descricao: '' };
@@ -67,6 +79,43 @@ export class CaminhoesListComponent implements OnInit {
     private api: CaminhaoApiService,
     private categoriaApi: CategoriaCaminhaoApiService
   ) {}
+
+  private toast(type: ToastType, message: string, ttlMs = 4200): void {
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    this.toasts = [{ id, type, message }, ...this.toasts].slice(0, 5);
+    window.setTimeout(() => this.dismissToast(id), ttlMs);
+  }
+
+  dismissToast(id: string): void {
+    this.toasts = this.toasts.filter(t => t.id !== id);
+  }
+
+  private extractApiError(err: unknown): string {
+    const e = err as HttpErrorResponse;
+    const body: any = e?.error;
+
+    // padrão do seu back: ValidationError { error: "Erro de validação", errors: [{name,message}] }
+    if (body?.errors && Array.isArray(body.errors) && body.errors.length) {
+      const msgs = body.errors
+        .map((x: any) => x?.message)
+        .filter(Boolean);
+      if (msgs.length) return msgs.join(' • ');
+    }
+
+    if (typeof body?.error === 'string' && body.error.trim()) return body.error;
+    if (typeof e?.message === 'string' && e.message.trim()) return e.message;
+    return 'Ocorreu um erro ao processar a solicitação.';
+  }
+
+  private normalizarPlaca(placa: string): string {
+    return (placa || '').trim().toUpperCase();
+  }
+
+  private placaValida(placa: string): boolean {
+    const p = this.normalizarPlaca(placa);
+    // mesmo regex do back
+    return /^([A-Z]{3}-?\d{4}|[A-Z]{3}\d[A-Z0-9]\d{2})$/.test(p);
+  }
 
   ngOnInit(): void {
     this.carregarCategorias();
@@ -103,6 +152,7 @@ export class CaminhoesListComponent implements OnInit {
         error: (err) => {
           console.error(err);
           this.errorMsg = 'Não foi possível carregar os caminhões.';
+          this.toast('error', this.extractApiError(err) || this.errorMsg);
         },
       });
   }
@@ -111,9 +161,6 @@ export class CaminhoesListComponent implements OnInit {
     return this.caminhoes || [];
   }
 
-
-
-  // abrir detalhe
   abrirDetalhe(c: CaminhaoResponse): void {
     this.router.navigate(['/dashboard/caminhoes', c.codigo]);
   }
@@ -138,8 +185,8 @@ export class CaminhoesListComponent implements OnInit {
   // vínculo em lote
   aplicarCategoria(): void {
     const codigos = Array.from(this.selected);
-    if (!this.categoriaSelecionada) return alert('Selecione uma categoria.');
-    if (codigos.length === 0) return alert('Selecione pelo menos 1 caminhão.');
+    if (!this.categoriaSelecionada) return this.toast('warning', 'Selecione uma categoria.');
+    if (codigos.length === 0) return this.toast('warning', 'Selecione pelo menos 1 caminhão.');
 
     const payload: VincularCategoriaCaminhaoEmLoteRequest = {
       categoriaCodigo: this.categoriaSelecionada,
@@ -153,10 +200,11 @@ export class CaminhoesListComponent implements OnInit {
         next: () => {
           this.categoriaSelecionada = '';
           this.carregarPagina();
+          this.toast('success', 'Categoria vinculada com sucesso.');
         },
         error: (err) => {
           console.error(err);
-          alert('Não foi possível vincular a categoria.');
+          this.toast('error', this.extractApiError(err) || 'Não foi possível vincular a categoria.');
         }
       });
   }
@@ -174,8 +222,8 @@ export class CaminhoesListComponent implements OnInit {
       codigo: (this.catForm.codigo || '').trim().toUpperCase(),
       descricao: (this.catForm.descricao || '').trim(),
     };
-    if (!payload.codigo) return alert('Informe o código.');
-    if (!payload.descricao) return alert('Informe a descrição.');
+    if (!payload.codigo) return this.toast('warning', 'Informe o código.');
+    if (!payload.descricao) return this.toast('warning', 'Informe a descrição.');
 
     this.loading = true;
     this.categoriaApi.criar(payload)
@@ -184,15 +232,16 @@ export class CaminhoesListComponent implements OnInit {
         next: () => {
           this.closeCategoriaModal();
           this.carregarCategorias();
+          this.toast('success', 'Categoria criada com sucesso.');
         },
         error: (err) => {
           console.error(err);
-          alert('Não foi possível criar a categoria (verifique se o código já existe).');
+          this.toast('error', this.extractApiError(err) || 'Não foi possível criar a categoria (verifique se o código já existe).');
         }
       });
   }
 
-  // modal caminhão (simples)
+  // modal caminhão
   openNovoCaminhao(): void {
     this.isEditing = false;
     this.editCodigo = null;
@@ -214,10 +263,19 @@ export class CaminhoesListComponent implements OnInit {
   }
 
   salvarCaminhao(): void {
-    if (!this.form.descricao?.trim()) return alert('Informe a descrição.');
-    if (!this.form.modelo?.trim()) return alert('Informe o modelo.');
-    if (!this.form.marca?.trim()) return alert('Informe a marca.');
-    if (!this.form.placa?.trim()) return alert('Informe a placa.');
+    this.form.descricao = (this.form.descricao || '').trim();
+    this.form.modelo = (this.form.modelo || '').trim();
+    this.form.marca = (this.form.marca || '').trim();
+    this.form.placa = this.normalizarPlaca(this.form.placa || '');
+
+    if (!this.form.descricao) return this.toast('warning', 'Informe a descrição.');
+    if (!this.form.modelo) return this.toast('warning', 'Informe o modelo.');
+    if (!this.form.marca) return this.toast('warning', 'Informe a marca.');
+    if (!this.form.placa) return this.toast('warning', 'Informe a placa.');
+
+    if (!this.placaValida(this.form.placa)) {
+      return this.toast('error', 'Placa inválida. Use ABC-1234 (antiga) ou ABC1D23 (Mercosul).');
+    }
 
     this.loading = true;
 
@@ -229,10 +287,11 @@ export class CaminhoesListComponent implements OnInit {
       next: () => {
         this.closeCaminhaoModal();
         this.carregarPagina();
+        this.toast('success', 'Caminhão salvo com sucesso.');
       },
       error: (err) => {
         console.error(err);
-        alert('Não foi possível salvar o caminhão.');
+        this.toast('error', this.extractApiError(err) || 'Não foi possível salvar o caminhão.');
       }
     });
   }
@@ -245,7 +304,7 @@ export class CaminhoesListComponent implements OnInit {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: () => this.carregarPagina(),
-        error: () => alert('Não foi possível inativar o caminhão.')
+        error: (err) => this.toast('error', this.extractApiError(err) || 'Não foi possível inativar o caminhão.')
       });
   }
 
@@ -257,10 +316,9 @@ export class CaminhoesListComponent implements OnInit {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: () => this.carregarPagina(),
-        error: () => alert('Não foi possível ativar o caminhão.')
+        error: (err) => this.toast('error', this.extractApiError(err) || 'Não foi possível ativar o caminhão.')
       });
   }
-
 
   prevPage(): void {
     if (this.page <= 0) return;

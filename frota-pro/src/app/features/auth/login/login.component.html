@@ -1,35 +1,72 @@
 <div class="login-container">
   <div class="login-card">
-    <img src="/assets/logo.png" alt="Logo FrotaPRO" class="logo" />
-    <h2>Login</h2>
-    <form (ngSubmit)="loginSubmit()">
+
+    <div class="brand">
+      <img src="/assets/logo.png" alt="Logo FrotaPRO" class="logo" />
+      <div class="brand-text">
+        <h1>FrotaPRO</h1>
+        <p>Gestão de frota e logística</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h2>Entrar</h2>
+    <p class="subtitle">Acesse sua conta para continuar</p>
+
+    <form (ngSubmit)="loginSubmit()" autocomplete="on">
+
       <div class="form-group">
         <label for="login">Usuário</label>
-        <input
-          id="login"
-          type="text"
-          [(ngModel)]="login"
-          name="login"
-          required
-          placeholder="Digite seu usuário"
-        />
+        <div class="input-wrap">
+          <span class="icon" aria-hidden="true">👤</span>
+          <input
+            id="login"
+            type="text"
+            [(ngModel)]="login"
+            name="login"
+            required
+            placeholder="Digite seu usuário"
+            autocomplete="username"
+          />
+        </div>
       </div>
 
       <div class="form-group">
         <label for="senha">Senha</label>
-        <input
-          id="senha"
-          type="password"
-          [(ngModel)]="senha"
-          name="senha"
-          required
-          placeholder="Digite sua senha"
-        />
+        <div class="input-wrap">
+          <span class="icon" aria-hidden="true">🔒</span>
+          <input
+            id="senha"
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="senha"
+            name="senha"
+            required
+            placeholder="Digite sua senha"
+            autocomplete="current-password"
+          />
+
+          <button
+            type="button"
+            class="eye"
+            (click)="togglePassword()"
+            [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+          >
+            {{ showPassword ? '🙈' : '👁️' }}
+          </button>
+        </div>
       </div>
 
       <button type="submit" class="login-button" [disabled]="loading">
+        <span class="spinner" *ngIf="loading"></span>
         {{ loading ? 'Entrando...' : 'Entrar' }}
       </button>
+
+      <div class="hint">
+        <span class="dot"></span>
+        Ao entrar, você concorda com as políticas internas de acesso.
+      </div>
+
     </form>
   </div>
 </div>

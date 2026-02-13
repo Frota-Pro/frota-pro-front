@@ -7,6 +7,15 @@ import { finalize } from 'rxjs/operators';
 import { CargaApiService } from '../../../core/api/carga-api.service';
 import { CargaMinResponse } from '../../../core/api/carga-api.models';
 
+type ToastType = 'success' | 'error' | 'info';
+
+interface ToastItem {
+  id: number;
+  type: ToastType;
+  title?: string;
+  message: string;
+}
+
 @Component({
   selector: 'app-cargas-list',
   standalone: true,
@@ -28,13 +37,102 @@ export class CargasListComponent implements OnInit {
 
   rows: CargaMinResponse[] = [];
 
+  // ===== Toasts =====
+  toasts: ToastItem[] = [];
+  private toastSeq = 0;
+
+  // ===== Validações UI =====
+  periodoErro: string | null = null;
+
   constructor(private api: CargaApiService, private router: Router) {}
 
   ngOnInit(): void {
     this.carregarPagina();
   }
 
+  // =======================
+  // Toast helpers
+  // =======================
+  toast(type: ToastType, message: string, title?: string, ms = 3200): void {
+    const id = ++this.toastSeq;
+    this.toasts.push({ id, type, title, message });
+    window.setTimeout(() => this.dismissToast(id), ms);
+  }
+
+  dismissToast(id: number): void {
+    this.toasts = this.toasts.filter(t => t.id !== id);
+  }
+
+  // =======================
+  // Datas / validações
+  // =======================
+  private parseDateOnly(iso: string): Date | null {
+    // iso esperado: yyyy-MM-dd
+    if (!iso) return null;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!m) return null;
+
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+
+    const dt = new Date(y, mo - 1, d);
+    if (Number.isNaN(dt.getTime())) return null;
+    // garante que bate com a data (evita 2026-02-31 virar março)
+    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+
+    dt.setHours(0, 0, 0, 0);
+    return dt;
+  }
+
+  private validarPeriodo(): boolean {
+    this.periodoErro = null;
+
+    const hasInicio = !!(this.inicio && this.inicio.trim());
+    const hasFim = !!(this.fim && this.fim.trim());
+
+    // se preencher um, exige o outro
+    if ((hasInicio && !hasFim) || (!hasInicio && hasFim)) {
+      this.periodoErro = 'Informe as duas datas (início e fim) para pesquisar por período.';
+      this.toast('info', this.periodoErro, 'Período');
+      return false;
+    }
+
+    if (!hasInicio && !hasFim) return true;
+
+    const di = this.parseDateOnly(this.inicio!);
+    const df = this.parseDateOnly(this.fim!);
+
+    if (!di || !df) {
+      this.periodoErro = 'Data inválida no filtro de período.';
+      this.toast('error', this.periodoErro, 'Período');
+      return false;
+    }
+
+    if (di.getTime() > df.getTime()) {
+      this.periodoErro = 'A data de início não pode ser maior que a data de fim.';
+      this.toast('error', this.periodoErro, 'Período');
+      return false;
+    }
+
+    // (opcional) trava período absurdo (ex.: 5 anos) — se quiser, comente
+    const diffDays = Math.ceil((df.getTime() - di.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays > 366) {
+      this.periodoErro = 'Período muito grande. Use no máximo 12 meses para evitar lentidão.';
+      this.toast('info', this.periodoErro, 'Período');
+      return false;
+    }
+
+    return true;
+  }
+
+  // =======================
+  // API / Tela
+  // =======================
   carregarPagina(): void {
+    // se o usuário deixou período inconsistente, não chama API
+    if (!this.validarPeriodo()) return;
+
     this.loading = true;
     this.errorMsg = null;
 
@@ -60,12 +158,15 @@ export class CargasListComponent implements OnInit {
           this.rows = [];
           this.totalPages = 0;
           this.errorMsg = 'Não foi possível carregar as cargas.';
+          this.toast('error', this.errorMsg, 'Erro');
         },
       });
   }
 
   aplicarFiltros(): void {
+    if (!this.validarPeriodo()) return;
     this.page = 0;
+    this.toast('info', 'Aplicando filtros...', 'Cargas', 1200);
     this.carregarPagina();
   }
 
@@ -73,7 +174,9 @@ export class CargasListComponent implements OnInit {
     this.q = '';
     this.inicio = null;
     this.fim = null;
+    this.periodoErro = null;
     this.page = 0;
+    this.toast('success', 'Filtros limpos.', 'Cargas', 1500);
     this.carregarPagina();
   }
 
@@ -116,13 +219,12 @@ export class CargasListComponent implements OnInit {
     if (typeof v === 'number') {
       n = v;
     } else {
-      // limpa "R$", espaços e separadores
       const raw = v
         .trim()
         .replace(/\s/g, '')
         .replace(/^R\$/i, '')
-        .replace(/\./g, '')   // remove separador de milhar
-        .replace(',', '.');   // troca decimal pt-BR para padrão JS
+        .replace(/\./g, '')
+        .replace(',', '.');
 
       n = Number(raw);
     }

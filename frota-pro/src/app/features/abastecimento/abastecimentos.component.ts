@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
+import { ToastService } from '../../shared/ui/toast/toast.service';
+
 import { AbastecimentoApiService } from '../../core/api/abastecimento-api.service';
 import { AbastecimentoRequest, AbastecimentoResponse } from '../../core/api/abastecimento-api.models';
 import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
@@ -12,8 +14,38 @@ import { MotoristaResponse } from '../../core/api/motorista-api.models';
 
 type UUID = string;
 
-type TipoCombustivel = 'DIESEL' | 'GASOLINA' | 'ETANOL' | 'DIESEL_S10' | 'GNV' | string;
-type FormaPagamento = 'DINHEIRO' | 'CARTAO' | 'PIX' | 'BOLETO' | 'TRANSFERENCIA' | string;
+type CombustivelValue =
+  | 'DIESEL_S10'
+  | 'DIESEL_S500'
+  | 'DIESEL_COMUM'
+  | 'GASOLINA_COMUM'
+  | 'GASOLINA_ADITIVADA'
+  | 'GASOLINA_PREMIUM'
+  | 'ETANOL'
+  | 'ETANOL_ADITIVADO'
+  | 'GNV'
+  | 'ARLA32'
+  | 'ELETRICO'
+  | 'HIBRIDO';
+
+type PagamentoValue =
+  | 'DINHEIRO'
+  | 'CARTAO_DEBITO'
+  | 'CARTAO_CREDITO'
+  | 'PIX'
+  | 'TRANSFERENCIA'
+  | 'CHEQUE'
+  | 'BOLETO'
+  | 'VALE_COMBUSTIVEL'
+  | 'CONVENIO'
+  | 'FATURADO'
+  | 'NOTA_DE_CREDITO'
+  | 'OUTROS';
+
+interface SelectOption<T extends string> {
+  value: T;
+  label: string;
+}
 
 interface AbastecimentoVM {
   id: UUID;
@@ -70,9 +102,36 @@ export class AbastecimentosComponent implements OnInit {
   isEditing = false;
   editingCodigo: string | null = null; // (back usa "codigo" no PUT)
 
-  // combos
-  combustiveis: TipoCombustivel[] = ['DIESEL', 'DIESEL_S10', 'GASOLINA', 'ETANOL', 'GNV'];
-  formasPagamento: FormaPagamento[] = ['DINHEIRO', 'CARTAO', 'PIX', 'BOLETO', 'TRANSFERENCIA'];
+  // combos (AGORA IGUAL AOS ENUMS DA API)
+  combustiveis: SelectOption<CombustivelValue>[] = [
+    { value: 'DIESEL_S10', label: 'Diesel S-10' },
+    { value: 'DIESEL_S500', label: 'Diesel S-500' },
+    { value: 'DIESEL_COMUM', label: 'Diesel Comum' },
+    { value: 'GASOLINA_COMUM', label: 'Gasolina Comum' },
+    { value: 'GASOLINA_ADITIVADA', label: 'Gasolina Aditivada' },
+    { value: 'GASOLINA_PREMIUM', label: 'Gasolina Premium' },
+    { value: 'ETANOL', label: 'Etanol' },
+    { value: 'ETANOL_ADITIVADO', label: 'Etanol Aditivado' },
+    { value: 'GNV', label: 'Gás Natural Veicular' },
+    { value: 'ARLA32', label: 'ARLA 32' },
+    { value: 'ELETRICO', label: 'Elétrico' },
+    { value: 'HIBRIDO', label: 'Híbrido' },
+  ];
+
+  formasPagamento: SelectOption<PagamentoValue>[] = [
+    { value: 'DINHEIRO', label: 'Dinheiro' },
+    { value: 'CARTAO_DEBITO', label: 'Cartão de Débito' },
+    { value: 'CARTAO_CREDITO', label: 'Cartão de Crédito' },
+    { value: 'PIX', label: 'PIX' },
+    { value: 'TRANSFERENCIA', label: 'Transferência Bancária' },
+    { value: 'CHEQUE', label: 'Cheque' },
+    { value: 'BOLETO', label: 'Boleto Bancário' },
+    { value: 'VALE_COMBUSTIVEL', label: 'Vale Combustível' },
+    { value: 'CONVENIO', label: 'Convênio' },
+    { value: 'FATURADO', label: 'Faturado para Empresa' },
+    { value: 'NOTA_DE_CREDITO', label: 'Nota de Crédito' },
+    { value: 'OUTROS', label: 'Outros' },
+  ];
 
   caminhoes: CaminhaoResponse[] = [];
   motoristas: MotoristaResponse[] = [];
@@ -98,6 +157,7 @@ export class AbastecimentosComponent implements OnInit {
     private abastecimentoApi: AbastecimentoApiService,
     private caminhaoApi: CaminhaoApiService,
     private motoristaApi: MotoristaApiService,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -110,6 +170,8 @@ export class AbastecimentosComponent implements OnInit {
    * Evita ficar chamando a API a cada tecla.
    */
   scheduleBuscar(): void {
+    if (!this.validarPeriodoPesquisa(true)) return;
+
     if (this.filtroTimer) clearTimeout(this.filtroTimer);
     this.filtroTimer = setTimeout(() => {
       this.buscar(0);
@@ -130,10 +192,138 @@ export class AbastecimentosComponent implements OnInit {
   }
 
   // =========================
+  // ENUMS (labels)
+  // =========================
+
+  getCombustivelLabel(value?: string | null): string {
+    if (!value) return '—';
+    return this.combustiveis.find((x) => x.value === value)?.label ?? value;
+  }
+
+  getPagamentoLabel(value?: string | null): string {
+    if (!value) return '—';
+    return this.formasPagamento.find((x) => x.value === value)?.label ?? value;
+  }
+
+  private normalizeLegacyCombustivel(value?: string | null): CombustivelValue {
+    const v = String(value || '').trim().toUpperCase();
+
+    // compatibilidade com valores antigos do front
+    if (v === 'DIESEL') return 'DIESEL_S10';
+    if (v === 'GASOLINA') return 'GASOLINA_COMUM';
+
+    const allowed = new Set(this.combustiveis.map((x) => x.value));
+    return allowed.has(v as any) ? (v as CombustivelValue) : 'DIESEL_S10';
+  }
+
+  private normalizeLegacyPagamento(value?: string | null): PagamentoValue {
+    const v = String(value || '').trim().toUpperCase();
+
+    if (v === 'CARTAO') return 'CARTAO_CREDITO';
+
+    const allowed = new Set(this.formasPagamento.map((x) => x.value));
+    return allowed.has(v as any) ? (v as PagamentoValue) : 'DINHEIRO';
+  }
+
+  // =========================
+  // VALIDAÇÕES
+  // =========================
+
+  private parseDateOnly(d: string): Date | null {
+    if (!d) return null;
+    const x = new Date(`${d}T00:00:00`);
+    return isNaN(x.getTime()) ? null : x;
+  }
+
+  private validarPeriodoPesquisa(showToast = true): boolean {
+    if (!this.filtroDataInicio || !this.filtroDataFim) return true;
+
+    const ini = this.parseDateOnly(this.filtroDataInicio);
+    const fim = this.parseDateOnly(this.filtroDataFim);
+
+    if (!ini || !fim) return true;
+
+    if (fim < ini) {
+      if (showToast) this.toast.warn('A data final não pode ser menor que a data inicial.', 'Filtro de período');
+      return false;
+    }
+    return true;
+  }
+
+  private validarCadastro(): boolean {
+    if (!this.novo?.dtAbastecimento) {
+      this.toast.warn('Informe a data/hora do abastecimento.', 'Validação');
+      return false;
+    }
+
+    const caminhaoIdent = String(this.novo?.caminhao?.codigo || this.novo?.caminhao?.placa || '').trim();
+    if (!caminhaoIdent) {
+      this.toast.warn('Informe a placa ou o código do caminhão.', 'Validação');
+      return false;
+    }
+
+    const tipo = String(this.novo?.tipoCombustivel || '').trim();
+    if (!tipo) {
+      this.toast.warn('Selecione o tipo de combustível.', 'Validação');
+      return false;
+    }
+    const combustiveisSet = new Set(this.combustiveis.map((x) => x.value));
+    if (!combustiveisSet.has(tipo as any)) {
+      this.toast.error('Tipo de combustível inválido. Selecione uma opção válida.', 'Validação');
+      return false;
+    }
+
+    const fp = String(this.novo?.formaPagamento || '').trim();
+    const pagamentosSet = new Set(this.formasPagamento.map((x) => x.value));
+    if (!fp || !pagamentosSet.has(fp as any)) {
+      this.toast.warn('Selecione uma forma de pagamento válida.', 'Validação');
+      return false;
+    }
+
+    const litros = Number(this.novo?.qtLitros);
+    if (!Number.isFinite(litros) || litros <= 0) {
+      this.toast.warn('Litros deve ser maior que zero.', 'Validação');
+      return false;
+    }
+
+    const valorLitro = Number(this.novo?.valorLitro);
+    if (!Number.isFinite(valorLitro) || valorLitro <= 0) {
+      this.toast.warn('Valor/L deve ser maior que zero.', 'Validação');
+      return false;
+    }
+
+    if (this.novo?.kmOdometro !== null && this.novo?.kmOdometro !== undefined && this.novo?.kmOdometro !== '') {
+      const km = Number(this.novo?.kmOdometro);
+      if (!Number.isFinite(km) || km < 0) {
+        this.toast.warn('Odômetro não pode ser negativo.', 'Validação');
+        return false;
+      }
+    }
+
+    if (this.novo?.mediaKmLitro !== null && this.novo?.mediaKmLitro !== undefined && this.novo?.mediaKmLitro !== '') {
+      const mk = Number(this.novo?.mediaKmLitro);
+      if (!Number.isFinite(mk) || mk < 0) {
+        this.toast.warn('Média km/L não pode ser negativa.', 'Validação');
+        return false;
+      }
+    }
+
+    const uf = String(this.novo?.uf || '').trim();
+    if (uf && uf.length !== 2) {
+      this.toast.warn('UF deve ter 2 letras (ex: PB).', 'Validação');
+      return false;
+    }
+
+    return true;
+  }
+
+  // =========================
   // LISTAGEM (API)
   // =========================
 
   buscar(page: number = 0): void {
+    if (!this.validarPeriodoPesquisa(true)) return;
+
     this.page = page;
     this.carregando = true;
     this.erro = null;
@@ -231,24 +421,20 @@ export class AbastecimentosComponent implements OnInit {
     const fim = this.filtroDataFim ? new Date(`${this.filtroDataFim}T23:59:59`) : null;
 
     return (this.abastecimentos || []).filter((a) => {
-      // tipo
       if (tipo && String(a.tipoCombustivel || '').toLowerCase() !== tipo) return false;
 
-      // caminhao (placa/codigo)
       if (caminhao) {
         const c1 = String(a.caminhao?.placa || '').toLowerCase();
         const c2 = String(a.caminhao?.codigo || '').toLowerCase();
         if (!c1.includes(caminhao) && !c2.includes(caminhao)) return false;
       }
 
-      // motorista (nome/codigo)
       if (motorista) {
         const m1 = String(a.motorista?.nome || '').toLowerCase();
         const m2 = String(a.motorista?.codigo || '').toLowerCase();
         if (!m1.includes(motorista) && !m2.includes(motorista)) return false;
       }
 
-      // data
       if (ini || fim) {
         const d = this.safeDate(a.dtAbastecimento);
         if (!d) return false;
@@ -256,7 +442,6 @@ export class AbastecimentosComponent implements OnInit {
         if (fim && d > fim) return false;
       }
 
-      // term geral
       if (term) {
         const hay = [
           a.codigo,
@@ -288,7 +473,7 @@ export class AbastecimentosComponent implements OnInit {
   }
 
   // =========================
-  // KPIs (sempre respeitam os filtros do usuário)
+  // KPIs
   // =========================
 
   private get kpiBase(): AbastecimentoVM[] {
@@ -298,12 +483,10 @@ export class AbastecimentosComponent implements OnInit {
   get litersThisMonth(): number {
     const base = this.kpiBase;
 
-    // Se o usuário definiu período, o KPI vira "litros no período".
     if (this.filtroDataInicio || this.filtroDataFim) {
       return base.reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
     }
 
-    // Caso contrário mantém a ideia do card: "litros do mês atual" (mas respeitando os demais filtros)
     const now = new Date();
     const y = now.getFullYear();
     const m = now.getMonth();
@@ -329,13 +512,6 @@ export class AbastecimentosComponent implements OnInit {
     return this.calcAvgConsumption(this.kpiBase);
   }
 
-  /**
-   * Consumo médio (km/L): calcula por diferença de odômetro entre abastecimentos consecutivos.
-   * - Agrupa por caminhão
-   * - Ordena por data
-   * - Soma km rodado e litros do abastecimento "atual" (o que reabasteceu)
-   * - Fallback: usa média simples do mediaKmLitro do back quando existir
-   */
   private calcAvgConsumption(items: AbastecimentoVM[]): number {
     if (!items?.length) return 0;
 
@@ -355,12 +531,10 @@ export class AbastecimentosComponent implements OnInit {
         const ty = this.safeDate(y.dtAbastecimento)?.getTime() ?? 0;
         if (tx !== ty) return tx - ty;
 
-        // desempate 1: odômetro (se ambos existirem)
         const kx = Number(x.kmOdometro ?? NaN);
         const ky = Number(y.kmOdometro ?? NaN);
         if (Number.isFinite(kx) && Number.isFinite(ky) && kx !== ky) return kx - ky;
 
-        // desempate 2: código/id (mantém ordenação estável)
         return String(x.codigo || '').localeCompare(String(y.codigo || ''));
       });
 
@@ -384,7 +558,6 @@ export class AbastecimentosComponent implements OnInit {
 
     if (totalLitros > 0) return totalKm / totalLitros;
 
-    // fallback: quando não dá pra calcular por odômetro, tenta usar o campo do back
     const vals = items.map((a) => Number(a.mediaKmLitro || 0)).filter((x) => x > 0);
     if (!vals.length) return 0;
     return vals.reduce((acc, x) => acc + x, 0) / vals.length;
@@ -426,10 +599,9 @@ export class AbastecimentosComponent implements OnInit {
 
     this.novo = this.novoVazio();
 
-    // codigo existe no template (required). No back ele não existe no request (não tem problema).
     this.novo.codigo = a.codigo || '';
     this.novo.dtAbastecimento = this.toDatetimeLocal(a.dtAbastecimento);
-    this.novo.tipoCombustivel = a.tipoCombustivel || 'DIESEL';
+    this.novo.tipoCombustivel = this.normalizeLegacyCombustivel(a.tipoCombustivel);
 
     this.novo.qtLitros = a.qtLitros ?? null;
     this.novo.valorLitro = a.valorLitro ?? null;
@@ -439,10 +611,9 @@ export class AbastecimentosComponent implements OnInit {
     this.novo.caminhao.placa = a.caminhao?.placa || '';
     this.novo.caminhao.codigo = a.caminhao?.codigo || '';
 
-    // HTML usa novo.motorista.nome (mantive assim)
     this.novo.motorista.nome = a.motorista?.codigo || a.motorista?.nome || '';
 
-    this.novo.formaPagamento = a.formaPagamento || 'CARTAO';
+    this.novo.formaPagamento = this.normalizeLegacyPagamento(a.formaPagamento);
     this.novo.posto = a.posto || '';
     this.novo.cidade = a.cidade || '';
     this.novo.uf = a.uf || '';
@@ -457,19 +628,10 @@ export class AbastecimentosComponent implements OnInit {
   }
 
   saveAbastecimento() {
-    if (!this.novo.dtAbastecimento) {
-      alert('Informe a data/hora.');
-      return;
-    }
+    if (!this.validarCadastro()) return;
 
-    // caminhão: no HTML tem placa e código -> a API espera um identificador (codigo/codigoExterno/placa)
     const caminhaoIdent = String(this.novo?.caminhao?.codigo || this.novo?.caminhao?.placa || '').trim();
-    if (!caminhaoIdent) {
-      alert('Informe a placa ou o código do caminhão.');
-      return;
-    }
 
-    // motorista: HTML usa "novo.motorista.nome" (mantive), mas a API espera codigo/codigoExterno
     const motoristaIdent = String(this.novo?.motorista?.nome || '').trim();
 
     const payload: AbastecimentoRequest = {
@@ -481,7 +643,6 @@ export class AbastecimentosComponent implements OnInit {
       qtLitros: this.novo.qtLitros != null ? Number(this.novo.qtLitros) : null,
       valorLitro: this.novo.valorLitro != null ? Number(this.novo.valorLitro) : null,
 
-      // se não vier, o back calcula (qtLitros * valorLitro)
       valorTotal: this.novo.valorTotal != null ? Number(this.novo.valorTotal) : null,
 
       tipoCombustivel: String(this.novo.tipoCombustivel),
@@ -489,7 +650,7 @@ export class AbastecimentosComponent implements OnInit {
 
       posto: this.novo.posto || null,
       cidade: this.novo.cidade || null,
-      uf: this.novo.uf || null,
+      uf: (this.novo.uf || null) ? String(this.novo.uf).trim().toUpperCase() : null,
       numNotaOuCupom: this.novo.numNotaOuCupom || null,
     };
 
@@ -505,23 +666,19 @@ export class AbastecimentosComponent implements OnInit {
       .subscribe({
         next: () => {
           this.closeAddModal();
+          this.toast.success(this.isEditing ? 'Abastecimento atualizado.' : 'Abastecimento cadastrado.');
           this.buscar(0);
         },
         error: (err) => {
-          alert(err?.error?.message || 'Falha ao salvar abastecimento.');
+          this.toast.error(err?.error?.message || 'Falha ao salvar abastecimento.');
         },
       });
   }
 
-  /**
-   * HTML chama deleteAbastecimento(a.id)
-   * Porém o BACK deleta por {codigo}
-   * Então resolvemos aqui: recebe ID -> encontra o item -> deleta pelo codigo
-   */
   deleteAbastecimento(id: string) {
     const item = (this.abastecimentos || []).find((x) => x.id === id);
     if (!item?.codigo) {
-      alert('Não foi possível identificar o código do abastecimento para excluir.');
+      this.toast.error('Não foi possível identificar o código do abastecimento para excluir.');
       return;
     }
 
@@ -532,38 +689,38 @@ export class AbastecimentosComponent implements OnInit {
       .deletar(item.codigo)
       .pipe(finalize(() => (this.carregando = false)))
       .subscribe({
-        next: () => this.buscar(0),
-        error: (err) => alert(err?.error?.message || 'Falha ao excluir abastecimento.'),
+        next: () => {
+          this.toast.success('Abastecimento excluído.');
+          this.buscar(0);
+        },
+        error: (err) => this.toast.error(err?.error?.message || 'Falha ao excluir abastecimento.'),
       });
   }
 
   private normalizeDatetimeLocalToIso(dtLocal: string): string {
-    // input: yyyy-MM-ddTHH:mm
     if (!dtLocal) return dtLocal;
-    return dtLocal.length === 16 ? `${dtLocal}:00` : dtLocal; // yyyy-MM-ddTHH:mm:ss
+    return dtLocal.length === 16 ? `${dtLocal}:00` : dtLocal;
   }
 
   private toDatetimeLocal(iso: string): string {
-    // iso: yyyy-MM-ddTHH:mm:ss (ou com timezone)
     if (!iso) return '';
-    // Se vier com timezone, Date() pode ajustar; aqui queremos somente "texto" local para o input
-    // então tentamos manter a parte inicial "yyyy-MM-ddTHH:mm"
-    const base = String(iso).slice(0, 16);
-    return base;
+    const dt = new Date(iso);
+    if (isNaN(dt.getTime())) return '';
+    const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
   }
 
   private nowAsDatetimeLocal(): string {
     const dt = new Date();
-    // converte para "local" (sem Z) no padrão do datetime-local
     const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 16); // yyyy-MM-ddTHH:mm
+    return local.toISOString().slice(0, 16);
   }
 
   private novoVazio(): any {
     return {
       codigo: '',
       dtAbastecimento: '',
-      tipoCombustivel: 'DIESEL',
+      tipoCombustivel: 'DIESEL_S10',
       qtLitros: null,
       valorLitro: null,
       valorTotal: null,
@@ -572,7 +729,7 @@ export class AbastecimentosComponent implements OnInit {
       caminhao: { placa: '', codigo: '' },
       motorista: { nome: '' },
 
-      formaPagamento: 'CARTAO',
+      formaPagamento: 'DINHEIRO',
       posto: '',
       cidade: '',
       uf: '',

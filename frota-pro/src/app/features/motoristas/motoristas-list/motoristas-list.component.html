@@ -1,5 +1,15 @@
 <div class="page">
 
+  <!-- TOASTS -->
+  <div class="toast-stack" *ngIf="toasts.length">
+    <div class="toast" *ngFor="let t of toasts" [class]="'toast ' + t.type" (click)="dismissToast(t.id)">
+      <span class="dot" aria-hidden="true"></span>
+      <div class="msg">{{ t.message }}</div>
+      <button class="close" type="button" aria-label="Fechar"
+              (click)="dismissToast(t.id); $event.stopPropagation()">✕</button>
+    </div>
+  </div>
+
   <div class="header">
     <div>
       <h1>Motoristas</h1>
@@ -142,15 +152,17 @@
       <input [(ngModel)]="form.dataNascimento" placeholder="Ex: 29/12/1995" />
 
       <label>CNH</label>
-      <input [(ngModel)]="form.cnh" placeholder="Ex: 01234567890" />
+      <input [(ngModel)]="form.cnh" placeholder="Somente números (11 dígitos)" maxlength="11" />
 
       <label>Validade CNH (dd/MM/yyyy)</label>
       <input [(ngModel)]="form.validadeCnh" placeholder="Ex: 29/12/2030" />
+
+      <small class="muted">CNH precisa ter <span class="mono">11 dígitos</span>. Datas no formato <span class="mono">dd/MM/yyyy</span>.</small>
     </div>
 
     <div class="modal-footer">
       <button class="btn ghost" (click)="closeMotoristaModal()">Cancelar</button>
-      <button class="btn primary" (click)="salvarMotorista()">Salvar</button>
+      <button class="btn primary" (click)="salvarMotorista()" [disabled]="loading">Salvar</button>
     </div>
   </div>
 </div>

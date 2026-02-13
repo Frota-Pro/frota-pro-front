@@ -1,35 +1,53 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.css',
+  styleUrl: './login.component.css'
 })
 export class LoginComponent {
-  login = '';
-  senha = '';
+
+  private auth = inject(AuthService);
+  private router = inject(Router);
+  private toast = inject(ToastService);
+
   loading = false;
 
-  constructor(private router: Router, private auth: AuthService) {}
+  login = '';
+  senha = '';
+  showPassword = false;
+
+  togglePassword() {
+    this.showPassword = !this.showPassword;
+  }
 
   loginSubmit() {
+    const l = (this.login ?? '').trim();
+    const s = (this.senha ?? '').trim();
+
+    if (!l || !s) {
+      this.toast.warn('Informe usuário e senha.');
+      return;
+    }
+
     this.loading = true;
 
-    this.auth.login({ login: this.login, senha: this.senha }).subscribe({
+    this.auth.login({ login: l, senha: s } as any).subscribe({
       next: () => {
-        this.loading = false;
-        this.router.navigate(['/dashboard/dashboard-home']);
+        this.toast.success('Login realizado com sucesso!');
+        this.router.navigate(['/dashboard']);
       },
-      error: (err) => {
+      error: () => {
+        this.toast.error('Usuário ou senha inválidos.');
         this.loading = false;
-        alert(err?.error?.message ?? 'Usuário ou senha inválidos!');
-      },
+      }
     });
   }
 }

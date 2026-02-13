@@ -1,5 +1,16 @@
 <div class="page">
 
+  <!-- Toasts -->
+  <div class="toast-wrap" aria-live="polite" aria-atomic="true">
+    <div class="toast" *ngFor="let t of toasts" [ngClass]="t.type">
+      <div class="toast-left">
+        <div class="toast-title" *ngIf="t.title">{{ t.title }}</div>
+        <div class="toast-msg">{{ t.message }}</div>
+      </div>
+      <button class="toast-x" type="button" (click)="dismissToast(t.id)">✕</button>
+    </div>
+  </div>
+
   <!-- Header -->
   <div class="header">
     <div class="left">
@@ -267,7 +278,15 @@
             <textarea class="textarea"
                       rows="7"
                       [(ngModel)]="observacao"
+                      [attr.maxLength]="OBS_MAX"
                       placeholder="Ex.: Atraso por trânsito, cliente não recebeu, divergência de nota, etc."></textarea>
+
+            <div class="field-hint">
+              <span class="muted">Mín.: {{ OBS_MIN }} • Máx.: {{ OBS_MAX }}</span>
+              <span class="counter" [class.bad]="obsLen() > OBS_MAX">{{ obsLen() }}/{{ OBS_MAX }}</span>
+            </div>
+
+            <div class="field-error" *ngIf="obsErro()">{{ obsErro() }}</div>
 
             <div class="muted smallline" *ngIf="carga.observacaoMotorista">
               Última observação salva está carregada no campo.
@@ -349,7 +368,7 @@
         </div>
       </div>
 
-      <!-- Manutenção (quando existir no payload) -->
+      <!-- Manutenção -->
       <div class="block" *ngIf="paradaSelecionada.manutencao">
         <div class="block-title">Manutenção</div>
         <div class="block-body">
@@ -443,7 +462,7 @@
                 </label>
 
                 <label>
-                  <span class="muted">Arquivo</span>
+                  <span class="muted">Arquivo (máx. {{ ANEXO_MAX_MB }}MB)</span>
                   <input class="input" type="file" (change)="onFileSelected($event)" />
                 </label>
 
@@ -465,9 +484,9 @@
   </div>
 </div>
 
-<!-- =============== MODAL: NOVA PARADA =============== -->
+<!-- =============== MODAL: NOVA PARADA (LAYOUT IGUAL ABASTECIMENTO) =============== -->
 <div class="modal-backdrop" *ngIf="showNovaParadaModal" (click)="fecharNovaParada()">
-  <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal modal-form" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
       <div>
@@ -477,112 +496,133 @@
       <button class="btn ghost" type="button" (click)="fecharNovaParada()">✕</button>
     </div>
 
-    <div class="modal-body">
-      <div class="form-grid">
+    <div class="modal-body modal-body-scroll">
 
-        <label>
-          <span class="muted">Tipo de parada</span>
-          <select class="select" [(ngModel)]="paradaForm.tipoParada">
-            <option value="ABASTECIMENTO">ABASTECIMENTO</option>
-            <option value="MANUTENCAO">MANUTENCAO</option>
-            <option value="ALIMENTACAO">ALIMENTACAO</option>
-            <option value="PERNOITE">PERNOITE</option>
-            <option value="OUTROS">OUTROS</option>
-          </select>
-        </label>
-
-        <label>
-          <span class="muted">Início</span>
-          <input class="input" type="datetime-local" [(ngModel)]="paradaForm.dtInicio" />
-        </label>
-
-        <label>
-          <span class="muted">Fim</span>
-          <input class="input" type="datetime-local" [(ngModel)]="paradaForm.dtFim" />
-        </label>
-
-        <label>
-          <span class="muted">Cidade</span>
-          <input class="input" [(ngModel)]="paradaForm.cidade" placeholder="Ex.: Fortaleza" />
-        </label>
-
-        <label>
-          <span class="muted">Local</span>
-          <input class="input" [(ngModel)]="paradaForm.local" placeholder="Ex.: Posto X / Oficina Y" />
-        </label>
-
-        <label>
-          <span class="muted">KM (odômetro)</span>
-          <input class="input" type="number" [(ngModel)]="paradaForm.kmOdometro" />
-        </label>
-
-        <label class="span2">
-          <span class="muted">Observação</span>
-          <textarea class="textarea" rows="4" [(ngModel)]="paradaForm.observacao"></textarea>
-        </label>
-
-        <label>
-          <span class="muted">Valor despesa (opcional)</span>
-          <input class="input" type="number" [(ngModel)]="paradaForm.valorDespesa" />
-        </label>
-
-        <label class="span2">
-          <span class="muted">Descrição despesa (opcional)</span>
-          <input class="input" [(ngModel)]="paradaForm.descricaoDespesa" />
-        </label>
-
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn ghost" type="button" (click)="fecharNovaParada()">Cancelar</button>
-        <button class="btn primary" type="button" (click)="salvarParada()" [disabled]="savingParada">
-          {{ savingParada ? 'Salvando...' : 'Salvar parada' }}
-        </button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- =============== MODAL: PREVIEW ARQUIVO =============== -->
-<div class="modal-backdrop" *ngIf="showArquivoModal" (click)="fecharPreviewArquivo()">
-  <div class="modal big" (click)="$event.stopPropagation()">
-
-    <div class="modal-header">
-      <div>
-        <h3>Preview do Arquivo</h3>
-        <p class="muted">Visualização rápida</p>
-      </div>
-      <button class="btn ghost" type="button" (click)="fecharPreviewArquivo()">✕</button>
-    </div>
-
-    <div class="modal-body preview-body">
-      <ng-container *ngIf="previewUrl; else noPreview">
-        <ng-container *ngIf="previewMime?.includes('pdf'); else notPdf">
-          <iframe class="iframe" [src]="previewUrl" title="Preview PDF"></iframe>
-        </ng-container>
-
-        <ng-template #notPdf>
-          <ng-container *ngIf="previewMime?.startsWith('image/'); else otherFile">
-            <img class="img" [src]="previewUrl" alt="Preview imagem" />
-          </ng-container>
-
-          <ng-template #otherFile>
-            <div class="fallback">
-              <h4>Arquivo não suportado para preview completo</h4>
-              <p class="muted">Você ainda pode baixar este arquivo.</p>
-              <a class="link" [href]="previewUrl" target="_blank" rel="noreferrer">Abrir em nova aba</a>
-            </div>
-          </ng-template>
-        </ng-template>
-      </ng-container>
-
-      <ng-template #noPreview>
-        <div class="fallback">
-          <h4>Nenhum preview disponível</h4>
+      <!-- Seção: Dados da parada -->
+      <section class="form-section">
+        <div class="section-head">
+          <div class="dot-icon"></div>
+          <div class="section-txt">
+            <div class="section-title">Dados da parada</div>
+            <div class="section-sub">Tipo, datas e odômetro.</div>
+          </div>
         </div>
-      </ng-template>
+
+        <div class="form-grid-3">
+          <label class="f">
+            <span class="f-label">Tipo de parada <span class="req">*</span></span>
+            <select class="control" [(ngModel)]="paradaForm.tipoParada">
+              <option value="ABASTECIMENTO">ABASTECIMENTO</option>
+              <option value="MANUTENCAO">MANUTENCAO</option>
+              <option value="ALIMENTACAO">ALIMENTACAO</option>
+              <option value="PERNOITE">PERNOITE</option>
+              <option value="OUTROS">OUTROS</option>
+            </select>
+          </label>
+
+          <label class="f">
+            <span class="f-label">Início <span class="req">*</span></span>
+            <input class="control" type="datetime-local" [(ngModel)]="paradaForm.dtInicio" />
+          </label>
+
+          <label class="f">
+            <span class="f-label">Fim</span>
+            <input class="control" type="datetime-local" [(ngModel)]="paradaForm.dtFim" />
+            <div class="field-error" *ngIf="dtFimAntesDoInicio()">Fim não pode ser menor que o início.</div>
+          </label>
+
+          <label class="f">
+            <span class="f-label">KM (odômetro)</span>
+            <input class="control" type="number" [(ngModel)]="paradaForm.kmOdometro" placeholder="Ex.: 123456" />
+            <div class="field-error" *ngIf="kmNegativo()">KM não pode ser negativo.</div>
+          </label>
+        </div>
+      </section>
+
+      <!-- Seção: Localização -->
+      <section class="form-section">
+        <div class="section-head">
+          <div class="dot-icon"></div>
+          <div class="section-txt">
+            <div class="section-title">Localização</div>
+            <div class="section-sub">Cidade e local da parada.</div>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <label class="f">
+            <span class="f-label">Cidade</span>
+            <input class="control" [(ngModel)]="paradaForm.cidade" placeholder="Ex.: Fortaleza" />
+          </label>
+
+          <label class="f span2">
+            <span class="f-label">Local</span>
+            <input class="control" [(ngModel)]="paradaForm.local" placeholder="Ex.: Posto X / Oficina Y" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Seção: Despesa -->
+      <section class="form-section">
+        <div class="section-head">
+          <div class="dot-icon"></div>
+          <div class="section-txt">
+            <div class="section-title">Despesa (opcional)</div>
+            <div class="section-sub">Valor e descrição (se informar valor, a descrição vira obrigatória).</div>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <label class="f">
+            <span class="f-label">Valor</span>
+            <input class="control" type="number" [(ngModel)]="paradaForm.valorDespesa" placeholder="Ex.: 45.90" />
+            <div class="field-error" *ngIf="valorDespesaNegativo()">Valor não pode ser negativo.</div>
+          </label>
+
+          <label class="f span2">
+            <span class="f-label">Descrição</span>
+            <input class="control" [(ngModel)]="paradaForm.descricaoDespesa" placeholder="Ex.: Alimentação / Pedágio" />
+            <div class="field-error" *ngIf="precisaDescricaoDespesa()">
+              Ao informar um valor, informe a descrição.
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- Seção: Observação -->
+      <section class="form-section">
+        <div class="section-head">
+          <div class="dot-icon"></div>
+          <div class="section-txt">
+            <div class="section-title">Observação</div>
+            <div class="section-sub">Detalhe o que aconteceu nesta parada.</div>
+          </div>
+        </div>
+
+        <label class="f">
+          <span class="f-label">Observação</span>
+          <textarea class="control textarea"
+                    rows="4"
+                    [(ngModel)]="paradaForm.observacao"
+                    maxlength="800"
+                    placeholder="Ex.: Aguardando carga/descarga, atraso por trânsito, etc."></textarea>
+
+          <div class="field-hint">
+            <span class="muted">Máx.: 800</span>
+            <span class="counter">{{ (paradaForm.observacao?.length || 0) }}/800</span>
+          </div>
+        </label>
+      </section>
+
+    </div>
+
+    <div class="modal-footer sticky-footer">
+      <button class="btn ghost" type="button" (click)="fecharNovaParada()">Cancelar</button>
+      <button class="btn primary" type="button" (click)="salvarParada()" [disabled]="savingParada">
+        {{ savingParada ? 'Salvando...' : 'Salvar parada' }}
+      </button>
     </div>
 
   </div>
 </div>
+

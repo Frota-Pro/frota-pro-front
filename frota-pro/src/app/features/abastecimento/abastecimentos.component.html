@@ -61,7 +61,7 @@
 
     <select [(ngModel)]="filtroTipo" (ngModelChange)="scheduleBuscar()">
       <option value="">Todos combustíveis</option>
-      <option *ngFor="let c of combustiveis" [value]="c">{{ c }}</option>
+      <option *ngFor="let c of combustiveis" [value]="c.value">{{ c.label }}</option>
     </select>
 
     <input
@@ -118,7 +118,7 @@
           <span class="truncate">{{ a.motorista?.nome || '—' }}</span>
 
           <span>
-            <span class="pill pill-fuel">{{ a.tipoCombustivel || '—' }}</span>
+            <span class="pill pill-fuel">{{ getCombustivelLabel(a.tipoCombustivel) }}</span>
           </span>
 
           <span class="num">{{ a.qtLitros || 0 | number : '1.0-3' }}</span>
@@ -154,7 +154,7 @@
             <div><strong>Odômetro:</strong> {{ a.kmOdometro ?? '—' }}</div>
 
             <div><strong>Valor/L:</strong> {{ (a.valorLitro || 0) | currency : 'BRL' }}</div>
-            <div><strong>Forma Pgto:</strong> {{ a.formaPagamento || '—' }}</div>
+            <div><strong>Forma Pgto:</strong> {{ getPagamentoLabel(a.formaPagamento) }}</div>
 
             <div><strong>Nota/Cupom:</strong> {{ a.numNotaOuCupom || '—' }}</div>
             <div><strong>Média km/L:</strong> {{ a.mediaKmLitro ?? '—' }}</div>
@@ -166,9 +166,9 @@
 
       </li>
 
-      <li *ngIf="(abastecimentosFiltrados.length || 0) === 0" class="abaste-item">
-        <div class="row" style="grid-template-columns: 1fr; text-align: center;">
-          <span style="padding: 12px; color: rgba(15,23,42,0.55);">
+      <li *ngIf="(abastecimentosFiltrados.length || 0) === 0">
+        <div style="padding: 18px; text-align:center;">
+          <span style="opacity:0.8; color: rgba(23,42,0.55);">
             Nenhum abastecimento encontrado.
           </span>
         </div>
@@ -221,7 +221,7 @@
             <div class="ab-field">
               <label>Combustível</label>
               <select [(ngModel)]="novo.tipoCombustivel" name="tipoCombustivel" required>
-                <option *ngFor="let c of combustiveis" [value]="c">{{ c }}</option>
+                <option *ngFor="let c of combustiveis" [value]="c.value">{{ c.label }}</option>
               </select>
             </div>
 
@@ -295,12 +295,8 @@
 
             <div class="ab-field">
               <label>Forma Pgto</label>
-              <select [(ngModel)]="novo.formaPagamento" name="formaPagamento">
-                <option value="">Selecione...</option>
-                <option value="DINHEIRO">DINHEIRO</option>
-                <option value="CARTAO">CARTÃO</option>
-                <option value="PIX">PIX</option>
-                <option value="FATURADO">FATURADO</option>
+              <select [(ngModel)]="novo.formaPagamento" name="formaPagamento" required>
+                <option *ngFor="let f of formasPagamento" [value]="f.value">{{ f.label }}</option>
               </select>
             </div>
 

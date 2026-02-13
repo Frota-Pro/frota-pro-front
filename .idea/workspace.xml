@@ -5,23 +5,31 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="Adiciona funcionalidade de logs ao módulo Winthor. Implementa listagem, filtragem e cópia de logs, além de suporte a autoatualização e seleção de fonte.">
-      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/relatorio-pdf-api.service.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/usuario-api.models.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/usuario-api.service.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/features/usuarios/usuarios.component.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/features/usuarios/usuarios.component.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/features/usuarios/usuarios.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/app.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/app.routes.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/admin/logs/logs.component.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/admin/logs/logs.component.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/admin/logs/logs.component.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/admin/usuarios/usuarios.component.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/admin/usuarios/usuarios.component.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/admin/usuarios/usuarios.component.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/api-error.interceptor.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/ui/toast/toast-container.component.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/ui/toast/toast-container.component.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/ui/toast/toast-container.component.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/ui/toast/toast.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/app.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/app.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/app.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/app.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/app.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth-error.interceptor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth-error.interceptor.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhoes-list/caminhoes-list.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhoes-list/caminhoes-list.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhoes-list/caminhoes-list.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhoes-list/caminhoes-list.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhoes-list/caminhoes-list.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhoes-list/caminhoes-list.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/carga-detalhe/carga-detalhe.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/carga-detalhe/carga-detalhe.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/carga-detalhe/carga-detalhe.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/carga-detalhe/carga-detalhe.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/carga-detalhe/carga-detalhe.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/carga-detalhe/carga-detalhe.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/cargas-list/cargas-list.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/cargas-list/cargas-list.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/cargas-list/cargas-list.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/cargas-list/cargas-list.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/cargas-list/cargas-list.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/cargas-list/cargas-list.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/motoristas/motoristas-list/motoristas-list.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/motoristas/motoristas-list/motoristas-list.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/motoristas/motoristas-list/motoristas-list.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/motoristas/motoristas-list/motoristas-list.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/motoristas/motoristas-list/motoristas-list.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/motoristas/motoristas-list/motoristas-list.component.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,10 +67,10 @@
     &quot;accountId&quot;: &quot;defc6836-ba86-4223-bf7b-f336683af109&quot;
   }
 }</component>
-  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
-  <component name="KubernetesApiProvider"><![CDATA[{
-  "isMigrated": true
-}]]></component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
@@ -139,7 +147,8 @@
       <workItem from="1770418753798" duration="473000" />
       <workItem from="1770755506496" duration="1647000" />
       <workItem from="1770808047654" duration="6497000" />
-      <workItem from="1770896165784" duration="11749000" />
+      <workItem from="1770896165784" duration="12090000" />
+      <workItem from="1770985307050" duration="16378000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade.">
       <option name="closed" value="true" />
@@ -213,7 +222,31 @@
       <option name="project" value="LOCAL" />
       <updated>1770815512646</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="Adiciona funcionalidade de logs ao módulo Winthor. Implementa listagem, filtragem e cópia de logs, além de suporte a autoatualização e seleção de fonte.">
+      <option name="closed" value="true" />
+      <created>1770918518193</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1770918518193</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Adiciona funcionalidade de logs ao módulo Winthor. Implementa listagem, filtragem e cópia de logs, além de suporte a autoatualização e seleção de fonte.">
+      <option name="closed" value="true" />
+      <created>1770918543500</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1770918543500</updated>
+    </task>
+    <task id="LOCAL-00012" summary="Adiciona funcionalidade de logs ao módulo Winthor. Implementa listagem, filtragem e cópia de logs, além de suporte a autoatualização e seleção de fonte.">
+      <option name="closed" value="true" />
+      <created>1770918551805</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1770918551805</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
