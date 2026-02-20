@@ -6,8 +6,10 @@ import { finalize } from 'rxjs/operators';
 
 import { MetaApiService } from '../../../core/api/meta-api.service';
 import { MetaRequest, MetaResponse } from '../../../core/api/meta-api.models';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 type TabKey = 'resumo' | 'historico';
+type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA' | string;
 
 @Component({
   selector: 'app-meta-detalhe',
@@ -33,12 +35,19 @@ export class MetaDetalheComponent implements OnInit {
   showEditModal = false;
   saving = false;
 
+  tiposMeta: Array<{ value: TipoMetaKey; label: string; unidade: string }> = [
+    { value: 'QUILOMETRAGEM', label: 'Meta de quilometragem', unidade: 'km' },
+    { value: 'CONSUMO_COMBUSTIVEL', label: 'Meta de consumo de combustível', unidade: 'km/l' },
+    { value: 'TONELADA', label: 'Meta de tonelada da carga', unidade: 't' },
+    { value: 'CARGA_TRANSPORTADA', label: 'Meta de carga transportada', unidade: 'cargas' },
+  ];
+
   editForm: MetaRequest = {
     dataIncio: '',
     dataFim: '',
     tipoMeta: '',
     valorMeta: 0,
-    valorRealizado: 0,
+    valorRealizado: null,
     unidade: null,
     statusMeta: 'EM_ANDAMENTO',
     descricao: null,
@@ -46,12 +55,14 @@ export class MetaDetalheComponent implements OnInit {
     categoria: null,
     motorista: null,
     renovarAutomaticamente: false,
+    recalcularProgresso: true,
   };
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private api: MetaApiService
+    private api: MetaApiService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -148,7 +159,7 @@ export class MetaDetalheComponent implements OnInit {
       dataFim: this.data.dataFim,
       tipoMeta: this.data.tipoMeta,
       valorMeta: Number(this.data.valorMeta || 0),
-      valorRealizado: Number(this.data.valorRealizado || 0),
+      valorRealizado: this.data.valorRealizado ?? null,
       unidade: this.data.unidade || null,
       statusMeta: this.data.statusMeta || 'EM_ANDAMENTO',
       descricao: this.data.descricao || null,
@@ -156,9 +167,15 @@ export class MetaDetalheComponent implements OnInit {
       categoria: this.data.categoriaCodigo || null,
       motorista: this.data.motoristaCodigo || null,
       renovarAutomaticamente: !!this.data.renovarAutomaticamente,
+      recalcularProgresso: this.data.recalcularProgresso ?? true,
     };
 
     this.showEditModal = true;
+  }
+
+  onTipoMetaChange(): void {
+    const unit = this.getUnidadeDefault(this.editForm.tipoMeta);
+    if (unit) this.editForm.unidade = unit;
   }
 
   closeEdit(): void {
@@ -168,23 +185,34 @@ export class MetaDetalheComponent implements OnInit {
   salvarEdicao(): void {
     if (!this.data) return;
 
-    if (!this.editForm.tipoMeta?.trim()) return alert('Informe o tipo da meta.');
-    if (!this.editForm.dataIncio) return alert('Informe a data início.');
-    if (!this.editForm.dataFim) return alert('Informe a data fim.');
+    const errors = this.validateForm(this.editForm);
+    if (errors.length) {
+      this.toast.warn(errors.join(' • '), 'Validação');
+      return;
+    }
 
     this.saving = true;
+    const req: MetaRequest = {
+      ...this.editForm,
+      caminhao: this.emptyToNull(this.editForm.caminhao),
+      categoria: this.emptyToNull(this.editForm.categoria),
+      motorista: this.emptyToNull(this.editForm.motorista),
+      unidade: this.emptyToNull(this.editForm.unidade),
+      descricao: this.emptyToNull(this.editForm.descricao),
+    };
     this.api
-      .atualizar(this.data.id, this.editForm)
+      .atualizar(this.data.id, req)
       .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: (res) => {
           this.showEditModal = false;
           this.data = res;
           this.carregarHistorico();
+          this.toast.success('Meta atualizada com sucesso.');
         },
         error: (err) => {
           console.error(err);
-          alert('Não foi possível salvar as alterações.');
+          this.toast.error('Não foi possível salvar as alterações.');
         },
       });
   }
@@ -198,8 +226,11 @@ export class MetaDetalheComponent implements OnInit {
       .deletar(this.data.id)
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: () => this.voltar(),
-        error: () => alert('Não foi possível excluir a meta.'),
+        next: () => {
+          this.toast.success('Meta excluída com sucesso.');
+          this.voltar();
+        },
+        error: () => this.toast.error('Não foi possível excluir a meta.'),
       });
   }
 
@@ -213,5 +244,58 @@ export class MetaDetalheComponent implements OnInit {
     const [y, m, d] = String(iso).split('-');
     if (!y || !m || !d) return String(iso);
     return `${d}/${m}/${y}`;
+  }
+
+  private validateForm(form: MetaRequest): string[] {
+    const errors: string[] = [];
+    const tipo = (form.tipoMeta || '').trim();
+    const unidade = (form.unidade || '').toString().trim();
+
+    if (!tipo) errors.push('Informe o tipo da meta.');
+    if (!form.dataIncio || !form.dataFim) errors.push('Informe o período.');
+
+    const ini = this.parseDate(form.dataIncio);
+    const fim = this.parseDate(form.dataFim);
+    if (ini && fim && fim < ini) errors.push('A data fim deve ser maior ou igual à data início.');
+
+    if (!form.valorMeta || form.valorMeta <= 0) errors.push('Informe um valor de meta maior que zero.');
+    if (!unidade) errors.push('Informe a unidade da meta.');
+
+    const caminhao = this.emptyToNull(form.caminhao);
+    const categoria = this.emptyToNull(form.categoria);
+    const motorista = this.emptyToNull(form.motorista);
+    const targetCount = [caminhao, categoria, motorista].filter((v) => v != null).length;
+    if (targetCount !== 1) {
+      errors.push('Informe apenas um alvo: caminhão, categoria ou motorista.');
+    }
+
+    return errors;
+  }
+
+  private getUnidadeDefault(tipo: string | null | undefined): string | null {
+    const t = (tipo || '').toUpperCase();
+    const found = this.tiposMeta.find((x) => x.value === t);
+    return found?.unidade ?? null;
+  }
+
+  private parseDate(value: string | null | undefined): Date | null {
+    if (!value) return null;
+    const v = String(value).trim();
+    if (!v) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      const [y, m, d] = v.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) {
+      const [d, m, y] = v.split('/').map(Number);
+      return new Date(y, m - 1, d);
+    }
+    return null;
+  }
+
+  private emptyToNull(v: any): any {
+    if (v === undefined || v === null) return null;
+    const s = String(v).trim();
+    return s ? v : null;
   }
 }

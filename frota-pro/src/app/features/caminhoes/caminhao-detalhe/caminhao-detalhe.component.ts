@@ -10,7 +10,6 @@ import { CategoriaCaminhaoApiService } from '../../../core/api/categoria-caminha
 import { CaminhaoDetalheResponse, CaminhaoRequest } from '../../../core/api/caminhao-api.models';
 import { CategoriaCaminhaoResponse } from '../../../core/api/categoria-caminhao-api.models';
 
-import { MetaApiService } from '../../../core/api/meta-api.service';
 import { MetaResponse } from '../../../core/api/meta-api.models';
 
 import { CargaApiService } from '../../../core/api/carga-api.service';
@@ -46,8 +45,7 @@ export class CaminhaoDetalheComponent implements OnInit {
   data: CaminhaoDetalheResponse | null = null;
   tab: TabKey = 'cargas';
 
-  // Meta real
-  metaLoading = false;
+  // Meta ativa (consumo)
   meta: MetaResponse | null = null;
 
   // Histórico real
@@ -120,7 +118,6 @@ export class CaminhaoDetalheComponent implements OnInit {
     private router: Router,
     private api: CaminhaoApiService,
     private categoriaApi: CategoriaCaminhaoApiService,
-    private metaApi: MetaApiService,
     private cargaApi: CargaApiService,
     private abastecimentoApi: AbastecimentoApiService,
     private manutencaoApi: ManutencaoApiService,
@@ -137,7 +134,6 @@ export class CaminhaoDetalheComponent implements OnInit {
 
     this.carregarCategorias();
     this.carregarBase();
-    this.carregarMetaAtiva();
     this.carregarTab();
   }
 
@@ -152,6 +148,7 @@ export class CaminhaoDetalheComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.data = res;
+          this.meta = this.getMetaConsumo(res.metasAtivas || []);
           this.carregarDocumentos();
         },
         error: (err) => {
@@ -173,25 +170,6 @@ export class CaminhaoDetalheComponent implements OnInit {
     this.router.navigate(['/dashboard/caminhoes']);
   }
 
-  // ------------------ META ------------------
-  carregarMetaAtiva(): void {
-    this.metaLoading = true;
-
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const hojeLocal = `${yyyy}-${mm}-${dd}`;
-
-    this.metaApi
-      .metaAtivaCaminhao(this.codigo, hojeLocal)
-      .pipe(finalize(() => (this.metaLoading = false)))
-      .subscribe({
-        next: (m) => (this.meta = m),
-        error: () => (this.meta = null),
-      });
-  }
-
   metaPercent(): number {
     if (!this.meta) return 0;
     const meta = Number(this.meta.valorMeta || 0);
@@ -199,6 +177,12 @@ export class CaminhaoDetalheComponent implements OnInit {
     if (meta <= 0) return 0;
     const p = (real / meta) * 100;
     return Math.max(0, Math.min(100, p));
+  }
+
+  private getMetaConsumo(list: MetaResponse[]): MetaResponse | null {
+    if (!list || list.length === 0) return null;
+    const found = list.find((m) => (m.tipoMeta || '').toUpperCase() === 'CONSUMO_COMBUSTIVEL');
+    return found || null;
   }
 
   // ------------------ TABS ------------------

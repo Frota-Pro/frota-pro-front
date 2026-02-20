@@ -1,3 +1,5 @@
+import { MetaResponse } from './meta-api.models';
+
 export type StatusCaminhao = 'DISPONIVEL' | 'EM_ROTA' | 'SINCRONIZADA' | 'FINALIZADA' | string;
 
 export interface CaminhaoResponse {
@@ -56,6 +58,8 @@ export interface CaminhaoDetalheResponse {
   pesoTransportado: number;
 
   ordensServicoAbertas: number;
+
+  metasAtivas: MetaResponse[];
 }
 
 export interface VincularCategoriaCaminhaoEmLoteRequest {

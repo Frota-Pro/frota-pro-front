@@ -21,6 +21,7 @@ export interface MetaResponse {
   motoristaDescricao?: string | null;
 
   renovarAutomaticamente?: boolean;
+  recalcularProgresso?: boolean;
 }
 
 export interface MetaRequest {
@@ -28,7 +29,7 @@ export interface MetaRequest {
   dataFim: string;
   tipoMeta: string;
   valorMeta: number;
-  valorRealizado?: number;
+  valorRealizado?: number | null;
   unidade?: string | null;
   statusMeta?: string | null;
   descricao?: string | null;
@@ -38,4 +39,5 @@ export interface MetaRequest {
   motorista?: string | null;
 
   renovarAutomaticamente?: boolean | null;
+  recalcularProgresso?: boolean | null;
 }

@@ -259,12 +259,15 @@
 
       <form class="modal-form" (ngSubmit)="salvarEdicao()">
         <div class="form-row">
-          <div>
+          <div class="field">
             <label>Tipo</label>
-            <input type="text" [(ngModel)]="editForm.tipoMeta" name="tipoMeta" required />
+            <select [(ngModel)]="editForm.tipoMeta" name="tipoMeta" required (change)="onTipoMetaChange()">
+              <option value="" disabled>Selecione...</option>
+              <option *ngFor="let t of tiposMeta" [value]="t.value">{{ t.label }}</option>
+            </select>
           </div>
 
-          <div>
+          <div class="field">
             <label>Status</label>
             <select [(ngModel)]="editForm.statusMeta" name="statusMeta">
               <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
@@ -275,59 +278,68 @@
         </div>
 
         <div class="form-row">
-          <div>
+          <div class="field">
             <label>Data Início</label>
             <input type="date" [(ngModel)]="editForm.dataIncio" name="dataIncio" required />
           </div>
 
-          <div>
+          <div class="field">
             <label>Data Fim</label>
             <input type="date" [(ngModel)]="editForm.dataFim" name="dataFim" required />
           </div>
         </div>
 
         <div class="form-row three">
-          <div>
+          <div class="field">
             <label>Valor Meta</label>
             <input type="number" step="0.01" [(ngModel)]="editForm.valorMeta" name="valorMeta" />
           </div>
 
-          <div>
+          <div class="field">
             <label>Valor Realizado</label>
             <input type="number" step="0.01" [(ngModel)]="editForm.valorRealizado" name="valorRealizado" />
           </div>
 
-          <div>
+          <div class="field">
             <label>Unidade</label>
-            <input type="text" [(ngModel)]="editForm.unidade" name="unidade" placeholder="Ex: M/LT" />
+            <input type="text" [(ngModel)]="editForm.unidade" name="unidade" placeholder="Ex: km/l" />
           </div>
         </div>
 
-        <div class="form-row">
-          <div>
-            <label>Caminhão (código)</label>
-            <input type="text" [(ngModel)]="editForm.caminhao" name="caminhao" />
+        <div class="form-section">
+          <div class="section-title">Alvo</div>
+          <div class="form-row">
+            <div class="field">
+              <label>Caminhão (código)</label>
+              <input type="text" [(ngModel)]="editForm.caminhao" name="caminhao" />
+            </div>
+
+            <div class="field">
+              <label>Categoria (código)</label>
+              <input type="text" [(ngModel)]="editForm.categoria" name="categoria" />
+            </div>
           </div>
 
-          <div>
-            <label>Categoria (código)</label>
-            <input type="text" [(ngModel)]="editForm.categoria" name="categoria" />
+          <div class="form-row">
+            <div class="field">
+              <label>Motorista (código)</label>
+              <input type="text" [(ngModel)]="editForm.motorista" name="motorista" />
+            </div>
+
+            <div class="checkbox-stack">
+              <div class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="editForm.renovarAutomaticamente" name="renovarAutomaticamente" />
+                <span>Renovar automaticamente</span>
+              </div>
+              <div class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="editForm.recalcularProgresso" name="recalcularProgresso" />
+                <span>Recalcular progresso</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="form-row">
-          <div>
-            <label>Motorista (código)</label>
-            <input type="text" [(ngModel)]="editForm.motorista" name="motorista" />
-          </div>
-
-          <div class="checkbox-row">
-            <input type="checkbox" [(ngModel)]="editForm.renovarAutomaticamente" name="renovarAutomaticamente" />
-            <span>Renovar automaticamente</span>
-          </div>
-        </div>
-
-        <div>
+        <div class="field">
           <label>Descrição</label>
           <input type="text" [(ngModel)]="editForm.descricao" name="descricao" />
         </div>

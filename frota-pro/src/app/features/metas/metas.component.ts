@@ -7,8 +7,10 @@ import { finalize } from 'rxjs/operators';
 import { MetaApiService } from '../../core/api/meta-api.service';
 import { MetaRequest, MetaResponse } from '../../core/api/meta-api.models';
 import { PageResponse } from '../../core/api/page.models';
+import { ToastService } from '../../shared/ui/toast/toast.service';
 
 type StatusMeta = 'ATIVA' | 'FINALIZADA' | 'CANCELADA' | 'EM_ANDAMENTO' | string;
+type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA' | string;
 
 @Component({
   selector: 'app-metas',
@@ -35,6 +37,13 @@ export class MetasComponent implements OnInit {
   // dados
   metas: MetaResponse[] = [];
 
+  tiposMeta: Array<{ value: TipoMetaKey; label: string; unidade: string }> = [
+    { value: 'QUILOMETRAGEM', label: 'Meta de quilometragem', unidade: 'km' },
+    { value: 'CONSUMO_COMBUSTIVEL', label: 'Meta de consumo de combustível', unidade: 'km/l' },
+    { value: 'TONELADA', label: 'Meta de tonelada da carga', unidade: 't' },
+    { value: 'CARGA_TRANSPORTADA', label: 'Meta de carga transportada', unidade: 'cargas' },
+  ];
+
   // modal/form
   showModal = false;
   saving = false;
@@ -45,7 +54,7 @@ export class MetasComponent implements OnInit {
     dataFim: '',
     tipoMeta: '',
     valorMeta: 0,
-    valorRealizado: 0,
+    valorRealizado: null,
     unidade: null,
     statusMeta: 'EM_ANDAMENTO',
     descricao: null,
@@ -53,9 +62,14 @@ export class MetasComponent implements OnInit {
     categoria: null,
     motorista: null,
     renovarAutomaticamente: false,
+    recalcularProgresso: true,
   };
 
-  constructor(private api: MetaApiService, private router: Router) {}
+  constructor(
+    private api: MetaApiService,
+    private router: Router,
+    private toast: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.carregar();
@@ -157,14 +171,15 @@ export class MetasComponent implements OnInit {
       dataFim: today,
       tipoMeta: '',
       valorMeta: 0,
-      valorRealizado: 0,
-      unidade: 'M/LT',
+      valorRealizado: null,
+      unidade: null,
       statusMeta: 'EM_ANDAMENTO',
       descricao: null,
       caminhao: null,
       categoria: null,
       motorista: null,
       renovarAutomaticamente: false,
+      recalcularProgresso: true,
     };
     this.showModal = true;
   }
@@ -176,7 +191,7 @@ export class MetasComponent implements OnInit {
       dataFim: m.dataFim,
       tipoMeta: m.tipoMeta,
       valorMeta: Number(m.valorMeta || 0),
-      valorRealizado: Number(m.valorRealizado || 0),
+      valorRealizado: m.valorRealizado ?? null,
       unidade: m.unidade || null,
       statusMeta: (m.statusMeta || 'EM_ANDAMENTO') as StatusMeta,
       descricao: m.descricao || null,
@@ -184,8 +199,14 @@ export class MetasComponent implements OnInit {
       categoria: m.categoriaCodigo || null,
       motorista: m.motoristaCodigo || null,
       renovarAutomaticamente: !!m.renovarAutomaticamente,
+      recalcularProgresso: m.recalcularProgresso ?? true,
     };
     this.showModal = true;
+  }
+
+  onTipoMetaChange(): void {
+    const unit = this.getUnidadeDefault(this.form.tipoMeta);
+    if (unit) this.form.unidade = unit;
   }
 
   closeModal(): void {
@@ -195,9 +216,11 @@ export class MetasComponent implements OnInit {
   }
 
   salvar(): void {
-    if (!this.form.tipoMeta?.trim()) return alert('Informe o tipo da meta.');
-    if (!this.form.dataIncio || !this.form.dataFim) return alert('Informe o período.');
-
+    const errors = this.validateForm(this.form);
+    if (errors.length) {
+      this.toast.warn(errors.join(' • '), 'Validação');
+      return;
+    }
     this.saving = true;
 
     const req: MetaRequest = {
@@ -219,10 +242,13 @@ export class MetasComponent implements OnInit {
         next: () => {
           this.closeModal();
           this.carregar();
+          this.toast.success(
+            this.editing ? 'Meta atualizada com sucesso.' : 'Meta criada com sucesso.'
+          );
         },
         error: (err) => {
           console.error(err);
-          alert('Não foi possível salvar a meta.');
+          this.toast.error('Não foi possível salvar a meta.');
         },
       });
   }
@@ -235,7 +261,7 @@ export class MetasComponent implements OnInit {
       dataFim: m.dataFim,
       tipoMeta: m.tipoMeta,
       valorMeta: Number(m.valorMeta || 0),
-      valorRealizado: Number(m.valorRealizado || 0),
+      valorRealizado: m.valorRealizado ?? null,
       unidade: m.unidade || null,
       statusMeta: 'FINALIZADA',
       descricao: m.descricao || null,
@@ -243,6 +269,7 @@ export class MetasComponent implements OnInit {
       categoria: m.categoriaCodigo || null,
       motorista: m.motoristaCodigo || null,
       renovarAutomaticamente: !!m.renovarAutomaticamente,
+      recalcularProgresso: m.recalcularProgresso ?? true,
     };
 
     this.loading = true;
@@ -250,8 +277,11 @@ export class MetasComponent implements OnInit {
       .atualizar(m.id, req)
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: () => this.carregar(),
-        error: () => alert('Não foi possível concluir a meta.'),
+        next: () => {
+          this.carregar();
+          this.toast.success('Meta concluída com sucesso.');
+        },
+        error: () => this.toast.error('Não foi possível concluir a meta.'),
       });
   }
 
@@ -262,9 +292,59 @@ export class MetasComponent implements OnInit {
       .deletar(m.id)
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: () => this.carregar(),
-        error: () => alert('Não foi possível excluir a meta.'),
+        next: () => {
+          this.carregar();
+          this.toast.success('Meta excluída com sucesso.');
+        },
+        error: () => this.toast.error('Não foi possível excluir a meta.'),
       });
+  }
+
+  private validateForm(form: MetaRequest): string[] {
+    const errors: string[] = [];
+    const tipo = (form.tipoMeta || '').trim();
+    const unidade = (form.unidade || '').toString().trim();
+
+    if (!tipo) errors.push('Informe o tipo da meta.');
+    if (!form.dataIncio || !form.dataFim) errors.push('Informe o período.');
+
+    const ini = this.parseDate(form.dataIncio);
+    const fim = this.parseDate(form.dataFim);
+    if (ini && fim && fim < ini) errors.push('A data fim deve ser maior ou igual à data início.');
+
+    if (!form.valorMeta || form.valorMeta <= 0) errors.push('Informe um valor de meta maior que zero.');
+    if (!unidade) errors.push('Informe a unidade da meta.');
+
+    const caminhao = this.emptyToNull(form.caminhao);
+    const categoria = this.emptyToNull(form.categoria);
+    const motorista = this.emptyToNull(form.motorista);
+    const targetCount = [caminhao, categoria, motorista].filter((v) => v != null).length;
+    if (targetCount !== 1) {
+      errors.push('Informe apenas um alvo: caminhão, categoria ou motorista.');
+    }
+
+    return errors;
+  }
+
+  private getUnidadeDefault(tipo: string | null | undefined): string | null {
+    const t = (tipo || '').toUpperCase();
+    const found = this.tiposMeta.find((x) => x.value === t);
+    return found?.unidade ?? null;
+  }
+
+  private parseDate(value: string | null | undefined): Date | null {
+    if (!value) return null;
+    const v = String(value).trim();
+    if (!v) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      const [y, m, d] = v.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) {
+      const [d, m, y] = v.split('/').map(Number);
+      return new Date(y, m - 1, d);
+    }
+    return null;
   }
 
   private emptyToNull(v: any): any {
