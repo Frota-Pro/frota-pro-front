@@ -24,6 +24,46 @@ interface ToastItem {
   message: string;
 }
 
+type AbastecimentoForm = {
+  qtLitros: number | null;
+  valorLitro: number | null;
+  valorTotal: number | null;
+  tipoCombustivel: string;
+  formaPagamento: string;
+  posto: string;
+  cidade: string;
+  uf: string;
+  numNotaOuCupom: string;
+};
+
+type TrocaPneuForm = {
+  pneu: string;
+  eixoNumero: number | null;
+  lado: string;
+  posicao: string;
+  kmOdometro: number | null;
+  tipoTroca: string;
+};
+
+type ManutencaoForm = {
+  descricao: string;
+  dataInicioManutencao: string;
+  dataFimManutencao: string;
+  tipoManutencao: string;
+  itensTrocados: string[];
+  observacoes: string;
+  valor: number | null;
+  statusManutencao: string;
+  oficinaId: string;
+  trocasPneu: TrocaPneuForm[];
+};
+
+type ParadaForm = Partial<ParadaCargaRequest> & {
+  abastecimento: AbastecimentoForm;
+  manutencao: ManutencaoForm;
+  itensTrocadosText: string;
+};
+
 @Component({
   selector: 'app-carga-detalhe',
   standalone: true,
@@ -67,7 +107,7 @@ export class CargaDetalheComponent implements OnInit {
 
   // ===== Nova parada =====
   showNovaParadaModal = false;
-  paradaForm: Partial<ParadaCargaRequest> = {
+  paradaForm: ParadaForm = {
     tipoParada: 'OUTROS',
     dtInicio: '',
     dtFim: '',
@@ -77,6 +117,30 @@ export class CargaDetalheComponent implements OnInit {
     observacao: '',
     valorDespesa: null,
     descricaoDespesa: '',
+    itensTrocadosText: '',
+    abastecimento: {
+      qtLitros: null,
+      valorLitro: null,
+      valorTotal: null,
+      tipoCombustivel: '',
+      formaPagamento: '',
+      posto: '',
+      cidade: '',
+      uf: '',
+      numNotaOuCupom: '',
+    },
+    manutencao: {
+      descricao: '',
+      dataInicioManutencao: '',
+      dataFimManutencao: '',
+      tipoManutencao: '',
+      itensTrocados: [],
+      observacoes: '',
+      valor: null,
+      statusManutencao: '',
+      oficinaId: '',
+      trocasPneu: [],
+    },
   };
   savingParada = false;
 
@@ -89,6 +153,40 @@ export class CargaDetalheComponent implements OnInit {
   readonly OBS_MIN = 5;
   readonly OBS_MAX = 800;
   readonly ANEXO_MAX_MB = 10;
+
+  readonly TIPOS_COMBUSTIVEL = [
+    'DIESEL_S10',
+    'DIESEL_S500',
+    'DIESEL_COMUM',
+    'GASOLINA_COMUM',
+    'GASOLINA_ADITIVADA',
+    'GASOLINA_PREMIUM',
+    'ETANOL',
+    'ETANOL_ADITIVADO',
+    'GNV',
+    'ARLA32',
+    'ELETRICO',
+    'HIBRIDO',
+  ];
+  readonly FORMAS_PAGAMENTO = [
+    'DINHEIRO',
+    'CARTAO_DEBITO',
+    'CARTAO_CREDITO',
+    'PIX',
+    'TRANSFERENCIA',
+    'CHEQUE',
+    'BOLETO',
+    'VALE_COMBUSTIVEL',
+    'CONVENIO',
+    'FATURADO',
+    'NOTA_DE_CREDITO',
+    'OUTROS',
+  ];
+  readonly TIPOS_MANUTENCAO = ['PREVENTIVA', 'CORRETIVA'];
+  readonly STATUS_MANUTENCAO = ['ABERTA', 'EM_ANDAMENTO', 'FINALIZADA', 'CANCELADA'];
+  readonly TIPOS_TROCA_PNEU = ['INSTALACAO', 'REMOVER', 'RODIZIO', 'TROCA_MANUTENCAO', 'ENVIO_RECAPAGEM', 'RETORNO_RECAPAGEM', 'DESCARTE'];
+  readonly LADOS_PNEU = ['ESQUERDO', 'DIREITO'];
+  readonly POSICOES_PNEU = ['INTERNO', 'EXTERNO'];
 
   constructor(
     private route: ActivatedRoute,
@@ -406,6 +504,30 @@ export class CargaDetalheComponent implements OnInit {
       observacao: '',
       valorDespesa: null,
       descricaoDespesa: '',
+      itensTrocadosText: '',
+      abastecimento: {
+        qtLitros: null,
+        valorLitro: null,
+        valorTotal: null,
+        tipoCombustivel: '',
+        formaPagamento: '',
+        posto: '',
+        cidade: '',
+        uf: '',
+        numNotaOuCupom: '',
+      },
+      manutencao: {
+        descricao: '',
+        dataInicioManutencao: '',
+        dataFimManutencao: '',
+        tipoManutencao: '',
+        itensTrocados: [],
+        observacoes: '',
+        valor: null,
+        statusManutencao: '',
+        oficinaId: '',
+        trocasPneu: [],
+      },
     };
   }
 
@@ -417,6 +539,18 @@ export class CargaDetalheComponent implements OnInit {
     if (!v) return null;
     const d = new Date(v);
     return Number.isFinite(d.getTime()) ? d : null;
+  }
+
+  private toBackendDateTime(v?: string | null): string | null {
+    if (!v) return null;
+    const d = new Date(v);
+    if (!Number.isFinite(d.getTime())) return null;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
   }
 
   dtFimAntesDoInicio(): boolean {
@@ -476,7 +610,110 @@ export class CargaDetalheComponent implements OnInit {
     const obs = String(this.paradaForm.observacao || '');
     if (obs && obs.length > 800) erros.push('Observação da parada muito grande (máx. 800 caracteres).');
 
+    if (String(this.paradaForm.tipoParada || '') === 'ABASTECIMENTO') {
+      const a = this.paradaForm.abastecimento;
+      if (!a.qtLitros || a.qtLitros <= 0) erros.push('Quantidade de litros é obrigatória.');
+      if (!a.valorLitro || a.valorLitro <= 0) erros.push('Valor do litro é obrigatório.');
+      if (!a.tipoCombustivel) erros.push('Tipo de combustível é obrigatório.');
+      if (!a.formaPagamento) erros.push('Forma de pagamento é obrigatória.');
+      if (a.posto && a.posto.length > 120) erros.push('Posto deve ter no máximo 120 caracteres.');
+      if (a.cidade && a.cidade.length > 120) erros.push('Cidade deve ter no máximo 120 caracteres.');
+      if (a.uf && !/^[A-Za-z]{2}$/.test(a.uf)) erros.push('UF inválida (ex: PB).');
+      if (a.numNotaOuCupom && a.numNotaOuCupom.length > 60) erros.push('Nº nota/cupom deve ter no máximo 60 caracteres.');
+    }
+
+    if (String(this.paradaForm.tipoParada || '') === 'MANUTENCAO') {
+      const m = this.paradaForm.manutencao;
+      if (!m.descricao || m.descricao.trim().length < 3) erros.push('Descrição da manutenção é obrigatória.');
+      if (m.descricao && m.descricao.length > 200) erros.push('Descrição deve ter até 200 caracteres.');
+      if (!m.dataInicioManutencao) erros.push('Data de início da manutenção é obrigatória.');
+      if (!m.tipoManutencao) erros.push('Tipo de manutenção é obrigatório.');
+      if (!m.statusManutencao) erros.push('Status da manutenção é obrigatório.');
+      if (m.observacoes && m.observacoes.length > 500) erros.push('Observações deve ter no máximo 500 caracteres.');
+      if (m.valor != null && Number(m.valor) < 0) erros.push('Valor da manutenção deve ser >= 0.');
+
+      const itens = (m.itensTrocados || []);
+      if (itens.some((it: string) => (it || '').length > 120)) erros.push('Item trocado inválido (máx. 120).');
+
+      for (const t of m.trocasPneu || []) {
+        if (!t.pneu) erros.push('Pneu é obrigatório na troca.');
+        if (!t.eixoNumero && t.eixoNumero !== 0) erros.push('Número do eixo é obrigatório na troca.');
+        if (!t.lado) erros.push('Lado é obrigatório na troca.');
+        if (!t.posicao) erros.push('Posição é obrigatória na troca.');
+        if (t.kmOdometro == null || Number(t.kmOdometro) < 0) erros.push('KM do odômetro é obrigatório na troca.');
+        if (!t.tipoTroca) erros.push('Tipo de troca é obrigatório na troca.');
+        break;
+      }
+    }
+
     return erros;
+  }
+
+  isAbastecimento(): boolean {
+    return String(this.paradaForm.tipoParada || '') === 'ABASTECIMENTO';
+  }
+
+  isManutencao(): boolean {
+    return String(this.paradaForm.tipoParada || '') === 'MANUTENCAO';
+  }
+
+  onTipoParadaChange(): void {
+    if (!this.isAbastecimento()) {
+      this.paradaForm.abastecimento = {
+        qtLitros: null,
+        valorLitro: null,
+        valorTotal: null,
+        tipoCombustivel: '',
+        formaPagamento: '',
+        posto: '',
+        cidade: '',
+        uf: '',
+        numNotaOuCupom: '',
+      };
+    }
+
+    if (!this.isManutencao()) {
+      this.paradaForm.manutencao = {
+        descricao: '',
+        dataInicioManutencao: '',
+        dataFimManutencao: '',
+        tipoManutencao: '',
+        itensTrocados: [],
+        observacoes: '',
+        valor: null,
+        statusManutencao: '',
+        oficinaId: '',
+        trocasPneu: [],
+      };
+      this.paradaForm.itensTrocadosText = '';
+    }
+  }
+
+  addTrocaPneu(): void {
+    this.paradaForm.manutencao.trocasPneu.push({
+      pneu: '',
+      eixoNumero: null,
+      lado: '',
+      posicao: '',
+      kmOdometro: null,
+      tipoTroca: '',
+    });
+  }
+
+  removeTrocaPneu(idx: number): void {
+    this.paradaForm.manutencao.trocasPneu.splice(idx, 1);
+  }
+
+  syncItensTrocados(): void {
+    const raw = (this.paradaForm.itensTrocadosText || '').trim();
+    if (!raw) {
+      this.paradaForm.manutencao.itensTrocados = [];
+      return;
+    }
+    this.paradaForm.manutencao.itensTrocados = raw
+      .split(/[,\n;]+/)
+      .map((v) => v.trim())
+      .filter(Boolean);
   }
 
   salvarParada(): void {
@@ -488,19 +725,46 @@ export class CargaDetalheComponent implements OnInit {
       return;
     }
 
+    this.syncItensTrocados();
+
     const req: ParadaCargaRequest = {
       carga: this.carga.numeroCarga,
       tipoParada: String(this.paradaForm.tipoParada),
-      dtInicio: String(this.paradaForm.dtInicio),
-      dtFim: this.paradaForm.dtFim || null,
+      dtInicio: this.toBackendDateTime(String(this.paradaForm.dtInicio)) || String(this.paradaForm.dtInicio),
+      dtFim: this.toBackendDateTime(this.paradaForm.dtFim || null),
       cidade: this.paradaForm.cidade || null,
       local: this.paradaForm.local || null,
       kmOdometro: (this.paradaForm as any).kmOdometro ?? null,
       observacao: (this.paradaForm.observacao || '').trim() || null,
       valorDespesa: (this.paradaForm as any).valorDespesa ?? null,
       descricaoDespesa: (this.paradaForm.descricaoDespesa || '').trim() || null,
-      abastecimento: this.paradaForm.abastecimento,
-      manutencao: this.paradaForm.manutencao,
+      abastecimento: this.isAbastecimento()
+        ? {
+          qtLitros: this.paradaForm.abastecimento.qtLitros,
+          valorLitro: this.paradaForm.abastecimento.valorLitro,
+          valorTotal: this.paradaForm.abastecimento.valorTotal,
+          tipoCombustivel: this.paradaForm.abastecimento.tipoCombustivel || null,
+          formaPagamento: this.paradaForm.abastecimento.formaPagamento || null,
+          posto: this.paradaForm.abastecimento.posto?.trim() || null,
+          cidade: this.paradaForm.abastecimento.cidade?.trim() || null,
+          uf: this.paradaForm.abastecimento.uf?.trim() || null,
+          numNotaOuCupom: this.paradaForm.abastecimento.numNotaOuCupom?.trim() || null,
+        }
+        : undefined,
+      manutencao: this.isManutencao()
+        ? {
+          descricao: this.paradaForm.manutencao.descricao?.trim() || null,
+          dataInicioManutencao: this.paradaForm.manutencao.dataInicioManutencao || null,
+          dataFimManutencao: this.paradaForm.manutencao.dataFimManutencao || null,
+          tipoManutencao: this.paradaForm.manutencao.tipoManutencao || null,
+          itensTrocados: this.paradaForm.manutencao.itensTrocados || [],
+          observacoes: this.paradaForm.manutencao.observacoes?.trim() || null,
+          valor: this.paradaForm.manutencao.valor ?? null,
+          statusManutencao: this.paradaForm.manutencao.statusManutencao || null,
+          oficinaId: this.paradaForm.manutencao.oficinaId?.trim() || null,
+          trocasPneu: this.paradaForm.manutencao.trocasPneu || [],
+        }
+        : undefined,
     };
 
     this.savingParada = true;

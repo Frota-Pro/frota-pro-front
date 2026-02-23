@@ -11,6 +11,20 @@ import {
   PneuMovimentacaoRequest,
   PneuMovimentacaoResponse
 } from '../../../core/api/pneu-api.models';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
+
+const PNEU_MOV_TIPOS = [
+  'INSTALACAO',
+  'REMOVER',
+  'RODIZIO',
+  'TROCA_MANUTENCAO',
+  'ENVIO_RECAPAGEM',
+  'RETORNO_RECAPAGEM',
+  'DESCARTE',
+] as const;
+const PNEU_LADOS = ['ESQUERDO', 'DIREITO'] as const;
+const PNEU_POSICOES = ['INTERNO', 'EXTERNO'] as const;
+const MAX_CODIGO = 20;
 
 @Component({
   selector: 'app-pneu-detalhe',
@@ -49,14 +63,26 @@ export class PneuDetalheComponent implements OnInit {
     kmInstalacao: null,
   };
 
-  constructor(private route: ActivatedRoute, private api: PneuApiService) {}
+  constructor(private route: ActivatedRoute, private api: PneuApiService, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.codigo = this.route.snapshot.paramMap.get('codigo') || '';
+    if (!this.codigo) {
+      this.toast.error('Código do pneu é obrigatório.');
+      return;
+    }
+    if (this.codigo.length > MAX_CODIGO) {
+      this.toast.error(`Código do pneu deve ter no máximo ${MAX_CODIGO} caracteres.`);
+      return;
+    }
     this.carregar();
   }
 
   carregar(): void {
+    if (!this.codigo || this.codigo.length > MAX_CODIGO) {
+      this.toast.error('Código do pneu inválido.');
+      return;
+    }
     this.loading = true;
     this.errorMsg = null;
 
@@ -117,17 +143,30 @@ export class PneuDetalheComponent implements OnInit {
   salvarEvento(): void {
     const tipo = this.evento.tipo;
 
+    if (!PNEU_MOV_TIPOS.includes(tipo as any)) {
+      this.toast.warn('Tipo de movimentação inválido.');
+      return;
+    }
+    if (this.evento.lado && !PNEU_LADOS.includes(this.evento.lado as any)) {
+      this.toast.warn('Lado inválido. Use ESQUERDO ou DIREITO.');
+      return;
+    }
+    if (this.evento.posicao && !PNEU_POSICOES.includes(this.evento.posicao as any)) {
+      this.toast.warn('Posição inválida. Use INTERNO ou EXTERNO.');
+      return;
+    }
+
     // validações mínimas
     if (tipo === 'INSTALACAO') {
-      if (!this.evento.caminhaoId) return alert('caminhaoId é obrigatório em INSTALACAO.');
-      if (this.evento.kmInstalacao == null) return alert('kmInstalacao é obrigatório em INSTALACAO.');
+      if (!this.evento.caminhaoId) return this.toast.warn('caminhaoId é obrigatório em INSTALACAO.');
+      if (this.evento.kmInstalacao == null) return this.toast.warn('kmInstalacao é obrigatório em INSTALACAO.');
       if (this.evento.eixoNumero == null || !this.evento.lado || !this.evento.posicao) {
-        return alert('eixoNumero, lado e posicao são obrigatórios em INSTALACAO.');
+        return this.toast.warn('eixoNumero, lado e posicao são obrigatórios em INSTALACAO.');
       }
     }
 
     if ((tipo === 'REMOVER' || tipo === 'RODIZIO' || tipo === 'TROCA_MANUTENCAO') && this.evento.kmEvento == null) {
-      return alert('kmEvento é obrigatório para este tipo de evento.');
+      return this.toast.warn('kmEvento é obrigatório para este tipo de evento.');
     }
 
     this.loading = true;

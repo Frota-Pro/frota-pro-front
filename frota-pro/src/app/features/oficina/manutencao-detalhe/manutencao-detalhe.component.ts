@@ -8,6 +8,9 @@ import { ManutencaoApiService } from '../../../core/api/manutencao-api.service';
 import { ManutencaoRequest, ManutencaoResponse } from '../../../core/api/manutencao-api.models';
 import { DocumentoManutencaoApiService } from '../../../core/api/documento-manutencao-api.service';
 import { DocumentoManutencaoResponse, TipoDocumentoManutencao } from '../../../core/api/documento-manutencao-api.models';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
+
+const MAX_CODIGO = 50;
 
 @Component({
   selector: 'app-manutencao-detalhe',
@@ -40,15 +43,28 @@ export class ManutencaoDetalheComponent implements OnInit {
     private route: ActivatedRoute,
     private api: ManutencaoApiService,
     private docApi: DocumentoManutencaoApiService,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
     this.codigo = this.route.snapshot.paramMap.get('codigo') || '';
+    if (!this.codigo) {
+      this.toast.error('Código da manutenção é obrigatório.');
+      return;
+    }
+    if (this.codigo.length > MAX_CODIGO) {
+      this.toast.error(`Código da manutenção deve ter no máximo ${MAX_CODIGO} caracteres.`);
+      return;
+    }
     this.carregar();
     this.carregarDocs();
   }
 
   carregar(): void {
+    if (!this.codigo || this.codigo.length > MAX_CODIGO) {
+      this.toast.error('Código da manutenção inválido.');
+      return;
+    }
     this.loading = true;
     this.erro = null;
 
@@ -61,6 +77,10 @@ export class ManutencaoDetalheComponent implements OnInit {
   }
 
   carregarDocs(): void {
+    if (!this.codigo || this.codigo.length > MAX_CODIGO) {
+      this.toast.error('Código da manutenção inválido.');
+      return;
+    }
     this.docsLoading = true;
     this.docApi.listar(this.codigo, { page: 0, size: 50, sort: 'criadoEm,desc' })
       .pipe(finalize(() => (this.docsLoading = false)))
@@ -77,7 +97,7 @@ export class ManutencaoDetalheComponent implements OnInit {
 
   uploadDoc(): void {
     if (!this.fileDoc) {
-      alert('Selecione um arquivo.');
+      this.toast.warn('Selecione um arquivo.');
       return;
     }
 
@@ -91,7 +111,7 @@ export class ManutencaoDetalheComponent implements OnInit {
           this.tipoDoc = 'OUTRO';
           this.carregarDocs();
         },
-        error: (err) => alert(err?.error?.message || 'Erro ao enviar documento.'),
+        error: (err) => this.toast.error(err?.error?.message || 'Erro ao enviar documento.'),
       });
   }
 
@@ -106,7 +126,7 @@ export class ManutencaoDetalheComponent implements OnInit {
         this.previewName = doc.arquivo?.nomeOriginal || 'arquivo';
         this.showPreview = true;
       },
-      error: () => alert('Erro ao abrir preview.'),
+      error: () => this.toast.error('Erro ao abrir preview.'),
     });
   }
 
@@ -123,7 +143,7 @@ export class ManutencaoDetalheComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => alert('Erro ao baixar arquivo.'),
+      error: () => this.toast.error('Erro ao baixar arquivo.'),
     });
   }
 

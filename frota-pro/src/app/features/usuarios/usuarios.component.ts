@@ -8,6 +8,10 @@ import {
   UsuarioCreateRequest,
   UsuarioUpdateRequest
 } from '../../core/api/usuario-api.models';
+import { ToastService } from '../../shared/ui/toast/toast.service';
+
+const MAX_FILTRO = 150;
+const MAX_MATRICULA = 50;
 
 @Component({
   selector: 'app-usuarios',
@@ -47,13 +51,17 @@ export class UsuariosComponent implements OnInit {
     'ROLE_CONSULTA'
   ];
 
-  constructor(private usuarioService: UsuarioApiService) {}
+  constructor(private usuarioService: UsuarioApiService, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.carregar();
   }
 
   carregar() {
+    if (this.filtro && this.filtro.length > MAX_FILTRO) {
+      this.toast.warn(`Filtro deve ter no máximo ${MAX_FILTRO} caracteres.`);
+      return;
+    }
     this.loading = true;
 
     this.usuarioService.listar({
@@ -69,7 +77,7 @@ export class UsuariosComponent implements OnInit {
       },
       error: (err) => {
         console.error('[Usuarios] erro API', err);
-        alert('Erro ao carregar usuários. Veja o console e a aba Network.');
+        this.toast.error('Erro ao carregar usuários.');
         this.loading = false;
       }
     });
@@ -135,7 +143,7 @@ export class UsuariosComponent implements OnInit {
     if (!novaSenha) return;
 
     this.usuarioService.atualizarSenha(usuario.id, { novaSenha })
-      .subscribe(() => alert('Senha atualizada com sucesso'));
+      .subscribe(() => this.toast.success('Senha atualizada com sucesso'));
   }
 
   toggleRole(role: string) {
@@ -150,22 +158,34 @@ export class UsuariosComponent implements OnInit {
 
   // ✅ Criar usuário para motorista
   criarUsuarioParaMotorista() {
-    const m = (this.matriculaMotorista || '').trim();
-    if (!m) {
-      alert('Informe a matrícula do motorista. Ex: MOT-000164');
+    const items = this.parseMatriculas(this.matriculaMotorista);
+    if (!items.length) {
+      this.toast.warn('Informe ao menos uma matrícula. Ex: MOT-000164');
+      return;
+    }
+    const invalid = items.find(x => x.length > MAX_MATRICULA);
+    if (invalid) {
+      this.toast.warn(`Cada matrícula deve ter no máximo ${MAX_MATRICULA} caracteres.`);
       return;
     }
 
-    this.usuarioService.criarUsuarioMotorista(m).subscribe({
+    this.usuarioService.criarUsuarioMotorista(items).subscribe({
       next: (msgs) => {
-        alert((msgs ?? []).join('\n') || 'Processado.');
+        this.toast.success((msgs ?? []).join(' • ') || 'Processado.');
         this.matriculaMotorista = '';
         this.carregar();
       },
       error: (err) => {
         console.error('[Usuarios] erro criarUsuarioMotorista', err);
-        alert('Erro ao criar usuário para o motorista.');
+        this.toast.error('Erro ao criar usuário para o motorista.');
       }
     });
+  }
+
+  private parseMatriculas(raw: string): string[] {
+    return (raw || '')
+      .split(/[,\n;]+/)
+      .map(v => v.trim())
+      .filter(Boolean);
   }
 }

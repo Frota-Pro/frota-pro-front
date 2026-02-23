@@ -6,6 +6,9 @@ import { finalize } from 'rxjs/operators';
 
 import { OficinaApiService } from '../../../core/api/oficina-api.service';
 import { OficinaRequest, OficinaResponse } from '../../../core/api/oficina-api.models';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
+
+const MAX_CODIGO = 50;
 
 @Component({
   selector: 'app-oficinas',
@@ -42,6 +45,7 @@ export class OficinasComponent implements OnInit {
   constructor(
     private api: OficinaApiService,
     private router: Router,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -112,7 +116,11 @@ export class OficinasComponent implements OnInit {
 
   salvar(): void {
     if (!this.form.nome || !this.form.nome.trim()) {
-      alert('Informe o nome da oficina.');
+      this.toast.warn('Informe o nome da oficina.');
+      return;
+    }
+    if (this.isEditing && this.editingCodigo && this.editingCodigo.length > MAX_CODIGO) {
+      this.toast.warn(`Código da oficina deve ter no máximo ${MAX_CODIGO} caracteres.`);
       return;
     }
 
@@ -133,6 +141,14 @@ export class OficinasComponent implements OnInit {
   }
 
   deletar(o: OficinaResponse): void {
+    if (!o?.codigo) {
+      this.toast.warn('Código da oficina é obrigatório.');
+      return;
+    }
+    if (o.codigo.length > MAX_CODIGO) {
+      this.toast.warn(`Código da oficina deve ter no máximo ${MAX_CODIGO} caracteres.`);
+      return;
+    }
     if (!confirm(`Deseja excluir a oficina ${o.codigo}?`)) return;
 
     this.loading = true;

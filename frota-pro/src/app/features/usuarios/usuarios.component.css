@@ -2,6 +2,7 @@
   display: block;
   padding: 18px 18px 26px;
   color: #0f172a;
+  background: transparent;
 }
 
 .container {
@@ -20,7 +21,7 @@ h2 {
 .card {
   background: #ffffff;
   border: 1px solid #e6eaf2;
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: 0 6px 18px rgba(12, 18, 32, 0.06);
   padding: 14px;
   margin-bottom: 14px;
@@ -164,6 +165,7 @@ select:focus {
   display: flex;
   gap: 8px;
   margin-top: 12px;
+  align-items: center;
 }
 
 /* Tabela */

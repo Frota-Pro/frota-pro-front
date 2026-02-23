@@ -59,8 +59,10 @@ export class UsuarioApiService extends BaseApiService {
   /**
    * POST /usuario/motoristas?matriculas=MOT-000164
    */
-  criarUsuarioMotorista(matricula: string) {
-    const params = new HttpParams().set('matriculas', matricula);
+  criarUsuarioMotorista(matriculas: string | string[]) {
+    const list = Array.isArray(matriculas) ? matriculas : [matriculas];
+    const payload = list.filter(Boolean).join(',');
+    const params = new HttpParams().set('matriculas', payload);
     return this.http.post<string[]>(`${this.apiUrl}/usuario/motoristas`, null, { params });
   }
 }

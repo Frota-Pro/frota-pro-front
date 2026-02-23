@@ -6,10 +6,12 @@ import { finalize } from 'rxjs/operators';
 
 import { ManutencaoApiService } from '../../../core/api/manutencao-api.service';
 import { ManutencaoRequest, ManutencaoResponse, ManutencaoItemRequest } from '../../../core/api/manutencao-api.models';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 type StatusManutencao = 'ABERTA' | 'EM_ANDAMENTO' | 'FINALIZADA' | 'CANCELADA' | string;
 type TipoManutencao = 'PREVENTIVA' | 'CORRETIVA' | string;
 type TipoItemManutencao = 'PECA' | 'SERVICO' | string;
+const MAX_CODIGO = 50;
 
 interface ManutencaoVM extends ManutencaoResponse {
   _inicio?: string; // yyyy-MM-dd
@@ -61,10 +63,22 @@ export class ManutencoesComponent implements OnInit {
   constructor(
     private api: ManutencaoApiService,
     private router: Router,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
+    this.setPeriodoMesAtual();
     this.carregarPagina();
+  }
+
+  setPeriodoMesAtual(): void {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const first = new Date(y, m, 1);
+    const last = new Date(y, m + 1, 0);
+    this.dataInicio = first.toISOString().slice(0, 10);
+    this.dataFim = last.toISOString().slice(0, 10);
   }
 
   scheduleBuscar(): void {
@@ -77,6 +91,15 @@ export class ManutencoesComponent implements OnInit {
 
   carregarPagina(page?: number): void {
     if (page != null) this.page = page;
+
+    if (!this.dataInicio || !this.dataFim) {
+      this.toast.warn('Informe início e fim para buscar manutenções.');
+      return;
+    }
+    if (this.caminhaoFilter && this.caminhaoFilter.length > MAX_CODIGO) {
+      this.toast.warn(`Código do caminhão deve ter no máximo ${MAX_CODIGO} caracteres.`);
+      return;
+    }
 
     this.loading = true;
     this.errorMsg = null;
@@ -251,15 +274,31 @@ export class ManutencoesComponent implements OnInit {
 
   salvar(): void {
     if (!this.form.descricao || !this.form.descricao.trim()) {
-      alert('Informe a descrição.');
+      this.toast.warn('Informe a descrição.');
       return;
     }
     if (!this.form.caminhao || !this.form.caminhao.trim()) {
-      alert('Informe o código do caminhão.');
+      this.toast.warn('Informe o código do caminhão.');
+      return;
+    }
+    if (this.form.caminhao.trim().length > MAX_CODIGO) {
+      this.toast.warn(`Código do caminhão deve ter no máximo ${MAX_CODIGO} caracteres.`);
+      return;
+    }
+    if (!this.form.oficina || !this.form.oficina.trim()) {
+      this.toast.warn('Informe o código da oficina.');
+      return;
+    }
+    if (this.form.oficina.trim().length > MAX_CODIGO) {
+      this.toast.warn(`Código da oficina deve ter no máximo ${MAX_CODIGO} caracteres.`);
       return;
     }
     if (!this.form.dataInicioManutencao) {
-      alert('Informe a data de início.');
+      this.toast.warn('Informe a data de início.');
+      return;
+    }
+    if (this.isEditing && this.editingCodigo && this.editingCodigo.length > MAX_CODIGO) {
+      this.toast.warn(`Código da manutenção deve ter no máximo ${MAX_CODIGO} caracteres.`);
       return;
     }
 
@@ -298,6 +337,14 @@ export class ManutencoesComponent implements OnInit {
   }
 
   deletar(m: ManutencaoVM): void {
+    if (!m?.codigo) {
+      this.toast.warn('Código da manutenção é obrigatório.');
+      return;
+    }
+    if (m.codigo.length > MAX_CODIGO) {
+      this.toast.warn(`Código da manutenção deve ter no máximo ${MAX_CODIGO} caracteres.`);
+      return;
+    }
     const ok = confirm(`Deseja excluir a manutenção ${m.codigo}?`);
     if (!ok) return;
 

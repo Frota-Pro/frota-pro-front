@@ -511,7 +511,7 @@
         <div class="form-grid-3">
           <label class="f">
             <span class="f-label">Tipo de parada <span class="req">*</span></span>
-            <select class="control" [(ngModel)]="paradaForm.tipoParada">
+            <select class="control" [(ngModel)]="paradaForm.tipoParada" (change)="onTipoParadaChange()">
               <option value="ABASTECIMENTO">ABASTECIMENTO</option>
               <option value="MANUTENCAO">MANUTENCAO</option>
               <option value="ALIMENTACAO">ALIMENTACAO</option>
@@ -614,6 +614,193 @@
         </label>
       </section>
 
+      <!-- Seção: Abastecimento -->
+      <section class="form-section" *ngIf="isAbastecimento()">
+        <div class="section-head">
+          <div class="dot-icon"></div>
+          <div class="section-txt">
+            <div class="section-title">Abastecimento</div>
+            <div class="section-sub">Informe os dados obrigatórios do abastecimento.</div>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <label class="f">
+            <span class="f-label">Qtd. litros <span class="req">*</span></span>
+            <input class="control" type="number" [(ngModel)]="paradaForm.abastecimento.qtLitros" placeholder="Ex.: 120.5" />
+          </label>
+
+          <label class="f">
+            <span class="f-label">Valor/L <span class="req">*</span></span>
+            <input class="control" type="number" [(ngModel)]="paradaForm.abastecimento.valorLitro" placeholder="Ex.: 6.19" />
+          </label>
+
+          <label class="f">
+            <span class="f-label">Valor total</span>
+            <input class="control" type="number" [(ngModel)]="paradaForm.abastecimento.valorTotal" placeholder="Opcional" />
+          </label>
+
+          <label class="f">
+            <span class="f-label">Tipo combustível <span class="req">*</span></span>
+            <select class="control" [(ngModel)]="paradaForm.abastecimento.tipoCombustivel">
+              <option value="">Selecione</option>
+              <option *ngFor="let t of TIPOS_COMBUSTIVEL" [value]="t">{{ t }}</option>
+            </select>
+          </label>
+
+          <label class="f">
+            <span class="f-label">Forma pagamento <span class="req">*</span></span>
+            <select class="control" [(ngModel)]="paradaForm.abastecimento.formaPagamento">
+              <option value="">Selecione</option>
+              <option *ngFor="let f of FORMAS_PAGAMENTO" [value]="f">{{ f }}</option>
+            </select>
+          </label>
+
+          <label class="f">
+            <span class="f-label">Posto</span>
+            <input class="control" [(ngModel)]="paradaForm.abastecimento.posto" placeholder="Ex.: Posto X" />
+          </label>
+
+          <label class="f">
+            <span class="f-label">Cidade</span>
+            <input class="control" [(ngModel)]="paradaForm.abastecimento.cidade" placeholder="Ex.: Fortaleza" />
+          </label>
+
+          <label class="f">
+            <span class="f-label">UF</span>
+            <input class="control" [(ngModel)]="paradaForm.abastecimento.uf" placeholder="Ex.: PB" maxlength="2" />
+          </label>
+
+          <label class="f span2">
+            <span class="f-label">Nº nota/cupom</span>
+            <input class="control" [(ngModel)]="paradaForm.abastecimento.numNotaOuCupom" placeholder="Opcional" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Seção: Manutenção -->
+      <section class="form-section" *ngIf="isManutencao()">
+        <div class="section-head">
+          <div class="dot-icon"></div>
+          <div class="section-txt">
+            <div class="section-title">Manutenção</div>
+            <div class="section-sub">Informe os dados obrigatórios da manutenção.</div>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <label class="f span2">
+            <span class="f-label">Descrição <span class="req">*</span></span>
+            <input class="control" [(ngModel)]="paradaForm.manutencao.descricao" placeholder="Ex.: Troca de pastilhas" />
+          </label>
+
+          <label class="f">
+            <span class="f-label">Início <span class="req">*</span></span>
+            <input class="control" type="date" [(ngModel)]="paradaForm.manutencao.dataInicioManutencao" />
+          </label>
+
+          <label class="f">
+            <span class="f-label">Fim</span>
+            <input class="control" type="date" [(ngModel)]="paradaForm.manutencao.dataFimManutencao" />
+          </label>
+
+          <label class="f">
+            <span class="f-label">Tipo manutenção <span class="req">*</span></span>
+            <select class="control" [(ngModel)]="paradaForm.manutencao.tipoManutencao">
+              <option value="">Selecione</option>
+              <option *ngFor="let t of TIPOS_MANUTENCAO" [value]="t">{{ t }}</option>
+            </select>
+          </label>
+
+          <label class="f">
+            <span class="f-label">Status <span class="req">*</span></span>
+            <select class="control" [(ngModel)]="paradaForm.manutencao.statusManutencao">
+              <option value="">Selecione</option>
+              <option *ngFor="let s of STATUS_MANUTENCAO" [value]="s">{{ s }}</option>
+            </select>
+          </label>
+
+          <label class="f">
+            <span class="f-label">Valor</span>
+            <input class="control" type="number" [(ngModel)]="paradaForm.manutencao.valor" placeholder="Ex.: 450.00" />
+          </label>
+
+          <label class="f">
+            <span class="f-label">Oficina (UUID)</span>
+            <input class="control" [(ngModel)]="paradaForm.manutencao.oficinaId" placeholder="Opcional" />
+          </label>
+        </div>
+
+        <label class="f">
+          <span class="f-label">Itens trocados</span>
+          <textarea class="control textarea"
+                    rows="3"
+                    [(ngModel)]="paradaForm.itensTrocadosText"
+                    placeholder="Separe por vírgula ou quebra de linha"></textarea>
+        </label>
+
+        <label class="f">
+          <span class="f-label">Observações</span>
+          <textarea class="control textarea"
+                    rows="3"
+                    [(ngModel)]="paradaForm.manutencao.observacoes"
+                    placeholder="Opcional"></textarea>
+        </label>
+
+        <div class="block" style="margin-top: 10px;">
+          <div class="block-title">Trocas de pneu (opcional)</div>
+          <div class="block-body">
+            <div class="form-grid-3" *ngFor="let t of paradaForm.manutencao.trocasPneu; let i = index">
+              <label class="f">
+                <span class="f-label">Pneu <span class="req">*</span></span>
+                <input class="control" [(ngModel)]="t.pneu" placeholder="Código do pneu" />
+              </label>
+
+              <label class="f">
+                <span class="f-label">Eixo <span class="req">*</span></span>
+                <input class="control" type="number" [(ngModel)]="t.eixoNumero" />
+              </label>
+
+              <label class="f">
+                <span class="f-label">KM odômetro <span class="req">*</span></span>
+                <input class="control" type="number" [(ngModel)]="t.kmOdometro" />
+              </label>
+
+              <label class="f">
+                <span class="f-label">Lado <span class="req">*</span></span>
+                <select class="control" [(ngModel)]="t.lado">
+                  <option value="">Selecione</option>
+                  <option *ngFor="let l of LADOS_PNEU" [value]="l">{{ l }}</option>
+                </select>
+              </label>
+
+              <label class="f">
+                <span class="f-label">Posição <span class="req">*</span></span>
+                <select class="control" [(ngModel)]="t.posicao">
+                  <option value="">Selecione</option>
+                  <option *ngFor="let p of POSICOES_PNEU" [value]="p">{{ p }}</option>
+                </select>
+              </label>
+
+              <label class="f">
+                <span class="f-label">Tipo troca <span class="req">*</span></span>
+                <select class="control" [(ngModel)]="t.tipoTroca">
+                  <option value="">Selecione</option>
+                  <option *ngFor="let tp of TIPOS_TROCA_PNEU" [value]="tp">{{ tp }}</option>
+                </select>
+              </label>
+
+              <div class="f">
+                <span class="f-label">&nbsp;</span>
+                <button class="btn ghost" type="button" (click)="removeTrocaPneu(i)">Remover</button>
+              </div>
+            </div>
+
+            <button class="btn small" type="button" (click)="addTrocaPneu()">+ Adicionar troca</button>
+          </div>
+        </div>
+      </section>
+
     </div>
 
     <div class="modal-footer sticky-footer">
@@ -625,4 +812,3 @@
 
   </div>
 </div>
-

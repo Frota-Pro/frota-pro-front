@@ -45,7 +45,7 @@ export class CaminhaoDetalheComponent implements OnInit {
   data: CaminhaoDetalheResponse | null = null;
   tab: TabKey = 'cargas';
 
-  // Meta ativa (consumo)
+  // Meta ativa (vem de metasAtivas)
   meta: MetaResponse | null = null;
 
   // Histórico real
@@ -148,7 +148,7 @@ export class CaminhaoDetalheComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.data = res;
-          this.meta = this.getMetaConsumo(res.metasAtivas || []);
+          this.meta = this.getMetaAtiva(res.metasAtivas || []);
           this.carregarDocumentos();
         },
         error: (err) => {
@@ -179,10 +179,9 @@ export class CaminhaoDetalheComponent implements OnInit {
     return Math.max(0, Math.min(100, p));
   }
 
-  private getMetaConsumo(list: MetaResponse[]): MetaResponse | null {
+  private getMetaAtiva(list: MetaResponse[]): MetaResponse | null {
     if (!list || list.length === 0) return null;
-    const found = list.find((m) => (m.tipoMeta || '').toUpperCase() === 'CONSUMO_COMBUSTIVEL');
-    return found || null;
+    return list[0] || null;
   }
 
   // ------------------ TABS ------------------

@@ -7,6 +7,9 @@ import { finalize } from 'rxjs/operators';
 import { OficinaApiService } from '../../../core/api/oficina-api.service';
 import { OficinaResponse } from '../../../core/api/oficina-api.models';
 import { OficinaDashboardResponse } from '../../../core/api/oficina-dashboard.models';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
+
+const MAX_CODIGO = 50;
 
 @Component({
   selector: 'app-oficina-detalhe',
@@ -31,10 +34,19 @@ export class OficinaDetalheComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private api: OficinaApiService,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
     this.codigo = this.route.snapshot.paramMap.get('codigo') || '';
+    if (!this.codigo) {
+      this.toast.error('Código da oficina é obrigatório.');
+      return;
+    }
+    if (this.codigo.length > MAX_CODIGO) {
+      this.toast.error(`Código da oficina deve ter no máximo ${MAX_CODIGO} caracteres.`);
+      return;
+    }
     this.setPeriodoMesAtual();
     this.carregarOficina();
     this.carregarDashboard();
@@ -53,6 +65,10 @@ export class OficinaDetalheComponent implements OnInit {
   }
 
   carregarOficina(): void {
+    if (!this.codigo || this.codigo.length > MAX_CODIGO) {
+      this.toast.error('Código da oficina inválido.');
+      return;
+    }
     this.loading = true;
     this.erro = null;
 
@@ -65,7 +81,14 @@ export class OficinaDetalheComponent implements OnInit {
   }
 
   carregarDashboard(): void {
-    if (!this.inicio || !this.fim) return;
+    if (!this.inicio || !this.fim) {
+      this.toast.warn('Informe início e fim para o dashboard.');
+      return;
+    }
+    if (!this.codigo || this.codigo.length > MAX_CODIGO) {
+      this.toast.error('Código da oficina inválido.');
+      return;
+    }
 
     this.loading = true;
     this.erro = null;

@@ -6,8 +6,12 @@ import { finalize } from 'rxjs/operators';
 
 import { PneuApiService } from '../../../core/api/pneu-api.service';
 import { PneuRequest, PneuResponse, PneuVidaUtilResponse } from '../../../core/api/pneu-api.models';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 type Alerta = 'TODOS' | 'OK' | 'PROXIMO_FIM' | 'VENCIDO';
+const PNEU_STATUS = ['ESTOQUE', 'EM_USO', 'EM_RECAPAGEM', 'DESCARTADO'] as const;
+const MAX_CODIGO = 20;
+const MAX_Q = 120;
 
 @Component({
   selector: 'app-pneus',
@@ -51,7 +55,7 @@ export class PneusComponent implements OnInit {
     dtCompra: null,
   };
 
-  constructor(private api: PneuApiService, private router: Router) {}
+  constructor(private api: PneuApiService, private router: Router, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.carregarPagina();
@@ -59,6 +63,15 @@ export class PneusComponent implements OnInit {
 
   carregarPagina(page?: number): void {
     if (page != null) this.page = page;
+
+    if (this.q && this.q.length > MAX_Q) {
+      this.toast.warn(`Busca deve ter no máximo ${MAX_Q} caracteres.`);
+      return;
+    }
+    if (this.statusFilter !== 'TODOS' && !PNEU_STATUS.includes(this.statusFilter as any)) {
+      this.toast.warn('Status inválido. Selecione um status válido.');
+      return;
+    }
 
     this.loading = true;
     this.errorMsg = null;
@@ -93,6 +106,14 @@ export class PneusComponent implements OnInit {
   }
 
   abrirDetalhe(p: PneuResponse): void {
+    if (!p?.codigo) {
+      this.toast.warn('Código do pneu é obrigatório.');
+      return;
+    }
+    if (p.codigo.length > MAX_CODIGO) {
+      this.toast.warn(`Código do pneu deve ter no máximo ${MAX_CODIGO} caracteres.`);
+      return;
+    }
     this.router.navigate(['/dashboard/pneus', p.codigo]);
   }
 
@@ -194,8 +215,16 @@ export class PneusComponent implements OnInit {
       dtCompra: this.form.dtCompra || null,
     };
 
+    if (!PNEU_STATUS.includes(payload.status as any)) {
+      this.toast.warn('Status do pneu inválido.');
+      return;
+    }
     if (!payload.kmMetaAtual || payload.kmMetaAtual <= 0) {
-      alert('Informe a meta de KM (kmMetaAtual) do pneu (maior que zero).');
+      this.toast.warn('Informe a meta de KM (kmMetaAtual) do pneu (maior que zero).');
+      return;
+    }
+    if (this.isEditing && this.editingCodigo && this.editingCodigo.length > MAX_CODIGO) {
+      this.toast.warn(`Código do pneu deve ter no máximo ${MAX_CODIGO} caracteres.`);
       return;
     }
 
@@ -215,6 +244,14 @@ export class PneusComponent implements OnInit {
   }
 
   deletar(p: PneuResponse): void {
+    if (!p?.codigo) {
+      this.toast.warn('Código do pneu é obrigatório.');
+      return;
+    }
+    if (p.codigo.length > MAX_CODIGO) {
+      this.toast.warn(`Código do pneu deve ter no máximo ${MAX_CODIGO} caracteres.`);
+      return;
+    }
     if (!confirm(`Deseja excluir o pneu ${p.codigo}?`)) return;
 
     this.loading = true;
