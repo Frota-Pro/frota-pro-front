@@ -12,6 +12,7 @@ import { CargaResponse } from '../../../core/api/carga-api.models';
 
 import { DocumentoMotoristaApiService } from '../../../core/api/documento-motorista-api.service';
 import { DocumentoMotoristaResponse, TipoDocumentoMotorista } from '../../../core/api/documento-motorista-api.models';
+import { formatKgFromTon } from '../../../shared/utils/weight';
 
 type TabKey = 'cargas' | 'meta' | 'docs';
 
@@ -403,6 +404,10 @@ export class MotoristaDetalheComponent implements OnInit {
   formatNumber(v: number | null | undefined, dec = 0): string {
     const n = Number(v || 0);
     return n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+
+  formatKgFromTon(v: number | string | null | undefined, dec = 0): string {
+    return formatKgFromTon(v, dec);
   }
 
   // KPI auxiliar: dias para vencer CNH (baseado em string dd/MM/yyyy)

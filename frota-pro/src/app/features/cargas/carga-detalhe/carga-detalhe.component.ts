@@ -7,6 +7,7 @@ import { finalize } from 'rxjs/operators';
 import { CargaApiService } from '../../../core/api/carga-api.service';
 import { ParadaCargaApiService } from '../../../core/api/parada-carga-api.service';
 import { ArquivoApiService } from '../../../core/api/arquivo-api.service';
+import { formatKgFromTon } from '../../../shared/utils/weight';
 
 import { CargaResponse, ClienteCargaResponse } from '../../../core/api/carga-api.models';
 import {
@@ -811,6 +812,10 @@ export class CargaDetalheComponent implements OnInit {
     if (!Number.isFinite(n)) n = 0;
 
     return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  formatKgFromTon(v: number | string | null | undefined, dec = 0): string {
+    return formatKgFromTon(v, dec);
   }
 
   labelStatus(status: string): string {

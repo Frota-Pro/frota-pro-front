@@ -26,6 +26,7 @@ import {
   DocumentoCaminhaoResponse,
   TipoDocumentoCaminhao,
 } from '../../../core/api/documento-caminhao-api.models';
+import { formatKgFromTon } from '../../../shared/utils/weight';
 
 type TabKey = 'cargas' | 'abastecimentos' | 'os';
 
@@ -456,6 +457,11 @@ export class CaminhaoDetalheComponent implements OnInit {
     const n = Number(v || 0);
     return n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
   }
+
+  formatKgFromTon(v: number | string | null | undefined, dec = 0): string {
+    return formatKgFromTon(v, dec);
+  }
+
 
   formatDateTimeBr(iso: string | null | undefined): string {
     if (!iso) return '—';

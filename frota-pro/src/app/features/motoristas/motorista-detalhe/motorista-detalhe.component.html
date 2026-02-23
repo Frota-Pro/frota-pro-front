@@ -128,7 +128,7 @@
           <td class="mono">{{ c.numeroCarga }}</td>
           <td>{{ c.dtSaida || '—' }}</td>
           <td><span class="tag">{{ c.statusCarga }}</span></td>
-          <td>{{ formatNumber(c.pesoCarga, 0) }} kg</td>
+          <td>{{ formatKgFromTon(c.pesoCarga, 0) }} kg</td>
           <td>{{ c.placaCaminhao || '—' }}</td>
         </tr>
         </tbody>
@@ -147,9 +147,9 @@
 
       <div class="meta-grid" *ngIf="!metaLoading && meta as r; else metaEmpty">
         <div class="kpi small">
-          <div class="kpi-head"><span class="kpi-label">Toneladas (total)</span></div>
-          <div class="kpi-value">{{ formatNumber(r.totalTonelada, 2) }}</div>
-          <div class="kpi-sub">Objetivo: {{ formatNumber(r.objetivoMesTonelada, 2) }}</div>
+          <div class="kpi-head"><span class="kpi-label">Peso (kg)</span></div>
+          <div class="kpi-value">{{ formatKgFromTon(r.totalTonelada, 0) }}</div>
+          <div class="kpi-sub">Objetivo: {{ formatKgFromTon(r.objetivoMesTonelada, 0) }}</div>
         </div>
 
         <div class="kpi small">
@@ -167,7 +167,7 @@
         <div class="kpi small">
           <div class="kpi-head"><span class="kpi-label">Realizado (%)</span></div>
           <div class="kpi-value">{{ formatNumber(r.realizadoToneladaPercentual, 2) }}%</div>
-          <div class="kpi-sub">Tonelagem</div>
+          <div class="kpi-sub">Peso</div>
         </div>
 
         <div class="meta-table-wrap" *ngIf="(r.linhas || []).length > 0">
@@ -176,7 +176,7 @@
             <tr>
               <th>Data</th>
               <th>Cidade</th>
-              <th>Tonelagem</th>
+              <th>Peso (kg)</th>
               <th>KM</th>
               <th>Litros</th>
               <th>Média</th>
@@ -187,7 +187,7 @@
             <tr *ngFor="let l of (r.linhas || [])">
               <td>{{ l.data || '—' }}</td>
               <td>{{ l.cidade || '—' }}</td>
-              <td>{{ formatNumber(l.tonelagem, 2) }}</td>
+              <td>{{ formatKgFromTon(l.tonelagem, 0) }}</td>
               <td>{{ formatNumber(l.kmRodado, 0) }}</td>
               <td>{{ formatNumber(l.litros, 2) }}</td>
               <td>{{ formatNumber(l.mediaKmLitro, 2) }}</td>

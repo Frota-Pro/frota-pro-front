@@ -113,6 +113,7 @@ export class MetasComponent implements OnInit {
     return Math.max(0, Math.min(100, pct));
   }
 
+
   get metasFiltradas(): MetaResponse[] {
     const t = (this.searchTerm || '').toLowerCase().trim();
     const st = (this.filtroStatus || '').toUpperCase().trim();

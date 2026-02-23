@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
+import { catchError, from, mergeMap, throwError } from 'rxjs';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 
 type ValidationErrorPayload = {
@@ -9,24 +9,49 @@ type ValidationErrorPayload = {
   error?: string;
   path?: string;
   message?: string;
+  details?: string;
+  detalhe?: string;
+  detalheErro?: string;
+  detail?: string;
+  title?: string;
   errors?: Array<{ field?: string; message?: string }>;
+  fieldErrors?: Array<{ field?: string; message?: string }>;
+  violations?: Array<{ field?: string; message?: string }>;
 };
 
-function firstUsefulMessage(body: any): string | null {
+function firstUsefulMessage(body: unknown): string | null {
   if (!body) return null;
 
   // string body
   if (typeof body === 'string' && body.trim()) return body.trim();
 
-  // CustomException { message }
-  if (typeof body === 'object' && typeof body.message === 'string' && body.message.trim()) {
-    return body.message.trim();
+  if (typeof body !== 'object') return null;
+
+  const payload = body as ValidationErrorPayload;
+
+  // mensagens diretas comuns em payloads de erro
+  const direct =
+    payload.message?.trim() ||
+    payload.error?.trim() ||
+    payload.detail?.trim() ||
+    payload.details?.trim() ||
+    payload.detalhe?.trim() ||
+    payload.detalheErro?.trim() ||
+    payload.title?.trim();
+
+  if (direct) {
+    return direct;
   }
 
-  // ValidationError { errors: [{field,message}] }
-  const v = body as ValidationErrorPayload;
-  if (v && Array.isArray(v.errors) && v.errors.length) {
-    const msgs = v.errors
+  // ValidationError { errors / fieldErrors / violations: [{field,message}] }
+  const nestedErrors =
+    (Array.isArray(payload.errors) ? payload.errors : []).concat(
+      Array.isArray(payload.fieldErrors) ? payload.fieldErrors : [],
+      Array.isArray(payload.violations) ? payload.violations : []
+    );
+
+  if (nestedErrors.length) {
+    const msgs = nestedErrors
       .map(e => {
         const f = e?.field?.trim();
         const m = e?.message?.trim();
@@ -36,7 +61,7 @@ function firstUsefulMessage(body: any): string | null {
       .filter(Boolean) as string[];
 
     if (msgs.length === 1) return msgs[0];
-    if (msgs.length > 1) return msgs.slice(0, 3).join(' • ');
+    if (msgs.length > 1) return msgs.slice(0, 4).join('\n• ');
   }
 
   return null;
@@ -53,6 +78,34 @@ function fallbackByStatus(status: number): string {
   return 'Erro inesperado.';
 }
 
+async function parseBlobJson(blob: Blob): Promise<unknown> {
+  try {
+    const text = (await blob.text())?.trim();
+    if (!text) return null;
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  } catch {
+    return null;
+  }
+}
+
+async function resolveErrorMessage(error: HttpErrorResponse): Promise<string> {
+  const direct = firstUsefulMessage(error.error);
+  if (direct) return direct;
+
+  if (error.error instanceof Blob) {
+    const parsed = await parseBlobJson(error.error);
+    const fromBlob = firstUsefulMessage(parsed);
+    if (fromBlob) return fromBlob;
+  }
+
+  return fallbackByStatus(error.status);
+}
+
 export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ToastService);
 
@@ -60,8 +113,12 @@ export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       // 401 é tratado no authErrorInterceptor (logout + redirect)
       if (error.status !== 401) {
-        const msg = firstUsefulMessage(error.error) ?? fallbackByStatus(error.status);
-        toast.error(msg);
+        return from(resolveErrorMessage(error)).pipe(
+          mergeMap((msg) => {
+            toast.error(msg, 'Não foi possível concluir');
+            return throwError(() => error);
+          })
+        );
       }
       return throwError(() => error);
     })

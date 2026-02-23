@@ -71,7 +71,7 @@
         <div class="kpi-label">Valor total</div>
         <div class="kpi-value">{{ formatMoneyBRL(carga.valorTotal) }}</div>
         <div class="kpi-sub">
-          Peso: <strong>{{ (carga.pesoCarga ?? 0) | number:'1.0-3' }}</strong>
+          Peso: <strong>{{ formatKgFromTon(carga.pesoCarga, 0) }} kg</strong>
         </div>
       </div>
 

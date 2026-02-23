@@ -39,7 +39,7 @@
       <div class="kpi-head">
         <span class="kpi-label">Peso Transportado</span>
       </div>
-      <div class="kpi-value">{{ formatNumber(d.pesoTransportado, 0) }} kg</div>
+      <div class="kpi-value">{{ formatKgFromTon(d.pesoTransportado, 0) }} kg</div>
       <div class="kpi-sub">Somatório das cargas</div>
     </div>
 
@@ -187,7 +187,7 @@
           <td class="mono">{{ c.numeroCarga }}</td>
           <td>{{ c.dtSaida || '—' }}</td>
           <td><span class="tag">{{ c.statusCarga }}</span></td>
-          <td>{{ formatNumber(c.pesoCarga, 0) }} kg</td>
+          <td>{{ formatKgFromTon(c.pesoCarga, 0) }} kg</td>
           <td>{{ c.nomeMotorista || '—' }}</td>
         </tr>
         </tbody>

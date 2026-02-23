@@ -7,9 +7,10 @@ import { ActionButtonComponent } from '../../../../shared/ui/action-button/actio
 
 import { DashboardApiService } from '../../../../core/api/dashboard-api.service';
 import { DashboardResumoResponse } from '../../../../core/api/dashboard-api.models';
-import {Observable} from 'rxjs';
-import {AuthMeResponse} from '../../../../core/auth/auth-user.model';
-import {AuthUserService} from '../../../../core/auth/auth-user.service';
+import { Observable } from 'rxjs';
+import { AuthMeResponse } from '../../../../core/auth/auth-user.model';
+import { AuthUserService } from '../../../../core/auth/auth-user.service';
+import { formatKgFromTon } from '../../../../shared/utils/weight';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -121,8 +122,7 @@ export class DashboardHomeComponent implements OnInit {
   }
 
   private formatKg(value: number | null): string {
-    const v = value ?? 0;
-    return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(v)} kg`;
+    return `${formatKgFromTon(value, 3)} kg`;
   }
 
   private formatStatus(status: string | null): string {

@@ -80,4 +80,14 @@ export class RelatorioPdfApiService extends BaseApiService {
       observe: 'response',
     });
   }
+
+  despesasPorCategoria(inicio: string, fim: string) {
+    const params = new HttpParams().set('inicio', inicio).set('fim', fim);
+
+    return this.http.get(`${this.apiUrl}/relatorios/pdf/despesas/categorias`, {
+      params,
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
 }

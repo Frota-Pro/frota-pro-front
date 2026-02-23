@@ -239,6 +239,7 @@ export class MetaDetalheComponent implements OnInit {
     return n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
   }
 
+
   formatDateBr(iso: string | null | undefined): string {
     if (!iso) return '—';
     const [y, m, d] = String(iso).split('-');
