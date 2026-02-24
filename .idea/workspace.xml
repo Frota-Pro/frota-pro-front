@@ -6,17 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="Refatora tratamento de erros na API e melhora a exibição de mensagens de erro. Atualiza a formatação de pesos para kg em componentes relevantes.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/styles.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,7 +25,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="170" />
+    <option name="cachedIndexableFilesCount" value="174" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Settings">
@@ -148,6 +137,8 @@
       <workItem from="1771940823136" duration="637000" />
       <workItem from="1771941827736" duration="211000" />
       <workItem from="1771942432534" duration="3572000" />
+      <workItem from="1771949932452" duration="2246000" />
+      <workItem from="1771961883215" duration="622000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade.">
       <option name="closed" value="true" />
@@ -277,7 +268,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771878122380</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="feat: implementa sistema de notificações com modal e melhorias na exibição">
+      <option name="closed" value="true" />
+      <created>1771950036256</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1771950036256</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
