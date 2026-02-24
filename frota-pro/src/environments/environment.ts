@@ -1,6 +1,6 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8080',
+  production: true,
+  apiUrl: '/api',
   appName: 'FrotaPRO',
-  appVersion: '1.0.0-dev',
+  appVersion: '1.0.0',
 };

@@ -2,10 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoogleChartsModule, ChartType } from 'angular-google-charts';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, RouterOutlet } from '@angular/router';
+import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthMeResponse } from '../../../core/auth/auth-user.model';
 import { AuthUserService } from '../../../core/auth/auth-user.service';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,7 +24,11 @@ import { AuthUserService } from '../../../core/auth/auth-user.service';
 export class Dashboard implements OnInit {
   user$!: Observable<AuthMeResponse | null>;
 
-  constructor(public authUser: AuthUserService) {
+  constructor(
+    public authUser: AuthUserService,
+    private authService: AuthService,
+    private router: Router,
+  ) {
     this.user$ = this.authUser.user$;
   }
 
@@ -157,8 +162,10 @@ export class Dashboard implements OnInit {
   }
 
   logout() {
-    // aqui você chamaria AuthService.logout + navigate
-    console.log('logout');
+    this.authService.logout();
     this.authUser.clear();
+    this.router.navigateByUrl('/login', { replaceUrl: true }).finally(() => {
+      window.location.replace('/login');
+    });
   }
 }

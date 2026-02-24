@@ -220,7 +220,6 @@
   margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid rgba(255,255,255,0.08);
-  position: relative;
 }
 
 .user-box {
@@ -265,26 +264,17 @@
 }
 
 
-.footer-item {
-  margin-top: 6px;
+.logout-item {
+  margin-top: 8px;
+  width: 100%;
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.14);
 }
 
-/* logout fixo no canto inferior direito do sidebar */
-.logout-btn {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.92);
-  cursor: pointer;
-}
-
-.logout-btn:hover {
-  background: rgba(255,255,255,0.10);
+.logout-item:hover {
+  background: rgba(239, 68, 68, 0.24);
+  border-color: rgba(252, 165, 165, 0.45);
 }
 
 /* ===== RESPONSIVE ===== */

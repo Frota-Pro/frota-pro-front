@@ -130,7 +130,7 @@
 
     </nav>
 
-    <!-- Footer do sidebar (usuário + configurações + logout) -->
+    <!-- Footer do sidebar (usuário + logout) -->
     <div class="sidebar-footer">
 
       <div class="user-box" *ngIf="!isClosed">
@@ -152,13 +152,9 @@
         </ng-template>
       </div>
 
-      <a class="menu-item footer-item" routerLink="configuracoes" routerLinkActive="active">
-        <i class="icon fas fa-cog"></i>
-        <span *ngIf="!isClosed">Configurações</span>
-      </a>
-
-      <button class="logout-btn" (click)="logout()" title="Sair">
-        <i class="fas fa-right-from-bracket"></i>
+      <button class="menu-item logout-item" (click)="logout()" title="Sair">
+        <i class="icon fas fa-right-from-bracket"></i>
+        <span *ngIf="!isClosed">Sair da conta</span>
       </button>
 
     </div>

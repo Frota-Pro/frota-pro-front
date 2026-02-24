@@ -4,21 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="Adiciona suporte a metas no componente de caminhão. Refatora a exibição de metas ativas e implementa validações no formulário de edição de metas.">
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="Refatora tratamento de erros na API e melhora a exibição de mensagens de erro. Atualiza a formatação de pesos para kg em componentes relevantes.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/api/api-error.interceptor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/api-error.interceptor.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/api/relatorio-pdf-api.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/relatorio-pdf-api.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhao-detalhe/caminhao-detalhe.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhao-detalhe/caminhao-detalhe.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhao-detalhe/caminhao-detalhe.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhao-detalhe/caminhao-detalhe.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/carga-detalhe/carga-detalhe.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/carga-detalhe/carga-detalhe.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/carga-detalhe/carga-detalhe.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/cargas/carga-detalhe/carga-detalhe.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard-home/dashboard-home.component/dashboard-home.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/metas/meta-detalhe/meta-detalhe.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/metas/meta-detalhe/meta-detalhe.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/motoristas/motorista-detalhe/motorista-detalhe.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/motoristas/motorista-detalhe/motorista-detalhe.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/motoristas/motorista-detalhe/motorista-detalhe.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/motoristas/motorista-detalhe/motorista-detalhe.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/shared/ui/toast/toast-container.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/ui/toast/toast-container.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/styles.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -143,7 +141,13 @@
       <workItem from="1771617829348" duration="646000" />
       <workItem from="1771845400544" duration="14299000" />
       <workItem from="1771873922015" duration="332000" />
-      <workItem from="1771874918333" duration="3019000" />
+      <workItem from="1771874918333" duration="3062000" />
+      <workItem from="1771890605821" duration="2898000" />
+      <workItem from="1771934089746" duration="1088000" />
+      <workItem from="1771938951578" duration="591000" />
+      <workItem from="1771940823136" duration="637000" />
+      <workItem from="1771941827736" duration="211000" />
+      <workItem from="1771942432534" duration="3572000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade.">
       <option name="closed" value="true" />
@@ -265,11 +269,30 @@
       <option name="project" value="LOCAL" />
       <updated>1771863065537</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Refatora tratamento de erros na API e melhora a exibição de mensagens de erro. Atualiza a formatação de pesos para kg em componentes relevantes.">
+      <option name="closed" value="true" />
+      <created>1771878122380</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1771878122380</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade." />
@@ -282,7 +305,8 @@
     <MESSAGE value="Adiciona funcionalidade de logs ao módulo Winthor. Implementa listagem, filtragem e cópia de logs, além de suporte a autoatualização e seleção de fonte." />
     <MESSAGE value="Adiciona componente de toast para exibição de mensagens. Implementa serviço de toast e integra com interceptores e componentes existentes para feedback ao usuário." />
     <MESSAGE value="Adiciona suporte a metas no componente de caminhão. Refatora a exibição de metas ativas e implementa validações no formulário de edição de metas." />
-    <option name="LAST_COMMIT_MESSAGE" value="Adiciona suporte a metas no componente de caminhão. Refatora a exibição de metas ativas e implementa validações no formulário de edição de metas." />
+    <MESSAGE value="Refatora tratamento de erros na API e melhora a exibição de mensagens de erro. Atualiza a formatação de pesos para kg em componentes relevantes." />
+    <option name="LAST_COMMIT_MESSAGE" value="Refatora tratamento de erros na API e melhora a exibição de mensagens de erro. Atualiza a formatação de pesos para kg em componentes relevantes." />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

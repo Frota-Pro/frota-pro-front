@@ -1,4 +1,4 @@
-<aside class="sidebar">
+<aside class="sidebar" [class.compact]="prefs.compactSidebar">
   <div class="brand">
     <div class="logo">Frota<span>PRO</span></div>
     <button class="collapse-btn" type="button" aria-label="Recolher sidebar">
@@ -101,33 +101,68 @@
     </div>
   </nav>
 
-  <div class="user-chip" *ngIf="(user$ | async) as u; else loadingUser">
-    <div class="avatar">{{ (u.nome || 'U').charAt(0).toUpperCase() }}</div>
+  <div class="sidebar-footer" (click)="$event.stopPropagation()">
+    <div class="user-chip" *ngIf="(user$ | async) as u; else loadingUser">
+      <div class="avatar">{{ (u.nome || 'U').charAt(0).toUpperCase() }}</div>
 
-    <div class="user-text">
-      <div class="user-name">{{ u.nome }}</div>
-      <div class="user-role">
-        {{ authUser.getRoleLabel(u) }}
+      <div class="user-text">
+        <div class="user-name">{{ u.nome }}</div>
+        <div class="user-role">
+          {{ authUser.getRoleLabel(u) }}
+        </div>
       </div>
+    </div>
+
+    <ng-template #loadingUser>
+      <div class="user-chip">
+        <div class="avatar">...</div>
+        <div class="user-text">
+          <div class="user-name">Carregando...</div>
+          <div class="user-role">...</div>
+        </div>
+      </div>
+    </ng-template>
+
+    <div class="footer-actions">
+      <button class="footer-btn settings-btn" type="button" (click)="togglePreferences($event)">
+        <span class="icon"><i class="fas fa-cog"></i></span>
+        <span class="label">Configurações</span>
+      </button>
+
+      <button class="footer-btn logout-btn" type="button" (click)="logout()">
+        <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="label">Sair da conta</span>
+      </button>
+    </div>
+
+    <div class="settings-popover" *ngIf="settingsOpen">
+      <div class="settings-title">Preferências rápidas</div>
+
+      <label class="setting-row">
+        <span>Sidebar compacta</span>
+        <input
+          type="checkbox"
+          [checked]="prefs.compactSidebar"
+          (change)="updatePreference('compactSidebar', $event)">
+      </label>
+
+      <label class="setting-row">
+        <span>Reduzir animações</span>
+        <input
+          type="checkbox"
+          [checked]="prefs.reduceMotion"
+          (change)="updatePreference('reduceMotion', $event)">
+      </label>
+
+      <label class="setting-row">
+        <span>Confirmar ao sair</span>
+        <input
+          type="checkbox"
+          [checked]="prefs.confirmLogout"
+          (change)="updatePreference('confirmLogout', $event)">
+      </label>
+
+      <button class="reset-btn" type="button" (click)="resetPreferences()">Restaurar padrões</button>
     </div>
   </div>
-
-  <ng-template #loadingUser>
-    <div class="user-chip">
-      <div class="avatar">...</div>
-      <div class="user-text">
-        <div class="user-name">Carregando...</div>
-        <div class="user-role">...</div>
-      </div>
-    </div>
-  </ng-template>
-
-    <a class="nav-item settings" routerLink="/dashboard/configuracoes" routerLinkActive="active">
-      <span class="icon"><i class="fas fa-cog"></i></span>
-      <span class="label">Configurações</span>
-    </a>
-
-    <button class="logout" type="button" (click)="logout()" aria-label="Sair">
-      <i class="fas fa-sign-out-alt"></i>
-    </button>
 </aside>

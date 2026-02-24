@@ -6,11 +6,65 @@
     </div>
 
     <div class="header-right">
-      <button class="icon-btn" type="button" aria-label="Notificações" (click)="toggleNotifications()">
+      <button
+        class="icon-btn"
+        type="button"
+        aria-label="Notificações"
+        [class.active]="notificationsOpen"
+        [class.has-new]="hasIncomingNotification"
+        (click)="toggleNotifications($event)">
         <i class="fas fa-bell"></i>
         <span class="dot" aria-hidden="true" *ngIf="unreadCount > 0"></span>
         <span class="count" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
       </button>
+
+      <section class="notifications-popover" *ngIf="notificationsOpen" (click)="$event.stopPropagation()">
+        <div class="notifications-header">
+          <div>
+            <h3>Notificações</h3>
+            <p>{{ unreadCount }} não lida(s)</p>
+          </div>
+          <button type="button" class="link-btn" *ngIf="unreadCount > 0" (click)="markAllAsRead()">Marcar todas como lidas</button>
+        </div>
+
+        <div class="notifications-tabs">
+          <button type="button" [class.active]="activeTab === 'todas'" (click)="switchTab('todas')">Todas</button>
+          <button type="button" [class.active]="activeTab === 'naoLidas'" (click)="switchTab('naoLidas')">Não lidas</button>
+        </div>
+
+        <div class="notifications-list">
+          <div class="empty" *ngIf="notificationsLoading">Carregando notificações...</div>
+          <div class="empty" *ngIf="!notificationsLoading && notificationsError">{{ notificationsError }}</div>
+          <div class="empty" *ngIf="!notificationsLoading && !notificationsError && notifications.length === 0">
+            Nenhuma notificação encontrada.
+          </div>
+
+          <button
+            type="button"
+            class="notification-item"
+            *ngFor="let n of notifications"
+            [class.unread]="!n.lida"
+            [class.info]="n.tipo === 'INFO'"
+            [class.success]="n.tipo === 'SUCESSO'"
+            [class.warning]="n.tipo === 'ALERTA'"
+            [class.error]="n.tipo === 'ERRO'"
+            (click)="openNotification(n)">
+            <div class="icon"><i [class]="notificationIcon(n.tipo)"></i></div>
+            <div class="body">
+              <div class="title-row">
+                <strong>{{ getNotificationTitle(n.titulo) }}</strong>
+                <span>{{ formatNotificationDate(n.criadoEm) }}</span>
+              </div>
+              <p>{{ getNotificationMessage(n.mensagem) }}</p>
+            </div>
+          </button>
+        </div>
+
+        <p class="notifications-footnote" *ngIf="!notificationsLoading && notifications.length > 0">
+          Exibindo as 5 notificações mais recentes.
+        </p>
+        <button type="button" class="see-all-btn" (click)="openNotificationsModal($event)">Ver todas</button>
+      </section>
 
       <div class="user-chip" *ngIf="!isClosed">
         <ng-container *ngIf="(user$ | async) as u; else loadingUser">
@@ -34,48 +88,51 @@
     </div>
   </header>
 
-  <section class="notifications-panel" *ngIf="notificationsOpen">
-    <div class="notifications-header">
-      <div>
-        <h3>Notificações</h3>
-        <p>{{ unreadCount }} não lida(s)</p>
-      </div>
-      <button type="button" class="link-btn" (click)="markAllAsRead()">Marcar todas como lidas</button>
-    </div>
-
-    <div class="notifications-tabs">
-      <button type="button" [class.active]="activeTab === 'todas'" (click)="switchTab('todas')">Todas</button>
-      <button type="button" [class.active]="activeTab === 'naoLidas'" (click)="switchTab('naoLidas')">Não lidas</button>
-    </div>
-
-    <div class="notifications-list" (scroll)="onListScroll($event)">
-      <div class="empty" *ngIf="notificationsLoading">Carregando notificações...</div>
-      <div class="empty" *ngIf="!notificationsLoading && notificationsError">{{ notificationsError }}</div>
-      <div class="empty" *ngIf="!notificationsLoading && !notificationsError && notifications.length === 0">
-        Nenhuma notificação encontrada.
-      </div>
-
-      <button
-        type="button"
-        class="notification-item"
-        *ngFor="let n of notifications"
-        [class.unread]="!n.lida"
-        [class.info]="n.tipo === 'INFO'"
-        [class.success]="n.tipo === 'SUCESSO'"
-        [class.warning]="n.tipo === 'ALERTA'"
-        [class.error]="n.tipo === 'ERRO'"
-        (click)="openNotification(n)">
-        <div class="icon"><i [class]="notificationIcon(n.tipo)"></i></div>
-        <div class="body">
-          <div class="title-row">
-            <strong>{{ n.titulo }}</strong>
-            <span>{{ formatNotificationDate(n.criadoEm) }}</span>
-          </div>
-          <p>{{ n.mensagem }}</p>
+  <section class="notifications-modal-backdrop" *ngIf="notificationsModalOpen" (click)="closeNotificationsModal()">
+    <div class="notifications-modal" role="dialog" aria-modal="true" aria-label="Todas as notificações" (click)="$event.stopPropagation()">
+      <div class="notifications-modal-header">
+        <div>
+          <h3>Todas as notificações</h3>
+          <p>{{ unreadCount }} não lida(s)</p>
         </div>
-      </button>
+        <button type="button" class="close-modal-btn" aria-label="Fechar notificações" (click)="closeNotificationsModal()">×</button>
+      </div>
 
-      <div class="empty" *ngIf="notificationsLoadingMore">Carregando mais...</div>
+      <div class="notifications-tabs modal-tabs">
+        <button type="button" [class.active]="modalActiveTab === 'todas'" (click)="switchModalTab('todas')">Todas</button>
+        <button type="button" [class.active]="modalActiveTab === 'naoLidas'" (click)="switchModalTab('naoLidas')">Não lidas</button>
+        <button type="button" class="link-btn" *ngIf="unreadCount > 0" (click)="markAllAsRead()">Marcar todas como lidas</button>
+      </div>
+
+      <div class="notifications-modal-list" (scroll)="onModalListScroll($event)">
+        <div class="empty" *ngIf="modalNotificationsLoading">Carregando notificações...</div>
+        <div class="empty" *ngIf="!modalNotificationsLoading && modalNotificationsError">{{ modalNotificationsError }}</div>
+        <div class="empty" *ngIf="!modalNotificationsLoading && !modalNotificationsError && modalNotifications.length === 0">
+          Nenhuma notificação encontrada.
+        </div>
+
+        <button
+          type="button"
+          class="notification-item"
+          *ngFor="let n of modalNotifications"
+          [class.unread]="!n.lida"
+          [class.info]="n.tipo === 'INFO'"
+          [class.success]="n.tipo === 'SUCESSO'"
+          [class.warning]="n.tipo === 'ALERTA'"
+          [class.error]="n.tipo === 'ERRO'"
+          (click)="openNotification(n)">
+          <div class="icon"><i [class]="notificationIcon(n.tipo)"></i></div>
+          <div class="body">
+            <div class="title-row">
+              <strong>{{ getNotificationTitle(n.titulo) }}</strong>
+              <span>{{ formatNotificationDate(n.criadoEm) }}</span>
+            </div>
+            <p>{{ getNotificationMessage(n.mensagem) }}</p>
+          </div>
+        </button>
+
+        <div class="empty" *ngIf="modalNotificationsLoadingMore">Carregando mais...</div>
+      </div>
     </div>
   </section>
 

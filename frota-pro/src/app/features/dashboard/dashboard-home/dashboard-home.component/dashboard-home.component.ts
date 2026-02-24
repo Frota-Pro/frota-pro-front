@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -61,10 +61,15 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     status: string;
   }> = [];
 
-  readonly notificationPageSize = 20;
+  readonly notificationPageSize = 5;
+  readonly notificationModalPageSize = 20;
+  readonly notificationsPollMs = 10000;
   unreadCount = 0;
   notificationsOpen = false;
   activeTab: 'todas' | 'naoLidas' = 'todas';
+  hasIncomingNotification = false;
+  private cueTimeoutId: number | null = null;
+  private unreadSnapshot: number | null = null;
 
   notifications: NotificacaoResponse[] = [];
   notificationsLoading = false;
@@ -72,6 +77,15 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
   notificationsError: string | null = null;
   notificationsPage = 0;
   notificationsLastPage = false;
+
+  notificationsModalOpen = false;
+  modalActiveTab: 'todas' | 'naoLidas' = 'todas';
+  modalNotifications: NotificacaoResponse[] = [];
+  modalNotificationsLoading = false;
+  modalNotificationsLoadingMore = false;
+  modalNotificationsError: string | null = null;
+  modalNotificationsPage = 0;
+  modalNotificationsLastPage = false;
 
   ngOnInit(): void {
     this.loading = true;
@@ -86,12 +100,15 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     });
 
     this.refreshUnreadCount();
-    interval(45000)
+    interval(this.notificationsPollMs)
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.refreshUnreadCount());
+      .subscribe(() => this.pollNotifications());
   }
 
   ngOnDestroy(): void {
+    if (this.cueTimeoutId !== null) {
+      window.clearTimeout(this.cueTimeoutId);
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -136,9 +153,11 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/cargas']);
   }
 
-  toggleNotifications(): void {
+  toggleNotifications(event: MouseEvent): void {
+    event.stopPropagation();
     this.notificationsOpen = !this.notificationsOpen;
-    if (this.notificationsOpen && this.notifications.length === 0) {
+    if (this.notificationsOpen) {
+      this.hasIncomingNotification = false;
       this.loadNotifications(true);
     }
   }
@@ -149,9 +168,22 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     this.loadNotifications(true);
   }
 
-  loadMoreNotifications(): void {
-    if (this.notificationsLoadingMore || this.notificationsLoading || this.notificationsLastPage) return;
-    this.loadNotifications(false);
+  openNotificationsModal(event?: MouseEvent): void {
+    event?.stopPropagation();
+    this.notificationsOpen = false;
+    this.notificationsModalOpen = true;
+    this.modalActiveTab = this.activeTab;
+    this.loadModalNotifications(true);
+  }
+
+  closeNotificationsModal(): void {
+    this.notificationsModalOpen = false;
+  }
+
+  switchModalTab(tab: 'todas' | 'naoLidas'): void {
+    if (this.modalActiveTab === tab) return;
+    this.modalActiveTab = tab;
+    this.loadModalNotifications(true);
   }
 
   markAllAsRead(): void {
@@ -159,6 +191,9 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       next: () => {
         this.refreshUnreadCount();
         this.loadNotifications(true);
+        if (this.notificationsModalOpen) {
+          this.loadModalNotifications(true);
+        }
       },
     });
   }
@@ -171,9 +206,13 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
         next: () => {
           item.lida = true;
           item.lidaEm = new Date().toISOString();
+          this.syncNotificationRead(item.id);
           this.refreshUnreadCount();
           if (this.activeTab === 'naoLidas') {
             this.notifications = this.notifications.filter((n) => n.id !== item.id);
+          }
+          if (this.modalActiveTab === 'naoLidas') {
+            this.modalNotifications = this.modalNotifications.filter((n) => n.id !== item.id);
           }
           navigate();
         },
@@ -183,14 +222,6 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     }
 
     navigate();
-  }
-
-  onListScroll(event: Event): void {
-    const el = event.target as HTMLElement;
-    const threshold = 80;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - threshold) {
-      this.loadMoreNotifications();
-    }
   }
 
   notificationIcon(tipo: NotificacaoTipo): string {
@@ -210,6 +241,16 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  getNotificationTitle(value: unknown): string {
+    const parsed = this.stringifyNotificationValue(value);
+    return parsed || 'Notificação';
+  }
+
+  getNotificationMessage(value: unknown): string {
+    const parsed = this.stringifyNotificationValue(value);
+    return parsed || 'Sem detalhes para esta notificação.';
   }
 
   private loadNotifications(reset: boolean): void {
@@ -241,10 +282,86 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       });
   }
 
+  onModalListScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    if (this.modalNotificationsLoading || this.modalNotificationsLoadingMore || this.modalNotificationsLastPage) {
+      return;
+    }
+    const threshold = 120;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - threshold) {
+      this.loadModalNotifications(false);
+    }
+  }
+
+  private loadModalNotifications(reset: boolean): void {
+    if (reset) {
+      this.modalNotificationsPage = 0;
+      this.modalNotificationsLastPage = false;
+      this.modalNotifications = [];
+      this.modalNotificationsError = null;
+      this.modalNotificationsLoading = true;
+    } else {
+      this.modalNotificationsLoadingMore = true;
+    }
+
+    this.notificacaoApi
+      .listar(this.modalActiveTab === 'naoLidas', this.modalNotificationsPage, this.notificationModalPageSize)
+      .subscribe({
+        next: (res) => {
+          this.modalNotifications = reset ? res.content : [...this.modalNotifications, ...res.content];
+          this.modalNotificationsPage += 1;
+          this.modalNotificationsLastPage = res.last;
+          this.modalNotificationsLoading = false;
+          this.modalNotificationsLoadingMore = false;
+        },
+        error: () => {
+          this.modalNotificationsError = 'Não foi possível carregar notificações.';
+          this.modalNotificationsLoading = false;
+          this.modalNotificationsLoadingMore = false;
+        },
+      });
+  }
+
   private refreshUnreadCount(): void {
     this.notificacaoApi.totalNaoLidas().subscribe({
-      next: (count) => (this.unreadCount = count || 0),
+      next: (count) => {
+        const parsed = this.parseUnreadCount(count);
+        const previous = this.unreadSnapshot;
+        this.unreadSnapshot = parsed;
+        this.unreadCount = parsed;
+
+        if (previous !== null && parsed > previous) {
+          this.triggerIncomingNotificationCue();
+          if (this.notificationsOpen) {
+            this.loadNotifications(true);
+          }
+        }
+      },
     });
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.notificationsOpen = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.notificationsModalOpen) {
+      this.notificationsModalOpen = false;
+      return;
+    }
+    this.notificationsOpen = false;
+  }
+
+  private pollNotifications(): void {
+    this.refreshUnreadCount();
+    if (this.notificationsOpen) {
+      this.loadNotifications(true);
+    }
+    if (this.notificationsModalOpen) {
+      this.loadModalNotifications(true);
+    }
   }
 
   private navigateByReference(item: NotificacaoResponse): void {
@@ -302,5 +419,52 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     if (!status) return 'N/A';
     // deixa mais “bonito” no badge
     return status.replaceAll('_', ' ');
+  }
+
+  private parseUnreadCount(value: unknown): number {
+    if (typeof value === 'number') return Math.max(0, value);
+    if (value && typeof value === 'object') {
+      const candidate = (value as { total?: unknown; quantidade?: unknown }).total
+        ?? (value as { total?: unknown; quantidade?: unknown }).quantidade;
+      if (typeof candidate === 'number') return Math.max(0, candidate);
+    }
+    return 0;
+  }
+
+  private triggerIncomingNotificationCue(): void {
+    this.hasIncomingNotification = true;
+    if (this.cueTimeoutId !== null) {
+      window.clearTimeout(this.cueTimeoutId);
+    }
+    this.cueTimeoutId = window.setTimeout(() => {
+      this.hasIncomingNotification = false;
+      this.cueTimeoutId = null;
+    }, 3500);
+  }
+
+  private syncNotificationRead(id: string): void {
+    this.notifications = this.notifications.map((n) => (n.id === id ? { ...n, lida: true, lidaEm: new Date().toISOString() } : n));
+    this.modalNotifications = this.modalNotifications.map((n) => (n.id === id ? { ...n, lida: true, lidaEm: new Date().toISOString() } : n));
+  }
+
+  private stringifyNotificationValue(value: unknown): string {
+    if (typeof value === 'string') return value.trim();
+    if (value == null) return '';
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (typeof value === 'object') {
+      const candidate = (value as { mensagem?: unknown; message?: unknown; descricao?: unknown }).mensagem
+        ?? (value as { mensagem?: unknown; message?: unknown; descricao?: unknown }).message
+        ?? (value as { mensagem?: unknown; message?: unknown; descricao?: unknown }).descricao;
+
+      if (typeof candidate === 'string' || typeof candidate === 'number' || typeof candidate === 'boolean') {
+        return String(candidate).trim();
+      }
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return '';
+      }
+    }
+    return '';
   }
 }

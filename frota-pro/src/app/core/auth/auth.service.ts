@@ -21,6 +21,7 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
   }
 
   getToken(): string | null {
