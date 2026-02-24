@@ -20,6 +20,6 @@ FROM nginx:alpine
 
 # Angular normalmente gera dist/<nome-do-projeto>/
 # Vamos copiar tudo de dist
-COPY --from=build /app/dist/ /usr/share/nginx/html
+COPY --from=build /app/dist/frota-pro/browser/ /usr/share/nginx/html
 
 EXPOSE 80
