@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -7,10 +7,13 @@ import { ActionButtonComponent } from '../../../../shared/ui/action-button/actio
 
 import { DashboardApiService } from '../../../../core/api/dashboard-api.service';
 import { DashboardResumoResponse } from '../../../../core/api/dashboard-api.models';
-import { Observable } from 'rxjs';
+import { Observable, Subject, interval } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AuthMeResponse } from '../../../../core/auth/auth-user.model';
 import { AuthUserService } from '../../../../core/auth/auth-user.service';
 import { formatKgFromTon } from '../../../../shared/utils/weight';
+import { NotificacaoApiService } from '../../../../core/api/notificacao-api.service';
+import { NotificacaoResponse, NotificacaoTipo } from '../../../../core/api/notificacao-api.models';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -19,10 +22,17 @@ import { formatKgFromTon } from '../../../../shared/utils/weight';
   templateUrl: './dashboard-home.component.html',
   styleUrls: ['./dashboard-home.component.css'],
 })
-export class DashboardHomeComponent implements OnInit {
-  constructor(private router: Router, private dashboardApi: DashboardApiService, public authUser: AuthUserService) {
+export class DashboardHomeComponent implements OnInit, OnDestroy {
+  constructor(
+    private router: Router,
+    private dashboardApi: DashboardApiService,
+    public authUser: AuthUserService,
+    private notificacaoApi: NotificacaoApiService,
+  ) {
     this.user$ = this.authUser.user$;
   }
+
+  private destroy$ = new Subject<void>();
 
   isClosed = false;
   user$!: Observable<AuthMeResponse | null>;
@@ -51,6 +61,18 @@ export class DashboardHomeComponent implements OnInit {
     status: string;
   }> = [];
 
+  readonly notificationPageSize = 20;
+  unreadCount = 0;
+  notificationsOpen = false;
+  activeTab: 'todas' | 'naoLidas' = 'todas';
+
+  notifications: NotificacaoResponse[] = [];
+  notificationsLoading = false;
+  notificationsLoadingMore = false;
+  notificationsError: string | null = null;
+  notificationsPage = 0;
+  notificationsLastPage = false;
+
   ngOnInit(): void {
     this.loading = true;
     this.errorMsg = null;
@@ -62,6 +84,16 @@ export class DashboardHomeComponent implements OnInit {
         this.loading = false;
       },
     });
+
+    this.refreshUnreadCount();
+    interval(45000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.refreshUnreadCount());
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private applyResumo(res: DashboardResumoResponse) {
@@ -102,6 +134,147 @@ export class DashboardHomeComponent implements OnInit {
   }
   verTodasCargas() {
     this.router.navigate(['/dashboard/cargas']);
+  }
+
+  toggleNotifications(): void {
+    this.notificationsOpen = !this.notificationsOpen;
+    if (this.notificationsOpen && this.notifications.length === 0) {
+      this.loadNotifications(true);
+    }
+  }
+
+  switchTab(tab: 'todas' | 'naoLidas'): void {
+    if (this.activeTab === tab) return;
+    this.activeTab = tab;
+    this.loadNotifications(true);
+  }
+
+  loadMoreNotifications(): void {
+    if (this.notificationsLoadingMore || this.notificationsLoading || this.notificationsLastPage) return;
+    this.loadNotifications(false);
+  }
+
+  markAllAsRead(): void {
+    this.notificacaoApi.marcarTodasComoLidas().subscribe({
+      next: () => {
+        this.refreshUnreadCount();
+        this.loadNotifications(true);
+      },
+    });
+  }
+
+  openNotification(item: NotificacaoResponse): void {
+    const navigate = () => this.navigateByReference(item);
+
+    if (!item.lida) {
+      this.notificacaoApi.marcarComoLida(item.id).subscribe({
+        next: () => {
+          item.lida = true;
+          item.lidaEm = new Date().toISOString();
+          this.refreshUnreadCount();
+          if (this.activeTab === 'naoLidas') {
+            this.notifications = this.notifications.filter((n) => n.id !== item.id);
+          }
+          navigate();
+        },
+        error: () => navigate(),
+      });
+      return;
+    }
+
+    navigate();
+  }
+
+  onListScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    const threshold = 80;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - threshold) {
+      this.loadMoreNotifications();
+    }
+  }
+
+  notificationIcon(tipo: NotificacaoTipo): string {
+    return {
+      INFO: 'fas fa-info-circle',
+      SUCESSO: 'fas fa-check-circle',
+      ALERTA: 'fas fa-exclamation-triangle',
+      ERRO: 'fas fa-times-circle',
+    }[tipo];
+  }
+
+  formatNotificationDate(value: string): string {
+    return new Date(value).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  private loadNotifications(reset: boolean): void {
+    if (reset) {
+      this.notificationsPage = 0;
+      this.notificationsLastPage = false;
+      this.notifications = [];
+      this.notificationsError = null;
+      this.notificationsLoading = true;
+    } else {
+      this.notificationsLoadingMore = true;
+    }
+
+    this.notificacaoApi
+      .listar(this.activeTab === 'naoLidas', this.notificationsPage, this.notificationPageSize)
+      .subscribe({
+        next: (res) => {
+          this.notifications = reset ? res.content : [...this.notifications, ...res.content];
+          this.notificationsPage += 1;
+          this.notificationsLastPage = res.last;
+          this.notificationsLoading = false;
+          this.notificationsLoadingMore = false;
+        },
+        error: () => {
+          this.notificationsError = 'Não foi possível carregar notificações.';
+          this.notificationsLoading = false;
+          this.notificationsLoadingMore = false;
+        },
+      });
+  }
+
+  private refreshUnreadCount(): void {
+    this.notificacaoApi.totalNaoLidas().subscribe({
+      next: (count) => (this.unreadCount = count || 0),
+    });
+  }
+
+  private navigateByReference(item: NotificacaoResponse): void {
+    const refTipo = (item.referenciaTipo || '').toUpperCase();
+
+    if (refTipo === 'CARGA' && item.referenciaCodigo) {
+      this.router.navigate(['/dashboard/cargas', item.referenciaCodigo]);
+      return;
+    }
+
+    if (refTipo === 'PARADA_CARGA') {
+      this.router.navigate(['/dashboard/cargas'], {
+        queryParams: {
+          paradaId: item.referenciaId || undefined,
+          codigo: item.referenciaCodigo || undefined,
+        },
+      });
+      return;
+    }
+
+    if (refTipo === 'MANUTENCAO' && item.referenciaCodigo) {
+      this.router.navigate(['/dashboard/manutencoes', item.referenciaCodigo]);
+      return;
+    }
+
+    if (refTipo === 'ABASTECIMENTO') {
+      this.router.navigate(['/dashboard/abastecimentos'], {
+        queryParams: { codigo: item.referenciaCodigo || undefined },
+      });
+    }
   }
 
   // --- Formatadores ---
