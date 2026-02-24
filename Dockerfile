@@ -1,12 +1,23 @@
-# build
+# =========================
+# BUILD STAGE
+# =========================
 FROM node:20-alpine AS build
+
 WORKDIR /app
-COPY package*.json ./
+
+# copia apenas os arquivos do projeto angular
+COPY frota-pro/package*.json ./
 RUN npm ci
-COPY . .
+
+COPY frota-pro/ .
 RUN npm run build
 
-# runtime
+# =========================
+# RUNTIME STAGE
+# =========================
 FROM nginx:alpine
+
+# copia o build gerado
 COPY --from=build /app/dist/ /usr/share/nginx/html
+
 EXPOSE 80
