@@ -168,8 +168,8 @@
             <span class="badge" [class.origin-category]="metaOrigem(m)==='categoria'" [class.origin-truck]="metaOrigem(m)==='caminhao'">
               {{ metaOrigemLabel(m) }}
             </span>
-            <span class="badge" [class.ok]="metaAtingida(m)" [class.active]="!metaAtingida(m)">
-              {{ metaAtingida(m) ? 'META ATINGIDA' : 'EM PROGRESSO' }}
+            <span class="badge" [class.ok]="metaResultadoClasse(m)==='ok'" [class.warn]="metaResultadoClasse(m)==='warn'" [class.active]="metaResultadoClasse(m)==='active'">
+              {{ metaResultadoLabel(m) }}
             </span>
             <span class="badge ok">{{ m.statusMeta }}</span>
           </div>

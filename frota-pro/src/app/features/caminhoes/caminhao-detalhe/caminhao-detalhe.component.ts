@@ -194,6 +194,21 @@ export class CaminhaoDetalheComponent implements OnInit {
     return meta > 0 && real >= meta;
   }
 
+  metaResultadoLabel(metaItem: MetaResponse): string {
+    const status = this.normalizeMetaStatus(metaItem.statusMeta);
+    const atingida = this.metaAtingida(metaItem);
+    if (status === 'CONCLUIDA') return atingida ? 'META ATINGIDA' : 'NAO ATINGIDA';
+    return atingida ? 'META ATINGIDA' : 'EM PROGRESSO';
+  }
+
+  metaResultadoClasse(metaItem: MetaResponse): 'ok' | 'warn' | 'active' {
+    const status = this.normalizeMetaStatus(metaItem.statusMeta);
+    const atingida = this.metaAtingida(metaItem);
+    if (atingida) return 'ok';
+    if (status === 'CONCLUIDA') return 'warn';
+    return 'active';
+  }
+
   metaEscopo(metaItem: MetaResponse): string {
     if (metaItem.caminhaoCodigo) {
       return `Caminhão ${metaItem.caminhaoCodigo}${metaItem.caminhaoDescricao ? ` - ${metaItem.caminhaoDescricao}` : ''}`;
