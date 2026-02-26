@@ -302,8 +302,8 @@ export class AbastecimentosComponent implements OnInit {
 
     if (this.novo?.mediaKmLitro !== null && this.novo?.mediaKmLitro !== undefined && this.novo?.mediaKmLitro !== '') {
       const mk = Number(this.novo?.mediaKmLitro);
-      if (!Number.isFinite(mk) || mk < 0) {
-        this.toast.warn('Média km/L não pode ser negativa.', 'Validação');
+      if (!Number.isFinite(mk) || mk <= 0) {
+        this.toast.warn('Média km/L deve ser maior que zero.', 'Validação');
         return false;
       }
     }
@@ -644,6 +644,10 @@ export class AbastecimentosComponent implements OnInit {
       valorLitro: this.novo.valorLitro != null ? Number(this.novo.valorLitro) : null,
 
       valorTotal: this.novo.valorTotal != null ? Number(this.novo.valorTotal) : null,
+      mediaKmLitro:
+        this.novo.mediaKmLitro !== null && this.novo.mediaKmLitro !== undefined && this.novo.mediaKmLitro !== ''
+          ? Number(this.novo.mediaKmLitro)
+          : null,
 
       tipoCombustivel: String(this.novo.tipoCombustivel),
       formaPagamento: String(this.novo.formaPagamento),

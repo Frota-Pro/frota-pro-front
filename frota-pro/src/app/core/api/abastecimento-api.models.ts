@@ -33,6 +33,7 @@ export interface AbastecimentoRequest {
   qtLitros?: number | null;
   valorLitro?: number | null;
   valorTotal?: number | null;    // se não enviar, o back calcula
+  mediaKmLitro?: number | null;
   tipoCombustivel: string;
   formaPagamento: string;
   posto?: string | null;

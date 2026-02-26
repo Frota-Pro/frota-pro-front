@@ -641,6 +641,11 @@
           </label>
 
           <label class="f">
+            <span class="f-label">Média km/L</span>
+            <input class="control" type="number" step="0.01" [(ngModel)]="paradaForm.abastecimento.mediaKmLitro" placeholder="Opcional" />
+          </label>
+
+          <label class="f">
             <span class="f-label">Tipo combustível <span class="req">*</span></span>
             <select class="control" [(ngModel)]="paradaForm.abastecimento.tipoCombustivel">
               <option value="">Selecione</option>

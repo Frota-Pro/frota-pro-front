@@ -29,6 +29,7 @@ type AbastecimentoForm = {
   qtLitros: number | null;
   valorLitro: number | null;
   valorTotal: number | null;
+  mediaKmLitro: number | null;
   tipoCombustivel: string;
   formaPagamento: string;
   posto: string;
@@ -123,6 +124,7 @@ export class CargaDetalheComponent implements OnInit {
       qtLitros: null,
       valorLitro: null,
       valorTotal: null,
+      mediaKmLitro: null,
       tipoCombustivel: '',
       formaPagamento: '',
       posto: '',
@@ -510,6 +512,7 @@ export class CargaDetalheComponent implements OnInit {
         qtLitros: null,
         valorLitro: null,
         valorTotal: null,
+        mediaKmLitro: null,
         tipoCombustivel: '',
         formaPagamento: '',
         posto: '',
@@ -552,6 +555,12 @@ export class CargaDetalheComponent implements OnInit {
     const hh = String(d.getHours()).padStart(2, '0');
     const mi = String(d.getMinutes()).padStart(2, '0');
     return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
+  }
+
+  private toNullableNumber(v: unknown): number | null {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
   }
 
   dtFimAntesDoInicio(): boolean {
@@ -617,6 +626,8 @@ export class CargaDetalheComponent implements OnInit {
       if (!a.valorLitro || a.valorLitro <= 0) erros.push('Valor do litro é obrigatório.');
       if (!a.tipoCombustivel) erros.push('Tipo de combustível é obrigatório.');
       if (!a.formaPagamento) erros.push('Forma de pagamento é obrigatória.');
+      const mediaKmLitro = this.toNullableNumber(a.mediaKmLitro);
+      if (mediaKmLitro !== null && mediaKmLitro <= 0) erros.push('Média km/L deve ser maior que zero.');
       if (a.posto && a.posto.length > 120) erros.push('Posto deve ter no máximo 120 caracteres.');
       if (a.cidade && a.cidade.length > 120) erros.push('Cidade deve ter no máximo 120 caracteres.');
       if (a.uf && !/^[A-Za-z]{2}$/.test(a.uf)) erros.push('UF inválida (ex: PB).');
@@ -664,6 +675,7 @@ export class CargaDetalheComponent implements OnInit {
         qtLitros: null,
         valorLitro: null,
         valorTotal: null,
+        mediaKmLitro: null,
         tipoCombustivel: '',
         formaPagamento: '',
         posto: '',
@@ -744,6 +756,7 @@ export class CargaDetalheComponent implements OnInit {
           qtLitros: this.paradaForm.abastecimento.qtLitros,
           valorLitro: this.paradaForm.abastecimento.valorLitro,
           valorTotal: this.paradaForm.abastecimento.valorTotal,
+          mediaKmLitro: this.toNullableNumber(this.paradaForm.abastecimento.mediaKmLitro),
           tipoCombustivel: this.paradaForm.abastecimento.tipoCombustivel || null,
           formaPagamento: this.paradaForm.abastecimento.formaPagamento || null,
           posto: this.paradaForm.abastecimento.posto?.trim() || null,
