@@ -272,9 +272,11 @@ export class MetaDetalheComponent implements OnInit {
   private validateForm(form: MetaRequest): string[] {
     const errors: string[] = [];
     const tipo = (form.tipoMeta || '').trim();
+    const status = String(form.statusMeta || '').trim();
     const unidade = (form.unidade || '').toString().trim();
 
     if (!tipo) errors.push('Informe o tipo da meta.');
+    if (!status) errors.push('Informe o status da meta.');
     if (!form.dataIncio || !form.dataFim) errors.push('Informe o período.');
 
     const ini = this.parseDate(form.dataIncio);

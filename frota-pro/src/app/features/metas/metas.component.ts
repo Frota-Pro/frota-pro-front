@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
 
 import { MetaApiService } from '../../core/api/meta-api.service';
 import { MetaRequest, MetaResponse } from '../../core/api/meta-api.models';
@@ -234,25 +236,36 @@ export class MetasComponent implements OnInit {
       descricao: this.emptyToNull(this.form.descricao),
     };
 
-    const obs = this.editing
-      ? this.api.atualizar(this.editing.id, req)
-      : this.api.criar(req);
+    this.validarDuplicidadeAtiva(req).subscribe((duplicada) => {
+      if (duplicada) {
+        this.saving = false;
+        this.toast.warn(
+          'Já existe meta ativa do mesmo tipo para o mesmo alvo no período informado.',
+          'Validação'
+        );
+        return;
+      }
 
-    obs
-      .pipe(finalize(() => (this.saving = false)))
-      .subscribe({
-        next: () => {
-          this.closeModal();
-          this.carregar();
-          this.toast.success(
-            this.editing ? 'Meta atualizada com sucesso.' : 'Meta criada com sucesso.'
-          );
-        },
-        error: (err) => {
-          console.error(err);
-          this.toast.error('Não foi possível salvar a meta.');
-        },
-      });
+      const obs = this.editing
+        ? this.api.atualizar(this.editing.id, req)
+        : this.api.criar(req);
+
+      obs
+        .pipe(finalize(() => (this.saving = false)))
+        .subscribe({
+          next: () => {
+            this.closeModal();
+            this.carregar();
+            this.toast.success(
+              this.editing ? 'Meta atualizada com sucesso.' : 'Meta criada com sucesso.'
+            );
+          },
+          error: (err) => {
+            console.error(err);
+            this.toast.error('Não foi possível salvar a meta.');
+          },
+        });
+    });
   }
 
   concluir(m: MetaResponse): void {
@@ -305,9 +318,11 @@ export class MetasComponent implements OnInit {
   private validateForm(form: MetaRequest): string[] {
     const errors: string[] = [];
     const tipo = (form.tipoMeta || '').trim();
+    const status = String(form.statusMeta || '').trim();
     const unidade = (form.unidade || '').toString().trim();
 
     if (!tipo) errors.push('Informe o tipo da meta.');
+    if (!status) errors.push('Informe o status da meta.');
     if (!form.dataIncio || !form.dataFim) errors.push('Informe o período.');
 
     const ini = this.parseDate(form.dataIncio);
@@ -326,6 +341,62 @@ export class MetasComponent implements OnInit {
     }
 
     return errors;
+  }
+
+  private validarDuplicidadeAtiva(form: MetaRequest): Observable<boolean> {
+    const inicio = this.toIsoDateString(form.dataIncio);
+    const fim = this.toIsoDateString(form.dataFim);
+    const tipo = String(form.tipoMeta || '').trim().toUpperCase();
+    const caminhao = this.emptyToNull(form.caminhao);
+    const categoria = this.emptyToNull(form.categoria);
+    const motorista = this.emptyToNull(form.motorista);
+
+    if (!inicio || !fim || !tipo) return of(false);
+    if (!caminhao && !categoria && !motorista) return of(false);
+
+    return this.api
+      .historico({ caminhao, categoria, motorista, inicio, fim })
+      .pipe(
+        map((list) => {
+          const reqIni = this.parseDate(inicio);
+          const reqFim = this.parseDate(fim);
+          if (!reqIni || !reqFim) return false;
+
+          return (list || []).some((m) => {
+            if (this.editing?.id && m.id === this.editing.id) return false;
+            if (String(m.tipoMeta || '').trim().toUpperCase() !== tipo) return false;
+            if (!this.isMetaAtivaStatus(m.statusMeta)) return false;
+
+            const mIni = this.parseDate(m.dataIncio);
+            const mFim = this.parseDate(m.dataFim);
+            if (!mIni || !mFim) return false;
+
+            return this.periodosSobrepostos(reqIni, reqFim, mIni, mFim);
+          });
+        }),
+        catchError(() => of(false))
+      );
+  }
+
+  private isMetaAtivaStatus(status: string | null | undefined): boolean {
+    const s = this.toApiStatus(status);
+    return s !== 'CONCLUIDA' && s !== 'CANCELADA';
+  }
+
+  private periodosSobrepostos(iniA: Date, fimA: Date, iniB: Date, fimB: Date): boolean {
+    return iniA <= fimB && iniB <= fimA;
+  }
+
+  private toIsoDateString(v: string | null | undefined): string {
+    const s = String(v || '').trim();
+    if (!s) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+      const [dd, mm, yyyy] = s.split('/');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return s.slice(0, 10);
+    return s;
   }
 
   private getUnidadeDefault(tipo: string | null | undefined): string | null {
