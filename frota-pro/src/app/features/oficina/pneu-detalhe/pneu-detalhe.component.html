@@ -170,7 +170,7 @@
       <div class="grid2">
         <div>
           <label>Tipo</label>
-          <select [(ngModel)]="evento.tipo">
+          <select [(ngModel)]="evento.tipo" (ngModelChange)="onTipoEventoChange()">
             <option value="INSTALACAO">INSTALACAO</option>
             <option value="REMOVER">REMOVER</option>
             <option value="RODIZIO">RODIZIO</option>
@@ -181,9 +181,10 @@
           </select>
         </div>
 
-        <div>
+        <div *ngIf="mostrarKmEvento()">
           <label>Km evento</label>
           <input type="number" [(ngModel)]="evento.kmEvento" placeholder="Ex: 248500" />
+          <div class="muted small" *ngIf="evento.tipo==='INSTALACAO' || evento.tipo==='REMOVER'">Obrigatório para este tipo.</div>
         </div>
 
         <div class="span2" *ngIf="evento.tipo==='INSTALACAO'">
