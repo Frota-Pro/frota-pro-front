@@ -30,6 +30,8 @@ export class MetaDetalheComponent implements OnInit {
   // histórico
   histLoading = false;
   historico: MetaResponse[] = [];
+  histInicio = '';
+  histFim = '';
 
   // modal editar
   showEditModal = false;
@@ -85,6 +87,8 @@ export class MetaDetalheComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.data = res;
+          this.histInicio = this.toInputDate(res.dataIncio) || '';
+          this.histFim = this.toInputDate(res.dataFim) || '';
           this.carregarHistorico();
         },
         error: (err) => {
@@ -102,11 +106,18 @@ export class MetaDetalheComponent implements OnInit {
 
   carregarHistorico(): void {
     if (!this.data) return;
-    const inicio = this.data.dataIncio;
-    const fim = this.data.dataFim;
+    const inicio = (this.histInicio || '').trim();
+    const fim = (this.histFim || '').trim();
 
     if (!inicio || !fim) {
       this.historico = [];
+      this.toast.warn('Informe início e fim para pesquisar o histórico.', 'Histórico');
+      return;
+    }
+
+    if (inicio > fim) {
+      this.historico = [];
+      this.toast.warn('Período inválido: início maior que fim.', 'Histórico');
       return;
     }
 
@@ -148,7 +159,8 @@ export class MetaDetalheComponent implements OnInit {
   }
 
   isFinalizada(): boolean {
-    return (this.data?.statusMeta || '').toUpperCase() === 'FINALIZADA';
+    const s = String(this.data?.statusMeta || '').toUpperCase();
+    return s === 'CONCLUIDA' || s === 'FINALIZADA';
   }
 
   editar(): void {
@@ -161,7 +173,7 @@ export class MetaDetalheComponent implements OnInit {
       valorMeta: Number(this.data.valorMeta || 0),
       valorRealizado: this.data.valorRealizado ?? null,
       unidade: this.data.unidade || null,
-      statusMeta: this.data.statusMeta || 'EM_ANDAMENTO',
+      statusMeta: this.toApiStatus(this.data.statusMeta || 'EM_ANDAMENTO'),
       descricao: this.data.descricao || null,
       caminhao: this.data.caminhaoCodigo || null,
       categoria: this.data.categoriaCodigo || null,
@@ -194,6 +206,9 @@ export class MetaDetalheComponent implements OnInit {
     this.saving = true;
     const req: MetaRequest = {
       ...this.editForm,
+      dataIncio: this.toApiDateString(this.editForm.dataIncio),
+      dataFim: this.toApiDateString(this.editForm.dataFim),
+      statusMeta: this.toApiStatus(this.editForm.statusMeta),
       caminhao: this.emptyToNull(this.editForm.caminhao),
       categoria: this.emptyToNull(this.editForm.categoria),
       motorista: this.emptyToNull(this.editForm.motorista),
@@ -247,6 +262,13 @@ export class MetaDetalheComponent implements OnInit {
     return `${d}/${m}/${y}`;
   }
 
+  statusUiLabel(v: string | null | undefined): string {
+    const s = String(v || '').trim().toUpperCase();
+    if (!s) return 'EM_ANDAMENTO';
+    if (s === 'FINALIZADA') return 'CONCLUIDA';
+    return s;
+  }
+
   private validateForm(form: MetaRequest): string[] {
     const errors: string[] = [];
     const tipo = (form.tipoMeta || '').trim();
@@ -298,5 +320,40 @@ export class MetaDetalheComponent implements OnInit {
     if (v === undefined || v === null) return null;
     const s = String(v).trim();
     return s ? v : null;
+  }
+
+  private toApiStatus(v: string | null | undefined): string {
+    const s = String(v || '').trim().toUpperCase();
+    if (!s) return 'EM_ANDAMENTO';
+    if (s === 'FINALIZADA') return 'CONCLUIDA';
+    return s;
+  }
+
+  private toApiDateString(v: string | null | undefined): string {
+    const s = String(v || '').trim();
+    if (!s) return s;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [yyyy, mm, dd] = s.split('-');
+      return `${dd}/${mm}/${yyyy}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+      const [datePart] = s.split('T');
+      const [yyyy, mm, dd] = datePart.split('-');
+      return `${dd}/${mm}/${yyyy}`;
+    }
+    return s;
+  }
+
+  private toInputDate(v: string | null | undefined): string {
+    const s = String(v || '').trim();
+    if (!s) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+      const [dd, mm, yyyy] = s.split('/');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return s.slice(0, 10);
+    return s;
   }
 }

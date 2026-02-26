@@ -33,7 +33,7 @@
           <span class="pill"
                 [class.pill-success]="(m.statusMeta || '').toUpperCase() === 'EM_ANDAMENTO'"
                 [class.pill-muted]="(m.statusMeta || '').toUpperCase() !== 'EM_ANDAMENTO'">
-            {{ (m.statusMeta || 'EM_ANDAMENTO').toUpperCase() }}
+            {{ statusUiLabel(m.statusMeta) }}
           </span>
         </div>
 
@@ -164,7 +164,7 @@
       <div class="resume-grid">
         <div class="resume-item">
           <div class="resume-label">Status</div>
-          <div class="resume-value mono">{{ (m.statusMeta || '—') }}</div>
+          <div class="resume-value mono">{{ statusUiLabel(m.statusMeta) }}</div>
         </div>
 
         <div class="resume-item">
@@ -189,7 +189,7 @@
           <li *ngIf="progressPercent() < 50">Acompanhe o realizado com mais frequência para evitar ficar abaixo da meta.</li>
           <li *ngIf="progressPercent() >= 50 && progressPercent() < 100">Meta em andamento com bom progresso. Mantenha o ritmo.</li>
           <li *ngIf="progressPercent() >= 100">Meta atingida. Você pode finalizar quando desejar.</li>
-          <li *ngIf="(m.statusMeta || '').toUpperCase() !== 'FINALIZADA'">Finalize a meta quando o período encerrar e os valores estiverem consolidados.</li>
+          <li *ngIf="!isFinalizada()">Finalize a meta quando o período encerrar e os valores estiverem consolidados.</li>
         </ul>
       </div>
     </div>
@@ -197,10 +197,14 @@
     <div class="tab-card" *ngIf="tab==='historico'">
       <div class="hist-head">
         <h3>Histórico</h3>
-        <button class="btn" type="button" (click)="carregarHistorico()" [disabled]="histLoading">
-          <i class="fas fa-rotate"></i>
-          Atualizar
-        </button>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input class="input" type="date" [(ngModel)]="histInicio" />
+          <input class="input" type="date" [(ngModel)]="histFim" />
+          <button class="btn" type="button" (click)="carregarHistorico()" [disabled]="histLoading">
+            <i class="fas fa-magnifying-glass"></i>
+            Pesquisar
+          </button>
+        </div>
       </div>
 
       <div class="state" *ngIf="histLoading">Carregando histórico...</div>
@@ -228,7 +232,7 @@
               <span class="pill small"
                     [class.pill-success]="(h.statusMeta || '').toUpperCase() === 'EM_ANDAMENTO'"
                     [class.pill-muted]="(h.statusMeta || '').toUpperCase() !== 'EM_ANDAMENTO'">
-                {{ (h.statusMeta || '—').toUpperCase() }}
+                {{ statusUiLabel(h.statusMeta) }}
               </span>
             </td>
             <td class="right">
@@ -270,8 +274,9 @@
           <div class="field">
             <label>Status</label>
             <select [(ngModel)]="editForm.statusMeta" name="statusMeta">
+              <option value="NAO_INICIADA">NAO_INICIADA</option>
               <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
-              <option value="FINALIZADA">FINALIZADA</option>
+              <option value="CONCLUIDA">CONCLUIDA</option>
               <option value="CANCELADA">CANCELADA</option>
             </select>
           </div>

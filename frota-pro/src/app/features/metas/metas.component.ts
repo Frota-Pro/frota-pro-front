@@ -9,7 +9,7 @@ import { MetaRequest, MetaResponse } from '../../core/api/meta-api.models';
 import { PageResponse } from '../../core/api/page.models';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 
-type StatusMeta = 'ATIVA' | 'FINALIZADA' | 'CANCELADA' | 'EM_ANDAMENTO' | string;
+type StatusMeta = 'NAO_INICIADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' | string;
 type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA' | string;
 
 @Component({
@@ -22,7 +22,7 @@ type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA
 export class MetasComponent implements OnInit {
   // filtros
   searchTerm = '';
-  filtroStatus: '' | 'ATIVA' | 'FINALIZADA' = '';
+  filtroStatus: '' | 'NAO_INICIADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' = '';
 
   // paginação
   page = 0;
@@ -100,9 +100,7 @@ export class MetasComponent implements OnInit {
 
   // ===== filtros (client-side) =====
   getStatusLabel(m: MetaResponse): string {
-    const s = (m.statusMeta || 'EM_ANDAMENTO').toString().toUpperCase();
-    if (s === 'EM_ANDAMENTO') return 'ATIVA';
-    return s;
+    return this.normalizeStatusLabel(m.statusMeta) || 'EM_ANDAMENTO';
   }
 
   getProgressPercent(m: MetaResponse): number {
@@ -194,7 +192,7 @@ export class MetasComponent implements OnInit {
       valorMeta: Number(m.valorMeta || 0),
       valorRealizado: m.valorRealizado ?? null,
       unidade: m.unidade || null,
-      statusMeta: (m.statusMeta || 'EM_ANDAMENTO') as StatusMeta,
+      statusMeta: this.toApiStatus(m.statusMeta || 'EM_ANDAMENTO'),
       descricao: m.descricao || null,
       caminhao: m.caminhaoCodigo || null,
       categoria: m.categoriaCodigo || null,
@@ -226,6 +224,9 @@ export class MetasComponent implements OnInit {
 
     const req: MetaRequest = {
       ...this.form,
+      dataIncio: this.toApiDateString(this.form.dataIncio),
+      dataFim: this.toApiDateString(this.form.dataFim),
+      statusMeta: this.toApiStatus(this.form.statusMeta),
       caminhao: this.emptyToNull(this.form.caminhao),
       categoria: this.emptyToNull(this.form.categoria),
       motorista: this.emptyToNull(this.form.motorista),
@@ -258,13 +259,13 @@ export class MetasComponent implements OnInit {
     if (!confirm('Concluir esta meta?')) return;
 
     const req: MetaRequest = {
-      dataIncio: m.dataIncio,
-      dataFim: m.dataFim,
+      dataIncio: this.toApiDateString(m.dataIncio),
+      dataFim: this.toApiDateString(m.dataFim),
       tipoMeta: m.tipoMeta,
       valorMeta: Number(m.valorMeta || 0),
       valorRealizado: m.valorRealizado ?? null,
       unidade: m.unidade || null,
-      statusMeta: 'FINALIZADA',
+      statusMeta: 'CONCLUIDA',
       descricao: m.descricao || null,
       caminhao: m.caminhaoCodigo || null,
       categoria: m.categoriaCodigo || null,
@@ -352,5 +353,34 @@ export class MetasComponent implements OnInit {
     if (v === undefined || v === null) return null;
     const s = String(v).trim();
     return s ? v : null;
+  }
+
+  private normalizeStatusLabel(v: string | null | undefined): string {
+    const s = String(v || '').trim().toUpperCase();
+    if (s === 'FINALIZADA') return 'CONCLUIDA';
+    return s;
+  }
+
+  private toApiStatus(v: string | null | undefined): string {
+    const s = String(v || '').trim().toUpperCase();
+    if (!s) return 'EM_ANDAMENTO';
+    if (s === 'FINALIZADA') return 'CONCLUIDA';
+    return s;
+  }
+
+  private toApiDateString(v: string | null | undefined): string {
+    const s = String(v || '').trim();
+    if (!s) return s;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [yyyy, mm, dd] = s.split('-');
+      return `${dd}/${mm}/${yyyy}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+      const [datePart] = s.split('T');
+      const [yyyy, mm, dd] = datePart.split('-');
+      return `${dd}/${mm}/${yyyy}`;
+    }
+    return s;
   }
 }
