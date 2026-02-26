@@ -85,9 +85,12 @@
   padding: 12px;
   background: #fafafa;
 }
+.meta-list { display: grid; gap: 10px; }
 .meta-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.meta-head-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .meta-name { font-weight: 900; }
 .meta-sub { margin-top: 6px; font-size: 12px; color: #6b7280; }
+.meta-scope { margin-top: 4px; font-size: 12px; color: #4b5563; font-weight: 700; }
 
 .progress {
   height: 10px;

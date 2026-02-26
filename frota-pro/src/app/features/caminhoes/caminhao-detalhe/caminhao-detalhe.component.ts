@@ -47,7 +47,7 @@ export class CaminhaoDetalheComponent implements OnInit {
   tab: TabKey = 'cargas';
 
   // Meta ativa (vem de metasAtivas)
-  meta: MetaResponse | null = null;
+  metas: MetaResponse[] = [];
 
   // Histórico real
   cargasLoading = false;
@@ -149,12 +149,13 @@ export class CaminhaoDetalheComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.data = res;
-          this.meta = this.getMetaAtiva(res.metasAtivas || []);
+          this.metas = this.getMetasAtivas(res.metasAtivas || []);
           this.carregarDocumentos();
         },
         error: (err) => {
           console.error(err);
           this.data = null;
+          this.metas = [];
           this.errorMsg = 'Não foi possível carregar o detalhamento do caminhão.';
         },
       });
@@ -171,18 +172,38 @@ export class CaminhaoDetalheComponent implements OnInit {
     this.router.navigate(['/dashboard/caminhoes']);
   }
 
-  metaPercent(): number {
-    if (!this.meta) return 0;
-    const meta = Number(this.meta.valorMeta || 0);
-    const real = Number(this.meta.valorRealizado || 0);
+  metaPercent(metaItem: MetaResponse): number {
+    const meta = Number(metaItem.valorMeta || 0);
+    const real = Number(metaItem.valorRealizado || 0);
     if (meta <= 0) return 0;
     const p = (real / meta) * 100;
     return Math.max(0, Math.min(100, p));
   }
 
-  private getMetaAtiva(list: MetaResponse[]): MetaResponse | null {
-    if (!list || list.length === 0) return null;
-    return list[0] || null;
+  metaAtingida(metaItem: MetaResponse): boolean {
+    const meta = Number(metaItem.valorMeta || 0);
+    const real = Number(metaItem.valorRealizado || 0);
+    return meta > 0 && real >= meta;
+  }
+
+  metaEscopo(metaItem: MetaResponse): string {
+    if (metaItem.caminhaoCodigo) {
+      return `Caminhão ${metaItem.caminhaoCodigo}${metaItem.caminhaoDescricao ? ` - ${metaItem.caminhaoDescricao}` : ''}`;
+    }
+    if (metaItem.categoriaCodigo || metaItem.categoriaDescricao) {
+      const cod = metaItem.categoriaCodigo || '—';
+      const desc = metaItem.categoriaDescricao ? ` - ${metaItem.categoriaDescricao}` : '';
+      return `Categoria ${cod}${desc}`;
+    }
+    if (metaItem.motoristaCodigo) {
+      return `Motorista ${metaItem.motoristaCodigo}${metaItem.motoristaDescricao ? ` - ${metaItem.motoristaDescricao}` : ''}`;
+    }
+    return 'Escopo não informado';
+  }
+
+  private getMetasAtivas(list: MetaResponse[]): MetaResponse[] {
+    if (!Array.isArray(list) || list.length === 0) return [];
+    return list.filter((m) => !!m);
   }
 
   // ------------------ TABS ------------------

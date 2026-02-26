@@ -131,21 +131,29 @@
   <div class="card">
     <div class="card-title">Metas</div>
 
-    <div class="meta-box" *ngIf="meta as m; else metaEmpty">
-      <div class="meta-head">
-        <div class="meta-name">{{ m.tipoMeta }}</div>
-        <span class="badge ok">{{ m.statusMeta }}</span>
-      </div>
+    <div class="meta-list" *ngIf="metas.length > 0; else metaEmpty">
+      <div class="meta-box" *ngFor="let m of metas">
+        <div class="meta-head">
+          <div class="meta-name">{{ m.tipoMeta }}</div>
+          <div class="meta-head-right">
+            <span class="badge" [class.ok]="metaAtingida(m)" [class.active]="!metaAtingida(m)">
+              {{ metaAtingida(m) ? 'META ATINGIDA' : 'EM PROGRESSO' }}
+            </span>
+            <span class="badge ok">{{ m.statusMeta }}</span>
+          </div>
+        </div>
 
-      <div class="meta-sub">{{ m.descricao || 'Progresso' }}</div>
+        <div class="meta-sub">{{ m.descricao || 'Progresso' }}</div>
+        <div class="meta-scope">Escopo: {{ metaEscopo(m) }}</div>
 
-      <div class="progress">
-        <div class="bar" [style.width.%]="metaPercent()"></div>
-      </div>
+        <div class="progress">
+          <div class="bar" [style.width.%]="metaPercent(m)"></div>
+        </div>
 
-      <div class="meta-foot">
-        <span>{{ formatNumber(m.valorRealizado, 2) }} {{ m.unidade }}</span>
-        <span>{{ formatNumber(m.valorMeta, 2) }} {{ m.unidade }}</span>
+        <div class="meta-foot">
+          <span>{{ formatNumber(m.valorRealizado, 2) }} {{ m.unidade }}</span>
+          <span>{{ formatNumber(m.valorMeta, 2) }} {{ m.unidade }}</span>
+        </div>
       </div>
     </div>
 
