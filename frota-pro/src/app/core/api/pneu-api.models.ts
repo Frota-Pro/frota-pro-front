@@ -50,6 +50,7 @@ export interface PneuMovimentacaoRequest {
   observacao?: string | null;
 
   caminhaoId?: string | null;
+  caminhao?: string | null; // UUID ou codigo interno ou codigo externo ou placa
   manutencaoId?: string | null;
   paradaId?: string | null;
 

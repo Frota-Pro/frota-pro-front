@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat: ajusta filtros de histórico e melhora usabilidade com novos estilos e responsividade">
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat: refatora exibição de metas no detalhe do caminhão, adiciona suporte a múltiplas metas e melhora usabilidade e estilos">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -140,7 +140,7 @@
       <workItem from="1771949932452" duration="2246000" />
       <workItem from="1771961883215" duration="656000" />
       <workItem from="1772124723058" duration="3803000" />
-      <workItem from="1772132615462" duration="1046000" />
+      <workItem from="1772132615462" duration="3631000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade.">
       <option name="closed" value="true" />
@@ -310,7 +310,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772128883704</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="feat: refatora exibição de metas no detalhe do caminhão, adiciona suporte a múltiplas metas e melhora usabilidade e estilos">
+      <option name="closed" value="true" />
+      <created>1772135016832</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1772135016832</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -343,7 +351,8 @@
     <MESSAGE value="feat: adiciona campo de média km/L e validações no componente de abastecimento" />
     <MESSAGE value="feat: refatora status de metas e implementa validações no histórico" />
     <MESSAGE value="feat: ajusta filtros de histórico e melhora usabilidade com novos estilos e responsividade" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: ajusta filtros de histórico e melhora usabilidade com novos estilos e responsividade" />
+    <MESSAGE value="feat: refatora exibição de metas no detalhe do caminhão, adiciona suporte a múltiplas metas e melhora usabilidade e estilos" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: refatora exibição de metas no detalhe do caminhão, adiciona suporte a múltiplas metas e melhora usabilidade e estilos" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

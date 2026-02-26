@@ -55,6 +55,7 @@ export class PneuDetalheComponent implements OnInit {
     kmEvento: null,
     observacao: '',
     caminhaoId: null,
+    caminhao: null,
     manutencaoId: null,
     paradaId: null,
     eixoNumero: null,
@@ -126,6 +127,7 @@ export class PneuDetalheComponent implements OnInit {
       kmEvento: null,
       observacao: '',
       caminhaoId: null,
+      caminhao: null,
       manutencaoId: null,
       paradaId: null,
       eixoNumero: null,
@@ -142,6 +144,8 @@ export class PneuDetalheComponent implements OnInit {
 
   salvarEvento(): void {
     const tipo = this.evento.tipo;
+    this.evento.caminhaoId = this.emptyToNull(this.evento.caminhaoId);
+    this.evento.caminhao = this.emptyToNull(this.evento.caminhao);
 
     if (!PNEU_MOV_TIPOS.includes(tipo as any)) {
       this.toast.warn('Tipo de movimentação inválido.');
@@ -158,7 +162,9 @@ export class PneuDetalheComponent implements OnInit {
 
     // validações mínimas
     if (tipo === 'INSTALACAO') {
-      if (!this.evento.caminhaoId) return this.toast.warn('caminhaoId é obrigatório em INSTALACAO.');
+      if (!this.evento.caminhaoId && !this.evento.caminhao) {
+        return this.toast.warn('Informe o caminhão por UUID, placa, código interno ou código externo.');
+      }
       if (this.evento.kmInstalacao == null) return this.toast.warn('kmInstalacao é obrigatório em INSTALACAO.');
       if (this.evento.eixoNumero == null || !this.evento.lado || !this.evento.posicao) {
         return this.toast.warn('eixoNumero, lado e posicao são obrigatórios em INSTALACAO.');
@@ -208,5 +214,10 @@ export class PneuDetalheComponent implements OnInit {
     if (p >= 1) return 'VENCIDO';
     if (p >= 0.85) return 'PRÓXIMO DO FIM';
     return 'OK';
+  }
+
+  private emptyToNull(v: string | null | undefined): string | null {
+    const s = String(v || '').trim();
+    return s ? s : null;
   }
 }

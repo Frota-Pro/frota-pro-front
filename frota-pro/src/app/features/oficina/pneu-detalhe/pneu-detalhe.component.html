@@ -189,8 +189,9 @@
         <div class="span2" *ngIf="evento.tipo==='INSTALACAO'">
           <div class="grid3">
             <div>
-              <label>Caminhão (UUID)</label>
-              <input [(ngModel)]="evento.caminhaoId" placeholder="UUID do caminhão" />
+              <label>Caminhão</label>
+              <input [(ngModel)]="evento.caminhao" placeholder="Placa, código interno, código externo ou UUID" />
+              <div class="muted small">Aceita placa, código interno, código externo ou UUID.</div>
             </div>
             <div>
               <label>Km instalação</label>
@@ -205,8 +206,8 @@
             <div>
               <label>Lado</label>
               <select [(ngModel)]="evento.lado">
-                <option value="E">E</option>
-                <option value="D">D</option>
+                <option value="ESQUERDO">ESQUERDO</option>
+                <option value="DIREITO">DIREITO</option>
               </select>
             </div>
             <div>
