@@ -129,13 +129,45 @@
 
   <!-- METAS -->
   <div class="card">
-    <div class="card-title">Metas</div>
+    <div class="card-title">Metas do caminhão</div>
 
-    <div class="meta-list" *ngIf="metas.length > 0; else metaEmpty">
-      <div class="meta-box" *ngFor="let m of metas">
+    <div class="meta-filters">
+      <div class="field">
+        <label>Início *</label>
+        <input type="date" [(ngModel)]="metasInicio" />
+      </div>
+      <div class="field">
+        <label>Fim *</label>
+        <input type="date" [(ngModel)]="metasFim" />
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select [(ngModel)]="metasStatusFiltro">
+          <option value="">Todos</option>
+          <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
+          <option value="CONCLUIDA">CONCLUIDA</option>
+          <option value="NAO_INICIADA">NAO_INICIADA</option>
+          <option value="CANCELADA">CANCELADA</option>
+        </select>
+      </div>
+      <div class="field actions">
+        <button class="btn" type="button" (click)="carregarMetasHistorico()" [disabled]="metasLoading">
+          {{ metasLoading ? 'Consultando...' : 'Consultar metas' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="alert error" *ngIf="metasError">{{ metasError }}</div>
+    <div class="subloading" *ngIf="metasLoading">Carregando metas por caminhão...</div>
+
+    <div class="meta-list" *ngIf="!metasLoading && metasFiltradas.length > 0; else metaEmpty">
+      <div class="meta-box" *ngFor="let m of metasFiltradas">
         <div class="meta-head">
           <div class="meta-name">{{ m.tipoMeta }}</div>
           <div class="meta-head-right">
+            <span class="badge" [class.origin-category]="metaOrigem(m)==='categoria'" [class.origin-truck]="metaOrigem(m)==='caminhao'">
+              {{ metaOrigemLabel(m) }}
+            </span>
             <span class="badge" [class.ok]="metaAtingida(m)" [class.active]="!metaAtingida(m)">
               {{ metaAtingida(m) ? 'META ATINGIDA' : 'EM PROGRESSO' }}
             </span>
@@ -144,6 +176,7 @@
         </div>
 
         <div class="meta-sub">{{ m.descricao || 'Progresso' }}</div>
+        <div class="meta-periodo">Período: {{ formatDateBr(m.dataIncio) }} até {{ formatDateBr(m.dataFim) }}</div>
         <div class="meta-scope">Escopo: {{ metaEscopo(m) }}</div>
 
         <div class="progress">
@@ -160,7 +193,7 @@
     <ng-template #metaEmpty>
       <div class="empty small">
         <div class="txt">
-          <span>Sem meta ativa</span>
+          <span>Nenhuma meta encontrada para o período</span>
         </div>
       </div>
     </ng-template>

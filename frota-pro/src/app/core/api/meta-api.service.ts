@@ -61,6 +61,14 @@ export class MetaApiService extends BaseApiService {
     );
   }
 
+  historicoPorCaminhao(codigoCaminhao: string, inicio: string, fim: string) {
+    const params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    return this.http.get<MetaResponse[]>(
+      `${this.apiUrl}/metas/historico/caminhao/${encodeURIComponent(codigoCaminhao)}`,
+      { params }
+    );
+  }
+
   historico(opts: {
     caminhao?: string | null;
     categoria?: string | null;

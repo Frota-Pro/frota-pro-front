@@ -11,6 +11,7 @@ import { CaminhaoDetalheResponse, CaminhaoRequest } from '../../../core/api/cami
 import { CategoriaCaminhaoResponse } from '../../../core/api/categoria-caminhao-api.models';
 
 import { MetaResponse } from '../../../core/api/meta-api.models';
+import { MetaApiService } from '../../../core/api/meta-api.service';
 
 import { CargaApiService } from '../../../core/api/carga-api.service';
 import { CargaResponse } from '../../../core/api/carga-api.models';
@@ -47,7 +48,12 @@ export class CaminhaoDetalheComponent implements OnInit {
   tab: TabKey = 'cargas';
 
   // Meta ativa (vem de metasAtivas)
-  metas: MetaResponse[] = [];
+  metasHistorico: MetaResponse[] = [];
+  metasLoading = false;
+  metasError: string | null = null;
+  metasInicio = '';
+  metasFim = '';
+  metasStatusFiltro = '';
 
   // Histórico real
   cargasLoading = false;
@@ -122,6 +128,7 @@ export class CaminhaoDetalheComponent implements OnInit {
     private cargaApi: CargaApiService,
     private abastecimentoApi: AbastecimentoApiService,
     private manutencaoApi: ManutencaoApiService,
+    private metaApi: MetaApiService,
     private documentoApi: DocumentoCaminhaoApiService,
     private sanitizer: DomSanitizer
   ) {}
@@ -133,6 +140,7 @@ export class CaminhaoDetalheComponent implements OnInit {
       return;
     }
 
+    this.initPeriodoMetas();
     this.carregarCategorias();
     this.carregarBase();
     this.carregarTab();
@@ -149,13 +157,13 @@ export class CaminhaoDetalheComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.data = res;
-          this.metas = this.getMetasAtivas(res.metasAtivas || []);
+          this.carregarMetasHistorico();
           this.carregarDocumentos();
         },
         error: (err) => {
           console.error(err);
           this.data = null;
-          this.metas = [];
+          this.metasHistorico = [];
           this.errorMsg = 'Não foi possível carregar o detalhamento do caminhão.';
         },
       });
@@ -199,6 +207,83 @@ export class CaminhaoDetalheComponent implements OnInit {
       return `Motorista ${metaItem.motoristaCodigo}${metaItem.motoristaDescricao ? ` - ${metaItem.motoristaDescricao}` : ''}`;
     }
     return 'Escopo não informado';
+  }
+
+  metaOrigem(metaItem: MetaResponse): 'categoria' | 'caminhao' | 'outro' {
+    if (metaItem.categoriaCodigo) return 'categoria';
+    if (metaItem.caminhaoCodigo) return 'caminhao';
+    return 'outro';
+  }
+
+  metaOrigemLabel(metaItem: MetaResponse): string {
+    const origem = this.metaOrigem(metaItem);
+    if (origem === 'categoria') return 'Meta da categoria';
+    if (origem === 'caminhao') return 'Meta do caminhão';
+    return 'Meta do escopo';
+  }
+
+  get metasFiltradas(): MetaResponse[] {
+    const status = this.normalizeMetaStatus(this.metasStatusFiltro);
+    if (!status) return this.metasHistorico;
+    return this.metasHistorico.filter((m) => this.normalizeMetaStatus(m.statusMeta) === status);
+  }
+
+  carregarMetasHistorico(): void {
+    if (!this.metasInicio || !this.metasFim) {
+      this.metasError = 'Informe o período para consultar metas.';
+      this.metasHistorico = [];
+      return;
+    }
+    if (this.metasInicio > this.metasFim) {
+      this.metasError = 'Período inválido: início maior que fim.';
+      this.metasHistorico = [];
+      return;
+    }
+
+    this.metasLoading = true;
+    this.metasError = null;
+    this.metaApi
+      .historicoPorCaminhao(this.codigo, this.metasInicio, this.metasFim)
+      .pipe(finalize(() => (this.metasLoading = false)))
+      .subscribe({
+        next: (list) => {
+          this.metasHistorico = (list || [])
+            .slice()
+            .sort((a, b) => String(b.dataIncio || '').localeCompare(String(a.dataIncio || '')));
+        },
+        error: () => {
+          this.metasHistorico = this.getMetasAtivas(this.data?.metasAtivas || []);
+          this.metasError = 'Não foi possível carregar o histórico por caminhão. Exibindo metas ativas como fallback.';
+        },
+      });
+  }
+
+  formatDateBr(value: string | null | undefined): string {
+    const v = String(value || '').trim();
+    if (!v) return '—';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      const [y, m, d] = v.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) return v;
+    if (/^\d{4}-\d{2}-\d{2}T/.test(v)) {
+      const [datePart] = v.split('T');
+      const [y, m, d] = datePart.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    return v;
+  }
+
+  private initPeriodoMetas(): void {
+    const ano = new Date().getFullYear();
+    this.metasInicio = `${ano}-01-01`;
+    this.metasFim = `${ano}-12-31`;
+  }
+
+  private normalizeMetaStatus(v: string | null | undefined): string {
+    const s = String(v || '').trim().toUpperCase();
+    if (s === 'FINALIZADA') return 'CONCLUIDA';
+    return s;
   }
 
   private getMetasAtivas(list: MetaResponse[]): MetaResponse[] {
