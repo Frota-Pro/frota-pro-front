@@ -231,6 +231,31 @@
   gap:10px;
   margin-bottom:10px;
 }
+.hist-filters{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.hist-date{
+  min-width: 150px;
+  padding:9px 12px;
+  border-radius:10px;
+  border:1px solid rgba(15,23,42,.12);
+  background:#fff;
+  color:#0f172a;
+  font-size:12px;
+  font-weight:800;
+  outline:none;
+}
+.hist-date:focus{
+  border-color: rgba(37,99,235,.45);
+  box-shadow:0 0 0 4px rgba(37,99,235,.10);
+}
+@media (max-width: 720px){
+  .hist-filters{ width:100%; }
+  .hist-date{ flex:1 1 100%; min-width: 0; }
+}
 .hist-table{ width:100%; overflow:auto; }
 .hist-table table{
   width:100%;

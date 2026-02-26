@@ -197,9 +197,9 @@
     <div class="tab-card" *ngIf="tab==='historico'">
       <div class="hist-head">
         <h3>Histórico</h3>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input class="input" type="date" [(ngModel)]="histInicio" />
-          <input class="input" type="date" [(ngModel)]="histFim" />
+        <div class="hist-filters">
+          <input class="hist-date" type="date" [(ngModel)]="histInicio" />
+          <input class="hist-date" type="date" [(ngModel)]="histFim" />
           <button class="btn" type="button" (click)="carregarHistorico()" [disabled]="histLoading">
             <i class="fas fa-magnifying-glass"></i>
             Pesquisar
