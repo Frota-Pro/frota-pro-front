@@ -13,6 +13,17 @@
   border: 1px solid #e5e7eb; background: #fff;
   cursor: pointer; font-weight: 700; font-size: 13px;
 }
+.btn:focus-visible,
+.tab:focus-visible,
+.icon-btn:focus-visible,
+.field input:focus-visible,
+.field select:focus-visible,
+.doc-mid input:focus-visible,
+.doc-mid select:focus-visible,
+.doc-left input[type="file"]:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
 .btn.primary { background: #111827; color: #fff; border-color: #111827; }
 .btn.ghost { background: #fff; }
 .btn.small { height: 32px; padding: 0 10px; border-radius: 10px; font-weight: 700; font-size: 12px; }
