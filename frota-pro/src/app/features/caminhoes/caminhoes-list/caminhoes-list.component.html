@@ -1,8 +1,8 @@
 <div class="page">
 
   <!-- TOASTS -->
-  <div class="toast-stack" *ngIf="toasts.length">
-    <div class="toast" *ngFor="let t of toasts" [class]="'toast ' + t.type" (click)="dismissToast(t.id)">
+  <div class="toast-stack" *ngIf="toasts.length" role="status" aria-live="polite" aria-atomic="false">
+    <div class="toast" *ngFor="let t of toasts" [class]="'toast ' + t.type" (click)="dismissToast(t.id)" tabindex="0">
       <span class="dot" aria-hidden="true"></span>
       <div class="msg">{{ t.message }}</div>
       <button class="close" type="button" aria-label="Fechar" (click)="dismissToast(t.id); $event.stopPropagation()">✕</button>
@@ -22,24 +22,28 @@
   </div>
 
   <div class="toolbar">
+    <label class="sr-only" for="caminhoes-search">Buscar caminhões</label>
     <input class="search"
+           id="caminhoes-search"
            [(ngModel)]="search"
            (keyup.enter)="page=0; carregarPagina()"
            placeholder="Buscar por placa, descrição, marca, modelo, categoria..." />
 
-    <select [(ngModel)]="ativoFilter" class="select">
+    <label class="sr-only" for="caminhoes-ativo-filter">Filtrar por status de atividade</label>
+    <select [(ngModel)]="ativoFilter" class="select" id="caminhoes-ativo-filter">
       <option [ngValue]="'ATIVOS'">Ativos</option>
       <option [ngValue]="'INATIVOS'">Inativos</option>
       <option [ngValue]="'TODOS'">Todos</option>
     </select>
 
     <div class="bulk">
-      <select [(ngModel)]="categoriaSelecionada" class="select">
+      <label class="sr-only" for="caminhoes-categoria-lote">Selecionar categoria para vínculo em lote</label>
+      <select [(ngModel)]="categoriaSelecionada" class="select" id="caminhoes-categoria-lote">
         <option value="">Vincular categoria...</option>
         <option *ngFor="let c of categorias" [value]="c.codigo">{{ c.descricao }} ({{ c.codigo }})</option>
       </select>
 
-      <button class="btn" type="button" (click)="aplicarCategoria()">
+      <button class="btn" type="button" (click)="aplicarCategoria()" [attr.aria-label]="'Aplicar categoria em ' + selected.size + ' caminhão(ões) selecionado(s)'">
         Aplicar ({{ selected.size }})
       </button>
     </div>
@@ -49,8 +53,9 @@
 
   <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
 
-  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl" [attr.aria-busy]="loading">
     <table class="table" *ngIf="filtered.length > 0; else emptyTpl">
+      <caption class="sr-only">Lista de caminhões com código, placa, descrição, categoria, status e ações.</caption>
       <thead>
       <tr>
         <th class="col-check">
@@ -58,6 +63,7 @@
             type="checkbox"
             (change)="toggleAll($any($event.target).checked)"
             [checked]="selected.size > 0 && selected.size === filtered.length"
+            [attr.aria-label]="(selected.size > 0 && selected.size === filtered.length) ? 'Desmarcar todos os caminhões da página' : 'Selecionar todos os caminhões da página'"
           />
         </th>
         <th>Código</th>
@@ -71,11 +77,19 @@
       </thead>
 
       <tbody>
-      <tr *ngFor="let c of filtered" (dblclick)="abrirDetalhe(c)">
+      <tr
+        *ngFor="let c of filtered"
+        (dblclick)="abrirDetalhe(c)"
+        (keydown.enter)="abrirDetalhe(c)"
+        (keydown.space)="$event.preventDefault(); abrirDetalhe(c)"
+        tabindex="0"
+        [attr.aria-label]="'Abrir detalhe do caminhão ' + c.codigo + ' placa ' + c.placa"
+      >
         <td class="col-check" (click)="$event.stopPropagation()">
           <input type="checkbox"
                  [checked]="isSelected(c.codigo)"
-                 (change)="toggleOne(c.codigo, $any($event.target).checked)" />
+                 (change)="toggleOne(c.codigo, $any($event.target).checked)"
+                 [attr.aria-label]="'Selecionar caminhão ' + c.codigo + ' placa ' + c.placa" />
         </td>
 
         <td class="mono">{{ c.codigo }}</td>
@@ -104,13 +118,13 @@
         </td>
 
         <td class="row-actions" (click)="$event.stopPropagation()">
-          <button class="btn small" type="button" (click)="abrirDetalhe(c)">Ver</button>
+          <button class="btn small" type="button" (click)="abrirDetalhe(c)" [attr.aria-label]="'Ver detalhes do caminhão ' + c.codigo">Ver</button>
 
-          <button *ngIf="c.ativo" class="btn small danger" type="button" (click)="inativar(c)">
+          <button *ngIf="c.ativo" class="btn small danger" type="button" (click)="inativar(c)" [attr.aria-label]="'Inativar caminhão ' + c.codigo">
             Inativar
           </button>
 
-          <button *ngIf="!c.ativo" class="btn small" type="button" (click)="ativar(c)">
+          <button *ngIf="!c.ativo" class="btn small" type="button" (click)="ativar(c)" [attr.aria-label]="'Ativar caminhão ' + c.codigo">
             Ativar
           </button>
         </td>
@@ -134,7 +148,7 @@
   </div>
 
   <ng-template #loadingTpl>
-    <div class="loading">
+    <div class="loading" role="status" aria-live="polite">
       <div class="spinner"></div>
       <span>Carregando...</span>
     </div>

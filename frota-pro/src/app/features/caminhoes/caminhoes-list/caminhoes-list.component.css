@@ -1,4 +1,15 @@
 .page { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* Toasts */
 .toast-stack {
@@ -85,6 +96,17 @@
 .btn.ghost { background: #fff; }
 .btn.danger { border-color: rgba(239,68,68,.25); background: rgba(239,68,68,.08); }
 .btn.small { height: 32px; border-radius: 10px; font-size: 12px; padding: 0 10px; }
+.btn:focus-visible,
+.close:focus-visible,
+.icon:focus-visible,
+.search:focus-visible,
+.select:focus-visible,
+.modal-body input:focus-visible,
+.modal-body select:focus-visible,
+.table input[type="checkbox"]:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
 
 .alert { color: #b91c1c; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.20); padding: 10px 12px; border-radius: 12px; }
 
@@ -96,6 +118,11 @@
 }
 .table tbody td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
 .table tbody tr:hover { background: #fcfcfc; cursor: pointer; }
+.table tbody tr:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: -3px;
+  background: #eef4ff;
+}
 
 .col-actions { text-align: right; }
 .row-actions { text-align: right; display: flex; justify-content: flex-end; gap: 8px; }
