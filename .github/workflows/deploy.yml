@@ -23,6 +23,6 @@ jobs:
       - name: Deploy locally (VM)
         run: |
           cd /home/frotapro/deploy/frotapro
-          docker compose pull front
-          docker compose up -d front
-          docker logs --tail=100 frotapro-front
+          docker compose pull frotapro-front
+          docker compose up -d --no-deps --remove-orphans frotapro-front
+          docker compose logs --tail=100 frotapro-front
