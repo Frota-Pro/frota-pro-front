@@ -37,7 +37,9 @@ export class IntegracaoWinthorApiService extends BaseApiService {
   listJobs(opts: { tipo?: IntegracaoJobTipo; status: StatusSincronizacao[]; page?: number; size?: number }) {
     let params = new HttpParams();
     params = params.set('tipo', (opts.tipo || 'TODOS').toString());
-    params = params.set('status', (opts.status || []).join(','));
+    (opts.status || []).forEach((s) => {
+      params = params.append('status', s);
+    });
     params = params.set('page', String(opts.page ?? 0));
     params = params.set('size', String(opts.size ?? 50));
 
