@@ -8,6 +8,8 @@ export interface IntegracaoWinthorConfigResponse {
   syncCaminhoes: boolean;
   syncMotoristas: boolean;
   syncCargas: boolean;
+  codigosCaminhoes: number[];
+  codigosMotoristas: number[];
   criadoEm?: string | null;
   atualizadoEm?: string | null;
 }
@@ -18,6 +20,8 @@ export interface IntegracaoWinthorConfigUpdateRequest {
   syncCaminhoes?: boolean;
   syncMotoristas?: boolean;
   syncCargas?: boolean;
+  codigosCaminhoes?: number[];
+  codigosMotoristas?: number[];
 }
 
 export interface IntegracaoWinthorJobResponse {

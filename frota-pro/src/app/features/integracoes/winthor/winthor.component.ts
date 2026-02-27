@@ -16,6 +16,7 @@ import {
 } from '../../../core/api/integracao-winthor-api.models';
 
 type TabKey = 'overview' | 'jobs' | 'logs';
+const WINTHOR_EMPRESA_ID_KEY = 'winthor_empresa_id';
 
 @Component({
   selector: 'app-winthor',
@@ -33,6 +34,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
   refreshing = false;
 
   // Config
+  empresaId = '';
   config?: IntegracaoWinthorConfigResponse;
   form: IntegracaoWinthorConfigUpdateRequest = {
     ativo: true,
@@ -40,7 +42,11 @@ export class WinthorComponent implements OnInit, OnDestroy {
     syncCaminhoes: true,
     syncMotoristas: true,
     syncCargas: true,
+    codigosCaminhoes: [],
+    codigosMotoristas: [],
   };
+  codigosCaminhoesInput = '';
+  codigosMotoristasInput = '';
 
   // Status
   status?: IntegracaoWinthorStatusResponse;
@@ -48,7 +54,8 @@ export class WinthorComponent implements OnInit, OnDestroy {
 
   // Manual sync inputs
   codFilial: number | null = null;
-  dataCargas: string = this.todayISO();
+  dataInicialCargas: string = this.todayISO();
+  dataFinalCargas: string = this.todayISO();
 
   // Jobs
   jobsLoading = false;
@@ -76,6 +83,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
   constructor(private api: IntegracaoWinthorApiService) {}
 
   ngOnInit(): void {
+    this.empresaId = this.loadEmpresaId();
     this.bootstrap();
   }
 
@@ -84,13 +92,23 @@ export class WinthorComponent implements OnInit, OnDestroy {
   }
 
   bootstrap(): void {
+    const empresaId = this.normalizedEmpresaId();
+    if (!empresaId) {
+      this.loading = false;
+      this.config = undefined;
+      this.showToast('info', 'Informe o Empresa ID para carregar a configuração da integração.');
+      return;
+    }
+
     this.loading = true;
     this.toast = null;
 
-    this.api.getConfig()
+    this.api.getConfig(empresaId)
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (cfg) => {
+          this.empresaId = cfg.empresaId || empresaId;
+          this.saveEmpresaId(this.empresaId);
           this.config = cfg;
           this.form = {
             ativo: cfg.ativo,
@@ -98,7 +116,11 @@ export class WinthorComponent implements OnInit, OnDestroy {
             syncCaminhoes: cfg.syncCaminhoes,
             syncMotoristas: cfg.syncMotoristas,
             syncCargas: cfg.syncCargas,
+            codigosCaminhoes: cfg.codigosCaminhoes ?? [],
+            codigosMotoristas: cfg.codigosMotoristas ?? [],
           };
+          this.codigosCaminhoesInput = (cfg.codigosCaminhoes ?? []).join(', ');
+          this.codigosMotoristasInput = (cfg.codigosMotoristas ?? []).join(', ');
 
           // Carrega status e jobs em seguida
           this.refreshStatus();
@@ -128,7 +150,30 @@ export class WinthorComponent implements OnInit, OnDestroy {
   // =========================
   // Config
   // =========================
+  updateEmpresaId(value: string): void {
+    this.empresaId = (value || '').trim();
+    this.saveEmpresaId(this.empresaId);
+  }
+
   saveConfig(): void {
+    const empresaId = this.normalizedEmpresaId();
+    if (!empresaId) {
+      this.showToast('error', 'Informe o Empresa ID antes de salvar.');
+      return;
+    }
+
+    const parsedCaminhoes = this.parseCodigos(this.codigosCaminhoesInput, 'caminhões');
+    if (parsedCaminhoes.error) {
+      this.showToast('error', parsedCaminhoes.error);
+      return;
+    }
+
+    const parsedMotoristas = this.parseCodigos(this.codigosMotoristasInput, 'motoristas');
+    if (parsedMotoristas.error) {
+      this.showToast('error', parsedMotoristas.error);
+      return;
+    }
+
     this.saving = true;
     this.toast = null;
 
@@ -138,12 +183,16 @@ export class WinthorComponent implements OnInit, OnDestroy {
       syncCaminhoes: !!this.form.syncCaminhoes,
       syncMotoristas: !!this.form.syncMotoristas,
       syncCargas: !!this.form.syncCargas,
+      codigosCaminhoes: parsedCaminhoes.values,
+      codigosMotoristas: parsedMotoristas.values,
     };
 
-    this.api.updateConfig(payload)
+    this.api.updateConfig(empresaId, payload)
       .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: (cfg) => {
+          this.empresaId = cfg.empresaId || empresaId;
+          this.saveEmpresaId(this.empresaId);
           this.config = cfg;
           this.form = {
             ativo: cfg.ativo,
@@ -151,7 +200,11 @@ export class WinthorComponent implements OnInit, OnDestroy {
             syncCaminhoes: cfg.syncCaminhoes,
             syncMotoristas: cfg.syncMotoristas,
             syncCargas: cfg.syncCargas,
+            codigosCaminhoes: cfg.codigosCaminhoes ?? [],
+            codigosMotoristas: cfg.codigosMotoristas ?? [],
           };
+          this.codigosCaminhoesInput = (cfg.codigosCaminhoes ?? []).join(', ');
+          this.codigosMotoristasInput = (cfg.codigosMotoristas ?? []).join(', ');
           this.showToast('success', 'Configuração salva com sucesso.');
           this.refreshStatus();
         },
@@ -189,10 +242,16 @@ export class WinthorComponent implements OnInit, OnDestroy {
   // Manual Sync
   // =========================
   syncMotoristas(): void {
+    const empresaId = this.normalizedEmpresaId();
+    if (!empresaId) {
+      this.showToast('error', 'Informe o Empresa ID antes de sincronizar.');
+      return;
+    }
+
     this.refreshing = true;
     this.toast = null;
 
-    this.api.syncMotoristas()
+    this.api.syncMotoristas(empresaId)
       .pipe(finalize(() => (this.refreshing = false)))
       .subscribe({
         next: (res) => {
@@ -204,10 +263,16 @@ export class WinthorComponent implements OnInit, OnDestroy {
   }
 
   syncCaminhoes(): void {
+    const empresaId = this.normalizedEmpresaId();
+    if (!empresaId) {
+      this.showToast('error', 'Informe o Empresa ID antes de sincronizar.');
+      return;
+    }
+
     this.refreshing = true;
     this.toast = null;
 
-    this.api.syncCaminhoes(this.codFilial)
+    this.api.syncCaminhoes(empresaId, this.codFilial)
       .pipe(finalize(() => (this.refreshing = false)))
       .subscribe({
         next: (res) => {
@@ -219,12 +284,27 @@ export class WinthorComponent implements OnInit, OnDestroy {
   }
 
   syncCargas(): void {
+    const empresaId = this.normalizedEmpresaId();
+    if (!empresaId) {
+      this.showToast('error', 'Informe o Empresa ID antes de sincronizar.');
+      return;
+    }
+
+    const dataInicial = (this.dataInicialCargas || '').trim();
+    const dataFinal = (this.dataFinalCargas || '').trim();
+    if (!dataInicial || !dataFinal) {
+      this.showToast('error', 'Informe data inicial e data final para sincronizar cargas.');
+      return;
+    }
+    if (dataFinal < dataInicial) {
+      this.showToast('error', 'A data final deve ser maior ou igual à data inicial.');
+      return;
+    }
+
     this.refreshing = true;
     this.toast = null;
 
-    const data = (this.dataCargas || '').trim() || null;
-
-    this.api.syncCargas(data)
+    this.api.syncCargas(empresaId, dataInicial, dataFinal)
       .pipe(finalize(() => (this.refreshing = false)))
       .subscribe({
         next: (res) => {
@@ -410,6 +490,62 @@ export class WinthorComponent implements OnInit, OnDestroy {
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private parseCodigos(raw: string, label: 'caminhões' | 'motoristas'): { values: number[]; error?: string } {
+    const tokens = (raw || '')
+      .split(/[,\s;\n\r\t]+/)
+      .map(v => v.trim())
+      .filter(Boolean);
+
+    if (tokens.length === 0) return { values: [] };
+
+    const values: number[] = [];
+    const invalid: string[] = [];
+    const seen = new Set<number>();
+
+    tokens.forEach((token) => {
+      if (!/^\d+$/.test(token)) {
+        invalid.push(token);
+        return;
+      }
+      const parsed = Number(token);
+      if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+        invalid.push(token);
+        return;
+      }
+      if (!seen.has(parsed)) {
+        seen.add(parsed);
+        values.push(parsed);
+      }
+    });
+
+    if (invalid.length > 0) {
+      return { values: [], error: `Códigos de ${label} inválidos: ${invalid.slice(0, 5).join(', ')}.` };
+    }
+
+    return { values };
+  }
+
+  private normalizedEmpresaId(): string {
+    return (this.empresaId || '').trim();
+  }
+
+  private loadEmpresaId(): string {
+    try {
+      return (localStorage.getItem(WINTHOR_EMPRESA_ID_KEY) || '').trim();
+    } catch {
+      return '';
+    }
+  }
+
+  private saveEmpresaId(value: string): void {
+    try {
+      if (value) localStorage.setItem(WINTHOR_EMPRESA_ID_KEY, value);
+      else localStorage.removeItem(WINTHOR_EMPRESA_ID_KEY);
+    } catch {
+      // no-op
+    }
   }
 
   showToast(type: 'success' | 'error' | 'info', text: string): void {

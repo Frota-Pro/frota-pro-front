@@ -51,6 +51,14 @@
         </div>
 
         <div class="form">
+          <label class="row row-stack">
+            <span>Empresa ID</span>
+            <input class="input" type="text"
+                   [ngModel]="empresaId"
+                   (ngModelChange)="updateEmpresaId($event)"
+                   placeholder="Informe o identificador da empresa" />
+          </label>
+
           <label class="row">
             <span>Sincronização automática</span>
             <label class="switch">
@@ -90,6 +98,24 @@
               <span class="slider"></span>
             </label>
           </label>
+
+          <label class="row row-stack">
+            <span>Códigos de Caminhões</span>
+            <input class="input" type="text"
+                   [(ngModel)]="codigosCaminhoesInput"
+                   placeholder="Ex.: 101, 102, 103" />
+          </label>
+
+          <label class="row row-stack">
+            <span>Códigos de Motoristas</span>
+            <input class="input" type="text"
+                   [(ngModel)]="codigosMotoristasInput"
+                   placeholder="Ex.: 201, 202, 203" />
+          </label>
+
+          <p class="muted">
+            Para sincronizar todos, deixe os campos vazios. Para filtrar, preencha os códigos e salve.
+          </p>
 
           <div class="meta">
             <div class="meta-line">
@@ -176,7 +202,7 @@
       <div class="manual-grid">
         <div class="manual-box">
           <h4>Motoristas</h4>
-          <p class="muted">Sincroniza motoristas do WinThor para o FrotaPRO.</p>
+          <p class="muted">Usa os códigos salvos na configuração (quando existirem).</p>
           <button class="btn primary" type="button" (click)="syncMotoristas()" [disabled]="refreshing">
             {{ refreshing ? 'Enviando...' : 'Sincronizar motoristas' }}
           </button>
@@ -184,7 +210,7 @@
 
         <div class="manual-box">
           <h4>Caminhões</h4>
-          <p class="muted">Sincroniza caminhões (opcional: filial).</p>
+          <p class="muted">Usa os códigos salvos e permite filial opcional.</p>
 
           <div class="inline">
             <input class="input" type="number" min="1" step="1"
@@ -197,10 +223,11 @@
 
         <div class="manual-box">
           <h4>Cargas</h4>
-          <p class="muted">Sincroniza cargas por data (padrão: hoje).</p>
+          <p class="muted">Sincroniza por período, usando os códigos salvos.</p>
 
           <div class="inline">
-            <input class="input" type="date" [(ngModel)]="dataCargas" />
+            <input class="input" type="date" [(ngModel)]="dataInicialCargas" />
+            <input class="input" type="date" [(ngModel)]="dataFinalCargas" />
             <button class="btn primary" type="button" (click)="syncCargas()" [disabled]="refreshing">
               {{ refreshing ? 'Enviando...' : 'Sincronizar cargas' }}
             </button>

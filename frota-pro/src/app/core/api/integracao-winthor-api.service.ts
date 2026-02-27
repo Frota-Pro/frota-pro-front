@@ -16,17 +16,20 @@ import {
 @Injectable({ providedIn: 'root' })
 export class IntegracaoWinthorApiService extends BaseApiService {
   private readonly base = '/api/integracao/winthor';
+  private readonly baseIntegracao = '/api/integracao';
 
   constructor(protected override http: HttpClient) {
     super(http);
   }
 
-  getConfig() {
-    return this.http.get<IntegracaoWinthorConfigResponse>(`${this.apiUrl}${this.base}/config`);
+  getConfig(empresaId: string) {
+    const params = new HttpParams().set('empresaId', empresaId);
+    return this.http.get<IntegracaoWinthorConfigResponse>(`${this.apiUrl}${this.base}/config`, { params });
   }
 
-  updateConfig(body: IntegracaoWinthorConfigUpdateRequest) {
-    return this.http.put<IntegracaoWinthorConfigResponse>(`${this.apiUrl}${this.base}/config`, body);
+  updateConfig(empresaId: string, body: IntegracaoWinthorConfigUpdateRequest) {
+    const params = new HttpParams().set('empresaId', empresaId);
+    return this.http.put<IntegracaoWinthorConfigResponse>(`${this.apiUrl}${this.base}/config`, body, { params });
   }
 
   getStatus() {
@@ -47,20 +50,49 @@ export class IntegracaoWinthorApiService extends BaseApiService {
     return this.http.post<any>(`${this.apiUrl}${this.base}/jobs/${tipo}/${jobId}/retry`, {});
   }
 
-  syncMotoristas() {
-    return this.http.post<any>(`${this.apiUrl}${this.base}/sync/motoristas`, {});
+  syncMotoristas(empresaId: string, codigosMotoristas?: number[]) {
+    let params = new HttpParams().set('empresaId', empresaId);
+    if ((codigosMotoristas || []).length > 0) {
+      params = params.set('codigosMotoristas', (codigosMotoristas || []).join(','));
+    }
+    return this.http.post<any>(`${this.apiUrl}${this.baseIntegracao}/motoristas/sincronizar`, null, { params });
   }
 
-  syncCaminhoes(codFilial?: number | null) {
-    let params = new HttpParams();
+  syncCaminhoes(empresaId: string, codFilial?: number | null, codigosCaminhoes?: number[]) {
+    let params = new HttpParams().set('empresaId', empresaId);
     if (codFilial != null) params = params.set('codFilial', String(codFilial));
-    return this.http.post<any>(`${this.apiUrl}${this.base}/sync/caminhoes`, {}, { params });
+    if ((codigosCaminhoes || []).length > 0) {
+      params = params.set('codigosCaminhoes', (codigosCaminhoes || []).join(','));
+    }
+    return this.http.post<any>(`${this.apiUrl}${this.baseIntegracao}/caminhoes/sincronizar`, null, { params });
   }
 
-  syncCargas(data?: string | null) {
-    let params = new HttpParams();
-    if (data) params = params.set('data', data);
-    return this.http.post<any>(`${this.apiUrl}${this.base}/sync/cargas`, {}, { params });
+  syncCargas(
+    empresaId: string,
+    dataInicial: string,
+    dataFinal: string,
+    codigosCaminhoes?: number[],
+    codigosMotoristas?: number[],
+    tipoCarga?: string,
+    origem?: string,
+    solicitadoPor?: string
+  ) {
+    let params = new HttpParams()
+      .set('empresaId', empresaId)
+      .set('dataInicial', dataInicial)
+      .set('dataFinal', dataFinal);
+
+    if ((codigosCaminhoes || []).length > 0) {
+      params = params.set('codigosCaminhoes', (codigosCaminhoes || []).join(','));
+    }
+    if ((codigosMotoristas || []).length > 0) {
+      params = params.set('codigosMotoristas', (codigosMotoristas || []).join(','));
+    }
+    if (tipoCarga) params = params.set('tipoCarga', tipoCarga);
+    if (origem) params = params.set('origem', origem);
+    if (solicitadoPor) params = params.set('solicitadoPor', solicitadoPor);
+
+    return this.http.post<any>(`${this.apiUrl}${this.baseIntegracao}/cargas/sincronizar`, null, { params });
   }
 
   getLogs(source: IntegracaoLogSource, lines: number) {
