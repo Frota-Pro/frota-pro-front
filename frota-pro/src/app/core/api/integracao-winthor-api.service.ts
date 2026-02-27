@@ -22,23 +22,20 @@ export class IntegracaoWinthorApiService extends BaseApiService {
     super(http);
   }
 
-  getConfig(empresaId: string) {
-    const params = new HttpParams().set('empresaId', empresaId);
-    return this.http.get<IntegracaoWinthorConfigResponse>(`${this.apiUrl}${this.base}/config`, { params });
+  getConfig() {
+    return this.http.get<IntegracaoWinthorConfigResponse>(`${this.apiUrl}${this.base}/config`);
   }
 
-  updateConfig(empresaId: string, body: IntegracaoWinthorConfigUpdateRequest) {
-    const params = new HttpParams().set('empresaId', empresaId);
-    return this.http.put<IntegracaoWinthorConfigResponse>(`${this.apiUrl}${this.base}/config`, body, { params });
+  updateConfig(body: IntegracaoWinthorConfigUpdateRequest) {
+    return this.http.put<IntegracaoWinthorConfigResponse>(`${this.apiUrl}${this.base}/config`, body);
   }
 
   getStatus() {
     return this.http.get<IntegracaoWinthorStatusResponse>(`${this.apiUrl}${this.base}/status`);
   }
 
-  listJobs(empresaId: string, opts: { tipo?: IntegracaoJobTipo; status: StatusSincronizacao[]; page?: number; size?: number }) {
+  listJobs(opts: { tipo?: IntegracaoJobTipo; status: StatusSincronizacao[]; page?: number; size?: number }) {
     let params = new HttpParams();
-    params = params.set('empresaId', empresaId);
     params = params.set('tipo', (opts.tipo || 'TODOS').toString());
     params = params.set('status', (opts.status || []).join(','));
     params = params.set('page', String(opts.page ?? 0));

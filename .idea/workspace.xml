@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat: adiciona suporte a IDs e filtros detalhados em integrações com WinThor, refatora sincronizações e melhora usabilidade">
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat: adiciona suporte a filtro por empresa ID em jobs do WinThor, refatora consultas e melhora feedback ao usuário">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/api/integracao-winthor-api.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/integracao-winthor-api.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/integracoes/winthor/winthor.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/integracoes/winthor/winthor.component.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -145,7 +143,7 @@
       <workItem from="1772132615462" duration="7411000" />
       <workItem from="1772192476500" duration="942000" />
       <workItem from="1772195281861" duration="1375000" />
-      <workItem from="1772199695989" duration="2176000" />
+      <workItem from="1772199695989" duration="3197000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade.">
       <option name="closed" value="true" />
@@ -387,7 +385,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772200526454</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="feat: adiciona suporte a filtro por empresa ID em jobs do WinThor, refatora consultas e melhora feedback ao usuário">
+      <option name="closed" value="true" />
+      <created>1772202037371</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1772202037371</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -429,7 +435,8 @@
     <MESSAGE value="feat: melhora acessibilidade na lista de caminhões e refina estilos" />
     <MESSAGE value="feat: melhora acessibilidade nos detalhes do caminhão e adiciona estilos focados" />
     <MESSAGE value="feat: adiciona suporte a IDs e filtros detalhados em integrações com WinThor, refatora sincronizações e melhora usabilidade" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: adiciona suporte a IDs e filtros detalhados em integrações com WinThor, refatora sincronizações e melhora usabilidade" />
+    <MESSAGE value="feat: adiciona suporte a filtro por empresa ID em jobs do WinThor, refatora consultas e melhora feedback ao usuário" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: adiciona suporte a filtro por empresa ID em jobs do WinThor, refatora consultas e melhora feedback ao usuário" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
