@@ -319,6 +319,16 @@ export class WinthorComponent implements OnInit, OnDestroy {
   // Jobs
   // =========================
   refreshJobs(): void {
+    const empresaId = this.normalizedEmpresaId();
+    if (!empresaId) {
+      this.jobsLoading = false;
+      this.jobsPendente = [];
+      this.jobsErro = [];
+      this.jobsConcluido = [];
+      this.showToast('error', 'Informe o Empresa ID para carregar os jobs.');
+      return;
+    }
+
     this.jobsLoading = true;
 
     const pendentes: StatusSincronizacao[] = ['PENDENTE', 'PROCESSANDO'];
@@ -331,7 +341,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
       if (done >= 3) this.jobsLoading = false;
     };
 
-    this.api.listJobs({ tipo: this.jobsTipo, status: pendentes, page: 0, size: this.pageSize })
+    this.api.listJobs(empresaId, { tipo: this.jobsTipo, status: pendentes, page: 0, size: this.pageSize })
       .pipe(finalize(() => finish()))
       .subscribe({
         next: (rows) => (this.jobsPendente = rows || []),
@@ -341,7 +351,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
         }
       });
 
-    this.api.listJobs({ tipo: this.jobsTipo, status: erros, page: 0, size: this.pageSize })
+    this.api.listJobs(empresaId, { tipo: this.jobsTipo, status: erros, page: 0, size: this.pageSize })
       .pipe(finalize(() => finish()))
       .subscribe({
         next: (rows) => (this.jobsErro = rows || []),
@@ -351,7 +361,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
         }
       });
 
-    this.api.listJobs({ tipo: this.jobsTipo, status: concluidos, page: 0, size: this.pageSize })
+    this.api.listJobs(empresaId, { tipo: this.jobsTipo, status: concluidos, page: 0, size: this.pageSize })
       .pipe(finalize(() => finish()))
       .subscribe({
         next: (rows) => (this.jobsConcluido = rows || []),
