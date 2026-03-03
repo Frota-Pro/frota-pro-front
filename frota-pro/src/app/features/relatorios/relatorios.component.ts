@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -7,6 +7,10 @@ import { finalize } from 'rxjs';
 import { PneuApiService } from '../../core/api/pneu-api.service';
 import { PneuVidaUtilRelatorioLinha, PneuVidaUtilRelatorioResponse } from '../../core/api/pneu-api.models';
 import { RelatorioPdfApiService } from '../../core/api/relatorio-pdf-api.service';
+import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
+import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
+import { MotoristaApiService } from '../../core/api/motorista-api.service';
+import { MotoristaResponse } from '../../core/api/motorista-api.models';
 
 type ReportKey =
   | 'ABASTECIMENTOS'
@@ -35,10 +39,12 @@ type ReportDef = {
   templateUrl: './relatorios.component.html',
   styleUrls: ['./relatorios.component.css'],
 })
-export class RelatoriosComponent implements OnDestroy {
+export class RelatoriosComponent implements OnInit, OnDestroy {
   constructor(
     private api: RelatorioPdfApiService,
     private pneuApi: PneuApiService,
+    private caminhaoApi: CaminhaoApiService,
+    private motoristaApi: MotoristaApiService,
     private sanitizer: DomSanitizer
   ) {}
 
@@ -70,14 +76,25 @@ export class RelatoriosComponent implements OnDestroy {
   errorMsg = '';
   vidaUtilLoading = false;
   vidaUtilResult: PneuVidaUtilRelatorioResponse | null = null;
+  caminhoes: CaminhaoResponse[] = [];
+  motoristas: MotoristaResponse[] = [];
+  showSugRelCaminhao = false;
+  showSugRelMotorista = false;
+  readonly sugestoesMax = 8;
 
   pdfSafeUrl: SafeResourceUrl | null = null;
   private objectUrl: string | null = null;
   private lastBlob: Blob | null = null;
   lastFilename = 'relatorio.pdf';
+  private autocompleteBlurTimer: any = null;
+
+  ngOnInit(): void {
+    this.preloadCombos();
+  }
 
   ngOnDestroy(): void {
     this.revokeObjectUrl();
+    this.resetAutoComplete();
   }
 
   get selectedDef(): ReportDef | undefined {
@@ -87,6 +104,7 @@ export class RelatoriosComponent implements OnDestroy {
   /** ✅ limpa campos quando troca o tipo para evitar enviar filtro “sem querer” */
   onTipoChange() {
     this.errorMsg = '';
+    this.closeAllSugestoes();
 
     const def = this.selectedDef;
 
@@ -160,6 +178,7 @@ export class RelatoriosComponent implements OnDestroy {
   }
 
   gerar() {
+    this.closeAllSugestoes();
     this.errorMsg = '';
     const err = this.validate();
     if (err) {
@@ -338,5 +357,85 @@ export class RelatoriosComponent implements OnDestroy {
 
   trackByVidaUtil(_: number, row: PneuVidaUtilRelatorioLinha): string {
     return row.codigoPneu || `${row.numeroSerie || ''}-${row.caminhao || ''}`;
+  }
+
+  // ===== autocomplete =====
+  get sugestoesRelCaminhao(): CaminhaoResponse[] {
+    const q = (this.form.codigoCaminhao || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.caminhoes || [])
+      .filter((c) => c.ativo !== false)
+      .filter((c) => {
+        const hay = [c.codigo, c.codigoExterno, c.placa, c.descricao, c.marca, c.modelo]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  get sugestoesRelMotorista(): MotoristaResponse[] {
+    const q = (this.form.codigoMotorista || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.motoristas || [])
+      .filter((m) => m.ativo !== false)
+      .filter((m) => {
+        const hay = [m.codigo, m.codigoExterno, m.nome, m.email, m.cnh]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  onFocusRelCaminhao(): void {
+    this.closeAllSugestoes();
+    this.showSugRelCaminhao = true;
+  }
+
+  onFocusRelMotorista(): void {
+    this.closeAllSugestoes();
+    this.showSugRelMotorista = true;
+  }
+
+  onBlurRelSugestao(): void {
+    if (this.autocompleteBlurTimer) clearTimeout(this.autocompleteBlurTimer);
+    this.autocompleteBlurTimer = setTimeout(() => this.closeAllSugestoes(), 140);
+  }
+
+  selectRelCaminhao(c: CaminhaoResponse): void {
+    this.form.codigoCaminhao = c.codigo || c.codigoExterno || '';
+    this.closeAllSugestoes();
+  }
+
+  selectRelMotorista(m: MotoristaResponse): void {
+    this.form.codigoMotorista = m.codigo || m.codigoExterno || '';
+    this.closeAllSugestoes();
+  }
+
+  private preloadCombos(): void {
+    this.caminhaoApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
+      next: (res) => (this.caminhoes = res.content || []),
+      error: () => (this.caminhoes = []),
+    });
+    this.motoristaApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
+      next: (res) => (this.motoristas = res.content || []),
+      error: () => (this.motoristas = []),
+    });
+  }
+
+  private closeAllSugestoes(): void {
+    this.showSugRelCaminhao = false;
+    this.showSugRelMotorista = false;
+  }
+
+  private resetAutoComplete(): void {
+    this.closeAllSugestoes();
+    if (this.autocompleteBlurTimer) {
+      clearTimeout(this.autocompleteBlurTimer);
+      this.autocompleteBlurTimer = null;
+    }
   }
 }

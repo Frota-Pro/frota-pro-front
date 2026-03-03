@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +12,8 @@ import {
   PneuMovimentacaoResponse
 } from '../../../core/api/pneu-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
+import { CaminhaoResponse } from '../../../core/api/caminhao-api.models';
 
 const PNEU_MOV_TIPOS = [
   'INSTALACAO',
@@ -33,7 +35,7 @@ const MAX_CODIGO = 20;
   templateUrl: './pneu-detalhe.component.html',
   styleUrls: ['./pneu-detalhe.component.css'],
 })
-export class PneuDetalheComponent implements OnInit {
+export class PneuDetalheComponent implements OnInit, OnDestroy {
 
   codigo = '';
   loading = false;
@@ -47,6 +49,7 @@ export class PneuDetalheComponent implements OnInit {
   movSize = 10;
   movTotalPages = 0;
   movimentacoes: PneuMovimentacaoResponse[] = [];
+  caminhoes: CaminhaoResponse[] = [];
 
   // modal evento
   showEvento = false;
@@ -63,8 +66,16 @@ export class PneuDetalheComponent implements OnInit {
     posicao: null,
     kmInstalacao: null,
   };
+  showSugEventoCaminhao = false;
+  readonly sugestoesMax = 8;
+  private autocompleteBlurTimer: any = null;
 
-  constructor(private route: ActivatedRoute, private api: PneuApiService, private toast: ToastService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private api: PneuApiService,
+    private caminhaoApi: CaminhaoApiService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.codigo = this.route.snapshot.paramMap.get('codigo') || '';
@@ -76,7 +87,12 @@ export class PneuDetalheComponent implements OnInit {
       this.toast.error(`Código do pneu deve ter no máximo ${MAX_CODIGO} caracteres.`);
       return;
     }
+    this.preloadCaminhoes();
     this.carregar();
+  }
+
+  ngOnDestroy(): void {
+    this.resetAutoComplete();
   }
 
   carregar(): void {
@@ -135,11 +151,13 @@ export class PneuDetalheComponent implements OnInit {
       posicao: null,
       kmInstalacao: null,
     };
+    this.resetAutoComplete();
     this.showEvento = true;
   }
 
   closeEvento(): void {
     this.showEvento = false;
+    this.resetAutoComplete();
   }
 
   salvarEvento(): void {
@@ -226,8 +244,54 @@ export class PneuDetalheComponent implements OnInit {
     if (!this.mostrarKmEvento()) this.evento.kmEvento = null;
   }
 
+  get sugestoesEventoCaminhao(): CaminhaoResponse[] {
+    const q = (this.evento.caminhao || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.caminhoes || [])
+      .filter((c) => c.ativo !== false)
+      .filter((c) => {
+        const hay = [c.codigo, c.codigoExterno, c.placa, c.descricao, c.marca, c.modelo]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  onFocusEventoCaminhao(): void {
+    this.showSugEventoCaminhao = true;
+  }
+
+  onBlurEventoSugestao(): void {
+    if (this.autocompleteBlurTimer) clearTimeout(this.autocompleteBlurTimer);
+    this.autocompleteBlurTimer = setTimeout(() => {
+      this.showSugEventoCaminhao = false;
+    }, 140);
+  }
+
+  selectEventoCaminhao(c: CaminhaoResponse): void {
+    this.evento.caminhao = c.codigo || c.codigoExterno || c.placa || null;
+    this.showSugEventoCaminhao = false;
+  }
+
+  private preloadCaminhoes(): void {
+    this.caminhaoApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
+      next: (res) => (this.caminhoes = res.content || []),
+      error: () => (this.caminhoes = []),
+    });
+  }
+
   private emptyToNull(v: string | null | undefined): string | null {
     const s = String(v || '').trim();
     return s ? s : null;
+  }
+
+  private resetAutoComplete(): void {
+    this.showSugEventoCaminhao = false;
+    if (this.autocompleteBlurTimer) {
+      clearTimeout(this.autocompleteBlurTimer);
+      this.autocompleteBlurTimer = null;
+    }
   }
 }

@@ -262,17 +262,68 @@
           <div class="ab-grid">
             <div class="ab-field">
               <label>Placa do Caminhão</label>
-              <input type="text" [(ngModel)]="novo.caminhao.placa" name="placa" placeholder="Ex: ABC1D23" />
+              <div class="ab-autocomplete">
+                <input
+                  type="text"
+                  [(ngModel)]="novo.caminhao.placa"
+                  name="placa"
+                  placeholder="Ex: ABC1D23"
+                  autocomplete="off"
+                  (focus)="onFocusPlaca()"
+                  (blur)="onBlurSugestao()"
+                />
+                <ul class="ab-suggest" *ngIf="showSugPlaca && sugestoesCaminhaoPorPlaca.length > 0">
+                  <li *ngFor="let c of sugestoesCaminhaoPorPlaca" (mousedown)="selectCaminhaoByPlaca(c)">
+                    <strong>{{ c.placa || '-' }}</strong>
+                    <span>{{ c.codigo }}</span>
+                    <small>{{ c.descricao || '-' }}</small>
+                  </li>
+                </ul>
+              </div>
             </div>
 
             <div class="ab-field">
               <label>Código do Caminhão</label>
-              <input type="text" [(ngModel)]="novo.caminhao.codigo" name="codigoCaminhao" placeholder="Ex: CAM-001" />
+              <div class="ab-autocomplete">
+                <input
+                  type="text"
+                  [(ngModel)]="novo.caminhao.codigo"
+                  name="codigoCaminhao"
+                  placeholder="Ex: CAM-001"
+                  autocomplete="off"
+                  (focus)="onFocusCodigo()"
+                  (blur)="onBlurSugestao()"
+                />
+                <ul class="ab-suggest" *ngIf="showSugCodigo && sugestoesCaminhaoPorCodigo.length > 0">
+                  <li *ngFor="let c of sugestoesCaminhaoPorCodigo" (mousedown)="selectCaminhaoByCodigo(c)">
+                    <strong>{{ c.codigo }}</strong>
+                    <span>{{ c.placa || '-' }}</span>
+                    <small>{{ c.descricao || '-' }}</small>
+                  </li>
+                </ul>
+              </div>
             </div>
 
             <div class="ab-field">
               <label>Motorista</label>
-              <input type="text" [(ngModel)]="novo.motorista.nome" name="nomeMotorista" placeholder="Ex: Carlos Silva" />
+              <div class="ab-autocomplete">
+                <input
+                  type="text"
+                  [(ngModel)]="novo.motorista.nome"
+                  name="nomeMotorista"
+                  placeholder="Ex: Carlos Silva"
+                  autocomplete="off"
+                  (focus)="onFocusMotorista()"
+                  (blur)="onBlurSugestao()"
+                />
+                <ul class="ab-suggest" *ngIf="showSugMotorista && sugestoesMotorista.length > 0">
+                  <li *ngFor="let m of sugestoesMotorista" (mousedown)="selectMotorista(m)">
+                    <strong>{{ m.nome || '-' }}</strong>
+                    <span>{{ m.codigo }}</span>
+                    <small>{{ m.cnh || m.email || '-' }}</small>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </section>

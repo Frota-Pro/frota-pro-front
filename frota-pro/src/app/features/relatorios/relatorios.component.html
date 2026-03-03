@@ -42,12 +42,44 @@
         <!-- ✅ ABASTECIMENTOS: filtros opcionais -->
         <div class="field" *ngIf="form.tipo === 'ABASTECIMENTOS'">
           <label>Caminhão (opcional)</label>
-          <input type="text" placeholder="Ex: CAM-000030" [(ngModel)]="form.codigoCaminhao" />
+          <div class="autocomplete">
+            <input
+              type="text"
+              placeholder="Ex: CAM-000030"
+              [(ngModel)]="form.codigoCaminhao"
+              autocomplete="off"
+              (focus)="onFocusRelCaminhao()"
+              (blur)="onBlurRelSugestao()"
+            />
+            <ul class="suggest" *ngIf="showSugRelCaminhao && sugestoesRelCaminhao.length > 0">
+              <li *ngFor="let c of sugestoesRelCaminhao" (mousedown)="selectRelCaminhao(c)">
+                <strong>{{ c.codigo }}</strong>
+                <span>{{ c.placa || '-' }}</span>
+                <small>{{ c.descricao || '-' }}</small>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div class="field" *ngIf="form.tipo === 'VIDA_UTIL_PNEU'">
           <label>Caminhão (opcional)</label>
-          <input type="text" placeholder="Ex: CAM-000001" [(ngModel)]="form.codigoCaminhao" />
+          <div class="autocomplete">
+            <input
+              type="text"
+              placeholder="Ex: CAM-000001"
+              [(ngModel)]="form.codigoCaminhao"
+              autocomplete="off"
+              (focus)="onFocusRelCaminhao()"
+              (blur)="onBlurRelSugestao()"
+            />
+            <ul class="suggest" *ngIf="showSugRelCaminhao && sugestoesRelCaminhao.length > 0">
+              <li *ngFor="let c of sugestoesRelCaminhao" (mousedown)="selectRelCaminhao(c)">
+                <strong>{{ c.codigo }}</strong>
+                <span>{{ c.placa || '-' }}</span>
+                <small>{{ c.descricao || '-' }}</small>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div class="field" *ngIf="form.tipo === 'VIDA_UTIL_PNEU'">
@@ -57,18 +89,66 @@
 
         <div class="field" *ngIf="form.tipo === 'ABASTECIMENTOS'">
           <label>Motorista (opcional)</label>
-          <input type="text" placeholder="Ex: MOT-000001" [(ngModel)]="form.codigoMotorista" />
+          <div class="autocomplete">
+            <input
+              type="text"
+              placeholder="Ex: MOT-000001"
+              [(ngModel)]="form.codigoMotorista"
+              autocomplete="off"
+              (focus)="onFocusRelMotorista()"
+              (blur)="onBlurRelSugestao()"
+            />
+            <ul class="suggest" *ngIf="showSugRelMotorista && sugestoesRelMotorista.length > 0">
+              <li *ngFor="let m of sugestoesRelMotorista" (mousedown)="selectRelMotorista(m)">
+                <strong>{{ m.codigo }}</strong>
+                <span>{{ m.nome || '-' }}</span>
+                <small>{{ m.cnh || m.email || '-' }}</small>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <!-- 🔒 outros relatórios: obrigatórios quando o tipo exigir -->
         <div class="field" *ngIf="selectedDef?.needsCaminhao && form.tipo !== 'ABASTECIMENTOS'">
           <label>Caminhão (código)</label>
-          <input type="text" placeholder="Ex: CAM-000030" [(ngModel)]="form.codigoCaminhao" />
+          <div class="autocomplete">
+            <input
+              type="text"
+              placeholder="Ex: CAM-000030"
+              [(ngModel)]="form.codigoCaminhao"
+              autocomplete="off"
+              (focus)="onFocusRelCaminhao()"
+              (blur)="onBlurRelSugestao()"
+            />
+            <ul class="suggest" *ngIf="showSugRelCaminhao && sugestoesRelCaminhao.length > 0">
+              <li *ngFor="let c of sugestoesRelCaminhao" (mousedown)="selectRelCaminhao(c)">
+                <strong>{{ c.codigo }}</strong>
+                <span>{{ c.placa || '-' }}</span>
+                <small>{{ c.descricao || '-' }}</small>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div class="field" *ngIf="selectedDef?.needsMotorista && form.tipo !== 'ABASTECIMENTOS'">
           <label>Motorista (código)</label>
-          <input type="text" placeholder="Ex: MOT-000001" [(ngModel)]="form.codigoMotorista" />
+          <div class="autocomplete">
+            <input
+              type="text"
+              placeholder="Ex: MOT-000001"
+              [(ngModel)]="form.codigoMotorista"
+              autocomplete="off"
+              (focus)="onFocusRelMotorista()"
+              (blur)="onBlurRelSugestao()"
+            />
+            <ul class="suggest" *ngIf="showSugRelMotorista && sugestoesRelMotorista.length > 0">
+              <li *ngFor="let m of sugestoesRelMotorista" (mousedown)="selectRelMotorista(m)">
+                <strong>{{ m.codigo }}</strong>
+                <span>{{ m.nome || '-' }}</span>
+                <small>{{ m.cnh || m.email || '-' }}</small>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div class="field" *ngIf="selectedDef?.needsNumeroCarga">

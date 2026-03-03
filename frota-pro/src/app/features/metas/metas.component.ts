@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -10,6 +10,10 @@ import { MetaApiService } from '../../core/api/meta-api.service';
 import { MetaRequest, MetaResponse } from '../../core/api/meta-api.models';
 import { PageResponse } from '../../core/api/page.models';
 import { ToastService } from '../../shared/ui/toast/toast.service';
+import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
+import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
+import { MotoristaApiService } from '../../core/api/motorista-api.service';
+import { MotoristaResponse } from '../../core/api/motorista-api.models';
 
 type StatusMeta = 'NAO_INICIADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' | string;
 type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA' | string;
@@ -21,7 +25,7 @@ type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA
   templateUrl: './metas.component.html',
   styleUrls: ['./metas.component.css'],
 })
-export class MetasComponent implements OnInit {
+export class MetasComponent implements OnInit, OnDestroy {
   // filtros
   searchTerm = '';
   filtroStatus: '' | 'NAO_INICIADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' = '';
@@ -38,6 +42,8 @@ export class MetasComponent implements OnInit {
 
   // dados
   metas: MetaResponse[] = [];
+  caminhoes: CaminhaoResponse[] = [];
+  motoristas: MotoristaResponse[] = [];
 
   tiposMeta: Array<{ value: TipoMetaKey; label: string; unidade: string }> = [
     { value: 'QUILOMETRAGEM', label: 'Meta de quilometragem', unidade: 'km' },
@@ -67,14 +73,28 @@ export class MetasComponent implements OnInit {
     recalcularProgresso: true,
   };
 
+  // autocomplete
+  showSugMetaCaminhao = false;
+  showSugMetaMotorista = false;
+  readonly sugestoesMax = 8;
+
+  private autocompleteBlurTimer: any = null;
+
   constructor(
     private api: MetaApiService,
     private router: Router,
-    private toast: ToastService
+    private toast: ToastService,
+    private caminhaoApi: CaminhaoApiService,
+    private motoristaApi: MotoristaApiService
   ) {}
 
   ngOnInit(): void {
+    this.preloadCombos();
     this.carregar();
+  }
+
+  ngOnDestroy(): void {
+    this.resetAutoComplete();
   }
 
   carregar(): void {
@@ -182,6 +202,7 @@ export class MetasComponent implements OnInit {
       renovarAutomaticamente: false,
       recalcularProgresso: true,
     };
+    this.resetAutoComplete();
     this.showModal = true;
   }
 
@@ -202,6 +223,7 @@ export class MetasComponent implements OnInit {
       renovarAutomaticamente: !!m.renovarAutomaticamente,
       recalcularProgresso: m.recalcularProgresso ?? true,
     };
+    this.resetAutoComplete();
     this.showModal = true;
   }
 
@@ -214,6 +236,104 @@ export class MetasComponent implements OnInit {
     this.showModal = false;
     this.saving = false;
     this.editing = null;
+    this.resetAutoComplete();
+  }
+
+  // ===== autocomplete =====
+  get sugestoesMetaCaminhao(): CaminhaoResponse[] {
+    const q = String(this.form.caminhao || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.caminhoes || [])
+      .filter((c) => c.ativo !== false)
+      .filter((c) => {
+        const hay = [
+          c.codigo,
+          c.codigoExterno,
+          c.placa,
+          c.descricao,
+          c.marca,
+          c.modelo,
+        ]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  get sugestoesMetaMotorista(): MotoristaResponse[] {
+    const q = String(this.form.motorista || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.motoristas || [])
+      .filter((m) => m.ativo !== false)
+      .filter((m) => {
+        const hay = [
+          m.codigo,
+          m.codigoExterno,
+          m.nome,
+          m.email,
+          m.cnh,
+        ]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  onFocusMetaCaminhao(): void {
+    this.closeAllSugestoes();
+    this.showSugMetaCaminhao = true;
+  }
+
+  onFocusMetaMotorista(): void {
+    this.closeAllSugestoes();
+    this.showSugMetaMotorista = true;
+  }
+
+  onBlurMetaSugestao(): void {
+    if (this.autocompleteBlurTimer) clearTimeout(this.autocompleteBlurTimer);
+    this.autocompleteBlurTimer = setTimeout(() => this.closeAllSugestoes(), 140);
+  }
+
+  selectMetaCaminhao(c: CaminhaoResponse): void {
+    this.form.caminhao = c.codigo || c.codigoExterno || null;
+    this.form.motorista = null;
+    this.form.categoria = null;
+    this.closeAllSugestoes();
+  }
+
+  selectMetaMotorista(m: MotoristaResponse): void {
+    this.form.motorista = m.codigo || m.codigoExterno || null;
+    this.form.caminhao = null;
+    this.form.categoria = null;
+    this.closeAllSugestoes();
+  }
+
+  private preloadCombos(): void {
+    this.caminhaoApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
+      next: (res) => (this.caminhoes = res.content || []),
+      error: () => (this.caminhoes = []),
+    });
+    this.motoristaApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
+      next: (res) => (this.motoristas = res.content || []),
+      error: () => (this.motoristas = []),
+    });
+  }
+
+  private closeAllSugestoes(): void {
+    this.showSugMetaCaminhao = false;
+    this.showSugMetaMotorista = false;
+  }
+
+  private resetAutoComplete(): void {
+    this.closeAllSugestoes();
+    if (this.autocompleteBlurTimer) {
+      clearTimeout(this.autocompleteBlurTimer);
+      this.autocompleteBlurTimer = null;
+    }
   }
 
   salvar(): void {

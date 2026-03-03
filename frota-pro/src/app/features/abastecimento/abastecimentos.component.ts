@@ -149,6 +149,13 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
 
   // debounce para disparar buscar() quando filtros mudarem
   private filtroTimer: any = null;
+  private autocompleteBlurTimer: any = null;
+
+  // autocomplete modal (veiculo/motorista)
+  showSugPlaca = false;
+  showSugCodigo = false;
+  showSugMotorista = false;
+  readonly sugestoesMax = 8;
 
   // form (modal) -> exatamente como seu HTML espera
   novo: any = this.novoVazio();
@@ -169,6 +176,10 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     if (this.filtroTimer) {
       clearTimeout(this.filtroTimer);
       this.filtroTimer = null;
+    }
+    if (this.autocompleteBlurTimer) {
+      clearTimeout(this.autocompleteBlurTimer);
+      this.autocompleteBlurTimer = null;
     }
   }
 
@@ -596,6 +607,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
 
     this.novo = this.novoVazio();
     this.novo.dtAbastecimento = this.nowAsDatetimeLocal(); // datetime-local
+    this.resetAutoComplete();
 
     this.showAddModal = true;
   }
@@ -626,12 +638,121 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     this.novo.uf = a.uf || '';
     this.novo.numNotaOuCupom = a.numNotaOuCupom || '';
     this.novo.mediaKmLitro = a.mediaKmLitro ?? null;
+    this.resetAutoComplete();
 
     this.showAddModal = true;
   }
 
   closeAddModal() {
     this.showAddModal = false;
+    this.resetAutoComplete();
+  }
+
+  // =========================
+  // AUTOCOMPLETE
+  // =========================
+
+  get sugestoesCaminhaoPorPlaca(): CaminhaoResponse[] {
+    return this.buildSugestoesCaminhao((this.novo?.caminhao?.placa || '').trim());
+  }
+
+  get sugestoesCaminhaoPorCodigo(): CaminhaoResponse[] {
+    return this.buildSugestoesCaminhao((this.novo?.caminhao?.codigo || '').trim());
+  }
+
+  get sugestoesMotorista(): MotoristaResponse[] {
+    const q = (this.novo?.motorista?.nome || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.motoristas || [])
+      .filter((m) => m.ativo !== false)
+      .filter((m) => {
+        const hay = [
+          m.codigo,
+          m.codigoExterno,
+          m.nome,
+          m.email,
+          m.cnh,
+        ]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  onFocusPlaca(): void {
+    this.closeAllSugestoes();
+    this.showSugPlaca = true;
+  }
+
+  onFocusCodigo(): void {
+    this.closeAllSugestoes();
+    this.showSugCodigo = true;
+  }
+
+  onFocusMotorista(): void {
+    this.closeAllSugestoes();
+    this.showSugMotorista = true;
+  }
+
+  onBlurSugestao(): void {
+    if (this.autocompleteBlurTimer) clearTimeout(this.autocompleteBlurTimer);
+    this.autocompleteBlurTimer = setTimeout(() => this.closeAllSugestoes(), 140);
+  }
+
+  selectCaminhaoByPlaca(c: CaminhaoResponse): void {
+    this.novo.caminhao.placa = c.placa || '';
+    this.novo.caminhao.codigo = c.codigo || '';
+    this.closeAllSugestoes();
+  }
+
+  selectCaminhaoByCodigo(c: CaminhaoResponse): void {
+    this.novo.caminhao.codigo = c.codigo || '';
+    this.novo.caminhao.placa = c.placa || '';
+    this.closeAllSugestoes();
+  }
+
+  selectMotorista(m: MotoristaResponse): void {
+    // mantém padrão do payload atual (prioriza código)
+    this.novo.motorista.nome = m.codigo || m.codigoExterno || m.nome || '';
+    this.closeAllSugestoes();
+  }
+
+  private buildSugestoesCaminhao(rawQuery: string): CaminhaoResponse[] {
+    const q = (rawQuery || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.caminhoes || [])
+      .filter((c) => c.ativo !== false)
+      .filter((c) => {
+        const hay = [
+          c.codigo,
+          c.codigoExterno,
+          c.placa,
+          c.descricao,
+          c.marca,
+          c.modelo,
+        ]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  private closeAllSugestoes(): void {
+    this.showSugPlaca = false;
+    this.showSugCodigo = false;
+    this.showSugMotorista = false;
+  }
+
+  private resetAutoComplete(): void {
+    this.closeAllSugestoes();
+    if (this.autocompleteBlurTimer) {
+      clearTimeout(this.autocompleteBlurTimer);
+      this.autocompleteBlurTimer = null;
+    }
   }
 
   saveAbastecimento() {

@@ -208,7 +208,24 @@
           <div class="form-row">
             <div class="field">
               <label>Caminhão (código)</label>
-              <input type="text" [(ngModel)]="form.caminhao" name="caminhao" placeholder="Ex: CAM-000030" />
+              <div class="field-autocomplete">
+                <input
+                  type="text"
+                  [(ngModel)]="form.caminhao"
+                  name="caminhao"
+                  placeholder="Ex: CAM-000030"
+                  autocomplete="off"
+                  (focus)="onFocusMetaCaminhao()"
+                  (blur)="onBlurMetaSugestao()"
+                />
+                <ul class="field-suggest" *ngIf="showSugMetaCaminhao && sugestoesMetaCaminhao.length > 0">
+                  <li *ngFor="let c of sugestoesMetaCaminhao" (mousedown)="selectMetaCaminhao(c)">
+                    <strong>{{ c.codigo }}</strong>
+                    <span>{{ c.placa || '-' }}</span>
+                    <small>{{ c.descricao || '-' }}</small>
+                  </li>
+                </ul>
+              </div>
             </div>
 
             <div class="field">
@@ -220,7 +237,24 @@
           <div class="form-row">
             <div class="field">
               <label>Motorista (código)</label>
-              <input type="text" [(ngModel)]="form.motorista" name="motorista" placeholder="Ex: MOT-000010" />
+              <div class="field-autocomplete">
+                <input
+                  type="text"
+                  [(ngModel)]="form.motorista"
+                  name="motorista"
+                  placeholder="Ex: MOT-000010"
+                  autocomplete="off"
+                  (focus)="onFocusMetaMotorista()"
+                  (blur)="onBlurMetaSugestao()"
+                />
+                <ul class="field-suggest" *ngIf="showSugMetaMotorista && sugestoesMetaMotorista.length > 0">
+                  <li *ngFor="let m of sugestoesMetaMotorista" (mousedown)="selectMetaMotorista(m)">
+                    <strong>{{ m.codigo }}</strong>
+                    <span>{{ m.nome || '-' }}</span>
+                    <small>{{ m.cnh || m.email || '-' }}</small>
+                  </li>
+                </ul>
+              </div>
             </div>
 
             <div class="checkbox-stack">

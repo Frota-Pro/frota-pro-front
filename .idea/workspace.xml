@@ -4,10 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(relatorios): adiciona vida util de pneus (json + exportacao pdf)">
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(ui): adiciona auto pesquisa com debounce em motoristas, cargas, abastecimentos, metas, manutencoes, oficinas e pneus">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhoes-list/caminhoes-list.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhoes-list/caminhoes-list.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhoes-list/caminhoes-list.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhoes-list/caminhoes-list.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/abastecimento/abastecimentos.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/abastecimento/abastecimentos.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/abastecimento/abastecimentos.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/abastecimento/abastecimentos.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/abastecimento/abastecimentos.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/abastecimento/abastecimentos.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/manutencoes/manutencoes.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/manutencoes/manutencoes.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/manutencoes/manutencoes.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/manutencoes/manutencoes.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/manutencoes/manutencoes.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/manutencoes/manutencoes.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -145,7 +155,7 @@
       <workItem from="1772132615462" duration="7411000" />
       <workItem from="1772192476500" duration="942000" />
       <workItem from="1772195281861" duration="1375000" />
-      <workItem from="1772199695989" duration="19266000" />
+      <workItem from="1772199695989" duration="21202000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade.">
       <option name="closed" value="true" />
@@ -427,7 +437,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772555117950</updated>
     </task>
-    <option name="localTasksCounter" value="36" />
+    <task id="LOCAL-00036" summary="feat(ui): adiciona auto pesquisa com debounce em motoristas, cargas, abastecimentos, metas, manutencoes, oficinas e pneus">
+      <option name="closed" value="true" />
+      <created>1772556800542</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1772556800543</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -445,7 +463,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Adiciona funcionalidades ao módulo de abastecimento. Implementa listagem, filtragem, criação, atualização e exclusão de abastecimentos, além de refatoração de tipos e interfaces para melhor integração com a API." />
     <MESSAGE value="Melhora a usabilidade do módulo de abastecimento. Refatora estilos e componentes, implementa modal melhorado e adiciona debounce na busca de filtros." />
     <MESSAGE value="Adiciona módulo de detalhes da manutenção com componentes, serviços e estilos. Implementa listagem, edição e upload de documentos, além de visualização de itens e paradas." />
     <MESSAGE value="Adiciona módulo de oficinas com componentes, serviços e estilos. Implementa listagem, criação, edição e exclusão de oficinas, além de integração com a API para gerenciamento de pneus." />
@@ -470,7 +487,8 @@
     <MESSAGE value="refactor: ajusta construção de parâmetros de status em listJobs e atualiza task metadata" />
     <MESSAGE value="feat(pneus): adiciona relatório de vida útil (JSON + PDF) com filtros por caminhão/pneu" />
     <MESSAGE value="feat(relatorios): adiciona vida util de pneus (json + exportacao pdf)" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(relatorios): adiciona vida util de pneus (json + exportacao pdf)" />
+    <MESSAGE value="feat(ui): adiciona auto pesquisa com debounce em motoristas, cargas, abastecimentos, metas, manutencoes, oficinas e pneus" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(ui): adiciona auto pesquisa com debounce em motoristas, cargas, abastecimentos, metas, manutencoes, oficinas e pneus" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

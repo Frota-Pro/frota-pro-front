@@ -191,7 +191,22 @@
           <div class="grid3">
             <div>
               <label>Caminhão</label>
-              <input [(ngModel)]="evento.caminhao" placeholder="Placa, código interno, código externo ou UUID" />
+              <div class="field-autocomplete">
+                <input
+                  [(ngModel)]="evento.caminhao"
+                  placeholder="Placa, código interno, código externo ou UUID"
+                  autocomplete="off"
+                  (focus)="onFocusEventoCaminhao()"
+                  (blur)="onBlurEventoSugestao()"
+                />
+                <ul class="field-suggest" *ngIf="showSugEventoCaminhao && sugestoesEventoCaminhao.length > 0">
+                  <li *ngFor="let c of sugestoesEventoCaminhao" (mousedown)="selectEventoCaminhao(c)">
+                    <strong>{{ c.codigo }}</strong>
+                    <span>{{ c.placa || '-' }}</span>
+                    <small>{{ c.descricao || '-' }}</small>
+                  </li>
+                </ul>
+              </div>
               <div class="muted small">Aceita placa, código interno, código externo ou UUID.</div>
             </div>
             <div>

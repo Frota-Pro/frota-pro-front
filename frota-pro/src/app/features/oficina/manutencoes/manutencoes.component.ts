@@ -7,6 +7,10 @@ import { finalize } from 'rxjs/operators';
 import { ManutencaoApiService } from '../../../core/api/manutencao-api.service';
 import { ManutencaoRequest, ManutencaoResponse, ManutencaoItemRequest } from '../../../core/api/manutencao-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
+import { CaminhaoResponse } from '../../../core/api/caminhao-api.models';
+import { OficinaApiService } from '../../../core/api/oficina-api.service';
+import { OficinaResponse } from '../../../core/api/oficina-api.models';
 
 type StatusManutencao = 'ABERTA' | 'EM_ANDAMENTO' | 'FINALIZADA' | 'CANCELADA' | string;
 type TipoManutencao = 'PREVENTIVA' | 'CORRETIVA' | string;
@@ -17,6 +21,11 @@ interface ManutencaoVM extends ManutencaoResponse {
   _inicio?: string; // yyyy-MM-dd
   _fim?: string;    // yyyy-MM-dd
 }
+
+type ParadaSugestao = {
+  id: string;
+  numeroCarga: string;
+};
 
 @Component({
   selector: 'app-manutencoes',
@@ -48,6 +57,8 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
   // dados
   rows: ManutencaoVM[] = [];
   filtered: ManutencaoVM[] = [];
+  caminhoes: CaminhaoResponse[] = [];
+  oficinas: OficinaResponse[] = [];
 
   // modal
   showModal = false;
@@ -59,14 +70,24 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
 
   // debounce
   private filtroTimer: any = null;
+  private autocompleteBlurTimer: any = null;
+
+  // autocomplete modal
+  showSugManCaminhao = false;
+  showSugManOficina = false;
+  showSugManParada = false;
+  readonly sugestoesMax = 8;
 
   constructor(
     private api: ManutencaoApiService,
+    private caminhaoApi: CaminhaoApiService,
+    private oficinaApi: OficinaApiService,
     private router: Router,
     private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
+    this.preloadCombos();
     this.setPeriodoMesAtual();
     this.carregarPagina();
   }
@@ -76,6 +97,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
       clearTimeout(this.filtroTimer);
       this.filtroTimer = null;
     }
+    this.resetAutoComplete();
   }
 
   setPeriodoMesAtual(): void {
@@ -188,6 +210,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     this.isEditing = false;
     this.editingCodigo = null;
     this.form = this.emptyForm();
+    this.resetAutoComplete();
     this.showModal = true;
   }
 
@@ -219,6 +242,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     }
 
     this.recalcularTotal();
+    this.resetAutoComplete();
     this.showModal = true;
   }
 
@@ -227,6 +251,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     this.isEditing = false;
     this.editingCodigo = null;
     this.form = this.emptyForm();
+    this.resetAutoComplete();
   }
 
   emptyItem(): ManutencaoItemRequest {
@@ -372,5 +397,124 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     const n = Number(v || 0);
     if (!Number.isFinite(n)) return 'R$ 0,00';
     return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  // ===== autocomplete =====
+  get sugestoesManCaminhao(): CaminhaoResponse[] {
+    const q = String(this.form.caminhao || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.caminhoes || [])
+      .filter((c) => c.ativo !== false)
+      .filter((c) => {
+        const hay = [c.codigo, c.codigoExterno, c.placa, c.descricao, c.marca, c.modelo]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  get sugestoesManOficina(): OficinaResponse[] {
+    const q = String(this.form.oficina || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.oficinas || [])
+      .filter((o) => {
+        const hay = [o.codigo, o.nome]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  get sugestoesManParada(): ParadaSugestao[] {
+    const q = String(this.form.paradaId || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return this.paradasIndex
+      .filter((p) => {
+        const hay = [p.id, p.numeroCarga].join(' | ').toLowerCase();
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  onFocusManCaminhao(): void {
+    this.closeAllSugestoes();
+    this.showSugManCaminhao = true;
+  }
+
+  onFocusManOficina(): void {
+    this.closeAllSugestoes();
+    this.showSugManOficina = true;
+  }
+
+  onFocusManParada(): void {
+    this.closeAllSugestoes();
+    this.showSugManParada = true;
+  }
+
+  onBlurManSugestao(): void {
+    if (this.autocompleteBlurTimer) clearTimeout(this.autocompleteBlurTimer);
+    this.autocompleteBlurTimer = setTimeout(() => this.closeAllSugestoes(), 140);
+  }
+
+  selectManCaminhao(c: CaminhaoResponse): void {
+    this.form.caminhao = c.codigo || c.codigoExterno || '';
+    this.closeAllSugestoes();
+  }
+
+  selectManOficina(o: OficinaResponse): void {
+    this.form.oficina = o.codigo || '';
+    this.closeAllSugestoes();
+  }
+
+  selectManParada(p: ParadaSugestao): void {
+    this.form.paradaId = p.id;
+    this.closeAllSugestoes();
+  }
+
+  private get paradasIndex(): ParadaSugestao[] {
+    const uniq = new Map<string, ParadaSugestao>();
+
+    for (const r of this.rows || []) {
+      const id = String(r.parada?.id || '').trim();
+      if (!id) continue;
+      if (!uniq.has(id)) {
+        uniq.set(id, {
+          id,
+          numeroCarga: String(r.parada?.numeroCarga || '').trim() || '-',
+        });
+      }
+    }
+
+    return Array.from(uniq.values());
+  }
+
+  private preloadCombos(): void {
+    this.caminhaoApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
+      next: (res) => (this.caminhoes = res.content || []),
+      error: () => (this.caminhoes = []),
+    });
+    this.oficinaApi.listar({ page: 0, size: 200, sort: 'codigo,asc' }).subscribe({
+      next: (res) => (this.oficinas = res.content || []),
+      error: () => (this.oficinas = []),
+    });
+  }
+
+  private closeAllSugestoes(): void {
+    this.showSugManCaminhao = false;
+    this.showSugManOficina = false;
+    this.showSugManParada = false;
+  }
+
+  private resetAutoComplete(): void {
+    this.closeAllSugestoes();
+    if (this.autocompleteBlurTimer) {
+      clearTimeout(this.autocompleteBlurTimer);
+      this.autocompleteBlurTimer = null;
+    }
   }
 }

@@ -169,11 +169,40 @@
       <div class="row">
         <div class="col">
           <label>Caminhão (código ou externo)</label>
-          <input [(ngModel)]="form.caminhao" placeholder="CAM-000001" />
+          <div class="field-autocomplete">
+            <input
+              [(ngModel)]="form.caminhao"
+              placeholder="CAM-000001"
+              autocomplete="off"
+              (focus)="onFocusManCaminhao()"
+              (blur)="onBlurManSugestao()"
+            />
+            <ul class="field-suggest" *ngIf="showSugManCaminhao && sugestoesManCaminhao.length > 0">
+              <li *ngFor="let c of sugestoesManCaminhao" (mousedown)="selectManCaminhao(c)">
+                <strong>{{ c.codigo }}</strong>
+                <span>{{ c.placa || '-' }}</span>
+                <small>{{ c.descricao || '-' }}</small>
+              </li>
+            </ul>
+          </div>
         </div>
         <div class="col">
           <label>Oficina (código)</label>
-          <input [(ngModel)]="form.oficina" placeholder="OFI-000001 (opcional)" />
+          <div class="field-autocomplete">
+            <input
+              [(ngModel)]="form.oficina"
+              placeholder="OFI-000001 (opcional)"
+              autocomplete="off"
+              (focus)="onFocusManOficina()"
+              (blur)="onBlurManSugestao()"
+            />
+            <ul class="field-suggest" *ngIf="showSugManOficina && sugestoesManOficina.length > 0">
+              <li *ngFor="let o of sugestoesManOficina" (mousedown)="selectManOficina(o)">
+                <strong>{{ o.codigo }}</strong>
+                <span>{{ o.nome || '-' }}</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -196,8 +225,22 @@
         </div>
       </div>
 
-      <label>Parada (UUID)</label>
-      <input [(ngModel)]="form.paradaId" placeholder="Opcional (UUID da parada)" />
+      <label>Parada (UUID ou carga)</label>
+      <div class="field-autocomplete">
+        <input
+          [(ngModel)]="form.paradaId"
+          placeholder="Digite UUID ou número da carga"
+          autocomplete="off"
+          (focus)="onFocusManParada()"
+          (blur)="onBlurManSugestao()"
+        />
+        <ul class="field-suggest" *ngIf="showSugManParada && sugestoesManParada.length > 0">
+          <li *ngFor="let p of sugestoesManParada" (mousedown)="selectManParada(p)">
+            <strong>{{ p.numeroCarga !== '-' ? ('Carga ' + p.numeroCarga) : 'Parada sem carga' }}</strong>
+            <small>{{ p.id }}</small>
+          </li>
+        </ul>
+      </div>
 
       <label>Observações</label>
       <input [(ngModel)]="form.observacoes" placeholder="Opcional" />
