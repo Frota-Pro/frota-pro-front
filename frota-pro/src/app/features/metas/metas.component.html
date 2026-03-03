@@ -212,6 +212,7 @@
                 <input
                   type="text"
                   [(ngModel)]="form.caminhao"
+                  (ngModelChange)="onInputMetaCaminhao()"
                   name="caminhao"
                   placeholder="Ex: CAM-000030"
                   autocomplete="off"
@@ -241,6 +242,7 @@
                 <input
                   type="text"
                   [(ngModel)]="form.motorista"
+                  (ngModelChange)="onInputMetaMotorista()"
                   name="motorista"
                   placeholder="Ex: MOT-000010"
                   autocomplete="off"

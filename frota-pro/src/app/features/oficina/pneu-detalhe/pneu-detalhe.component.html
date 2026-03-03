@@ -194,6 +194,7 @@
               <div class="field-autocomplete">
                 <input
                   [(ngModel)]="evento.caminhao"
+                  (ngModelChange)="onInputEventoCaminhao()"
                   placeholder="Placa, código interno, código externo ou UUID"
                   autocomplete="off"
                   (focus)="onFocusEventoCaminhao()"

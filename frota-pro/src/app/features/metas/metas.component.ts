@@ -288,9 +288,21 @@ export class MetasComponent implements OnInit, OnDestroy {
     this.showSugMetaCaminhao = true;
   }
 
+  onInputMetaCaminhao(): void {
+    const hasQuery = String(this.form.caminhao || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugMetaCaminhao = hasQuery;
+  }
+
   onFocusMetaMotorista(): void {
     this.closeAllSugestoes();
     this.showSugMetaMotorista = true;
+  }
+
+  onInputMetaMotorista(): void {
+    const hasQuery = String(this.form.motorista || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugMetaMotorista = hasQuery;
   }
 
   onBlurMetaSugestao(): void {

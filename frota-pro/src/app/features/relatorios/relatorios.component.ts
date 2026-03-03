@@ -395,9 +395,21 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     this.showSugRelCaminhao = true;
   }
 
+  onInputRelCaminhao(): void {
+    const hasQuery = (this.form.codigoCaminhao || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugRelCaminhao = hasQuery;
+  }
+
   onFocusRelMotorista(): void {
     this.closeAllSugestoes();
     this.showSugRelMotorista = true;
+  }
+
+  onInputRelMotorista(): void {
+    const hasQuery = (this.form.codigoMotorista || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugRelMotorista = hasQuery;
   }
 
   onBlurRelSugestao(): void {

@@ -263,6 +263,10 @@ export class PneuDetalheComponent implements OnInit, OnDestroy {
     this.showSugEventoCaminhao = true;
   }
 
+  onInputEventoCaminhao(): void {
+    this.showSugEventoCaminhao = (this.evento.caminhao || '').trim().length > 0;
+  }
+
   onBlurEventoSugestao(): void {
     if (this.autocompleteBlurTimer) clearTimeout(this.autocompleteBlurTimer);
     this.autocompleteBlurTimer = setTimeout(() => {

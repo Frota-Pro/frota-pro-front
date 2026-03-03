@@ -172,6 +172,7 @@
           <div class="field-autocomplete">
             <input
               [(ngModel)]="form.caminhao"
+              (ngModelChange)="onInputManCaminhao()"
               placeholder="CAM-000001"
               autocomplete="off"
               (focus)="onFocusManCaminhao()"
@@ -191,6 +192,7 @@
           <div class="field-autocomplete">
             <input
               [(ngModel)]="form.oficina"
+              (ngModelChange)="onInputManOficina()"
               placeholder="OFI-000001 (opcional)"
               autocomplete="off"
               (focus)="onFocusManOficina()"
@@ -229,6 +231,7 @@
       <div class="field-autocomplete">
         <input
           [(ngModel)]="form.paradaId"
+          (ngModelChange)="onInputManParada()"
           placeholder="Digite UUID ou número da carga"
           autocomplete="off"
           (focus)="onFocusManParada()"

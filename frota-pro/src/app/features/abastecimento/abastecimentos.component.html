@@ -266,6 +266,7 @@
                 <input
                   type="text"
                   [(ngModel)]="novo.caminhao.placa"
+                  (ngModelChange)="onInputPlaca()"
                   name="placa"
                   placeholder="Ex: ABC1D23"
                   autocomplete="off"
@@ -288,6 +289,7 @@
                 <input
                   type="text"
                   [(ngModel)]="novo.caminhao.codigo"
+                  (ngModelChange)="onInputCodigo()"
                   name="codigoCaminhao"
                   placeholder="Ex: CAM-001"
                   autocomplete="off"
@@ -310,6 +312,7 @@
                 <input
                   type="text"
                   [(ngModel)]="novo.motorista.nome"
+                  (ngModelChange)="onInputMotorista()"
                   name="nomeMotorista"
                   placeholder="Ex: Carlos Silva"
                   autocomplete="off"

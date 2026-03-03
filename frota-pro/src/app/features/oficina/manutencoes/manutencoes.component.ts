@@ -446,14 +446,32 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     this.showSugManCaminhao = true;
   }
 
+  onInputManCaminhao(): void {
+    const hasQuery = String(this.form.caminhao || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugManCaminhao = hasQuery;
+  }
+
   onFocusManOficina(): void {
     this.closeAllSugestoes();
     this.showSugManOficina = true;
   }
 
+  onInputManOficina(): void {
+    const hasQuery = String(this.form.oficina || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugManOficina = hasQuery;
+  }
+
   onFocusManParada(): void {
     this.closeAllSugestoes();
     this.showSugManParada = true;
+  }
+
+  onInputManParada(): void {
+    const hasQuery = String(this.form.paradaId || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugManParada = hasQuery;
   }
 
   onBlurManSugestao(): void {

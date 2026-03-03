@@ -686,14 +686,32 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     this.showSugPlaca = true;
   }
 
+  onInputPlaca(): void {
+    const hasQuery = (this.novo?.caminhao?.placa || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugPlaca = hasQuery;
+  }
+
   onFocusCodigo(): void {
     this.closeAllSugestoes();
     this.showSugCodigo = true;
   }
 
+  onInputCodigo(): void {
+    const hasQuery = (this.novo?.caminhao?.codigo || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugCodigo = hasQuery;
+  }
+
   onFocusMotorista(): void {
     this.closeAllSugestoes();
     this.showSugMotorista = true;
+  }
+
+  onInputMotorista(): void {
+    const hasQuery = (this.novo?.motorista?.nome || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugMotorista = hasQuery;
   }
 
   onBlurSugestao(): void {
