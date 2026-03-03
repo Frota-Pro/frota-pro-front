@@ -77,3 +77,23 @@ export interface PneuMovimentacaoResponse {
   lado?: string | null;
   posicao?: string | null;
 }
+
+export interface PneuVidaUtilRelatorioLinha {
+  codigoPneu?: string | null;
+  numeroSerie?: string | null;
+  marca?: string | null;
+  modelo?: string | null;
+  medida?: string | null;
+  status?: string | null;
+  caminhao?: string | null;
+  kmTotal?: number | null;
+  kmMeta?: number | null;
+  percentualVida?: number | null; // valor em percentual: ex. 20.58
+}
+
+export interface PneuVidaUtilRelatorioResponse {
+  filtroCaminhao?: string | null;
+  filtroPneu?: string | null;
+  totalPneus?: number | null;
+  linhas: PneuVidaUtilRelatorioLinha[];
+}

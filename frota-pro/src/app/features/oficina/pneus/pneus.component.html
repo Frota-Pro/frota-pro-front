@@ -11,6 +11,79 @@
     </div>
   </div>
 
+  <div class="report-card">
+    <div class="report-head">
+      <div>
+        <h2>Relatório de Vida Útil</h2>
+        <p class="muted">Consulta consolidada com filtros opcionais por caminhão e pneu.</p>
+      </div>
+      <div class="report-actions">
+        <button class="btn ghost small" type="button" (click)="carregarRelatorioVidaUtil()" [disabled]="relatorioLoading">
+          {{ relatorioLoading ? 'Buscando...' : 'Buscar' }}
+        </button>
+        <button class="btn small" type="button" (click)="limparFiltroRelatorioVidaUtil()"
+                [disabled]="relatorioLoading || relatorioExporting">
+          Limpar
+        </button>
+        <button class="btn primary small" type="button" (click)="exportarRelatorioVidaUtilPdf()"
+                [disabled]="relatorioLoading || relatorioExporting">
+          {{ relatorioExporting ? 'Exportando...' : 'Exportar PDF' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="report-filters">
+      <input class="search" [(ngModel)]="filtroRelatorioCaminhao" (keyup.enter)="carregarRelatorioVidaUtil()"
+             placeholder="Caminhão (ex.: CAM-000001)" />
+      <input class="search" [(ngModel)]="filtroRelatorioPneu" (keyup.enter)="carregarRelatorioVidaUtil()"
+             placeholder="Pneu (ex.: PNEU-000001)" />
+    </div>
+
+    <div class="report-meta">
+      <span><strong>Filtro caminhão:</strong> {{ textOrDash(relatorioVida.filtroCaminhao) }}</span>
+      <span><strong>Filtro pneu:</strong> {{ textOrDash(relatorioVida.filtroPneu) }}</span>
+      <span><strong>Total pneus:</strong> {{ relatorioVida.totalPneus ?? 0 }}</span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table" *ngIf="(relatorioVida.linhas || []).length > 0; else reportEmptyTpl">
+        <thead>
+        <tr>
+          <th>Código</th>
+          <th>Série</th>
+          <th>Marca / Modelo / Medida</th>
+          <th>Status</th>
+          <th>Caminhão</th>
+          <th class="right">KM Total</th>
+          <th class="right">KM Meta</th>
+          <th class="right">% Vida</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let r of relatorioVida.linhas; trackBy: trackByRelatorioLinha">
+          <td class="mono">{{ textOrDash(r.codigoPneu) }}</td>
+          <td class="mono">{{ textOrDash(r.numeroSerie) }}</td>
+          <td>{{ textOrDash(r.marca) }} / {{ textOrDash(r.modelo) }} / {{ textOrDash(r.medida) }}</td>
+          <td>{{ textOrDash(r.status) }}</td>
+          <td>{{ textOrDash(r.caminhao) }}</td>
+          <td class="right mono">{{ formatNumber(r.kmTotal) }}</td>
+          <td class="right mono">{{ formatNumber(r.kmMeta) }}</td>
+          <td class="right mono">{{ formatPercentualVida(r.percentualVida) }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #reportEmptyTpl>
+      <div class="empty report-empty">
+        <div>
+          <h3>Sem dados para o relatório</h3>
+          <p>Ajuste os filtros e clique em buscar.</p>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+
   <div class="toolbar">
     <div class="tool">
       <input class="search" [(ngModel)]="q" (keyup.enter)="aplicarFiltros()"

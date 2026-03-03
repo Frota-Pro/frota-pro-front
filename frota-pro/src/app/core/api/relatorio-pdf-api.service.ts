@@ -70,9 +70,10 @@ export class RelatorioPdfApiService extends BaseApiService {
   }
 
   // (quando você ativar no back)
-  vidaUtilPneu(codigoCaminhao?: string) {
+  vidaUtilPneu(codigoCaminhao?: string, codigoPneu?: string) {
     let params = new HttpParams();
     if (codigoCaminhao) params = params.set('codigoCaminhao', codigoCaminhao);
+    if (codigoPneu) params = params.set('codigoPneu', codigoPneu);
 
     return this.http.get(`${this.apiUrl}/relatorios/pdf/pneus/vida-util`, {
       params,

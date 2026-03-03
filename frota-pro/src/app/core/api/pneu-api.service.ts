@@ -6,6 +6,7 @@ import {
   PneuRequest,
   PneuResponse,
   PneuVidaUtilResponse,
+  PneuVidaUtilRelatorioResponse,
   PneuMovimentacaoRequest,
   PneuMovimentacaoResponse,
 } from './pneu-api.models';
@@ -55,5 +56,13 @@ export class PneuApiService extends BaseApiService {
   listarMovimentacoes(codigo: string, page = 0, size = 20) {
     let params = new HttpParams().set('page', String(page)).set('size', String(size));
     return this.http.get<PageResponse<PneuMovimentacaoResponse>>(`${this.apiUrl}/pneus/${encodeURIComponent(codigo)}/movimentacoes`, { params });
+  }
+
+  relatorioVidaUtil(caminhao?: string, pneu?: string) {
+    let params = new HttpParams();
+    if (caminhao) params = params.set('caminhao', caminhao);
+    if (pneu) params = params.set('pneu', pneu);
+
+    return this.http.get<PneuVidaUtilRelatorioResponse>(`${this.apiUrl}/pneus/relatorios/vida-util`, { params });
   }
 }
