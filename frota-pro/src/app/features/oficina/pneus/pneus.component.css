@@ -16,30 +16,6 @@
 .actions{ display:flex; gap:10px; flex-wrap:wrap; }
 
 /* Report */
-.report-card{
-  padding:12px; border-radius:16px;
-  background:#fff; border:1px solid #e5e7eb;
-  box-shadow:0 8px 24px rgba(0,0,0,.08);
-  margin-bottom:12px;
-}
-.report-head{
-  display:flex; align-items:flex-start; justify-content:space-between;
-  gap:12px; margin-bottom:10px;
-}
-.report-head h2{ margin:0; font-size:16px; letter-spacing:-.15px; }
-.report-head p{ margin:4px 0 0; font-size:12px; }
-.report-actions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.report-filters{
-  display:grid; grid-template-columns:1fr 1fr; gap:10px;
-  margin-bottom:10px;
-}
-.report-meta{
-  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-  padding:10px; border-radius:12px;
-  border:1px dashed #e5e7eb; background:#fafafa;
-  margin-bottom:10px; font-size:12px;
-}
-.report-empty{ padding:16px; box-shadow:none; border-style:solid; }
 
 /* Buttons */
 .btn{
@@ -159,7 +135,6 @@
   vertical-align:top;
 }
 
-.table .right{ text-align:right; }
 
 .table tbody tr{
   cursor:pointer;
@@ -318,8 +293,6 @@ input:focus, select:focus{
   .tool{ min-width:220px; }
 }
 @media (max-width:720px){
-  .report-head{ flex-direction:column; align-items:stretch; }
-  .report-filters{ grid-template-columns:1fr; }
   .header{ flex-direction:column; align-items:stretch; }
   .actions{ justify-content:flex-start; }
   .toolbar-right{ width:100%; justify-content:flex-start; margin-left:0; }

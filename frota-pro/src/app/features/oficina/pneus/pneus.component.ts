@@ -5,14 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 
 import { PneuApiService } from '../../../core/api/pneu-api.service';
-import {
-  PneuRequest,
-  PneuResponse,
-  PneuVidaUtilRelatorioLinha,
-  PneuVidaUtilRelatorioResponse,
-  PneuVidaUtilResponse,
-} from '../../../core/api/pneu-api.models';
-import { RelatorioPdfApiService } from '../../../core/api/relatorio-pdf-api.service';
+import { PneuRequest, PneuResponse, PneuVidaUtilResponse } from '../../../core/api/pneu-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 type Alerta = 'TODOS' | 'OK' | 'PROXIMO_FIM' | 'VENCIDO';
@@ -28,17 +21,6 @@ const MAX_Q = 120;
   styleUrls: ['./pneus.component.css'],
 })
 export class PneusComponent implements OnInit {
-  relatorioLoading = false;
-  relatorioExporting = false;
-  filtroRelatorioCaminhao = '';
-  filtroRelatorioPneu = '';
-  relatorioVida: PneuVidaUtilRelatorioResponse = {
-    filtroCaminhao: 'Todos',
-    filtroPneu: 'Todos',
-    totalPneus: 0,
-    linhas: [],
-  };
-
   q = '';
   statusFilter = 'TODOS';
   alertaFilter: Alerta = 'TODOS';
@@ -72,81 +54,10 @@ export class PneusComponent implements OnInit {
     dtCompra: null,
   };
 
-  constructor(
-    private api: PneuApiService,
-    private relatorioPdfApi: RelatorioPdfApiService,
-    private router: Router,
-    private toast: ToastService
-  ) {}
+  constructor(private api: PneuApiService, private router: Router, private toast: ToastService) {}
 
   ngOnInit(): void {
-    this.carregarRelatorioVidaUtil();
     this.carregarPagina();
-  }
-
-  carregarRelatorioVidaUtil(): void {
-    const caminhao = (this.filtroRelatorioCaminhao || '').trim() || undefined;
-    const pneu = (this.filtroRelatorioPneu || '').trim() || undefined;
-
-    this.relatorioLoading = true;
-    this.api.relatorioVidaUtil(caminhao, pneu)
-      .pipe(finalize(() => (this.relatorioLoading = false)))
-      .subscribe({
-        next: (res) => {
-          this.relatorioVida = {
-            filtroCaminhao: res?.filtroCaminhao || 'Todos',
-            filtroPneu: res?.filtroPneu || 'Todos',
-            totalPneus: Number(res?.totalPneus ?? 0),
-            linhas: res?.linhas || [],
-          };
-        },
-        error: (err) => {
-          this.relatorioVida = {
-            filtroCaminhao: 'Todos',
-            filtroPneu: 'Todos',
-            totalPneus: 0,
-            linhas: [],
-          };
-          this.toast.error(err?.error?.message || 'Erro ao carregar relatório de vida útil.');
-        },
-      });
-  }
-
-  limparFiltroRelatorioVidaUtil(): void {
-    this.filtroRelatorioCaminhao = '';
-    this.filtroRelatorioPneu = '';
-    this.carregarRelatorioVidaUtil();
-  }
-
-  exportarRelatorioVidaUtilPdf(): void {
-    const codigoCaminhao = (this.filtroRelatorioCaminhao || '').trim() || undefined;
-    const codigoPneu = (this.filtroRelatorioPneu || '').trim() || undefined;
-
-    this.relatorioExporting = true;
-    this.relatorioPdfApi.vidaUtilPneu(codigoCaminhao, codigoPneu)
-      .pipe(finalize(() => (this.relatorioExporting = false)))
-      .subscribe({
-        next: (res) => {
-          const blob = res.body;
-          if (!blob) {
-            this.toast.error('PDF vazio retornado pela API.');
-            return;
-          }
-
-          const a = document.createElement('a');
-          const url = URL.createObjectURL(blob);
-          a.href = url;
-          a.download = this.extractFilename(
-            res.headers.get('content-disposition'),
-            'relatorio-vida-util-pneu.pdf'
-          );
-          a.click();
-          URL.revokeObjectURL(url);
-        },
-        error: (err) => {
-          this.toast.error(err?.error?.message || 'Erro ao exportar PDF de vida útil.');
-        },
-      });
   }
 
   carregarPagina(page?: number): void {
@@ -365,40 +276,5 @@ export class PneusComponent implements OnInit {
     const n = Number(v || 0);
     if (!Number.isFinite(n)) return '0 km';
     return `${n.toLocaleString('pt-BR')} km`;
-  }
-
-  formatNumber(v?: number | null): string {
-    if (v == null) return '-';
-    const n = Number(v);
-    if (!Number.isFinite(n)) return '-';
-    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  formatPercentualVida(v?: number | null): string {
-    if (v == null) return '-';
-    const n = Number(v);
-    if (!Number.isFinite(n)) return '-';
-    return `${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
-  }
-
-  textOrDash(v?: string | null): string {
-    const txt = (v || '').trim();
-    return txt || '-';
-  }
-
-  trackByRelatorioLinha(_: number, item: PneuVidaUtilRelatorioLinha): string {
-    return item.codigoPneu || `${item.numeroSerie || ''}-${item.caminhao || ''}`;
-  }
-
-  private extractFilename(contentDisposition: string | null, fallback: string): string {
-    if (!contentDisposition) return fallback;
-
-    const m1 = /filename=\"?([^\";]+)\"?/i.exec(contentDisposition);
-    if (m1?.[1]) return m1[1];
-
-    const m2 = /filename\*\=UTF-8''([^;]+)/i.exec(contentDisposition);
-    if (m2?.[1]) return decodeURIComponent(m2[1]);
-
-    return fallback;
   }
 }

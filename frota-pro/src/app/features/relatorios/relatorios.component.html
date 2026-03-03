@@ -45,6 +45,16 @@
           <input type="text" placeholder="Ex: CAM-000030" [(ngModel)]="form.codigoCaminhao" />
         </div>
 
+        <div class="field" *ngIf="form.tipo === 'VIDA_UTIL_PNEU'">
+          <label>Caminhão (opcional)</label>
+          <input type="text" placeholder="Ex: CAM-000001" [(ngModel)]="form.codigoCaminhao" />
+        </div>
+
+        <div class="field" *ngIf="form.tipo === 'VIDA_UTIL_PNEU'">
+          <label>Pneu (opcional)</label>
+          <input type="text" placeholder="Ex: PNEU-000001" [(ngModel)]="form.codigoPneu" />
+        </div>
+
         <div class="field" *ngIf="form.tipo === 'ABASTECIMENTOS'">
           <label>Motorista (opcional)</label>
           <input type="text" placeholder="Ex: MOT-000001" [(ngModel)]="form.codigoMotorista" />
@@ -71,8 +81,15 @@
         </div>
 
         <div class="mini-actions">
-          <button class="btn" type="button" (click)="abrirNovaAba()" [disabled]="!pdfSafeUrl">Abrir</button>
-          <button class="btn success" type="button" (click)="baixar()" [disabled]="!pdfSafeUrl">Download</button>
+          <button class="btn" type="button" (click)="abrirNovaAba()"
+                  [disabled]="!pdfSafeUrl || form.tipo === 'VIDA_UTIL_PNEU'">Abrir</button>
+          <button class="btn success" type="button"
+                  *ngIf="form.tipo !== 'VIDA_UTIL_PNEU'"
+                  (click)="baixar()" [disabled]="!pdfSafeUrl">Download</button>
+          <button class="btn success" type="button"
+                  *ngIf="form.tipo === 'VIDA_UTIL_PNEU'"
+                  (click)="exportarVidaUtilPneuPdf()"
+                  [disabled]="loading">Exportar PDF</button>
         </div>
       </div>
     </section>
@@ -80,16 +97,63 @@
     <!-- preview -->
     <section class="card preview-card">
       <div class="preview-head">
-        <h3>Pré-visualização</h3>
-        <span class="hint" *ngIf="lastFilename">{{ lastFilename }}</span>
+        <h3>{{ form.tipo === 'VIDA_UTIL_PNEU' ? 'Resultado (JSON)' : 'Pré-visualização' }}</h3>
+        <span class="hint" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && lastFilename">{{ lastFilename }}</span>
       </div>
 
-      <div class="preview-wrap" *ngIf="pdfSafeUrl; else empty">
+      <div class="table-wrap" *ngIf="form.tipo === 'VIDA_UTIL_PNEU'">
+        <div class="empty" *ngIf="vidaUtilLoading">Carregando relatório de vida útil...</div>
+
+        <div class="report-meta" *ngIf="!vidaUtilLoading && vidaUtilResult">
+          <span><strong>Filtro Caminhão:</strong> {{ formatText(vidaUtilResult.filtroCaminhao) }}</span>
+          <span><strong>Filtro Pneu:</strong> {{ formatText(vidaUtilResult.filtroPneu) }}</span>
+          <span><strong>Total:</strong> {{ vidaUtilResult.totalPneus ?? 0 }}</span>
+        </div>
+
+        <table class="table" *ngIf="!vidaUtilLoading && (vidaUtilResult?.linhas?.length || 0) > 0; else emptyVidaUtil">
+          <thead>
+          <tr>
+            <th>Código</th>
+            <th>Série</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Medida</th>
+            <th>Status</th>
+            <th>Caminhão</th>
+            <th class="right">KM Total</th>
+            <th class="right">KM Meta</th>
+            <th class="right">% Vida</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let l of vidaUtilResult?.linhas || []; trackBy: trackByVidaUtil">
+            <td>{{ formatText(l.codigoPneu) }}</td>
+            <td>{{ formatText(l.numeroSerie) }}</td>
+            <td>{{ formatText(l.marca) }}</td>
+            <td>{{ formatText(l.modelo) }}</td>
+            <td>{{ formatText(l.medida) }}</td>
+            <td>{{ formatText(l.status) }}</td>
+            <td>{{ formatText(l.caminhao) }}</td>
+            <td class="right">{{ formatNumber(l.kmTotal) }}</td>
+            <td class="right">{{ formatNumber(l.kmMeta) }}</td>
+            <td class="right">{{ formatPercent(l.percentualVida) }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #emptyVidaUtil>
+        <div class="empty" *ngIf="form.tipo === 'VIDA_UTIL_PNEU' && !vidaUtilLoading">
+          Gere o relatório para visualizar os dados aqui.
+        </div>
+      </ng-template>
+
+      <div class="preview-wrap" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && pdfSafeUrl; else empty">
         <iframe class="pdf-frame" [src]="pdfSafeUrl"></iframe>
       </div>
 
       <ng-template #empty>
-        <div class="empty">
+        <div class="empty" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU'">
           Gere um relatório para visualizar aqui.
         </div>
       </ng-template>

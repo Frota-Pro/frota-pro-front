@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { finalize } from 'rxjs';
 
+import { PneuApiService } from '../../core/api/pneu-api.service';
+import { PneuVidaUtilRelatorioLinha, PneuVidaUtilRelatorioResponse } from '../../core/api/pneu-api.models';
 import { RelatorioPdfApiService } from '../../core/api/relatorio-pdf-api.service';
 
 type ReportKey =
@@ -36,6 +38,7 @@ type ReportDef = {
 export class RelatoriosComponent implements OnDestroy {
   constructor(
     private api: RelatorioPdfApiService,
+    private pneuApi: PneuApiService,
     private sanitizer: DomSanitizer
   ) {}
 
@@ -50,8 +53,7 @@ export class RelatoriosComponent implements OnDestroy {
     { key: 'CARGA_COMPLETA', title: 'Relatório Completo da Carga', needsNumeroCarga: true, enabled: true },
     { key: 'META_MENSAL_MOTORISTA', title: 'Meta Mensal do Motorista', needsPeriodo: true, needsMotorista: true, enabled: true },
 
-    // back está comentado hoje:
-    { key: 'VIDA_UTIL_PNEU', title: 'Vida Útil do Pneu (em breve)', enabled: false },
+    { key: 'VIDA_UTIL_PNEU', title: 'Vida Útil do Pneu', enabled: true },
   ];
 
   form = {
@@ -59,12 +61,15 @@ export class RelatoriosComponent implements OnDestroy {
     fim: '',
     tipo: '' as ReportKey | '',
     codigoCaminhao: '',
+    codigoPneu: '',
     codigoMotorista: '',
     numeroCarga: '',
   };
 
   loading = false;
   errorMsg = '';
+  vidaUtilLoading = false;
+  vidaUtilResult: PneuVidaUtilRelatorioResponse | null = null;
 
   pdfSafeUrl: SafeResourceUrl | null = null;
   private objectUrl: string | null = null;
@@ -102,6 +107,10 @@ export class RelatoriosComponent implements OnDestroy {
     // se não precisa de carga, limpa número
     if (!def.needsNumeroCarga) {
       this.form.numeroCarga = '';
+    }
+    if (def.key !== 'VIDA_UTIL_PNEU') {
+      this.form.codigoPneu = '';
+      this.vidaUtilResult = null;
     }
 
     // regra especial: abastecimentos aceita caminhão/motorista opcionais, então NÃO limpa automaticamente aqui
@@ -159,6 +168,35 @@ export class RelatoriosComponent implements OnDestroy {
     }
 
     const def = this.selectedDef!;
+
+    if (def.key === 'VIDA_UTIL_PNEU') {
+      this.loading = false;
+      this.vidaUtilLoading = true;
+      this.pdfSafeUrl = null;
+      this.lastBlob = null;
+      this.lastFilename = 'relatorio.pdf';
+
+      this.pneuApi
+        .relatorioVidaUtil(this.form.codigoCaminhao || undefined, this.form.codigoPneu || undefined)
+        .pipe(finalize(() => (this.vidaUtilLoading = false)))
+        .subscribe({
+          next: (res) => {
+            this.vidaUtilResult = {
+              filtroCaminhao: res?.filtroCaminhao || 'Todos',
+              filtroPneu: res?.filtroPneu || 'Todos',
+              totalPneus: Number(res?.totalPneus ?? 0),
+              linhas: res?.linhas || [],
+            };
+          },
+          error: (e) => {
+            this.vidaUtilResult = null;
+            this.errorMsg = e?.error?.message || 'Erro ao carregar relatório de vida útil.';
+          },
+        });
+      return;
+    }
+
+    this.vidaUtilResult = null;
     this.loading = true;
 
     let req$;
@@ -196,10 +234,6 @@ export class RelatoriosComponent implements OnDestroy {
 
       case 'META_MENSAL_MOTORISTA':
         req$ = this.api.metaMensalMotorista(this.form.codigoMotorista, this.form.inicio, this.form.fim);
-        break;
-
-      case 'VIDA_UTIL_PNEU':
-        req$ = this.api.vidaUtilPneu(this.form.codigoCaminhao || undefined);
         break;
 
       default:
@@ -254,6 +288,55 @@ export class RelatoriosComponent implements OnDestroy {
     this.lastBlob = null;
     this.lastFilename = 'relatorio.pdf';
     this.pdfSafeUrl = null;
+    this.vidaUtilResult = null;
     this.revokeObjectUrl();
+  }
+
+  exportarVidaUtilPneuPdf() {
+    this.errorMsg = '';
+    this.loading = true;
+    this.api.vidaUtilPneu(this.form.codigoCaminhao || undefined, this.form.codigoPneu || undefined)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (res) => {
+          const blob = res.body;
+          if (!blob) {
+            this.errorMsg = 'PDF vazio retornado pela API.';
+            return;
+          }
+          const a = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          a.href = url;
+          a.download = this.extractFilename(res.headers.get('content-disposition'), 'relatorio-vida-util-pneu.pdf');
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        error: (e) => {
+          this.errorMsg = e?.error?.message || 'Erro ao exportar PDF.';
+        },
+      });
+  }
+
+  formatText(v?: string | null): string {
+    const t = (v || '').trim();
+    return t || '-';
+  }
+
+  formatNumber(v?: number | null): string {
+    if (v == null) return '-';
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '-';
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  formatPercent(v?: number | null): string {
+    if (v == null) return '-';
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '-';
+    return `${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+  }
+
+  trackByVidaUtil(_: number, row: PneuVidaUtilRelatorioLinha): string {
+    return row.codigoPneu || `${row.numeroSerie || ''}-${row.caminhao || ''}`;
   }
 }
