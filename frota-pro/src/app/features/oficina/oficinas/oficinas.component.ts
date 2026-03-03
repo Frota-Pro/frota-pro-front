@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -17,7 +17,7 @@ const MAX_CODIGO = 50;
   templateUrl: './oficinas.component.html',
   styleUrls: ['./oficinas.component.css'],
 })
-export class OficinasComponent implements OnInit {
+export class OficinasComponent implements OnInit, OnDestroy {
 
   search = '';
 
@@ -50,6 +50,13 @@ export class OficinasComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregarPagina();
+  }
+
+  ngOnDestroy(): void {
+    if (this.filtroTimer) {
+      clearTimeout(this.filtroTimer);
+      this.filtroTimer = null;
+    }
   }
 
   scheduleBuscar(): void {

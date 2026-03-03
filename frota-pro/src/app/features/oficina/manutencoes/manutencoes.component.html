@@ -20,7 +20,7 @@
     <input class="search"
            style="min-width:220px; flex:0;"
            [(ngModel)]="caminhaoFilter"
-           (ngModelChange)="applyLocalFilter()"
+           (ngModelChange)="scheduleBuscar()"
            placeholder="Filtro caminhão (cód/placa)" />
 
     <select [(ngModel)]="statusFilter" class="select" (change)="applyLocalFilter()">

@@ -30,6 +30,7 @@
   <div class="toolbar">
     <input class="search"
            [(ngModel)]="q"
+           (ngModelChange)="onSearchChange()"
            (keyup.enter)="aplicarFiltros()"
            placeholder="Buscar por código interno/externo..." />
 

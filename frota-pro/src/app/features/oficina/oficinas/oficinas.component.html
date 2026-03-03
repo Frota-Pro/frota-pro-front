@@ -14,7 +14,7 @@
   <div class="toolbar">
     <input class="search"
            [(ngModel)]="search"
-           (ngModelChange)="applyLocalFilter()"
+           (ngModelChange)="scheduleBuscar()"
            placeholder="Buscar por código ou nome..." />
 
     <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>

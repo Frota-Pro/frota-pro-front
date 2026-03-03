@@ -24,21 +24,25 @@
   <div class="toolbar">
     <input class="search"
            [(ngModel)]="codigoInterno"
+           (ngModelChange)="onSearchChange()"
            (keyup.enter)="page=0; carregarPagina()"
            placeholder="Código interno (ex: MOT-000123)" />
 
     <input class="search"
            [(ngModel)]="codigoExterno"
+           (ngModelChange)="onSearchChange()"
            (keyup.enter)="page=0; carregarPagina()"
            placeholder="Código externo (ERP/WinThor)" />
 
     <input class="search"
            [(ngModel)]="cnh"
+           (ngModelChange)="onSearchChange()"
            (keyup.enter)="page=0; carregarPagina()"
            placeholder="CNH" />
 
     <input class="search"
            [(ngModel)]="nomeEmail"
+           (ngModelChange)="onSearchChange()"
            (keyup.enter)="page=0; carregarPagina()"
            placeholder="Nome/E-mail" />
 

@@ -26,6 +26,7 @@
     <input class="search"
            id="caminhoes-search"
            [(ngModel)]="search"
+           (ngModelChange)="onSearchChange()"
            (keyup.enter)="page=0; carregarPagina()"
            placeholder="Buscar por placa, descrição, marca, modelo, categoria..." />
 

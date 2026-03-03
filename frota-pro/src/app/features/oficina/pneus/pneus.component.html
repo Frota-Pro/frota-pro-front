@@ -13,7 +13,7 @@
 
   <div class="toolbar">
     <div class="tool">
-      <input class="search" [(ngModel)]="q" (keyup.enter)="aplicarFiltros()"
+      <input class="search" [(ngModel)]="q" (ngModelChange)="onSearchChange()" (keyup.enter)="aplicarFiltros()"
              placeholder="Buscar por código, série, marca, modelo, medida..." />
       <span class="kbd">Enter</span>
     </div>

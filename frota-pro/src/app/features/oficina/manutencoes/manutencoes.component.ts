@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -25,7 +25,7 @@ interface ManutencaoVM extends ManutencaoResponse {
   templateUrl: './manutencoes.component.html',
   styleUrls: ['./manutencoes.component.css'],
 })
-export class ManutencoesComponent implements OnInit {
+export class ManutencoesComponent implements OnInit, OnDestroy {
 
   // filtros
   search = '';
@@ -69,6 +69,13 @@ export class ManutencoesComponent implements OnInit {
   ngOnInit(): void {
     this.setPeriodoMesAtual();
     this.carregarPagina();
+  }
+
+  ngOnDestroy(): void {
+    if (this.filtroTimer) {
+      clearTimeout(this.filtroTimer);
+      this.filtroTimer = null;
+    }
   }
 
   setPeriodoMesAtual(): void {

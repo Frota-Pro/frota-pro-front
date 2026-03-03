@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
@@ -85,7 +85,7 @@ interface AbastecimentoVM {
   templateUrl: './abastecimentos.component.html',
   styleUrls: ['./abastecimentos.component.css'],
 })
-export class AbastecimentosComponent implements OnInit {
+export class AbastecimentosComponent implements OnInit, OnDestroy {
   // filtros
   searchTerm: string = '';
   filtroTipo: string = '';
@@ -163,6 +163,13 @@ export class AbastecimentosComponent implements OnInit {
   ngOnInit(): void {
     this.preloadCombos();
     this.buscar();
+  }
+
+  ngOnDestroy(): void {
+    if (this.filtroTimer) {
+      clearTimeout(this.filtroTimer);
+      this.filtroTimer = null;
+    }
   }
 
   /**

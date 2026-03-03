@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -31,7 +31,7 @@ interface ToastItem {
   templateUrl: './caminhoes-list.component.html',
   styleUrls: ['./caminhoes-list.component.css'],
 })
-export class CaminhoesListComponent implements OnInit {
+export class CaminhoesListComponent implements OnInit, OnDestroy {
   // filtros
   search = '';
   ativoFilter: AtivoFiltro = 'ATIVOS';
@@ -53,6 +53,8 @@ export class CaminhoesListComponent implements OnInit {
   // ui
   loading = false;
   errorMsg: string | null = null;
+  private searchDebounceTimer?: number;
+  private lastSearchApplied = '';
 
   // toasts
   toasts: ToastItem[] = [];
@@ -122,6 +124,27 @@ export class CaminhoesListComponent implements OnInit {
     this.carregarPagina();
   }
 
+  ngOnDestroy(): void {
+    if (this.searchDebounceTimer) {
+      window.clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = undefined;
+    }
+  }
+
+  onSearchChange(): void {
+    if (this.searchDebounceTimer) {
+      window.clearTimeout(this.searchDebounceTimer);
+    }
+
+    this.searchDebounceTimer = window.setTimeout(() => {
+      const current = (this.search || '').trim();
+      if (current === this.lastSearchApplied) return;
+      this.lastSearchApplied = current;
+      this.page = 0;
+      this.carregarPagina();
+    }, 350);
+  }
+
   carregarCategorias(): void {
     this.categoriaApi.listarTodas().subscribe({
       next: (p) => (this.categorias = (p.content || []).filter(c => c.ativo !== false)),
@@ -138,6 +161,7 @@ export class CaminhoesListComponent implements OnInit {
         this.ativoFilter === 'ATIVOS' ? true : false;
 
     const q = (this.search || '').trim() || null;
+    this.lastSearchApplied = (this.search || '').trim();
 
     this.api
       .listar({ page: this.page, size: this.size, sort: 'descricao,asc', ativo: ativoParam, q })

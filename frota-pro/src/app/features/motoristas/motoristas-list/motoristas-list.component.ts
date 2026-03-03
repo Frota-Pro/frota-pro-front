@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -24,7 +24,7 @@ interface ToastItem {
   templateUrl: './motoristas-list.component.html',
   styleUrls: ['./motoristas-list.component.css'],
 })
-export class MotoristasListComponent implements OnInit {
+export class MotoristasListComponent implements OnInit, OnDestroy {
   // filtros
   codigoInterno = '';
   codigoExterno = '';
@@ -59,6 +59,8 @@ export class MotoristasListComponent implements OnInit {
 
   // toasts
   toasts: ToastItem[] = [];
+  private searchDebounceTimer?: number;
+  private lastQueryApplied = '';
 
   constructor(
     private router: Router,
@@ -67,6 +69,13 @@ export class MotoristasListComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregarPagina();
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchDebounceTimer) {
+      window.clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = undefined;
+    }
   }
 
   // ------------------------
@@ -159,6 +168,18 @@ export class MotoristasListComponent implements OnInit {
     return parts.length ? parts.join(' ') : null;
   }
 
+  onSearchChange(): void {
+    if (this.searchDebounceTimer) {
+      window.clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = window.setTimeout(() => {
+      const current = this.buildQuery() || '';
+      if (current === this.lastQueryApplied) return;
+      this.page = 0;
+      this.carregarPagina();
+    }, 350);
+  }
+
   carregarPagina(): void {
     this.loading = true;
     this.errorMsg = null;
@@ -168,6 +189,7 @@ export class MotoristasListComponent implements OnInit {
         this.ativoFilter === 'ATIVOS' ? true : false;
 
     const q = this.buildQuery();
+    this.lastQueryApplied = q || '';
 
     this.api.listar({ page: this.page, size: this.size, sort: 'nome,asc', ativo: ativoParam, q })
       .pipe(finalize(() => (this.loading = false)))

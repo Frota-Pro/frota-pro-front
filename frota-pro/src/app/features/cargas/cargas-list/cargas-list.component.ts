@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -23,7 +23,7 @@ interface ToastItem {
   templateUrl: './cargas-list.component.html',
   styleUrls: ['./cargas-list.component.css'],
 })
-export class CargasListComponent implements OnInit {
+export class CargasListComponent implements OnInit, OnDestroy {
   loading = false;
   errorMsg: string | null = null;
 
@@ -40,6 +40,8 @@ export class CargasListComponent implements OnInit {
   // ===== Toasts =====
   toasts: ToastItem[] = [];
   private toastSeq = 0;
+  private searchDebounceTimer?: number;
+  private lastSearchApplied = '';
 
   // ===== Validações UI =====
   periodoErro: string | null = null;
@@ -48,6 +50,13 @@ export class CargasListComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregarPagina();
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchDebounceTimer) {
+      window.clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = undefined;
+    }
   }
 
   // =======================
@@ -137,6 +146,7 @@ export class CargasListComponent implements OnInit {
     this.errorMsg = null;
 
     const q = this.q?.trim() ? this.q.trim() : null;
+    this.lastSearchApplied = q || '';
 
     this.api
       .listar({
@@ -168,6 +178,18 @@ export class CargasListComponent implements OnInit {
     this.page = 0;
     this.toast('info', 'Aplicando filtros...', 'Cargas', 1200);
     this.carregarPagina();
+  }
+
+  onSearchChange(): void {
+    if (this.searchDebounceTimer) {
+      window.clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = window.setTimeout(() => {
+      const current = this.q?.trim() || '';
+      if (current === this.lastSearchApplied) return;
+      this.page = 0;
+      this.carregarPagina();
+    }, 350);
   }
 
   limparFiltros(): void {

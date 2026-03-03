@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -20,7 +20,7 @@ const MAX_Q = 120;
   templateUrl: './pneus.component.html',
   styleUrls: ['./pneus.component.css'],
 })
-export class PneusComponent implements OnInit {
+export class PneusComponent implements OnInit, OnDestroy {
   q = '';
   statusFilter = 'TODOS';
   alertaFilter: Alerta = 'TODOS';
@@ -34,6 +34,8 @@ export class PneusComponent implements OnInit {
   errorMsg: string | null = null;
 
   rows: PneuResponse[] = [];
+  private searchDebounceTimer?: number;
+  private lastSearchApplied = '';
 
   // cache de vida útil por código (para exibir barra e alerta na lista)
   vidaMap: Record<string, PneuVidaUtilResponse | undefined> = {};
@@ -60,6 +62,13 @@ export class PneusComponent implements OnInit {
     this.carregarPagina();
   }
 
+  ngOnDestroy(): void {
+    if (this.searchDebounceTimer) {
+      window.clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = undefined;
+    }
+  }
+
   carregarPagina(page?: number): void {
     if (page != null) this.page = page;
 
@@ -77,6 +86,7 @@ export class PneusComponent implements OnInit {
 
     const status = (this.statusFilter && this.statusFilter !== 'TODOS') ? this.statusFilter : undefined;
     const q = (this.q || '').trim() || undefined;
+    this.lastSearchApplied = q || '';
 
     this.api.listar({ q, status, page: this.page, size: this.size, sort: 'codigo,desc' })
       .pipe(finalize(() => (this.loading = false)))
@@ -95,6 +105,18 @@ export class PneusComponent implements OnInit {
   aplicarFiltros(): void {
     this.page = 0;
     this.carregarPagina();
+  }
+
+  onSearchChange(): void {
+    if (this.searchDebounceTimer) {
+      window.clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = window.setTimeout(() => {
+      const current = (this.q || '').trim();
+      if (current === this.lastSearchApplied) return;
+      this.page = 0;
+      this.carregarPagina();
+    }, 350);
   }
 
   limparFiltros(): void {
