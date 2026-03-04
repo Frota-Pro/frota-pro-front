@@ -108,9 +108,17 @@ async function resolveErrorMessage(error: HttpErrorResponse): Promise<string> {
 
 export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ToastService);
+  const isAuthRequest =
+    req.url.endsWith('/login') ||
+    req.url.endsWith('/login/refresh') ||
+    req.url.endsWith('/login/logout');
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      if (isAuthRequest) {
+        return throwError(() => error);
+      }
+
       // 401 é tratado no authErrorInterceptor (logout + redirect)
       if (error.status !== 401) {
         return from(resolveErrorMessage(error)).pipe(

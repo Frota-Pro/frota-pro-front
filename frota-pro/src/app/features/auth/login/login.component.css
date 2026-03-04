@@ -222,6 +222,13 @@ input::placeholder {
   background: rgba(30, 79, 143, 0.55);
 }
 
+.security-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(11, 43, 82, 0.65);
+}
+
 /* responsivo */
 @media (max-width: 420px) {
   .login-card {
