@@ -4,17 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(front): adiciona autocomplete de caminhao/motorista/oficina/parada em metas, relatorios, manutencoes e instalacao de pneus">
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/abastecimento/abastecimentos.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/abastecimento/abastecimentos.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/abastecimento/abastecimentos.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/abastecimento/abastecimentos.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/metas/metas.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/manutencoes/manutencoes.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/manutencoes/manutencoes.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/manutencoes/manutencoes.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/manutencoes/manutencoes.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/pneu-detalhe/pneu-detalhe.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/pneu-detalhe/pneu-detalhe.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/pneu-detalhe/pneu-detalhe.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/oficina/pneu-detalhe/pneu-detalhe.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.ts" afterDir="false" />
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="fix(front): reabre dropdown de autocomplete ao editar campo após seleção">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth-error.interceptor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth-error.interceptor.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth.interceptor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth.interceptor.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth.models.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth.models.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/auth/auth.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/dashboard/dashboard/dashboard.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/shared/layout/sidebar/sidebar.component.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -152,7 +149,8 @@
       <workItem from="1772132615462" duration="7411000" />
       <workItem from="1772192476500" duration="942000" />
       <workItem from="1772195281861" duration="1375000" />
-      <workItem from="1772199695989" duration="22644000" />
+      <workItem from="1772199695989" duration="24758000" />
+      <workItem from="1772635410172" duration="269000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade.">
       <option name="closed" value="true" />
@@ -450,7 +448,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772558533469</updated>
     </task>
-    <option name="localTasksCounter" value="38" />
+    <task id="LOCAL-00038" summary="fix(front): reabre dropdown de autocomplete ao editar campo após seleção">
+      <option name="closed" value="true" />
+      <created>1772560828186</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1772560828186</updated>
+    </task>
+    <option name="localTasksCounter" value="39" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -468,7 +474,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Adiciona módulo de detalhes da manutenção com componentes, serviços e estilos. Implementa listagem, edição e upload de documentos, além de visualização de itens e paradas." />
     <MESSAGE value="Adiciona módulo de oficinas com componentes, serviços e estilos. Implementa listagem, criação, edição e exclusão de oficinas, além de integração com a API para gerenciamento de pneus." />
     <MESSAGE value="Adiciona funcionalidade de logs ao módulo Winthor. Implementa listagem, filtragem e cópia de logs, além de suporte a autoatualização e seleção de fonte." />
     <MESSAGE value="Adiciona componente de toast para exibição de mensagens. Implementa serviço de toast e integra com interceptores e componentes existentes para feedback ao usuário." />
@@ -493,7 +498,8 @@
     <MESSAGE value="feat(relatorios): adiciona vida util de pneus (json + exportacao pdf)" />
     <MESSAGE value="feat(ui): adiciona auto pesquisa com debounce em motoristas, cargas, abastecimentos, metas, manutencoes, oficinas e pneus" />
     <MESSAGE value="feat(front): adiciona autocomplete de caminhao/motorista/oficina/parada em metas, relatorios, manutencoes e instalacao de pneus" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(front): adiciona autocomplete de caminhao/motorista/oficina/parada em metas, relatorios, manutencoes e instalacao de pneus" />
+    <MESSAGE value="fix(front): reabre dropdown de autocomplete ao editar campo após seleção" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix(front): reabre dropdown de autocomplete ao editar campo após seleção" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

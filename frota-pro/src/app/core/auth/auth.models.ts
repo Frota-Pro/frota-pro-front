@@ -6,4 +6,10 @@ export interface LoginRequest {
 export interface LoginResponse {
   accessToken: string;
   expiresIn: number;
+  refreshToken: string;
+  refreshExpiresIn: number;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
 }

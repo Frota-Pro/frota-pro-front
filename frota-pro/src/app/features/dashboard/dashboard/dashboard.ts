@@ -162,10 +162,19 @@ export class Dashboard implements OnInit {
   }
 
   logout() {
-    this.authService.logout();
-    this.authUser.clear();
-    this.router.navigateByUrl('/login', { replaceUrl: true }).finally(() => {
-      window.location.replace('/login');
+    this.authService.logout().subscribe({
+      next: () => {
+        this.authUser.clear();
+        this.router.navigateByUrl('/login', { replaceUrl: true }).finally(() => {
+          window.location.replace('/login');
+        });
+      },
+      error: () => {
+        this.authUser.clear();
+        this.router.navigateByUrl('/login', { replaceUrl: true }).finally(() => {
+          window.location.replace('/login');
+        });
+      },
     });
   }
 }

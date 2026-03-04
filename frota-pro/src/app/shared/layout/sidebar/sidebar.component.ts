@@ -75,10 +75,18 @@ export class SidebarComponent {
       if (!confirmed) return;
     }
 
-    this.authService.logout();
-    this.authUser.clear();
-    this.settingsOpen = false;
-    this.router.navigate(['/login'], { replaceUrl: true });
+    this.authService.logout().subscribe({
+      next: () => {
+        this.authUser.clear();
+        this.settingsOpen = false;
+        this.router.navigate(['/login'], { replaceUrl: true });
+      },
+      error: () => {
+        this.authUser.clear();
+        this.settingsOpen = false;
+        this.router.navigate(['/login'], { replaceUrl: true });
+      },
+    });
   }
 
   @HostListener('document:click')
