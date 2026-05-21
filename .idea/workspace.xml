@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(meta): implementa invalidação de metas e atualizações reativas nos componentes relacionados">
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(styles): refactor grid layouts for responsiveness and improve overflow handling">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/styles.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -165,7 +166,7 @@
       <workItem from="1772199695989" duration="24758000" />
       <workItem from="1772635410172" duration="1618000" />
       <workItem from="1779383260465" duration="34000" />
-      <workItem from="1779383316343" duration="4668000" />
+      <workItem from="1779383316343" duration="5280000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade.">
       <option name="closed" value="true" />
@@ -495,7 +496,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779387117731</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="feat(styles): refactor grid layouts for responsiveness and improve overflow handling">
+      <option name="closed" value="true" />
+      <created>1779388902860</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1779388902860</updated>
+    </task>
+    <option name="localTasksCounter" value="43" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -513,7 +522,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Adiciona suporte a metas no componente de caminhão. Refatora a exibição de metas ativas e implementa validações no formulário de edição de metas." />
     <MESSAGE value="Refatora tratamento de erros na API e melhora a exibição de mensagens de erro. Atualiza a formatação de pesos para kg em componentes relevantes." />
     <MESSAGE value="feat: adiciona módulo de documentação ao caminhão e refatora estilos para melhor usabilidade" />
     <MESSAGE value="feat: adiciona campo de média km/L e validações no componente de abastecimento" />
@@ -538,7 +546,8 @@
     <MESSAGE value="feat(auth): implementa suporte a refresh token e tratamento automatizado de expiração de sessão" />
     <MESSAGE value="feat(relatorios): adiciona suporte a seleção de tipo de meta para relatórios de motoristas" />
     <MESSAGE value="feat(meta): implementa invalidação de metas e atualizações reativas nos componentes relacionados" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(meta): implementa invalidação de metas e atualizações reativas nos componentes relacionados" />
+    <MESSAGE value="feat(styles): refactor grid layouts for responsiveness and improve overflow handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(styles): refactor grid layouts for responsiveness and improve overflow handling" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
