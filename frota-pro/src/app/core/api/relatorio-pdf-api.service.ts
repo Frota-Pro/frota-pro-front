@@ -52,6 +52,17 @@ export class RelatorioPdfApiService extends BaseApiService {
     });
   }
 
+  metasMotoristas(inicio: string, fim: string, tipoMeta?: string) {
+    let params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    if (tipoMeta) params = params.set('tipoMeta', tipoMeta);
+
+    return this.http.get(`${this.apiUrl}/relatorios/pdf/motoristas/metas`, {
+      params,
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
   cargaCompleta(numeroCarga: string) {
     return this.http.get(`${this.apiUrl}/relatorios/pdf/carga/${encodeURIComponent(numeroCarga)}/completo`, {
       responseType: 'blob',

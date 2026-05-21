@@ -39,6 +39,16 @@
           <input type="date" [(ngModel)]="form.fim" />
         </div>
 
+        <div class="field" *ngIf="selectedDef?.needsTipoMeta">
+          <label>Tipo de Meta (opcional)</label>
+          <select [(ngModel)]="form.tipoMeta">
+            <option value="">Padrão do backend (Tonelada)</option>
+            <option *ngFor="let option of tipoMetaOptions" [ngValue]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
         <!-- ✅ ABASTECIMENTOS: filtros opcionais -->
         <div class="field" *ngIf="form.tipo === 'ABASTECIMENTOS'">
           <label>Caminhão (opcional)</label>

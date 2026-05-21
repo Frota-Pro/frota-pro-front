@@ -6,18 +6,36 @@
   <component name="ChangeListManager">
     <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(auth): implementa suporte a refresh token e tratamento automatizado de expiração de sessão">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/api/api-error.interceptor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/api-error.interceptor.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/auth/login/login.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/api/relatorio-pdf-api.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/relatorio-pdf-api.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/relatorios/relatorios.component.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="CopilotChats">
+    <option name="panelChat">
+      <chat>
+        <option name="activeSessionId" value="8d9bb201-6228-4bb3-bb8f-767790c107f4" />
+        <option name="sessions">
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="8d9bb201-6228-4bb3-bb8f-767790c107f4" />
+            <option name="modeId" value="Ask" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="auto" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+        </option>
+        <option name="type" value="PANEL" />
+      </chat>
+    </option>
+  </component>
   <component name="CopilotPersistence">
     <persistenceIdMap>
+      <entry key="_/home/arthenyo/Documentos/FrotaPRO - front" value="3E2iqxdMk0ZIDl1ewdjzfWH8iKI" />
       <entry key="_C:/Users/Arthenyo/Documents/PROJETOS/frota-pro-front" value="38WHEl0KMbBATjphNm7CU2CoNfR" />
     </persistenceIdMap>
   </component>
@@ -30,7 +48,6 @@
   </component>
   <component name="EmbeddingIndexingInfo">
     <option name="cachedIndexableFilesCount" value="175" />
-    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -70,6 +87,7 @@
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
@@ -94,7 +112,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-WS-253.30387.83" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.24374.125" />
       </set>
     </attachedChunks>
   </component>
@@ -149,6 +167,8 @@
       <workItem from="1772195281861" duration="1375000" />
       <workItem from="1772199695989" duration="24758000" />
       <workItem from="1772635410172" duration="1618000" />
+      <workItem from="1779383260465" duration="34000" />
+      <workItem from="1779383316343" duration="454000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade.">
       <option name="closed" value="true" />

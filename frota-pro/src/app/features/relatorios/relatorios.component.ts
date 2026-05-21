@@ -17,10 +17,13 @@ type ReportKey =
   | 'CUSTO_CAMINHAO'
   | 'MANUTENCOES_CAMINHAO'
   | 'RANKING_MOTORISTAS'
+  | 'METAS_MOTORISTAS'
   | 'CARGA_COMPLETA'
   | 'META_MENSAL_MOTORISTA'
   | 'DESPESAS_CATEGORIAS'
   | 'VIDA_UTIL_PNEU';
+
+type TipoMeta = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA';
 
 type ReportDef = {
   key: ReportKey;
@@ -29,6 +32,7 @@ type ReportDef = {
   needsCaminhao?: boolean;
   needsMotorista?: boolean;
   needsNumeroCarga?: boolean;
+  needsTipoMeta?: boolean;
   enabled?: boolean;
 };
 
@@ -55,6 +59,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     { key: 'CUSTO_CAMINHAO', title: 'Custo por Caminhão', needsPeriodo: true, needsCaminhao: true, enabled: true },
     { key: 'MANUTENCOES_CAMINHAO', title: 'Histórico de Manutenção (Caminhão)', needsPeriodo: true, needsCaminhao: true, enabled: true },
     { key: 'RANKING_MOTORISTAS', title: 'Ranking de Motoristas', needsPeriodo: true, enabled: true },
+    { key: 'METAS_MOTORISTAS', title: 'Metas dos Motoristas', needsPeriodo: true, needsTipoMeta: true, enabled: true },
     { key: 'DESPESAS_CATEGORIAS', title: 'Despesas por Categoria', needsPeriodo: true, enabled: true },
     { key: 'CARGA_COMPLETA', title: 'Relatório Completo da Carga', needsNumeroCarga: true, enabled: true },
     { key: 'META_MENSAL_MOTORISTA', title: 'Meta Mensal do Motorista', needsPeriodo: true, needsMotorista: true, enabled: true },
@@ -62,10 +67,18 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     { key: 'VIDA_UTIL_PNEU', title: 'Vida Útil do Pneu', enabled: true },
   ];
 
+  readonly tipoMetaOptions: { value: TipoMeta; label: string }[] = [
+    { value: 'QUILOMETRAGEM', label: 'Quilometragem' },
+    { value: 'CONSUMO_COMBUSTIVEL', label: 'Consumo de combustível' },
+    { value: 'TONELADA', label: 'Tonelada' },
+    { value: 'CARGA_TRANSPORTADA', label: 'Carga transportada' },
+  ];
+
   form = {
     inicio: '',
     fim: '',
     tipo: '' as ReportKey | '',
+    tipoMeta: '' as TipoMeta | '',
     codigoCaminhao: '',
     codigoPneu: '',
     codigoMotorista: '',
@@ -129,6 +142,9 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     if (def.key !== 'VIDA_UTIL_PNEU') {
       this.form.codigoPneu = '';
       this.vidaUtilResult = null;
+    }
+    if (!def.needsTipoMeta) {
+      this.form.tipoMeta = '';
     }
 
     // regra especial: abastecimentos aceita caminhão/motorista opcionais, então NÃO limpa automaticamente aqui
@@ -241,6 +257,10 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
 
       case 'RANKING_MOTORISTAS':
         req$ = this.api.rankingMotoristas(this.form.inicio, this.form.fim);
+        break;
+
+      case 'METAS_MOTORISTAS':
+        req$ = this.api.metasMotoristas(this.form.inicio, this.form.fim, this.form.tipoMeta || undefined);
         break;
 
       case 'DESPESAS_CATEGORIAS':
