@@ -11,6 +11,7 @@ import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
 import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
 import { MotoristaApiService } from '../../core/api/motorista-api.service';
 import { MotoristaResponse } from '../../core/api/motorista-api.models';
+import { MetaApiService } from '../../core/api/meta-api.service';
 
 type UUID = string;
 
@@ -164,6 +165,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     private abastecimentoApi: AbastecimentoApiService,
     private caminhaoApi: CaminhaoApiService,
     private motoristaApi: MotoristaApiService,
+    private metaApi: MetaApiService,
     private toast: ToastService,
   ) {}
 
@@ -533,52 +535,22 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   private calcAvgConsumption(items: AbastecimentoVM[]): number {
     if (!items?.length) return 0;
 
-    const byTruck = new Map<string, AbastecimentoVM[]>();
-    for (const a of items) {
-      const key = String(a.caminhao?.codigo || a.caminhao?.placa || '—');
-      if (!byTruck.has(key)) byTruck.set(key, []);
-      byTruck.get(key)!.push(a);
-    }
-
-    let totalKm = 0;
+    let weightedTotal = 0;
     let totalLitros = 0;
 
-    for (const arr of byTruck.values()) {
-      const sorted = [...arr].sort((x, y) => {
-        const tx = this.safeDate(x.dtAbastecimento)?.getTime() ?? 0;
-        const ty = this.safeDate(y.dtAbastecimento)?.getTime() ?? 0;
-        if (tx !== ty) return tx - ty;
+    for (const a of items) {
+      const media = Number(a.mediaKmLitro ?? NaN);
+      const litros = Number(a.qtLitros ?? NaN);
 
-        const kx = Number(x.kmOdometro ?? NaN);
-        const ky = Number(y.kmOdometro ?? NaN);
-        if (Number.isFinite(kx) && Number.isFinite(ky) && kx !== ky) return kx - ky;
+      if (!Number.isFinite(media) || media <= 0) continue;
+      if (!Number.isFinite(litros) || litros <= 0) continue;
 
-        return String(x.codigo || '').localeCompare(String(y.codigo || ''));
-      });
-
-      for (let i = 1; i < sorted.length; i++) {
-        const prev = sorted[i - 1];
-        const cur = sorted[i];
-
-        const kmPrev = Number(prev.kmOdometro ?? NaN);
-        const kmCur = Number(cur.kmOdometro ?? NaN);
-        const litrosCur = Number(cur.qtLitros ?? 0);
-
-        if (!Number.isFinite(kmPrev) || !Number.isFinite(kmCur)) continue;
-        const delta = kmCur - kmPrev;
-        if (delta <= 0) continue;
-        if (litrosCur <= 0) continue;
-
-        totalKm += delta;
-        totalLitros += litrosCur;
-      }
+      weightedTotal += media * litros;
+      totalLitros += litros;
     }
 
-    if (totalLitros > 0) return totalKm / totalLitros;
-
-    const vals = items.map((a) => Number(a.mediaKmLitro || 0)).filter((x) => x > 0);
-    if (!vals.length) return 0;
-    return vals.reduce((acc, x) => acc + x, 0) / vals.length;
+    if (!totalLitros) return 0;
+    return Math.round((weightedTotal / totalLitros) * 100) / 100;
   }
 
   // =========================
@@ -817,6 +789,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
         next: () => {
           this.closeAddModal();
           this.toast.success(this.isEditing ? 'Abastecimento atualizado.' : 'Abastecimento cadastrado.');
+          this.metaApi.invalidate();
           this.buscar(0);
         },
         error: (err) => {
@@ -841,6 +814,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.toast.success('Abastecimento excluído.');
+          this.metaApi.invalidate();
           this.buscar(0);
         },
         error: (err) => this.toast.error(err?.error?.message || 'Falha ao excluir abastecimento.'),

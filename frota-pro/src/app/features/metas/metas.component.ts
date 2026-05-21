@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { catchError, map } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 
 import { MetaApiService } from '../../core/api/meta-api.service';
 import { MetaRequest, MetaResponse } from '../../core/api/meta-api.models';
@@ -79,6 +79,7 @@ export class MetasComponent implements OnInit, OnDestroy {
   readonly sugestoesMax = 8;
 
   private autocompleteBlurTimer: any = null;
+  private metasInvalidatedSub: Subscription | null = null;
 
   constructor(
     private api: MetaApiService,
@@ -91,10 +92,13 @@ export class MetasComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.preloadCombos();
     this.carregar();
+    this.metasInvalidatedSub = this.api.invalidated$.subscribe(() => this.carregar());
   }
 
   ngOnDestroy(): void {
     this.resetAutoComplete();
+    this.metasInvalidatedSub?.unsubscribe();
+    this.metasInvalidatedSub = null;
   }
 
   carregar(): void {

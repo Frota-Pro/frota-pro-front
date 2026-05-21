@@ -1,12 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 
 import { MotoristaApiService } from '../../../core/api/motorista-api.service';
 import { MotoristaRequest, MotoristaResponse, RelatorioMetaMensalMotoristaResponse } from '../../../core/api/motorista-api.models';
+import { MetaApiService } from '../../../core/api/meta-api.service';
 import { CargaApiService } from '../../../core/api/carga-api.service';
 import { CargaResponse } from '../../../core/api/carga-api.models';
 
@@ -23,7 +25,7 @@ type TabKey = 'cargas' | 'meta' | 'docs';
   templateUrl: './motorista-detalhe.component.html',
   styleUrls: ['./motorista-detalhe.component.css'],
 })
-export class MotoristaDetalheComponent implements OnInit {
+export class MotoristaDetalheComponent implements OnInit, OnDestroy {
   codigo!: string;
 
   loading = false;
@@ -83,11 +85,13 @@ export class MotoristaDetalheComponent implements OnInit {
 
   private previewObjectUrl: string | null = null;
   private downloadObjectUrl: string | null = null;
+  private metasInvalidatedSub: Subscription | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private api: MotoristaApiService,
+    private metaApi: MetaApiService,
     private cargaApi: CargaApiService,
     private documentoApi: DocumentoMotoristaApiService,
     private sanitizer: DomSanitizer
@@ -101,6 +105,14 @@ export class MotoristaDetalheComponent implements OnInit {
     }
 
     this.carregarMotorista();
+    this.metasInvalidatedSub = this.metaApi.invalidated$.subscribe(() => {
+      if (this.tab === 'meta') this.carregarMetaMensalAtual();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.metasInvalidatedSub?.unsubscribe();
+    this.metasInvalidatedSub = null;
   }
 
   voltar(): void {

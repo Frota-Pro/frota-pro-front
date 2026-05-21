@@ -1,12 +1,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Subject } from 'rxjs';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
 import { MetaRequest, MetaResponse } from './meta-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class MetaApiService extends BaseApiService {
+  private readonly invalidatedSubject = new Subject<void>();
+  readonly invalidated$ = this.invalidatedSubject.asObservable();
+
   constructor(http: HttpClient) { super(http); }
+
+  invalidate(): void {
+    this.invalidatedSubject.next();
+  }
 
   private toApiDate(value: string | null | undefined): string {
     const v = (value || '').trim();

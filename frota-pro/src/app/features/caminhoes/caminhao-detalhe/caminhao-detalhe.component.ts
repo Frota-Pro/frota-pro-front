@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 
 import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
 import { CategoriaCaminhaoApiService } from '../../../core/api/categoria-caminhao-api.service';
@@ -38,7 +39,7 @@ type TabKey = 'cargas' | 'abastecimentos' | 'os';
   templateUrl: './caminhao-detalhe.component.html',
   styleUrls: ['./caminhao-detalhe.component.css'],
 })
-export class CaminhaoDetalheComponent implements OnInit {
+export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
   codigo!: string;
 
   loading = false;
@@ -119,6 +120,7 @@ export class CaminhaoDetalheComponent implements OnInit {
   // URLs blob temporárias (revogar para não vazar memória)
   private previewObjectUrl: string | null = null;
   private downloadObjectUrl: string | null = null;
+  private metasInvalidatedSub: Subscription | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -144,6 +146,14 @@ export class CaminhaoDetalheComponent implements OnInit {
     this.carregarCategorias();
     this.carregarBase();
     this.carregarTab();
+    this.metasInvalidatedSub = this.metaApi.invalidated$.subscribe(() => {
+      this.carregarBase();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.metasInvalidatedSub?.unsubscribe();
+    this.metasInvalidatedSub = null;
   }
 
   // ------------------ BASE ------------------
