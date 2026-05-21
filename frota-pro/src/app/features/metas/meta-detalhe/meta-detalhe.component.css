@@ -188,11 +188,11 @@
 
 .resume-grid{
   display:grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap:10px;
 }
 @media (max-width: 980px){
-  .resume-grid{ grid-template-columns: 1fr; }
+  .resume-grid{ grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 }
 .resume-item{
   border:1px solid rgba(15,23,42,.08);

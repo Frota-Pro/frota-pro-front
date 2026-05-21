@@ -59,7 +59,7 @@
 }
 
 .table-wrap{ width:100%; overflow:auto; }
-.table{ width:100%; border-collapse:collapse; min-width:980px; }
+.table{ width:100%; border-collapse:collapse; min-width:1040px; }
 .table thead th{
   text-align:left; font-size:11px; font-weight:800; color:rgba(15,23,42,.60);
   padding:12px; background:rgba(15,23,42,.02);
@@ -202,8 +202,8 @@ label{ display:block; font-size:12px; font-weight:800; color: rgba(15,23,42,.70)
 .field-suggest li span{ font-size:12px; color:rgba(15,23,42,.75); }
 .field-suggest li small{ font-size:11px; color:rgba(15,23,42,.56); }
 
-.form-row{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
-.form-row.three{ grid-template-columns: repeat(3, 1fr); }
+.form-row{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px; }
+.form-row.three{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 760px){ .form-row{ grid-template-columns: 1fr; } }
 
 .checkbox-row{ display:flex; align-items:center; gap:10px; color: rgba(15,23,42,.75); }
