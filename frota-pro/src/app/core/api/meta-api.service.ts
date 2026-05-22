@@ -5,6 +5,9 @@ import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
 import {
   DesempenhoCategoriaMetaResponse,
+  DesempenhoMetasLinha,
+  DesempenhoMetasParams,
+  DesempenhoMetasResponse,
   MetaRequest,
   MetaResponse,
   TipoMetaResponse
@@ -91,6 +94,22 @@ export class MetaApiService extends BaseApiService {
 
     return this.http.get<DesempenhoCategoriaMetaResponse>(
       `${this.apiUrl}/metas/categorias/${encodeURIComponent(codigoCategoria)}/desempenho`,
+      { params }
+    );
+  }
+
+  desempenho(paramsInput: DesempenhoMetasParams) {
+    let params = new HttpParams()
+      .set('inicio', paramsInput.inicio)
+      .set('fim', paramsInput.fim);
+
+    if (paramsInput.tipoMeta) params = params.set('tipoMeta', paramsInput.tipoMeta);
+    if (paramsInput.caminhao) params = params.set('caminhao', paramsInput.caminhao);
+    if (paramsInput.motorista) params = params.set('motorista', paramsInput.motorista);
+    if (paramsInput.categoria) params = params.set('categoria', paramsInput.categoria);
+
+    return this.http.get<DesempenhoMetasResponse | DesempenhoMetasLinha[]>(
+      `${this.apiUrl}/metas/desempenho`,
       { params }
     );
   }

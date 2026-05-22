@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
+import { DesempenhoMetasParams } from './meta-api.models';
 
 export type PdfResponse = HttpResponse<Blob>;
 
@@ -115,6 +116,23 @@ export class RelatorioPdfApiService extends BaseApiService {
     }
 
     return this.http.get(`${this.apiUrl}/relatorios/pdf/metas/categorias/${encodeURIComponent(codigoCategoria)}`, {
+      params,
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
+  desempenhoMetas(paramsInput: DesempenhoMetasParams) {
+    let params = new HttpParams()
+      .set('inicio', paramsInput.inicio)
+      .set('fim', paramsInput.fim);
+
+    if (paramsInput.tipoMeta) params = params.set('tipoMeta', paramsInput.tipoMeta);
+    if (paramsInput.caminhao) params = params.set('caminhao', paramsInput.caminhao);
+    if (paramsInput.motorista) params = params.set('motorista', paramsInput.motorista);
+    if (paramsInput.categoria) params = params.set('categoria', paramsInput.categoria);
+
+    return this.http.get(`${this.apiUrl}/relatorios/pdf/metas/desempenho`, {
       params,
       responseType: 'blob',
       observe: 'response',

@@ -40,6 +40,127 @@
   <div class="state" *ngIf="loading">Carregando...</div>
   <div class="state error" *ngIf="!loading && errorMsg">{{ errorMsg }}</div>
 
+  <div class="card unified-performance">
+    <div class="category-head">
+      <div>
+        <h3>Desempenho unificado de metas</h3>
+        <p class="muted">Metas de caminhão, motorista e metas herdadas de categoria no período.</p>
+      </div>
+
+      <div class="category-filters">
+        <input type="date" [(ngModel)]="desempenhoUnificadoInicio" />
+        <input type="date" [(ngModel)]="desempenhoUnificadoFim" />
+
+        <select [(ngModel)]="desempenhoUnificadoTipoMeta">
+          <option value="">Todos os tipos</option>
+          <option *ngFor="let t of tiposMeta" [value]="t.value">{{ t.label }}</option>
+        </select>
+
+        <select class="mode-select"
+                [(ngModel)]="desempenhoUnificadoAlvo"
+                (ngModelChange)="onDesempenhoUnificadoAlvoChange()">
+          <option value="">Todos os alvos</option>
+          <option value="caminhao">Caminhão</option>
+          <option value="motorista">Motorista</option>
+          <option value="categoria">Categoria</option>
+        </select>
+
+        <input type="text"
+               *ngIf="desempenhoUnificadoAlvo"
+               [(ngModel)]="desempenhoUnificadoAlvoCodigo"
+               [placeholder]="desempenhoUnificadoAlvo === 'categoria' ? 'Ex.: BAU' : (desempenhoUnificadoAlvo === 'motorista' ? 'Ex.: MOT-001' : 'Ex.: CAM-001')" />
+
+        <button class="btn" type="button" (click)="carregarDesempenhoUnificado()" [disabled]="desempenhoUnificadoLoading">
+          {{ desempenhoUnificadoLoading ? 'Consultando...' : 'Consultar' }}
+        </button>
+
+        <button class="btn" type="button" (click)="gerarPdfDesempenhoUnificado()" [disabled]="desempenhoUnificadoPdfLoading">
+          <i class="fas fa-file-pdf"></i>
+          {{ desempenhoUnificadoPdfLoading ? 'Gerando...' : 'Gerar PDF' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="state" *ngIf="desempenhoUnificadoLoading">Carregando desempenho...</div>
+    <div class="state error" *ngIf="!desempenhoUnificadoLoading && desempenhoUnificadoError">{{ desempenhoUnificadoError }}</div>
+
+    <div class="summary-grid" *ngIf="!desempenhoUnificadoLoading && desempenhoUnificadoLinhas.length > 0">
+      <div class="summary-card">
+        <span>Total avaliados</span>
+        <strong>{{ desempenhoUnificadoTotal() }}</strong>
+      </div>
+      <div class="summary-card success">
+        <span>Total que bateu</span>
+        <strong>{{ desempenhoUnificadoBateu() }}</strong>
+      </div>
+      <div class="summary-card danger">
+        <span>Total que não bateu</span>
+        <strong>{{ desempenhoUnificadoNaoBateu() }}</strong>
+      </div>
+      <div class="summary-card">
+        <span>Percentual de sucesso</span>
+        <strong>{{ desempenhoUnificadoPercentualSucesso() }}</strong>
+      </div>
+    </div>
+
+    <div class="table-wrap" *ngIf="!desempenhoUnificadoLoading && desempenhoUnificadoLinhas.length > 0">
+      <table class="table unified-table">
+        <thead>
+        <tr>
+          <th>Alvo</th>
+          <th>Código</th>
+          <th>Origem da meta</th>
+          <th>Categoria</th>
+          <th>Tipo da meta</th>
+          <th>Regra</th>
+          <th>Meta</th>
+          <th>Realizado</th>
+          <th>Percentual</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let l of desempenhoUnificadoLinhas">
+          <td>{{ desempenhoAlvoLabel(l) }}</td>
+          <td class="mono">{{ desempenhoCodigoLabel(l) }}</td>
+          <td>
+            <div>{{ desempenhoOrigemLabel(l) }}</div>
+            <span class="origin-note" *ngIf="desempenhoOrigemCategoria(l)">
+              Meta herdada da categoria
+            </span>
+          </td>
+          <td class="mono">{{ l.categoriaCodigo || '—' }}</td>
+          <td>{{ l.tipoMeta }}</td>
+          <td>{{ l.regraAtingimentoTexto || '—' }}</td>
+          <td class="mono">{{ formatNumber(l.valorMeta, 2) }}</td>
+          <td class="mono">{{ formatNumber(l.valorRealizado, 2) }}</td>
+          <td>
+            <div class="progress-wrapper compact">
+              <div class="progress-info">
+                <span class="mono">{{ formatNumber(l.percentual, 1) }}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="desempenhoUnificadoPercent(l)"></div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="pill"
+                  [class.pill-success]="metaAtingidaClasse(l.metaAtingida) === 'success'"
+                  [class.pill-danger]="metaAtingidaClasse(l.metaAtingida) === 'danger'">
+              {{ desempenhoStatusLabel(l) }}
+            </span>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="empty" *ngIf="!desempenhoUnificadoLoading && !desempenhoUnificadoError && desempenhoUnificadoLinhas.length === 0">
+      Consulte um período para visualizar o desempenho unificado de metas.
+    </div>
+  </div>
+
   <div class="card category-performance">
     <div class="category-head">
       <div>

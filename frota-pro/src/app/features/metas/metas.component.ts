@@ -10,6 +10,9 @@ import { MetaApiService } from '../../core/api/meta-api.service';
 import {
   DesempenhoCategoriaMetaLinha,
   DesempenhoCategoriaMetaResponse,
+  DesempenhoMetasLinha,
+  DesempenhoMetasParams,
+  DesempenhoMetasResponse,
   MetaRequest,
   MetaResponse,
   TipoMetaResponse
@@ -27,6 +30,7 @@ import { RelatorioPdfApiService } from '../../core/api/relatorio-pdf-api.service
 type StatusMeta = 'NAO_INICIADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' | string;
 type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA' | string;
 type DesempenhoFiltroModo = 'periodo' | 'data';
+type DesempenhoAlvoFiltro = '' | 'caminhao' | 'motorista' | 'categoria';
 type TipoMetaOption = { value: TipoMetaKey; label: string; unidade: string; regraAtingimentoTexto: string | null };
 
 @Component({
@@ -65,6 +69,15 @@ export class MetasComponent implements OnInit, OnDestroy {
   desempenhoLoading = false;
   desempenhoPdfLoading = false;
   desempenhoError: string | null = null;
+  desempenhoUnificadoLinhas: DesempenhoMetasLinha[] = [];
+  desempenhoUnificadoInicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
+  desempenhoUnificadoFim = new Date().toISOString().slice(0, 10);
+  desempenhoUnificadoTipoMeta = '';
+  desempenhoUnificadoAlvo: DesempenhoAlvoFiltro = '';
+  desempenhoUnificadoAlvoCodigo = '';
+  desempenhoUnificadoLoading = false;
+  desempenhoUnificadoPdfLoading = false;
+  desempenhoUnificadoError: string | null = null;
 
   tiposMeta: TipoMetaOption[] = [
     { value: 'QUILOMETRAGEM', label: 'Meta de quilometragem', unidade: 'km', regraAtingimentoTexto: null },
@@ -146,6 +159,81 @@ export class MetasComponent implements OnInit, OnDestroy {
           this.errorMsg = 'Não foi possível carregar as metas.';
         },
       });
+  }
+
+  carregarDesempenhoUnificado(): void {
+    const params = this.getDesempenhoUnificadoParams();
+    if (!params) return;
+
+    this.desempenhoUnificadoLoading = true;
+    this.desempenhoUnificadoError = null;
+
+    this.api.desempenho(params)
+      .pipe(finalize(() => (this.desempenhoUnificadoLoading = false)))
+      .subscribe({
+        next: (res) => {
+          this.desempenhoUnificadoLinhas = Array.isArray(res)
+            ? res
+            : ((res as DesempenhoMetasResponse).linhas || []);
+        },
+        error: (err) => {
+          console.error(err);
+          this.desempenhoUnificadoLinhas = [];
+          this.desempenhoUnificadoError = 'Não foi possível carregar o desempenho unificado de metas.';
+        },
+      });
+  }
+
+  gerarPdfDesempenhoUnificado(): void {
+    const params = this.getDesempenhoUnificadoParams();
+    if (!params) return;
+
+    this.desempenhoUnificadoPdfLoading = true;
+    this.desempenhoUnificadoError = null;
+
+    this.relatorioPdfApi.desempenhoMetas(params)
+      .pipe(finalize(() => (this.desempenhoUnificadoPdfLoading = false)))
+      .subscribe({
+        next: (res) => {
+          const blob = res.body;
+          if (!blob) {
+            this.desempenhoUnificadoError = 'PDF vazio retornado pela API.';
+            return;
+          }
+
+          const filename = this.extractFilename(
+            res.headers.get('content-disposition'),
+            `desempenho-metas-${params.inicio}-${params.fim}.pdf`
+          );
+          this.downloadBlob(blob, filename);
+        },
+        error: (err) => {
+          console.error(err);
+          this.desempenhoUnificadoError = 'Não foi possível gerar o PDF de desempenho de metas.';
+        },
+      });
+  }
+
+  onDesempenhoUnificadoAlvoChange(): void {
+    this.desempenhoUnificadoAlvoCodigo = '';
+  }
+
+  desempenhoUnificadoTotal(): number {
+    return this.desempenhoUnificadoLinhas.length;
+  }
+
+  desempenhoUnificadoBateu(): number {
+    return this.desempenhoUnificadoLinhas.filter((l) => l.metaAtingida === true).length;
+  }
+
+  desempenhoUnificadoNaoBateu(): number {
+    return this.desempenhoUnificadoLinhas.filter((l) => l.metaAtingida === false).length;
+  }
+
+  desempenhoUnificadoPercentualSucesso(): string {
+    const total = this.desempenhoUnificadoTotal();
+    if (!total) return '0%';
+    return `${this.formatNumber((this.desempenhoUnificadoBateu() / total) * 100, 1)}%`;
   }
 
   // ===== filtros (client-side) =====
@@ -779,10 +867,74 @@ export class MetasComponent implements OnInit, OnDestroy {
     return this.clampPercent(linha.percentual);
   }
 
+  desempenhoUnificadoPercent(linha: DesempenhoMetasLinha): number {
+    return this.clampPercent(linha.percentual);
+  }
+
+  desempenhoAlvoLabel(linha: DesempenhoMetasLinha): string {
+    if (linha.alvoTipo === 'MOTORISTA') return 'Motorista';
+    return 'Caminhão';
+  }
+
+  desempenhoCodigoLabel(linha: DesempenhoMetasLinha): string {
+    if (linha.alvoTipo === 'MOTORISTA') return linha.motoristaCodigo || '—';
+    return linha.caminhaoCodigo || '—';
+  }
+
+  desempenhoOrigemLabel(linha: DesempenhoMetasLinha): string {
+    return linha.origemMetaDescricao || linha.origemMeta || '—';
+  }
+
+  desempenhoOrigemCategoria(linha: DesempenhoMetasLinha): boolean {
+    return String(linha.origemMeta || '').toUpperCase() === 'CATEGORIA';
+  }
+
+  desempenhoStatusLabel(linha: DesempenhoMetasLinha): string {
+    if (linha.metaAtingida === true) return 'Bateu';
+    if (linha.metaAtingida === false) return 'Não bateu';
+    return linha.status || '—';
+  }
+
+  formatNumber(value: number | null | undefined, dec = 2): string {
+    const n = Number(value ?? 0);
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: dec,
+      maximumFractionDigits: dec,
+    }).format(Number.isFinite(n) ? n : 0);
+  }
+
   private clampPercent(value: number | null | undefined): number {
     const n = Number(value ?? 0);
     if (!Number.isFinite(n)) return 0;
     return Math.max(0, Math.min(100, n));
+  }
+
+  private getDesempenhoUnificadoParams(): DesempenhoMetasParams | null {
+    if (!this.desempenhoUnificadoInicio || !this.desempenhoUnificadoFim) {
+      this.desempenhoUnificadoError = 'Informe início e fim para consultar o desempenho.';
+      return null;
+    }
+    if (this.desempenhoUnificadoInicio > this.desempenhoUnificadoFim) {
+      this.desempenhoUnificadoError = 'Período inválido: início maior que fim.';
+      return null;
+    }
+    if (this.desempenhoUnificadoAlvo && !this.desempenhoUnificadoAlvoCodigo.trim()) {
+      this.desempenhoUnificadoError = 'Informe o código do alvo selecionado.';
+      return null;
+    }
+
+    const params: DesempenhoMetasParams = {
+      inicio: this.desempenhoUnificadoInicio,
+      fim: this.desempenhoUnificadoFim,
+      tipoMeta: this.desempenhoUnificadoTipoMeta || null,
+    };
+
+    const codigo = this.desempenhoUnificadoAlvoCodigo.trim();
+    if (this.desempenhoUnificadoAlvo === 'caminhao') params.caminhao = codigo;
+    if (this.desempenhoUnificadoAlvo === 'motorista') params.motorista = codigo;
+    if (this.desempenhoUnificadoAlvo === 'categoria') params.categoria = codigo;
+
+    return params;
   }
 
   private toApiStatus(v: string | null | undefined): string {

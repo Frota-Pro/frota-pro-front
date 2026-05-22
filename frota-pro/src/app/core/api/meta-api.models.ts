@@ -61,6 +61,45 @@ export interface DesempenhoCategoriaMetaResponse {
   linhas: DesempenhoCategoriaMetaLinha[];
 }
 
+export type DesempenhoMetasAlvoTipo = 'CAMINHAO' | 'MOTORISTA' | string;
+export type DesempenhoMetasOrigemMeta = 'CAMINHAO' | 'MOTORISTA' | 'CATEGORIA' | string;
+
+export interface DesempenhoMetasLinha {
+  alvoTipo: DesempenhoMetasAlvoTipo;
+  origemMeta: DesempenhoMetasOrigemMeta;
+  origemMetaDescricao?: string | null;
+  caminhaoCodigo?: string | null;
+  caminhaoDescricao?: string | null;
+  motoristaCodigo?: string | null;
+  motoristaDescricao?: string | null;
+  categoriaCodigo?: string | null;
+  categoriaDescricao?: string | null;
+  tipoMeta: string;
+  regraAtingimentoTexto?: string | null;
+  valorMeta: number;
+  valorRealizado: number;
+  percentual: number;
+  metaAtingida: boolean;
+  status: string;
+  periodoCalculoInicio?: string | null;
+  periodoCalculoFim?: string | null;
+}
+
+export interface DesempenhoMetasResponse {
+  inicio?: string | null;
+  fim?: string | null;
+  linhas: DesempenhoMetasLinha[];
+}
+
+export interface DesempenhoMetasParams {
+  inicio: string;
+  fim: string;
+  tipoMeta?: string | null;
+  caminhao?: string | null;
+  motorista?: string | null;
+  categoria?: string | null;
+}
+
 export interface MetaRequest {
   dataIncio: string;
   dataFim: string;
