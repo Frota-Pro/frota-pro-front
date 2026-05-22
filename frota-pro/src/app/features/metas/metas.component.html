@@ -40,6 +40,101 @@
   <div class="state" *ngIf="loading">Carregando...</div>
   <div class="state error" *ngIf="!loading && errorMsg">{{ errorMsg }}</div>
 
+  <div class="card category-performance">
+    <div class="category-head">
+      <div>
+        <h3>Desempenho por categoria</h3>
+        <p class="muted">Caminhões da categoria para a meta ativa no período.</p>
+      </div>
+
+      <div class="category-filters">
+        <select [(ngModel)]="desempenhoCategoriaCodigo">
+          <option value="">Categoria...</option>
+          <option *ngFor="let c of categorias" [value]="c.codigo">{{ c.descricao }} ({{ c.codigo }})</option>
+        </select>
+
+        <select class="mode-select" [(ngModel)]="desempenhoFiltroModo">
+          <option value="periodo">Período</option>
+          <option value="data">Data referência</option>
+        </select>
+
+        <ng-container *ngIf="desempenhoFiltroModo === 'periodo'; else filtroDataReferencia">
+          <input type="date" [(ngModel)]="desempenhoInicio" />
+          <input type="date" [(ngModel)]="desempenhoFim" />
+        </ng-container>
+
+        <ng-template #filtroDataReferencia>
+          <input type="date" [(ngModel)]="desempenhoDataReferencia" />
+        </ng-template>
+
+        <button class="btn" type="button" (click)="carregarDesempenhoCategoria()" [disabled]="desempenhoLoading">
+          {{ desempenhoLoading ? 'Consultando...' : 'Consultar' }}
+        </button>
+
+        <button class="btn" type="button" (click)="gerarPdfDesempenhoCategoria()" [disabled]="desempenhoPdfLoading">
+          <i class="fas fa-file-pdf"></i>
+          {{ desempenhoPdfLoading ? 'Gerando...' : 'Gerar PDF' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="state" *ngIf="desempenhoLoading">Carregando desempenho...</div>
+    <div class="state error" *ngIf="!desempenhoLoading && desempenhoError">{{ desempenhoError }}</div>
+
+    <div class="category-summary" *ngIf="!desempenhoLoading && desempenhoCategoria">
+      <span class="mono">{{ desempenhoCategoria.categoriaCodigo }}</span>
+      <span>{{ desempenhoCategoria.categoriaDescricao }}</span>
+      <span class="muted">Período: {{ desempenhoPeriodoLabel() }}</span>
+    </div>
+
+    <div class="table-wrap" *ngIf="!desempenhoLoading && desempenhoCategoria">
+      <table class="table performance-table">
+        <thead>
+        <tr>
+          <th>Caminhão</th>
+          <th>Descrição</th>
+          <th>Tipo</th>
+          <th>Meta</th>
+          <th>Realizado</th>
+          <th>Percentual</th>
+          <th>Regra</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let l of desempenhoCategoria.linhas">
+          <td class="mono">{{ l.caminhaoCodigo }}</td>
+          <td>{{ l.caminhaoDescricao || '—' }}</td>
+          <td>{{ l.tipoMeta }}</td>
+          <td class="mono">{{ l.valorMeta }} <span class="muted">{{ l.unidade }}</span></td>
+          <td class="mono">{{ l.valorRealizado }} <span class="muted">{{ l.unidade }}</span></td>
+          <td>
+            <div class="progress-wrapper compact">
+              <div class="progress-info">
+                <span class="mono">{{ l.percentual }}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="desempenhoPercent(l)"></div>
+              </div>
+            </div>
+          </td>
+          <td>{{ regraAtingimentoLabel(l.regraAtingimento) }}</td>
+          <td>
+            <span class="pill"
+                  [class.pill-success]="metaAtingidaClasse(l.metaAtingida) === 'success'"
+                  [class.pill-danger]="metaAtingidaClasse(l.metaAtingida) === 'danger'">
+              {{ metaAtingidaLabel(l.metaAtingida) }}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="desempenhoCategoria.linhas.length === 0">
+          <td colspan="8" class="empty">Nenhum caminhão encontrado para a categoria e data informadas.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Lista -->
   <div class="card" *ngIf="!loading && !errorMsg">
     <div class="table-wrap">
@@ -82,6 +177,7 @@
                 <span class="mono">{{ m.valorRealizado ?? 0 }}</span>
                 <span class="mono">{{ m.valorMeta ?? 0 }}</span>
                 <span class="muted">{{ m.unidade }}</span>
+                <span class="muted">{{ m.percentual ?? 0 }}%</span>
               </div>
               <div class="progress-bar">
                 <div class="progress-fill" [style.width.%]="getProgressPercent(m)"></div>
@@ -90,6 +186,14 @@
           </td>
 
           <td>
+              <span
+                class="pill"
+                *ngIf="m.metaAtingida !== null && m.metaAtingida !== undefined"
+                [class.pill-success]="metaAtingidaClasse(m.metaAtingida) === 'success'"
+                [class.pill-danger]="metaAtingidaClasse(m.metaAtingida) === 'danger'"
+              >
+                {{ metaAtingidaLabel(m.metaAtingida) }}
+              </span>
               <span
                 class="pill"
                 [class.pill-success]="getStatusLabel(m) === 'EM_ANDAMENTO'"
@@ -161,6 +265,9 @@
               <option value="" disabled>Selecione...</option>
               <option *ngFor="let t of tiposMeta" [value]="t.value">{{ t.label }}</option>
             </select>
+            <div class="field-help" *ngIf="regraTipoSelecionado()">
+              Regra: {{ regraTipoSelecionado() }}
+            </div>
           </div>
 
           <div class="field">

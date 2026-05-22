@@ -44,12 +44,12 @@
             class="notification-item"
             *ngFor="let n of notifications"
             [class.unread]="!n.lida"
-            [class.info]="n.tipo === 'INFO'"
-            [class.success]="n.tipo === 'SUCESSO'"
-            [class.warning]="n.tipo === 'ALERTA'"
-            [class.error]="n.tipo === 'ERRO'"
+            [class.info]="notificationVisualType(n) === 'INFO'"
+            [class.success]="notificationVisualType(n) === 'SUCESSO'"
+            [class.warning]="notificationVisualType(n) === 'ALERTA'"
+            [class.error]="notificationVisualType(n) === 'ERRO'"
             (click)="openNotification(n)">
-            <div class="icon"><i [class]="notificationIcon(n.tipo)"></i></div>
+            <div class="icon"><i [class]="notificationIcon(notificationVisualType(n))"></i></div>
             <div class="body">
               <div class="title-row">
                 <strong>{{ getNotificationTitle(n.titulo) }}</strong>
@@ -116,12 +116,12 @@
           class="notification-item"
           *ngFor="let n of modalNotifications"
           [class.unread]="!n.lida"
-          [class.info]="n.tipo === 'INFO'"
-          [class.success]="n.tipo === 'SUCESSO'"
-          [class.warning]="n.tipo === 'ALERTA'"
-          [class.error]="n.tipo === 'ERRO'"
+          [class.info]="notificationVisualType(n) === 'INFO'"
+          [class.success]="notificationVisualType(n) === 'SUCESSO'"
+          [class.warning]="notificationVisualType(n) === 'ALERTA'"
+          [class.error]="notificationVisualType(n) === 'ERRO'"
           (click)="openNotification(n)">
-          <div class="icon"><i [class]="notificationIcon(n.tipo)"></i></div>
+          <div class="icon"><i [class]="notificationIcon(notificationVisualType(n))"></i></div>
           <div class="body">
             <div class="title-row">
               <strong>{{ getNotificationTitle(n.titulo) }}</strong>
@@ -235,6 +235,76 @@
           <app-action-button label="Nova OS" iconClass="fas fa-wrench" (action)="novaOS()"></app-action-button>
           <app-action-button label="Nova Meta" iconClass="fas fa-bullseye" (action)="novaMeta()"></app-action-button>
         </div>
+      </div>
+    </section>
+
+    <section class="below">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Dashboard de Metas</h2>
+            <p class="panel-subtitle">Desempenho consolidado das metas ativas</p>
+          </div>
+          <button class="link-btn" type="button" (click)="carregarDashboardMetas()">
+            Atualizar <i class="fas fa-rotate"></i>
+          </button>
+        </div>
+
+        <div class="empty" *ngIf="metasDashboardLoading">
+          <div class="empty-title">Carregando metas</div>
+          <div class="empty-sub">Buscando indicadores de metas.</div>
+        </div>
+
+        <div class="empty" *ngIf="!metasDashboardLoading && metasDashboardError">
+          <div class="empty-title">{{ metasDashboardError }}</div>
+        </div>
+
+        <ng-container *ngIf="!metasDashboardLoading && !metasDashboardError && metasDashboard">
+          <div class="meta-kpi-grid">
+            <div class="meta-kpi">
+              <span>Metas ativas</span>
+              <strong>{{ metasDashboard.metasAtivas }}</strong>
+            </div>
+            <div class="meta-kpi warning">
+              <span>Metas vencendo</span>
+              <strong>{{ metasDashboard.metasVencendo }}</strong>
+            </div>
+            <div class="meta-kpi danger">
+              <span>Caminhões fora da meta</span>
+              <strong>{{ metasDashboard.caminhoesForaMeta }}</strong>
+            </div>
+          </div>
+
+          <div class="meta-dashboard-grid">
+            <div class="meta-dashboard-list">
+              <h3>Categorias com pior desempenho</h3>
+              <div class="empty compact" *ngIf="metasDashboard.categoriasPiorDesempenho.length === 0">
+                Nenhuma categoria para exibir.
+              </div>
+              <div class="meta-rank-row" *ngFor="let c of metasDashboard.categoriasPiorDesempenho">
+                <div>
+                  <strong>{{ c.categoriaDescricao || c.categoriaCodigo || 'Categoria' }}</strong>
+                  <span class="muted-line" *ngIf="c.categoriaCodigo">{{ c.categoriaCodigo }}</span>
+                </div>
+                <span class="badge warning">{{ formatPercent(c.percentual) }}</span>
+              </div>
+            </div>
+
+            <div class="meta-dashboard-list">
+              <h3>Top caminhões dentro da meta</h3>
+              <div class="empty compact" *ngIf="metasDashboard.topCaminhoesDentroMeta.length === 0">
+                Nenhum caminhão para exibir.
+              </div>
+              <div class="meta-rank-row" *ngFor="let c of metasDashboard.topCaminhoesDentroMeta">
+                <div>
+                  <strong>{{ c.caminhaoDescricao || c.caminhaoCodigo || 'Caminhão' }}</strong>
+                  <span class="muted-line">{{ c.caminhaoCodigo || '—' }} · {{ c.tipoMeta || 'Meta' }}</span>
+                </div>
+                <span class="badge success">{{ formatPercent(c.percentual) }}</span>
+              </div>
+            </div>
+          </div>
+        </ng-container>
       </div>
     </section>
 

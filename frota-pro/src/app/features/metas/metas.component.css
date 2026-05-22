@@ -104,9 +104,64 @@
   color: rgba(15,23,42,.70);
   border-color: rgba(15,23,42,.10);
 }
+.pill-danger{
+  background: rgba(239,68,68,.12);
+  color:#b91c1c;
+  border-color: rgba(239,68,68,.20);
+}
+
+.category-performance{ padding:0; }
+.category-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  padding:14px;
+  border-bottom:1px solid rgba(15,23,42,.06);
+  background:rgba(15,23,42,.02);
+}
+.category-head h3{
+  margin:0;
+  font-size:14px;
+  font-weight:900;
+  color:#0f172a;
+}
+.category-filters{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.category-filters input,
+.category-filters select{
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(15,23,42,.12);
+  background:#fff;
+  min-width:180px;
+  font-size:13px;
+  outline:none;
+}
+.category-filters .mode-select{ min-width:150px; }
+.category-summary{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  padding:12px 14px;
+  border-bottom:1px solid rgba(15,23,42,.06);
+}
+.performance-table{ min-width:1120px; }
+.field-help{
+  font-size:12px;
+  font-weight:800;
+  color:rgba(15,23,42,.62);
+}
 
 /* Progresso */
 .progress-wrapper{ min-width: 220px; }
+.progress-wrapper.compact{ min-width: 150px; }
 .progress-info{
   display:flex; align-items:center; justify-content:space-between;
   font-size:11px; font-weight:800; color: rgba(15,23,42,.60);

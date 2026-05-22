@@ -21,3 +21,29 @@ export interface DashboardResumoResponse {
 
   cargasRecentes: DashboardCargaRecenteResponse[];
 }
+
+export interface DashboardMetaCategoriaDesempenho {
+  categoriaCodigo?: string | null;
+  categoriaDescricao?: string | null;
+  percentual?: number | null;
+  metaAtingida?: boolean | null;
+  caminhoesForaMeta?: number | null;
+}
+
+export interface DashboardMetaCaminhaoDesempenho {
+  caminhaoCodigo?: string | null;
+  caminhaoDescricao?: string | null;
+  tipoMeta?: string | null;
+  valorMeta?: number | null;
+  valorRealizado?: number | null;
+  percentual?: number | null;
+  metaAtingida?: boolean | null;
+}
+
+export interface DashboardMetasResponse {
+  metasAtivas: number;
+  metasVencendo: number;
+  caminhoesForaMeta: number;
+  categoriasPiorDesempenho: DashboardMetaCategoriaDesempenho[];
+  topCaminhoesDentroMeta: DashboardMetaCaminhaoDesempenho[];
+}

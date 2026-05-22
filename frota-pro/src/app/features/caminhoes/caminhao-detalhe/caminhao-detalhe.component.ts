@@ -191,32 +191,34 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
   }
 
   metaPercent(metaItem: MetaResponse): number {
-    const meta = Number(metaItem.valorMeta || 0);
-    const real = Number(metaItem.valorRealizado || 0);
-    if (meta <= 0) return 0;
-    const p = (real / meta) * 100;
-    return Math.max(0, Math.min(100, p));
+    return this.clampPercent(metaItem.percentual);
   }
 
   metaAtingida(metaItem: MetaResponse): boolean {
-    const meta = Number(metaItem.valorMeta || 0);
-    const real = Number(metaItem.valorRealizado || 0);
-    return meta > 0 && real >= meta;
+    return metaItem.metaAtingida === true;
   }
 
   metaResultadoLabel(metaItem: MetaResponse): string {
-    const status = this.normalizeMetaStatus(metaItem.statusMeta);
-    const atingida = this.metaAtingida(metaItem);
-    if (status === 'CONCLUIDA') return atingida ? 'META ATINGIDA' : 'NAO ATINGIDA';
-    return atingida ? 'META ATINGIDA' : 'EM PROGRESSO';
+    if (metaItem.metaAtingida === true) return 'Bateu';
+    if (metaItem.metaAtingida === false) return 'Não bateu';
+    return this.normalizeMetaStatus(metaItem.statusMeta) || 'SEM STATUS';
   }
 
   metaResultadoClasse(metaItem: MetaResponse): 'ok' | 'warn' | 'active' {
-    const status = this.normalizeMetaStatus(metaItem.statusMeta);
-    const atingida = this.metaAtingida(metaItem);
-    if (atingida) return 'ok';
-    if (status === 'CONCLUIDA') return 'warn';
+    if (metaItem.metaAtingida === true) return 'ok';
+    if (metaItem.metaAtingida === false) return 'warn';
     return 'active';
+  }
+
+  metaRegraLabel(metaItem: MetaResponse): string {
+    switch (String(metaItem.regraAtingimento || '').trim().toUpperCase()) {
+      case 'MENOR_OU_IGUAL':
+        return 'Menor ou igual à meta';
+      case 'MAIOR_OU_IGUAL':
+        return 'Maior ou igual à meta';
+      default:
+        return metaItem.regraAtingimento || '—';
+    }
   }
 
   metaEscopo(metaItem: MetaResponse): string {
@@ -314,6 +316,12 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
   private getMetasAtivas(list: MetaResponse[]): MetaResponse[] {
     if (!Array.isArray(list) || list.length === 0) return [];
     return list.filter((m) => !!m);
+  }
+
+  private clampPercent(value: number | null | undefined): number {
+    const n = Number(value ?? 0);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(100, n));
   }
 
   // ------------------ TABS ------------------

@@ -1,3 +1,15 @@
+export type RegraAtingimentoMeta = 'MENOR_OU_IGUAL' | 'MAIOR_OU_IGUAL' | string;
+
+export interface TipoMetaResponse {
+  codigo?: string | null;
+  tipoMeta?: string | null;
+  label?: string | null;
+  descricao?: string | null;
+  unidade?: string | null;
+  regraAtingimento?: RegraAtingimentoMeta | null;
+  regraAtingimentoTexto?: string | null;
+}
+
 export interface MetaResponse {
   id: string;
   dataIncio: string;
@@ -10,6 +22,9 @@ export interface MetaResponse {
   unidade: string;
   statusMeta: string;
   descricao: string;
+  regraAtingimento?: RegraAtingimentoMeta | null;
+  percentual?: number | null;
+  metaAtingida?: boolean | null;
 
   caminhaoCodigo?: string | null;
   caminhaoDescricao?: string | null;
@@ -22,6 +37,28 @@ export interface MetaResponse {
 
   renovarAutomaticamente?: boolean;
   recalcularProgresso?: boolean;
+}
+
+export interface DesempenhoCategoriaMetaLinha {
+  metaId: string;
+  tipoMeta: string;
+  regraAtingimento: RegraAtingimentoMeta;
+  valorMeta: number;
+  unidade: string;
+  caminhaoCodigo: string;
+  caminhaoDescricao: string;
+  valorRealizado: number;
+  percentual: number;
+  metaAtingida: boolean;
+}
+
+export interface DesempenhoCategoriaMetaResponse {
+  categoriaCodigo: string;
+  categoriaDescricao: string;
+  dataReferencia: string;
+  inicio?: string | null;
+  fim?: string | null;
+  linhas: DesempenhoCategoriaMetaLinha[];
 }
 
 export interface MetaRequest {

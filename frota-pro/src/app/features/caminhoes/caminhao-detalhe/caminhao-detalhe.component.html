@@ -178,6 +178,7 @@
         <div class="meta-sub">{{ m.descricao || 'Progresso' }}</div>
         <div class="meta-periodo">Período: {{ formatDateBr(m.dataIncio) }} até {{ formatDateBr(m.dataFim) }}</div>
         <div class="meta-scope">Escopo: {{ metaEscopo(m) }}</div>
+        <div class="meta-scope">Regra: {{ metaRegraLabel(m) }}</div>
 
         <div class="progress">
           <div class="bar" [style.width.%]="metaPercent(m)"></div>
@@ -185,6 +186,7 @@
 
         <div class="meta-foot">
           <span>{{ formatNumber(m.valorRealizado, 2) }} {{ m.unidade }}</span>
+          <span>{{ formatNumber(m.percentual, 2) }}%</span>
           <span>{{ formatNumber(m.valorMeta, 2) }} {{ m.unidade }}</span>
         </div>
       </div>

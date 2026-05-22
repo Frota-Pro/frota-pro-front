@@ -3,7 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
-import { MetaRequest, MetaResponse } from './meta-api.models';
+import {
+  DesempenhoCategoriaMetaResponse,
+  MetaRequest,
+  MetaResponse,
+  TipoMetaResponse
+} from './meta-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class MetaApiService extends BaseApiService {
@@ -40,6 +45,10 @@ export class MetaApiService extends BaseApiService {
     return this.http.get<MetaResponse>(`${this.apiUrl}/metas/${encodeURIComponent(id)}`);
   }
 
+  tipos() {
+    return this.http.get<TipoMetaResponse[]>(`${this.apiUrl}/metas/tipos`);
+  }
+
   criar(payload: MetaRequest) {
     const body: MetaRequest = {
       ...payload,
@@ -66,6 +75,23 @@ export class MetaApiService extends BaseApiService {
     return this.http.get<MetaResponse>(
       `${this.apiUrl}/metas/ativas/caminhao/${encodeURIComponent(codigo)}`,
       { params: { dataReferencia: dataReferenciaIso } }
+    );
+  }
+
+  desempenhoCategoria(
+    codigoCategoria: string,
+    opts: { dataReferencia?: string | null; inicio?: string | null; fim?: string | null }
+  ) {
+    let params = new HttpParams();
+    if (opts.inicio && opts.fim) {
+      params = params.set('inicio', opts.inicio).set('fim', opts.fim);
+    } else if (opts.dataReferencia) {
+      params = params.set('dataReferencia', opts.dataReferencia);
+    }
+
+    return this.http.get<DesempenhoCategoriaMetaResponse>(
+      `${this.apiUrl}/metas/categorias/${encodeURIComponent(codigoCategoria)}/desempenho`,
+      { params }
     );
   }
 

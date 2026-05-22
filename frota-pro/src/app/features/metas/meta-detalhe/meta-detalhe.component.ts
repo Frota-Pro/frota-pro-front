@@ -5,11 +5,12 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
 import { MetaApiService } from '../../../core/api/meta-api.service';
-import { MetaRequest, MetaResponse } from '../../../core/api/meta-api.models';
+import { MetaRequest, MetaResponse, TipoMetaResponse } from '../../../core/api/meta-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 type TabKey = 'resumo' | 'historico';
 type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA' | string;
+type TipoMetaOption = { value: TipoMetaKey; label: string; unidade: string; regraAtingimentoTexto: string | null };
 
 @Component({
   selector: 'app-meta-detalhe',
@@ -37,11 +38,11 @@ export class MetaDetalheComponent implements OnInit {
   showEditModal = false;
   saving = false;
 
-  tiposMeta: Array<{ value: TipoMetaKey; label: string; unidade: string }> = [
-    { value: 'QUILOMETRAGEM', label: 'Meta de quilometragem', unidade: 'km' },
-    { value: 'CONSUMO_COMBUSTIVEL', label: 'Meta de consumo de combustível', unidade: 'km/l' },
-    { value: 'TONELADA', label: 'Meta de tonelada da carga', unidade: 't' },
-    { value: 'CARGA_TRANSPORTADA', label: 'Meta de carga transportada', unidade: 'cargas' },
+  tiposMeta: TipoMetaOption[] = [
+    { value: 'QUILOMETRAGEM', label: 'Meta de quilometragem', unidade: 'km', regraAtingimentoTexto: null },
+    { value: 'CONSUMO_COMBUSTIVEL', label: 'Meta de consumo de combustível', unidade: 'km/l', regraAtingimentoTexto: null },
+    { value: 'TONELADA', label: 'Meta de tonelada da carga', unidade: 't', regraAtingimentoTexto: null },
+    { value: 'CARGA_TRANSPORTADA', label: 'Meta de carga transportada', unidade: 'cargas', regraAtingimentoTexto: null },
   ];
 
   editForm: MetaRequest = {
@@ -75,6 +76,7 @@ export class MetaDetalheComponent implements OnInit {
     }
 
     this.carregar();
+    this.carregarTiposMeta();
   }
 
   carregar(): void {
@@ -188,6 +190,36 @@ export class MetaDetalheComponent implements OnInit {
   onTipoMetaChange(): void {
     const unit = this.getUnidadeDefault(this.editForm.tipoMeta);
     if (unit) this.editForm.unidade = unit;
+  }
+
+  regraTipoSelecionado(): string {
+    const tipo = String(this.editForm.tipoMeta || '').trim().toUpperCase();
+    if (!tipo) return '';
+    const found = this.tiposMeta.find((x) => String(x.value).toUpperCase() === tipo);
+    return found?.regraAtingimentoTexto || '';
+  }
+
+  carregarTiposMeta(): void {
+    this.api.tipos().subscribe({
+      next: (tipos) => {
+        if (!Array.isArray(tipos) || tipos.length === 0) return;
+        const mapped = tipos
+          .map((t: TipoMetaResponse) => {
+            const value = String(t.codigo || t.tipoMeta || '').trim();
+            if (!value) return null;
+            return {
+              value,
+              label: t.label || t.descricao || value,
+              unidade: t.unidade || '',
+              regraAtingimentoTexto: t.regraAtingimentoTexto || null,
+            };
+          })
+          .filter((t): t is TipoMetaOption => !!t);
+
+        if (mapped.length > 0) this.tiposMeta = mapped;
+      },
+      error: () => null,
+    });
   }
 
   closeEdit(): void {

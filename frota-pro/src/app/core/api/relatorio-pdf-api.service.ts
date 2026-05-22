@@ -102,4 +102,22 @@ export class RelatorioPdfApiService extends BaseApiService {
       observe: 'response',
     });
   }
+
+  metasPorCategoria(
+    codigoCategoria: string,
+    opts: { dataReferencia?: string | null; inicio?: string | null; fim?: string | null }
+  ) {
+    let params = new HttpParams();
+    if (opts.inicio && opts.fim) {
+      params = params.set('inicio', opts.inicio).set('fim', opts.fim);
+    } else if (opts.dataReferencia) {
+      params = params.set('dataReferencia', opts.dataReferencia);
+    }
+
+    return this.http.get(`${this.apiUrl}/relatorios/pdf/metas/categorias/${encodeURIComponent(codigoCategoria)}`, {
+      params,
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
 }

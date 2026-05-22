@@ -269,6 +269,9 @@
               <option value="" disabled>Selecione...</option>
               <option *ngFor="let t of tiposMeta" [value]="t.value">{{ t.label }}</option>
             </select>
+            <div class="field-help" *ngIf="regraTipoSelecionado()">
+              Regra: {{ regraTipoSelecionado() }}
+            </div>
           </div>
 
           <div class="field">

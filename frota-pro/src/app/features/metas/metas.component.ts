@@ -7,16 +7,27 @@ import { catchError, map } from 'rxjs/operators';
 import { Observable, of, Subscription } from 'rxjs';
 
 import { MetaApiService } from '../../core/api/meta-api.service';
-import { MetaRequest, MetaResponse } from '../../core/api/meta-api.models';
+import {
+  DesempenhoCategoriaMetaLinha,
+  DesempenhoCategoriaMetaResponse,
+  MetaRequest,
+  MetaResponse,
+  TipoMetaResponse
+} from '../../core/api/meta-api.models';
 import { PageResponse } from '../../core/api/page.models';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
 import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
 import { MotoristaApiService } from '../../core/api/motorista-api.service';
 import { MotoristaResponse } from '../../core/api/motorista-api.models';
+import { CategoriaCaminhaoApiService } from '../../core/api/categoria-caminhao-api.service';
+import { CategoriaCaminhaoResponse } from '../../core/api/categoria-caminhao-api.models';
+import { RelatorioPdfApiService } from '../../core/api/relatorio-pdf-api.service';
 
 type StatusMeta = 'NAO_INICIADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' | string;
 type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA' | string;
+type DesempenhoFiltroModo = 'periodo' | 'data';
+type TipoMetaOption = { value: TipoMetaKey; label: string; unidade: string; regraAtingimentoTexto: string | null };
 
 @Component({
   selector: 'app-metas',
@@ -44,12 +55,22 @@ export class MetasComponent implements OnInit, OnDestroy {
   metas: MetaResponse[] = [];
   caminhoes: CaminhaoResponse[] = [];
   motoristas: MotoristaResponse[] = [];
+  categorias: CategoriaCaminhaoResponse[] = [];
+  desempenhoCategoria: DesempenhoCategoriaMetaResponse | null = null;
+  desempenhoCategoriaCodigo = '';
+  desempenhoFiltroModo: DesempenhoFiltroModo = 'periodo';
+  desempenhoInicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
+  desempenhoFim = new Date().toISOString().slice(0, 10);
+  desempenhoDataReferencia = new Date().toISOString().slice(0, 10);
+  desempenhoLoading = false;
+  desempenhoPdfLoading = false;
+  desempenhoError: string | null = null;
 
-  tiposMeta: Array<{ value: TipoMetaKey; label: string; unidade: string }> = [
-    { value: 'QUILOMETRAGEM', label: 'Meta de quilometragem', unidade: 'km' },
-    { value: 'CONSUMO_COMBUSTIVEL', label: 'Meta de consumo de combustível', unidade: 'km/l' },
-    { value: 'TONELADA', label: 'Meta de tonelada da carga', unidade: 't' },
-    { value: 'CARGA_TRANSPORTADA', label: 'Meta de carga transportada', unidade: 'cargas' },
+  tiposMeta: TipoMetaOption[] = [
+    { value: 'QUILOMETRAGEM', label: 'Meta de quilometragem', unidade: 'km', regraAtingimentoTexto: null },
+    { value: 'CONSUMO_COMBUSTIVEL', label: 'Meta de consumo de combustível', unidade: 'km/l', regraAtingimentoTexto: null },
+    { value: 'TONELADA', label: 'Meta de tonelada da carga', unidade: 't', regraAtingimentoTexto: null },
+    { value: 'CARGA_TRANSPORTADA', label: 'Meta de carga transportada', unidade: 'cargas', regraAtingimentoTexto: null },
   ];
 
   // modal/form
@@ -86,10 +107,13 @@ export class MetasComponent implements OnInit, OnDestroy {
     private router: Router,
     private toast: ToastService,
     private caminhaoApi: CaminhaoApiService,
-    private motoristaApi: MotoristaApiService
+    private motoristaApi: MotoristaApiService,
+    private categoriaApi: CategoriaCaminhaoApiService,
+    private relatorioPdfApi: RelatorioPdfApiService
   ) {}
 
   ngOnInit(): void {
+    this.carregarTiposMeta();
     this.preloadCombos();
     this.carregar();
     this.metasInvalidatedSub = this.api.invalidated$.subscribe(() => this.carregar());
@@ -130,11 +154,7 @@ export class MetasComponent implements OnInit, OnDestroy {
   }
 
   getProgressPercent(m: MetaResponse): number {
-    const meta = Number(m.valorMeta || 0);
-    const atual = Number(m.valorRealizado || 0);
-    if (!meta || meta <= 0) return 0;
-    const pct = (atual / meta) * 100;
-    return Math.max(0, Math.min(100, pct));
+    return this.clampPercent(m.percentual);
   }
 
 
@@ -234,6 +254,13 @@ export class MetasComponent implements OnInit, OnDestroy {
   onTipoMetaChange(): void {
     const unit = this.getUnidadeDefault(this.form.tipoMeta);
     if (unit) this.form.unidade = unit;
+  }
+
+  regraTipoSelecionado(): string {
+    const tipo = String(this.form.tipoMeta || '').trim().toUpperCase();
+    if (!tipo) return '';
+    const found = this.tiposMeta.find((x) => String(x.value).toUpperCase() === tipo);
+    return found?.regraAtingimentoTexto || '';
   }
 
   closeModal(): void {
@@ -337,6 +364,111 @@ export class MetasComponent implements OnInit, OnDestroy {
       next: (res) => (this.motoristas = res.content || []),
       error: () => (this.motoristas = []),
     });
+    this.categoriaApi.listarTodas().subscribe({
+      next: (res) => {
+        this.categorias = (res.content || []).filter((c) => c.ativo !== false);
+        if (!this.desempenhoCategoriaCodigo && this.categorias.length > 0) {
+          this.desempenhoCategoriaCodigo = this.categorias[0].codigo;
+          this.carregarDesempenhoCategoria();
+        }
+      },
+      error: () => (this.categorias = []),
+    });
+  }
+
+  carregarTiposMeta(): void {
+    this.api.tipos().subscribe({
+      next: (tipos) => {
+        if (!Array.isArray(tipos) || tipos.length === 0) return;
+        const mapped = tipos
+          .map((t: TipoMetaResponse) => {
+            const value = String(t.codigo || t.tipoMeta || '').trim();
+            if (!value) return null;
+            return {
+              value,
+              label: t.label || t.descricao || value,
+              unidade: t.unidade || '',
+              regraAtingimentoTexto: t.regraAtingimentoTexto || null,
+            };
+          })
+          .filter((t): t is TipoMetaOption => !!t);
+
+        if (mapped.length > 0) this.tiposMeta = mapped;
+      },
+      error: () => null,
+    });
+  }
+
+  carregarDesempenhoCategoria(): void {
+    const codigo = this.desempenhoCategoriaCodigo.trim();
+    if (!codigo) {
+      this.desempenhoError = 'Informe a categoria para consultar o desempenho.';
+      this.desempenhoCategoria = null;
+      return;
+    }
+    if (!this.validarFiltroDesempenho()) {
+      this.desempenhoCategoria = null;
+      return;
+    }
+
+    this.desempenhoLoading = true;
+    this.desempenhoError = null;
+
+    this.api
+      .desempenhoCategoria(codigo, this.getDesempenhoParams())
+      .pipe(finalize(() => (this.desempenhoLoading = false)))
+      .subscribe({
+        next: (res) => (this.desempenhoCategoria = res),
+        error: (err) => {
+          console.error(err);
+          this.desempenhoCategoria = null;
+          this.desempenhoError = 'Não foi possível carregar o desempenho da categoria.';
+        },
+      });
+  }
+
+  gerarPdfDesempenhoCategoria(): void {
+    const codigo = this.desempenhoCategoriaCodigo.trim();
+    if (!codigo) {
+      this.desempenhoError = 'Informe a categoria para gerar o PDF.';
+      return;
+    }
+    if (!this.validarFiltroDesempenho()) return;
+
+    this.desempenhoPdfLoading = true;
+    this.desempenhoError = null;
+
+    this.relatorioPdfApi
+      .metasPorCategoria(codigo, this.getDesempenhoParams())
+      .pipe(finalize(() => (this.desempenhoPdfLoading = false)))
+      .subscribe({
+        next: (res) => {
+          const blob = res.body;
+          if (!blob) {
+            this.desempenhoError = 'PDF vazio retornado pela API.';
+            return;
+          }
+
+          const filename = this.extractFilename(
+            res.headers.get('content-disposition'),
+            `metas-categoria-${codigo}-${this.desempenhoPeriodoLabel().replace(/\//g, '-')}.pdf`
+          );
+          this.downloadBlob(blob, filename);
+        },
+        error: (err) => {
+          console.error(err);
+          this.desempenhoError = 'Não foi possível gerar o PDF de metas por categoria.';
+        },
+      });
+  }
+
+  desempenhoPeriodoLabel(): string {
+    const res = this.desempenhoCategoria;
+    const inicio = res?.inicio || (this.desempenhoFiltroModo === 'periodo' ? this.desempenhoInicio : '');
+    const fim = res?.fim || (this.desempenhoFiltroModo === 'periodo' ? this.desempenhoFim : '');
+    if (inicio && fim) return `${this.formatDateBr(inicio)} a ${this.formatDateBr(fim)}`;
+    const data = res?.dataReferencia || this.desempenhoDataReferencia;
+    return this.formatDateBr(data);
   }
 
   private closeAllSugestoes(): void {
@@ -541,6 +673,43 @@ export class MetasComponent implements OnInit, OnDestroy {
     return found?.unidade ?? null;
   }
 
+  private validarFiltroDesempenho(): boolean {
+    if (this.desempenhoFiltroModo === 'periodo') {
+      if (!this.desempenhoInicio || !this.desempenhoFim) {
+        this.desempenhoError = 'Informe início e fim para consultar o desempenho.';
+        return false;
+      }
+      if (this.desempenhoInicio > this.desempenhoFim) {
+        this.desempenhoError = 'Período inválido: início maior que fim.';
+        return false;
+      }
+      return true;
+    }
+
+    if (!this.desempenhoDataReferencia) {
+      this.desempenhoError = 'Informe a data de referência.';
+      return false;
+    }
+    return true;
+  }
+
+  private getDesempenhoParams(): { dataReferencia?: string | null; inicio?: string | null; fim?: string | null } {
+    if (this.desempenhoFiltroModo === 'periodo') {
+      return { inicio: this.desempenhoInicio, fim: this.desempenhoFim };
+    }
+    return { dataReferencia: this.desempenhoDataReferencia };
+  }
+
+  formatDateBr(value: string | null | undefined): string {
+    const v = String(value || '').trim();
+    if (!v) return '—';
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) {
+      const [y, m, d] = v.slice(0, 10).split('-');
+      return `${d}/${m}/${y}`;
+    }
+    return v;
+  }
+
   private parseDate(value: string | null | undefined): Date | null {
     if (!value) return null;
     const v = String(value).trim();
@@ -562,10 +731,58 @@ export class MetasComponent implements OnInit, OnDestroy {
     return s ? v : null;
   }
 
+  private extractFilename(contentDisposition: string | null, fallback: string): string {
+    if (!contentDisposition) return fallback;
+
+    const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition);
+    if (utf8?.[1]) return decodeURIComponent(utf8[1].replace(/"/g, ''));
+
+    const plain = /filename="?([^"]+)"?/i.exec(contentDisposition);
+    return plain?.[1] || fallback;
+  }
+
+  private downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   private normalizeStatusLabel(v: string | null | undefined): string {
     const s = String(v || '').trim().toUpperCase();
     if (s === 'FINALIZADA') return 'CONCLUIDA';
     return s;
+  }
+
+  regraAtingimentoLabel(regra: string | null | undefined): string {
+    switch (String(regra || '').trim().toUpperCase()) {
+      case 'MENOR_OU_IGUAL':
+        return 'Menor ou igual à meta';
+      case 'MAIOR_OU_IGUAL':
+        return 'Maior ou igual à meta';
+      default:
+        return regra || '—';
+    }
+  }
+
+  metaAtingidaLabel(metaAtingida: boolean | null | undefined): string {
+    return metaAtingida === true ? 'Bateu' : 'Não bateu';
+  }
+
+  metaAtingidaClasse(metaAtingida: boolean | null | undefined): 'success' | 'danger' {
+    return metaAtingida === true ? 'success' : 'danger';
+  }
+
+  desempenhoPercent(linha: DesempenhoCategoriaMetaLinha): number {
+    return this.clampPercent(linha.percentual);
+  }
+
+  private clampPercent(value: number | null | undefined): number {
+    const n = Number(value ?? 0);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(100, n));
   }
 
   private toApiStatus(v: string | null | undefined): string {

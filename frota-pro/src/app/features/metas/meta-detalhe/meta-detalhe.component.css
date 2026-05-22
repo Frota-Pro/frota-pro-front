@@ -320,6 +320,11 @@
 }
 label{ display:block; font-size:12px; font-weight:900; color: rgba(15,23,42,.70); margin-bottom:6px; }
 .field{ display:flex; flex-direction:column; gap:6px; }
+.field-help{
+  font-size:12px;
+  font-weight:800;
+  color:rgba(15,23,42,.62);
+}
 
 .form-row{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
 .form-row.three{ grid-template-columns: repeat(3, 1fr); }

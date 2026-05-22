@@ -6,7 +6,7 @@ import { StatCardComponent } from '../../../../shared/ui/stat-card/stat-card.com
 import { ActionButtonComponent } from '../../../../shared/ui/action-button/action-button.component';
 
 import { DashboardApiService } from '../../../../core/api/dashboard-api.service';
-import { DashboardResumoResponse } from '../../../../core/api/dashboard-api.models';
+import { DashboardMetasResponse, DashboardResumoResponse } from '../../../../core/api/dashboard-api.models';
 import { Observable, Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AuthMeResponse } from '../../../../core/auth/auth-user.model';
@@ -42,6 +42,9 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
 
   loading = true;
   errorMsg: string | null = null;
+  metasDashboard: DashboardMetasResponse | null = null;
+  metasDashboardLoading = false;
+  metasDashboardError: string | null = null;
 
   // KPIs (preenchido pela API)
   kpis = [
@@ -98,11 +101,35 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
     });
+    this.carregarDashboardMetas();
 
     this.refreshUnreadCount();
     interval(this.notificationsPollMs)
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.pollNotifications());
+  }
+
+  carregarDashboardMetas(): void {
+    this.metasDashboardLoading = true;
+    this.metasDashboardError = null;
+    this.dashboardApi.getMetas()
+      .subscribe({
+        next: (res) => {
+          this.metasDashboard = {
+            metasAtivas: res.metasAtivas ?? 0,
+            metasVencendo: res.metasVencendo ?? 0,
+            caminhoesForaMeta: res.caminhoesForaMeta ?? 0,
+            categoriasPiorDesempenho: res.categoriasPiorDesempenho ?? [],
+            topCaminhoesDentroMeta: res.topCaminhoesDentroMeta ?? [],
+          };
+          this.metasDashboardLoading = false;
+        },
+        error: () => {
+          this.metasDashboard = null;
+          this.metasDashboardError = 'Não foi possível carregar o dashboard de metas.';
+          this.metasDashboardLoading = false;
+        },
+      });
   }
 
   ngOnDestroy(): void {
@@ -231,6 +258,16 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       ALERTA: 'fas fa-exclamation-triangle',
       ERRO: 'fas fa-times-circle',
     }[tipo];
+  }
+
+  notificationVisualType(item: NotificacaoResponse): NotificacaoTipo {
+    if (this.isMetaAlertEvent(item)) return 'ALERTA';
+    return item.tipo;
+  }
+
+  isMetaAlertEvent(item: NotificacaoResponse): boolean {
+    const evento = String(item.evento || '').trim().toUpperCase();
+    return evento === 'META_CAMINHAO_FORA' || evento === 'META_FORA_DO_PRAZO';
   }
 
   formatNotificationDate(value: string): string {
@@ -391,6 +428,15 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       this.router.navigate(['/dashboard/abastecimentos'], {
         queryParams: { codigo: item.referenciaCodigo || undefined },
       });
+      return;
+    }
+
+    if (refTipo === 'META' || this.isMetaAlertEvent(item)) {
+      if (item.referenciaId) {
+        this.router.navigate(['/dashboard/metas', item.referenciaId]);
+      } else {
+        this.router.navigate(['/dashboard/metas']);
+      }
     }
   }
 
@@ -419,6 +465,11 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     if (!status) return 'N/A';
     // deixa mais “bonito” no badge
     return status.replaceAll('_', ' ');
+  }
+
+  formatPercent(value: number | null | undefined): string {
+    const n = Number(value ?? 0);
+    return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(Number.isFinite(n) ? n : 0)}%`;
   }
 
   private parseUnreadCount(value: unknown): number {
