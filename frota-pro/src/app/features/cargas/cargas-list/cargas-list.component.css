@@ -200,7 +200,7 @@
 .col-actions { width: 140px; }
 .row-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
-.stack { display: grid; gap: 2px; }
+.stack { display: grid; gap: 4px; justify-items: start; }
 .mono { font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 .muted { color: #6b7280; font-size: 12px; }
 
@@ -208,6 +208,7 @@
 .badge {
   display: inline-flex;
   align-items: center;
+  margin-right: 6px;
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid #e5e7eb;
@@ -227,6 +228,29 @@
   border-color: rgba(239, 68, 68, 0.25);
   background: rgba(239, 68, 68, 0.10);
   color: #991b1b;
+}
+
+.transfer-badge,
+.badge.transfer-done {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.transfer-badge {
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  background: rgba(245, 158, 11, 0.12);
+  color: #92400e;
+}
+
+.badge.transfer-done {
+  border-color: rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.10);
+  color: #065f46;
 }
 
 .empty {

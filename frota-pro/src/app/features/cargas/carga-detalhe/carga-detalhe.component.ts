@@ -98,6 +98,11 @@ export class CargaDetalheComponent implements OnInit {
   observacao = '';
   savingObs = false;
 
+  // ===== Transferência =====
+  showTransferenciaModal = false;
+  numeroCargaDestinoTransferencia = '';
+  savingTransferencia = false;
+
   // ===== Preview Parada =====
   showParadaModal = false;
   paradaSelecionada: ParadaCargaResponse | null = null;
@@ -371,6 +376,45 @@ export class CargaDetalheComponent implements OnInit {
         error: (err2) => {
           console.error(err2);
           this.toast('error', 'Não foi possível salvar a observação.', 'Observação');
+        },
+      });
+  }
+
+  // =========================
+  // Transferência
+  // =========================
+  abrirTransferenciaModal(): void {
+    this.numeroCargaDestinoTransferencia = '';
+    this.showTransferenciaModal = true;
+  }
+
+  fecharTransferenciaModal(): void {
+    if (this.savingTransferencia) return;
+    this.showTransferenciaModal = false;
+    this.numeroCargaDestinoTransferencia = '';
+  }
+
+  marcarTransferencia(): void {
+    if (!this.carga) return;
+
+    const numeroCargaDestino = this.numeroCargaDestinoTransferencia.trim();
+    const body = numeroCargaDestino ? { numeroCargaDestino } : {};
+
+    this.savingTransferencia = true;
+
+    this.cargaApi
+      .marcarTransferencia(this.carga.numeroCarga, body)
+      .pipe(finalize(() => (this.savingTransferencia = false)))
+      .subscribe({
+        next: () => {
+          this.showTransferenciaModal = false;
+          this.numeroCargaDestinoTransferencia = '';
+          this.toast('success', 'Carga marcada como transferência.', 'Transferência');
+          this.carregar();
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', 'Não foi possível marcar a carga como transferência.', 'Transferência');
         },
       });
   }
@@ -842,5 +886,20 @@ export class CargaDetalheComponent implements OnInit {
       default:
         return status;
     }
+  }
+
+  labelStatusTransferencia(status?: string | null): string {
+    switch (status) {
+      case 'PENDENTE_SYNC':
+        return 'Transferência pendente de sincronização';
+      case 'CONCLUIDA':
+        return 'Transferência concluída';
+      default:
+        return '';
+    }
+  }
+
+  transferenciaPendente(): boolean {
+    return !!this.carga?.transferenciaPendente || this.carga?.statusTransferencia === 'PENDENTE_SYNC';
   }
 }

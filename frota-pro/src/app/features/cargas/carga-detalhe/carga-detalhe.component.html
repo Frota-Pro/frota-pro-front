@@ -23,11 +23,18 @@
           <span class="dot">•</span>
           <span *ngIf="carga.numeroCargaExterno; else semExterno">Ext: {{ carga.numeroCargaExterno }}</span>
           <ng-template #semExterno><span class="muted">Sem código externo</span></ng-template>
+          <ng-container *ngIf="labelStatusTransferencia(carga.statusTransferencia)">
+            <span class="dot">•</span>
+            <span class="transfer-inline">{{ labelStatusTransferencia(carga.statusTransferencia) }}</span>
+          </ng-container>
         </p>
       </div>
     </div>
 
     <div class="right">
+      <button class="btn primary" type="button" (click)="abrirTransferenciaModal()" [disabled]="loading">
+        Marcar transferência
+      </button>
       <button class="btn" type="button" (click)="carregar()" [disabled]="loading">Atualizar</button>
     </div>
   </div>
@@ -42,12 +49,25 @@
 
   <ng-container *ngIf="!loading && carga">
 
+    <div class="transfer-alert"
+         *ngIf="transferenciaPendente() || labelStatusTransferencia(carga.statusTransferencia)"
+         [class.done]="carga.statusTransferencia === 'CONCLUIDA'">
+      <div class="transfer-alert-title">
+        {{ labelStatusTransferencia(carga.statusTransferencia) || 'Transferência pendente de sincronização' }}
+      </div>
+      <div class="transfer-alert-text" *ngIf="transferenciaPendente()">
+        Peso, valor e notas desta carga antiga ainda aguardam atualização pela sincronização do WinThor.
+      </div>
+    </div>
+
     <!-- KPIs -->
     <div class="kpis">
       <div class="kpi-card">
         <div class="kpi-label">Status</div>
         <div class="kpi-value">
           <span class="badge">{{ labelStatus(carga.statusCarga) }}</span>
+          <span class="badge warn" *ngIf="carga.statusTransferencia === 'PENDENTE_SYNC'">Transferência</span>
+          <span class="badge ok" *ngIf="carga.statusTransferencia === 'CONCLUIDA'">Transferência</span>
         </div>
       </div>
 
@@ -298,6 +318,44 @@
 
     </div>
   </ng-container>
+</div>
+
+<!-- =============== MODAL: MARCAR TRANSFERÊNCIA =============== -->
+<div class="modal-backdrop" *ngIf="showTransferenciaModal" (click)="fecharTransferenciaModal()">
+  <div class="modal transfer-modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h3>Marcar transferência</h3>
+        <p class="muted" *ngIf="carga">
+          Carga antiga <span class="mono">{{ carga.numeroCarga }}</span>
+        </p>
+      </div>
+      <button class="btn ghost" type="button" (click)="fecharTransferenciaModal()" [disabled]="savingTransferencia">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="muted help">
+        Informe a carga nova/destino se já souber. A correção de peso, valor e notas será feita pela sincronização.
+      </p>
+
+      <label class="f">
+        <span class="f-label">Carga destino (opcional)</span>
+        <input class="control"
+               [(ngModel)]="numeroCargaDestinoTransferencia"
+               placeholder="Ex.: CAR-000020"
+               [disabled]="savingTransferencia" />
+      </label>
+    </div>
+
+    <div class="modal-footer sticky-footer">
+      <button class="btn ghost" type="button" (click)="fecharTransferenciaModal()" [disabled]="savingTransferencia">Cancelar</button>
+      <button class="btn primary" type="button" (click)="marcarTransferencia()" [disabled]="savingTransferencia">
+        {{ savingTransferencia ? 'Marcando...' : 'Marcar transferência' }}
+      </button>
+    </div>
+
+  </div>
 </div>
 
 <!-- =============== MODAL: PREVIEW PARADA =============== -->

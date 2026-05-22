@@ -231,6 +231,17 @@ export class CargasListComponent implements OnInit, OnDestroy {
     }
   }
 
+  labelStatusTransferencia(status?: string | null): string {
+    switch (status) {
+      case 'PENDENTE_SYNC':
+        return 'Transferência pendente';
+      case 'CONCLUIDA':
+        return 'Transferência concluída';
+      default:
+        return '';
+    }
+  }
+
   formatMoneyBRL(v?: number | string | null): string {
     if (v === null || v === undefined) {
       return (0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

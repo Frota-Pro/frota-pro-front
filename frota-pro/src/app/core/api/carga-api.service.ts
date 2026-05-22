@@ -2,7 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
-import { CargaMinResponse, CargaResponse } from './carga-api.models';
+import {
+  CargaMinResponse,
+  CargaResponse,
+  MarcarTransferenciaCargaRequest
+} from './carga-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class CargaApiService extends BaseApiService {
@@ -60,6 +64,14 @@ export class CargaApiService extends BaseApiService {
     return this.http.patch<void>(
       `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/observacao`,
       { observacao }
+    );
+  }
+
+  /** PATCH {{host}}/carga/{numeroCarga}/marcar-transferencia */
+  marcarTransferencia(numeroCarga: string, request: MarcarTransferenciaCargaRequest = {}) {
+    return this.http.patch<void>(
+      `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/marcar-transferencia`,
+      request
     );
   }
 

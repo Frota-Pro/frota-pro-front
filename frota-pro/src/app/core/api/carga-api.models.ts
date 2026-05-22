@@ -3,6 +3,8 @@ export interface ClienteCargaResponse {
   notas: string[];
 }
 
+export type StatusTransferenciaCarga = 'SEM_TRANSFERENCIA' | 'PENDENTE_SYNC' | 'CONCLUIDA';
+
 export interface CargaMinResponse {
   numeroCarga: string;
   numeroCargaExterno?: string | null;
@@ -10,6 +12,8 @@ export interface CargaMinResponse {
   pesoCarga?: number | null;
   valorTotal?: number | null;
   statusCarga: string;
+  transferenciaPendente?: boolean;
+  statusTransferencia?: StatusTransferenciaCarga | null;
   nomeMotorista?: string | null;
   placaCaminhao?: string | null;
 }
@@ -35,6 +39,8 @@ export interface CargaResponse {
   clientes?: ClienteCargaResponse[];
 
   statusCarga: string;
+  transferenciaPendente?: boolean;
+  statusTransferencia?: StatusTransferenciaCarga | null;
 
   codigoMotorista?: string | null;
   nomeMotorista?: string | null;
@@ -69,4 +75,8 @@ export interface CargaRequest {
   codigoRota: string;
 
   codigosAjudantes?: string[] | null;
+}
+
+export interface MarcarTransferenciaCargaRequest {
+  numeroCargaDestino?: string | null;
 }

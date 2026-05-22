@@ -70,6 +70,11 @@
           <div class="stack">
             <strong class="mono">{{ c.numeroCarga }}</strong>
             <small class="muted" *ngIf="c.numeroCargaExterno">Ext: {{ c.numeroCargaExterno }}</small>
+            <span class="transfer-badge"
+                  *ngIf="c.transferenciaPendente || c.statusTransferencia === 'PENDENTE_SYNC'"
+                  title="Peso, valor e notas aguardam atualização pela sincronização">
+              Transferência pendente
+            </span>
           </div>
         </td>
 
@@ -79,6 +84,9 @@
         <td>{{ formatMoneyBRL(c.valorTotal) }}</td>
         <td>
           <span class="badge">{{ labelStatus(c.statusCarga) }}</span>
+          <span class="badge transfer-done" *ngIf="c.statusTransferencia === 'CONCLUIDA'">
+            {{ labelStatusTransferencia(c.statusTransferencia) }}
+          </span>
         </td>
         <td class="row-actions" (click)="$event.stopPropagation()">
           <button class="btn small" type="button" (click)="abrirDetalhe(c)">Ver</button>
