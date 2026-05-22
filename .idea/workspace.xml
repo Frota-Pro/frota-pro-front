@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(metas): add dashboard performance metrics and enhance meta display with new rules and percentages">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(metas): implement unified performance metrics dashboard with filtering and PDF generation" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -166,7 +164,7 @@
       <workItem from="1772635410172" duration="1618000" />
       <workItem from="1779383260465" duration="34000" />
       <workItem from="1779383316343" duration="5843000" />
-      <workItem from="1779454345001" duration="5528000" />
+      <workItem from="1779454345001" duration="6086000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona módulo de documentação ao caminhão, incluindo upload, listagem e visualização de documentos. Refatora estilos e componentes para melhor usabilidade e responsividade.">
       <option name="closed" value="true" />
@@ -552,7 +550,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779467711136</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="feat(metas): implement unified performance metrics dashboard with filtering and PDF generation">
+      <option name="closed" value="true" />
+      <created>1779471659945</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1779471659945</updated>
+    </task>
+    <option name="localTasksCounter" value="50" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -570,7 +576,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: ajusta filtros de histórico e melhora usabilidade com novos estilos e responsividade" />
     <MESSAGE value="feat: refatora exibição de metas no detalhe do caminhão, adiciona suporte a múltiplas metas e melhora usabilidade e estilos" />
     <MESSAGE value="feat: permite identificação de caminhão por placa, código interno, externo ou UUID no detalhe de pneus" />
     <MESSAGE value="feat: adiciona validações de kmEvento e exibe campo condicionalmente no detalhe de pneus" />
@@ -595,7 +600,8 @@
     <MESSAGE value="feat(styles): improve scrollbar styles and padding for better dashboard usability" />
     <MESSAGE value="feat(transferencia): add transfer marking feature with modal and status updates" />
     <MESSAGE value="feat(metas): add dashboard performance metrics and enhance meta display with new rules and percentages" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(metas): add dashboard performance metrics and enhance meta display with new rules and percentages" />
+    <MESSAGE value="feat(metas): implement unified performance metrics dashboard with filtering and PDF generation" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(metas): implement unified performance metrics dashboard with filtering and PDF generation" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

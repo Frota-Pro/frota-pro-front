@@ -199,14 +199,17 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
   }
 
   metaResultadoLabel(metaItem: MetaResponse): string {
-    if (metaItem.metaAtingida === true) return 'Bateu';
-    if (metaItem.metaAtingida === false) return 'Não bateu';
+    const key = this.metaStatusKey(metaItem.statusDesempenho, metaItem.metaAtingida);
+    if (key === 'BATEU') return 'Bateu';
+    if (key === 'NAO_BATEU') return 'Não bateu';
+    if (key === 'NAO_INICIADO') return 'Não iniciado';
     return this.normalizeMetaStatus(metaItem.statusMeta) || 'SEM STATUS';
   }
 
   metaResultadoClasse(metaItem: MetaResponse): 'ok' | 'warn' | 'active' {
-    if (metaItem.metaAtingida === true) return 'ok';
-    if (metaItem.metaAtingida === false) return 'warn';
+    const key = this.metaStatusKey(metaItem.statusDesempenho, metaItem.metaAtingida);
+    if (key === 'BATEU') return 'ok';
+    if (key === 'NAO_BATEU') return 'warn';
     return 'active';
   }
 
@@ -322,6 +325,14 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
     const n = Number(value ?? 0);
     if (!Number.isFinite(n)) return 0;
     return Math.max(0, Math.min(100, n));
+  }
+
+  private metaStatusKey(status?: string | null, metaAtingida?: boolean | null): string {
+    const s = String(status || '').trim().toUpperCase();
+    if (s === 'BATEU' || s === 'NAO_BATEU' || s === 'NAO_INICIADO') return s;
+    if (metaAtingida === true) return 'BATEU';
+    if (metaAtingida === false) return 'NAO_BATEU';
+    return s;
   }
 
   // ------------------ TABS ------------------

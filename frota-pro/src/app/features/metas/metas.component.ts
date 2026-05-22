@@ -223,11 +223,11 @@ export class MetasComponent implements OnInit, OnDestroy {
   }
 
   desempenhoUnificadoBateu(): number {
-    return this.desempenhoUnificadoLinhas.filter((l) => l.metaAtingida === true).length;
+    return this.desempenhoUnificadoLinhas.filter((l) => this.metaStatusKey(l.status, l.metaAtingida) === 'BATEU').length;
   }
 
   desempenhoUnificadoNaoBateu(): number {
-    return this.desempenhoUnificadoLinhas.filter((l) => l.metaAtingida === false).length;
+    return this.desempenhoUnificadoLinhas.filter((l) => this.metaStatusKey(l.status, l.metaAtingida) === 'NAO_BATEU').length;
   }
 
   desempenhoUnificadoPercentualSucesso(): string {
@@ -855,12 +855,12 @@ export class MetasComponent implements OnInit, OnDestroy {
     }
   }
 
-  metaAtingidaLabel(metaAtingida: boolean | null | undefined): string {
-    return metaAtingida === true ? 'Bateu' : 'Não bateu';
+  metaAtingidaLabel(metaAtingida: boolean | null | undefined, status?: string | null): string {
+    return this.metaStatusLabel(status, metaAtingida);
   }
 
-  metaAtingidaClasse(metaAtingida: boolean | null | undefined): 'success' | 'danger' {
-    return metaAtingida === true ? 'success' : 'danger';
+  metaAtingidaClasse(metaAtingida: boolean | null | undefined, status?: string | null): 'success' | 'danger' | 'neutral' {
+    return this.metaStatusClass(status, metaAtingida);
   }
 
   desempenhoPercent(linha: DesempenhoCategoriaMetaLinha): number {
@@ -890,9 +890,7 @@ export class MetasComponent implements OnInit, OnDestroy {
   }
 
   desempenhoStatusLabel(linha: DesempenhoMetasLinha): string {
-    if (linha.metaAtingida === true) return 'Bateu';
-    if (linha.metaAtingida === false) return 'Não bateu';
-    return linha.status || '—';
+    return this.metaStatusLabel(linha.status, linha.metaAtingida);
   }
 
   formatNumber(value: number | null | undefined, dec = 2): string {
@@ -901,6 +899,29 @@ export class MetasComponent implements OnInit, OnDestroy {
       minimumFractionDigits: dec,
       maximumFractionDigits: dec,
     }).format(Number.isFinite(n) ? n : 0);
+  }
+
+  metaStatusLabel(status?: string | null, metaAtingida?: boolean | null): string {
+    const key = this.metaStatusKey(status, metaAtingida);
+    if (key === 'BATEU') return 'Bateu';
+    if (key === 'NAO_BATEU') return 'Não bateu';
+    if (key === 'NAO_INICIADO') return 'Não iniciado';
+    return status || '—';
+  }
+
+  metaStatusClass(status?: string | null, metaAtingida?: boolean | null): 'success' | 'danger' | 'neutral' {
+    const key = this.metaStatusKey(status, metaAtingida);
+    if (key === 'BATEU') return 'success';
+    if (key === 'NAO_BATEU') return 'danger';
+    return 'neutral';
+  }
+
+  private metaStatusKey(status?: string | null, metaAtingida?: boolean | null): string {
+    const s = String(status || '').trim().toUpperCase();
+    if (s === 'BATEU' || s === 'NAO_BATEU' || s === 'NAO_INICIADO') return s;
+    if (metaAtingida === true) return 'BATEU';
+    if (metaAtingida === false) return 'NAO_BATEU';
+    return s;
   }
 
   private clampPercent(value: number | null | undefined): number {

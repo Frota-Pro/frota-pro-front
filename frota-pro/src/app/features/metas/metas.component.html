@@ -146,8 +146,9 @@
           </td>
           <td>
             <span class="pill"
-                  [class.pill-success]="metaAtingidaClasse(l.metaAtingida) === 'success'"
-                  [class.pill-danger]="metaAtingidaClasse(l.metaAtingida) === 'danger'">
+                  [class.pill-success]="metaAtingidaClasse(l.metaAtingida, l.status) === 'success'"
+                  [class.pill-danger]="metaAtingidaClasse(l.metaAtingida, l.status) === 'danger'"
+                  [class.pill-muted]="metaAtingidaClasse(l.metaAtingida, l.status) === 'neutral'">
               {{ desempenhoStatusLabel(l) }}
             </span>
           </td>
@@ -242,9 +243,10 @@
           <td>{{ regraAtingimentoLabel(l.regraAtingimento) }}</td>
           <td>
             <span class="pill"
-                  [class.pill-success]="metaAtingidaClasse(l.metaAtingida) === 'success'"
-                  [class.pill-danger]="metaAtingidaClasse(l.metaAtingida) === 'danger'">
-              {{ metaAtingidaLabel(l.metaAtingida) }}
+                  [class.pill-success]="metaAtingidaClasse(l.metaAtingida, l.status) === 'success'"
+                  [class.pill-danger]="metaAtingidaClasse(l.metaAtingida, l.status) === 'danger'"
+                  [class.pill-muted]="metaAtingidaClasse(l.metaAtingida, l.status) === 'neutral'">
+              {{ metaAtingidaLabel(l.metaAtingida, l.status) }}
             </span>
           </td>
         </tr>
@@ -309,11 +311,12 @@
           <td>
               <span
                 class="pill"
-                *ngIf="m.metaAtingida !== null && m.metaAtingida !== undefined"
-                [class.pill-success]="metaAtingidaClasse(m.metaAtingida) === 'success'"
-                [class.pill-danger]="metaAtingidaClasse(m.metaAtingida) === 'danger'"
+                *ngIf="m.metaAtingida !== null && m.metaAtingida !== undefined || m.statusDesempenho"
+                [class.pill-success]="metaAtingidaClasse(m.metaAtingida, m.statusDesempenho) === 'success'"
+                [class.pill-danger]="metaAtingidaClasse(m.metaAtingida, m.statusDesempenho) === 'danger'"
+                [class.pill-muted]="metaAtingidaClasse(m.metaAtingida, m.statusDesempenho) === 'neutral'"
               >
-                {{ metaAtingidaLabel(m.metaAtingida) }}
+                {{ metaAtingidaLabel(m.metaAtingida, m.statusDesempenho) }}
               </span>
               <span
                 class="pill"
