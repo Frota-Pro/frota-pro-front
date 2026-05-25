@@ -46,8 +46,8 @@ export class IntegracaoWinthorApiService extends BaseApiService {
     return this.http.get<IntegracaoWinthorJobResponse[]>(`${this.apiUrl}${this.base}/jobs`, { params });
   }
 
-  retryJob(tipo: 'CARGAS' | 'CAMINHOES' | 'MOTORISTAS', jobId: string) {
-    return this.http.post<any>(`${this.apiUrl}${this.base}/jobs/${tipo}/${jobId}/retry`, {});
+  retryCargaJob(jobId: string) {
+    return this.http.post<any>(`${this.apiUrl}${this.base}/jobs/CARGAS/${jobId}/retry`, {});
   }
 
   syncMotoristas(empresaId: string, codigosMotoristas?: number[]) {

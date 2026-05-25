@@ -65,6 +65,8 @@ export class WinthorComponent implements OnInit, OnDestroy {
 
   jobsTipo: IntegracaoJobTipo = 'TODOS';
   pageSize = 50;
+  private jobsTimer?: ReturnType<typeof setInterval>;
+  private jobsPollingWarmup = 0;
 
   // Logs
   logsLoading = false;
@@ -89,6 +91,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopLogsAutoRefresh();
+    this.stopJobsAutoRefresh();
   }
 
   bootstrap(): void {
@@ -242,7 +245,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           this.showToast('success', `Sincronização de motoristas solicitada. Job: ${res?.jobId ?? '-'}`);
-          this.refreshJobs();
+          this.monitorJobsAfterRequest();
         },
         error: (err) => this.showError('Falha ao solicitar sincronização de motoristas.', err),
       });
@@ -263,7 +266,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           this.showToast('success', `Sincronização de caminhões solicitada. Job: ${res?.jobId ?? '-'}`);
-          this.refreshJobs();
+          this.monitorJobsAfterRequest();
         },
         error: (err) => this.showError('Falha ao solicitar sincronização de caminhões.', err),
       });
@@ -295,7 +298,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           this.showToast('success', `Sincronização de cargas solicitada. Job: ${res?.jobId ?? '-'}`);
-          this.refreshJobs();
+          this.monitorJobsAfterRequest();
         },
         error: (err) => this.showError('Falha ao solicitar sincronização de cargas.', err),
       });
@@ -314,7 +317,18 @@ export class WinthorComponent implements OnInit, OnDestroy {
     let done = 0;
     const finish = () => {
       done += 1;
-      if (done >= 3) this.jobsLoading = false;
+      if (done >= 3) {
+        this.jobsLoading = false;
+        if (this.jobsPendente.length > 0) {
+          this.jobsPollingWarmup = 0;
+          this.startJobsAutoRefresh();
+        } else if (this.jobsPollingWarmup > 0) {
+          this.jobsPollingWarmup -= 1;
+          this.startJobsAutoRefresh();
+        } else {
+          this.stopJobsAutoRefresh();
+        }
+      }
     };
 
     this.api.listJobs({ tipo: this.jobsTipo, status: pendentes, page: 0, size: this.pageSize })
@@ -349,18 +363,17 @@ export class WinthorComponent implements OnInit, OnDestroy {
   }
 
   retryJob(row: IntegracaoWinthorJobResponse): void {
-    if (!row?.jobId || !row?.tipo) return;
+    if (!row?.jobId || row.tipo !== 'CARGAS' || row.status !== 'ERRO') return;
 
-    const tipo = row.tipo; // 'CARGAS' | 'CAMINHOES' | 'MOTORISTAS'
     this.toast = null;
 
-    this.api.retryJob(tipo, row.jobId)
+    this.api.retryCargaJob(row.jobId)
       .subscribe({
         next: () => {
-          this.showToast('success', `Job reenfileirado (${tipo}).`);
-          this.refreshJobs();
+          this.showToast('success', 'Reprocessamento da carga solicitado.');
+          this.monitorJobsAfterRequest();
         },
-        error: (err) => this.showError(`Falha ao reenfileirar job (${tipo}).`, err),
+        error: (err) => this.showError('Falha ao reprocessar job de carga.', err),
       });
   }
 
@@ -443,6 +456,21 @@ export class WinthorComponent implements OnInit, OnDestroy {
     if (s === 'PENDENTE') return 'chip info';
     if (s === 'ERRO') return 'chip err';
     return 'chip';
+  }
+
+  jobStatusLabel(status?: StatusSincronizacao | null): string {
+    switch (status) {
+      case 'PENDENTE':
+        return 'Aguardando envio';
+      case 'PROCESSANDO':
+        return 'Sincronizando';
+      case 'CONCLUIDO':
+        return 'Concluído';
+      case 'ERRO':
+        return 'Erro';
+      default:
+        return '-';
+    }
   }
 
   pillClass(ok?: boolean): string {
@@ -531,6 +559,28 @@ export class WinthorComponent implements OnInit, OnDestroy {
       else localStorage.removeItem(WINTHOR_EMPRESA_ID_KEY);
     } catch {
       // no-op
+    }
+  }
+
+  private startJobsAutoRefresh(): void {
+    if (this.jobsTimer) return;
+
+    this.jobsTimer = setInterval(() => {
+      if (!this.jobsLoading) this.refreshJobs();
+    }, 4000);
+  }
+
+  private monitorJobsAfterRequest(): void {
+    // O job pode ainda não aparecer na lista imediatamente após o POST.
+    this.jobsPollingWarmup = 3;
+    this.refreshJobs();
+    this.startJobsAutoRefresh();
+  }
+
+  private stopJobsAutoRefresh(): void {
+    if (this.jobsTimer) {
+      clearInterval(this.jobsTimer);
+      this.jobsTimer = undefined;
     }
   }
 

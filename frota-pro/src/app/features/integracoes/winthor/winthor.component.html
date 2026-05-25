@@ -292,7 +292,7 @@
             <tbody>
             <tr *ngFor="let r of jobsPendente">
               <td class="mono">{{ r.tipo }}</td>
-              <td><span class="{{ chipClass(r.status) }}">{{ r.status }}</span></td>
+              <td><span class="{{ chipClass(r.status) }}">{{ jobStatusLabel(r.status) }}</span></td>
               <td>{{ formatDate(r.dataReferencia || null) }}</td>
               <td class="right">{{ r.totalRegistros ?? '-' }}</td>
               <td>{{ formatDateTime(r.atualizadoEm || r.criadoEm || null) }}</td>
@@ -311,7 +311,7 @@
         <div class="card-h">
           <div>
             <h3>Erros</h3>
-            <p class="muted">Falhas que podem ser reenfileiradas.</p>
+            <p class="muted">Falhas de cargas podem ser reprocessadas.</p>
           </div>
           <span class="counter err">{{ jobsErro.length }}</span>
         </div>
@@ -330,12 +330,12 @@
             <tbody>
             <tr *ngFor="let r of jobsErro">
               <td class="mono">{{ r.tipo }}</td>
-              <td><span class="{{ chipClass(r.status) }}">{{ r.status }}</span></td>
+              <td><span class="{{ chipClass(r.status) }}">{{ jobStatusLabel(r.status) }}</span></td>
               <td>{{ formatDate(r.dataReferencia || null) }}</td>
               <td class="truncate" [title]="r.mensagemErro || ''">{{ r.mensagemErro || '-' }}</td>
               <td class="right">
-                <button class="btn small danger" type="button" (click)="retryJob(r)">
-                  Reenfileirar
+                <button *ngIf="r.tipo === 'CARGAS'" class="btn small danger" type="button" (click)="retryJob(r)">
+                  Reprocessar
                 </button>
               </td>
             </tr>
@@ -372,7 +372,7 @@
             <tbody>
             <tr *ngFor="let r of jobsConcluido">
               <td class="mono">{{ r.tipo }}</td>
-              <td><span class="{{ chipClass(r.status) }}">{{ r.status }}</span></td>
+              <td><span class="{{ chipClass(r.status) }}">{{ jobStatusLabel(r.status) }}</span></td>
               <td>{{ formatDate(r.dataReferencia || null) }}</td>
               <td class="right">{{ r.totalRegistros ?? '-' }}</td>
               <td>{{ formatDateTime(r.atualizadoEm || r.criadoEm || null) }}</td>
@@ -389,7 +389,7 @@
 
     <div class="note">
       <span class="muted">
-        Ação “Reenfileirar” marca o job como pendente e reenviará o evento com o mesmo <span class="mono">jobId</span>.
+        A ação “Reprocessar” está disponível somente para jobs de carga com erro.
       </span>
     </div>
   </ng-container>
