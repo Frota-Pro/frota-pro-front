@@ -53,12 +53,17 @@
       <div class="card full" *ngIf="vida">
         <div class="top">
           <h3>Vida útil</h3>
-          <span class="pill"
-                [class.ok]="alertaLabel()==='OK'"
-                [class.warn]="alertaLabel()==='PRÓXIMO DO FIM'"
-                [class.bad]="alertaLabel()==='VENCIDO'">
-            {{ alertaLabel() }}
-          </span>
+          <div class="actions-inline">
+            <button *ngIf="pneu.status === 'EM_USO'" class="btn small primary" type="button" (click)="openEvento('ATUALIZACAO_KM')">
+              Atualizar KM
+            </button>
+            <span class="pill"
+                  [class.ok]="alertaLabel()==='OK'"
+                  [class.warn]="alertaLabel()==='PRÓXIMO DO FIM'"
+                  [class.bad]="alertaLabel()==='VENCIDO'">
+              {{ alertaLabel() }}
+            </span>
+          </div>
         </div>
 
         <div class="life">
@@ -106,6 +111,7 @@
           <h3>Movimentações</h3>
           <div class="actions-inline">
             <button class="btn small" type="button" (click)="openEvento('INSTALACAO')">Instalar</button>
+            <button *ngIf="pneu.status === 'EM_USO'" class="btn small primary" type="button" (click)="openEvento('ATUALIZACAO_KM')">Atualizar KM</button>
             <button class="btn small" type="button" (click)="openEvento('REMOVER')">Remover</button>
             <button class="btn small" type="button" (click)="openEvento('ENVIO_RECAPAGEM')">Enviar recapagem</button>
             <button class="btn small" type="button" (click)="openEvento('RETORNO_RECAPAGEM')">Retorno recapagem</button>
@@ -162,13 +168,13 @@
 
   <div class="modal" *ngIf="showEvento">
     <div class="modal-header">
-      <h2>Registrar evento</h2>
+      <h2>{{ atualizandoKm() ? 'Atualizar KM do pneu' : 'Registrar evento' }}</h2>
       <button class="iconbtn" type="button" (click)="closeEvento()">✕</button>
     </div>
 
     <div class="modal-body">
       <div class="grid2">
-        <div>
+        <div *ngIf="!atualizandoKm()">
           <label>Tipo</label>
           <select [(ngModel)]="evento.tipo" (ngModelChange)="onTipoEventoChange()">
             <option value="INSTALACAO">INSTALACAO</option>
@@ -182,9 +188,9 @@
         </div>
 
         <div *ngIf="mostrarKmEvento()">
-          <label>Km evento</label>
+          <label>Km evento{{ atualizandoKm() ? ' *' : '' }}</label>
           <input type="number" [(ngModel)]="evento.kmEvento" placeholder="Ex: 248500" />
-          <div class="muted small" *ngIf="evento.tipo==='INSTALACAO' || evento.tipo==='REMOVER'">Obrigatório para este tipo.</div>
+          <div class="muted small" *ngIf="evento.tipo==='INSTALACAO' || evento.tipo==='REMOVER' || evento.tipo==='ATUALIZACAO_KM'">Obrigatório para este tipo.</div>
         </div>
 
         <div class="span2" *ngIf="evento.tipo==='INSTALACAO'">
@@ -236,7 +242,7 @@
 
         <div class="span2">
           <label>Observação</label>
-          <input [(ngModel)]="evento.observacao" placeholder="Ex.: Troca por desgaste, enviado p/ recapagem..." />
+          <input [(ngModel)]="evento.observacao" [placeholder]="atualizandoKm() ? 'Ex.: Leitura mensal do odômetro' : 'Ex.: Troca por desgaste, enviado p/ recapagem...'" />
         </div>
       </div>
     </div>

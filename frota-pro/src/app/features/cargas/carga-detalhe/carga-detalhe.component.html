@@ -821,7 +821,15 @@
 
               <label class="f">
                 <span class="f-label">Eixo <span class="req">*</span></span>
-                <input class="control" type="number" [(ngModel)]="t.eixoNumero" />
+                <select class="control" [(ngModel)]="t.eixoNumero" [disabled]="loadingEixos">
+                  <option [ngValue]="null">{{ loadingEixos ? 'Carregando eixos...' : 'Selecione' }}</option>
+                  <option *ngFor="let eixo of eixosCaminhao" [ngValue]="eixoNumero(eixo)" [disabled]="eixoNumero(eixo) == null">
+                    {{ eixoLabel(eixo) }}
+                  </option>
+                </select>
+                <span class="muted" *ngIf="!loadingEixos && eixosCaminhao.length === 0">
+                  Nenhum eixo cadastrado para este caminhão.
+                </span>
               </label>
 
               <label class="f">

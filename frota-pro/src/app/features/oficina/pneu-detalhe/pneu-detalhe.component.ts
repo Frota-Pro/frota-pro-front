@@ -8,6 +8,7 @@ import { PneuApiService } from '../../../core/api/pneu-api.service';
 import {
   PneuResponse,
   PneuVidaUtilResponse,
+  TipoMovimentacaoPneu,
   PneuMovimentacaoRequest,
   PneuMovimentacaoResponse
 } from '../../../core/api/pneu-api.models';
@@ -17,6 +18,7 @@ import { CaminhaoResponse } from '../../../core/api/caminhao-api.models';
 
 const PNEU_MOV_TIPOS = [
   'INSTALACAO',
+  'ATUALIZACAO_KM',
   'REMOVER',
   'RODIZIO',
   'TROCA_MANUTENCAO',
@@ -137,7 +139,7 @@ export class PneuDetalheComponent implements OnInit, OnDestroy {
   }
 
   // ===== Evento =====
-  openEvento(tipo?: string): void {
+  openEvento(tipo?: TipoMovimentacaoPneu): void {
     this.evento = {
       tipo: tipo || 'RODIZIO',
       kmEvento: null,
@@ -162,25 +164,25 @@ export class PneuDetalheComponent implements OnInit, OnDestroy {
 
   salvarEvento(): void {
     const tipo = this.evento.tipo;
-    this.evento.caminhaoId = this.emptyToNull(this.evento.caminhaoId);
-    this.evento.caminhao = this.emptyToNull(this.evento.caminhao);
     if (!this.mostrarKmEvento()) this.evento.kmEvento = null;
 
     if (!PNEU_MOV_TIPOS.includes(tipo as any)) {
       this.toast.warn('Tipo de movimentação inválido.');
       return;
     }
-    if (this.evento.lado && !PNEU_LADOS.includes(this.evento.lado as any)) {
+    if (tipo !== 'ATUALIZACAO_KM' && this.evento.lado && !PNEU_LADOS.includes(this.evento.lado as any)) {
       this.toast.warn('Lado inválido. Use ESQUERDO ou DIREITO.');
       return;
     }
-    if (this.evento.posicao && !PNEU_POSICOES.includes(this.evento.posicao as any)) {
+    if (tipo !== 'ATUALIZACAO_KM' && this.evento.posicao && !PNEU_POSICOES.includes(this.evento.posicao as any)) {
       this.toast.warn('Posição inválida. Use INTERNO ou EXTERNO.');
       return;
     }
 
     // validações mínimas
     if (tipo === 'INSTALACAO') {
+      this.evento.caminhaoId = this.emptyToNull(this.evento.caminhaoId);
+      this.evento.caminhao = this.emptyToNull(this.evento.caminhao);
       if (!this.evento.caminhaoId && !this.evento.caminhao) {
         return this.toast.warn('Informe o caminhão por UUID, placa, código interno ou código externo.');
       }
@@ -189,6 +191,17 @@ export class PneuDetalheComponent implements OnInit, OnDestroy {
       if (this.evento.eixoNumero == null || !this.evento.lado || !this.evento.posicao) {
         return this.toast.warn('eixoNumero, lado e posicao são obrigatórios em INSTALACAO.');
       }
+    }
+
+    if (tipo === 'ATUALIZACAO_KM') {
+      if (this.pneu?.status !== 'EM_USO') {
+        return this.toast.warn('Pneu precisa estar EM_USO para registrar atualização de KM.');
+      }
+      if (this.evento.kmEvento == null) {
+        return this.toast.warn('kmEvento é obrigatório para atualizar o KM.');
+      }
+      this.salvarAtualizacaoKm(this.evento.kmEvento, this.emptyToNull(this.evento.observacao));
+      return;
     }
 
     if ((tipo === 'REMOVER' || tipo === 'RODIZIO' || tipo === 'TROCA_MANUTENCAO') && this.evento.kmEvento == null) {
@@ -205,8 +218,30 @@ export class PneuDetalheComponent implements OnInit, OnDestroy {
           this.closeEvento();
           this.carregarVida();
           this.carregarMovimentacoes();
+          this.toast.success('Movimentação registrada com sucesso.');
         },
-        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao registrar evento.',
+        error: (err) => this.showEventoError(err, 'Erro ao registrar evento.'),
+      });
+  }
+
+  private salvarAtualizacaoKm(kmEvento: number, observacao: string | null): void {
+    this.loading = true;
+    this.errorMsg = null;
+
+    this.api.atualizarKm(this.codigo, {
+      tipo: 'ATUALIZACAO_KM',
+      kmEvento,
+      observacao,
+    })
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => {
+          this.closeEvento();
+          this.carregarVida();
+          this.carregarMovimentacoes();
+          this.toast.success('KM do pneu atualizado com sucesso.');
+        },
+        error: (err) => this.showEventoError(err, 'Erro ao atualizar KM do pneu.'),
       });
   }
 
@@ -238,6 +273,10 @@ export class PneuDetalheComponent implements OnInit, OnDestroy {
 
   mostrarKmEvento(): boolean {
     return this.evento.tipo !== 'ENVIO_RECAPAGEM' && this.evento.tipo !== 'RETORNO_RECAPAGEM';
+  }
+
+  atualizandoKm(): boolean {
+    return this.evento.tipo === 'ATUALIZACAO_KM';
   }
 
   onTipoEventoChange(): void {
@@ -289,6 +328,12 @@ export class PneuDetalheComponent implements OnInit, OnDestroy {
   private emptyToNull(v: string | null | undefined): string | null {
     const s = String(v || '').trim();
     return s ? s : null;
+  }
+
+  private showEventoError(err: any, fallback: string): void {
+    const message = err?.error?.message || err?.error?.erro || fallback;
+    this.errorMsg = message;
+    this.toast.error(message);
   }
 
   private resetAutoComplete(): void {

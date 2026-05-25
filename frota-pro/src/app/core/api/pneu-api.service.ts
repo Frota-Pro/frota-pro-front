@@ -7,6 +7,7 @@ import {
   PneuResponse,
   PneuVidaUtilResponse,
   PneuVidaUtilRelatorioResponse,
+  AtualizacaoKmPneuRequest,
   PneuMovimentacaoRequest,
   PneuMovimentacaoResponse,
 } from './pneu-api.models';
@@ -48,6 +49,10 @@ export class PneuApiService extends BaseApiService {
   }
 
   movimentacao(codigo: string, payload: PneuMovimentacaoRequest) {
+    return this.http.post<void>(`${this.apiUrl}/pneus/${encodeURIComponent(codigo)}/movimentacoes`, payload);
+  }
+
+  atualizarKm(codigo: string, payload: AtualizacaoKmPneuRequest) {
     return this.http.post<void>(`${this.apiUrl}/pneus/${encodeURIComponent(codigo)}/movimentacoes`, payload);
   }
 

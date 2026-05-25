@@ -7,6 +7,8 @@ import { finalize } from 'rxjs/operators';
 import { CargaApiService } from '../../../core/api/carga-api.service';
 import { ParadaCargaApiService } from '../../../core/api/parada-carga-api.service';
 import { ArquivoApiService } from '../../../core/api/arquivo-api.service';
+import { EixoApiService } from '../../../core/api/eixo-api.service';
+import { EixoCaminhaoResponse } from '../../../core/api/eixo-api.models';
 import { formatKgFromTon } from '../../../shared/utils/weight';
 
 import { CargaResponse, ClienteCargaResponse } from '../../../core/api/carga-api.models';
@@ -88,6 +90,8 @@ export class CargaDetalheComponent implements OnInit {
   // ===== Paradas =====
   paradas: ParadaCargaResponse[] = [];
   loadingParadas = false;
+  eixosCaminhao: EixoCaminhaoResponse[] = [];
+  loadingEixos = false;
 
   // ===== Ordem de entrega =====
   ordem: string[] = [];
@@ -201,7 +205,8 @@ export class CargaDetalheComponent implements OnInit {
     private router: Router,
     private cargaApi: CargaApiService,
     private paradaApi: ParadaCargaApiService,
-    private arquivoApi: ArquivoApiService
+    private arquivoApi: ArquivoApiService,
+    private eixoApi: EixoApiService
   ) {}
 
   // =========================
@@ -535,6 +540,7 @@ export class CargaDetalheComponent implements OnInit {
   // =========================
   abrirNovaParada(): void {
     this.showNovaParadaModal = true;
+    this.carregarEixosCaminhao(this.carga?.codigoCaminhao);
 
     const now = new Date();
     const isoLocal = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
@@ -577,6 +583,26 @@ export class CargaDetalheComponent implements OnInit {
         trocasPneu: [],
       },
     };
+  }
+
+  private carregarEixosCaminhao(codigoCaminhao?: string | null): void {
+    if (!codigoCaminhao) {
+      this.eixosCaminhao = [];
+      return;
+    }
+
+    this.loadingEixos = true;
+    this.eixoApi.listarPorCaminhao(codigoCaminhao)
+      .pipe(finalize(() => (this.loadingEixos = false)))
+      .subscribe({
+        next: (res) => {
+          this.eixosCaminhao = Array.isArray(res) ? res : (res.content || []);
+        },
+        error: () => {
+          this.eixosCaminhao = [];
+          this.toast('error', 'Não foi possível carregar os eixos cadastrados do caminhão.', 'Pneus');
+        },
+      });
   }
 
   fecharNovaParada(): void {
@@ -759,6 +785,17 @@ export class CargaDetalheComponent implements OnInit {
 
   removeTrocaPneu(idx: number): void {
     this.paradaForm.manutencao.trocasPneu.splice(idx, 1);
+  }
+
+  eixoNumero(eixo: EixoCaminhaoResponse): number | null {
+    return eixo.eixoNumero ?? eixo.numeroEixo ?? eixo.numero ?? null;
+  }
+
+  eixoLabel(eixo: EixoCaminhaoResponse): string {
+    const numero = this.eixoNumero(eixo);
+    const descricao = String(eixo.descricao || '').trim();
+    if (numero == null) return descricao || 'Eixo sem número';
+    return descricao ? `Eixo ${numero} - ${descricao}` : `Eixo ${numero}`;
   }
 
   syncItensTrocados(): void {

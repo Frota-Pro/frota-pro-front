@@ -44,8 +44,18 @@ export interface PneuVidaUtilResponse {
   dataInstalacao?: string | null; // ISO
 }
 
+export type TipoMovimentacaoPneu =
+  | 'INSTALACAO'
+  | 'ATUALIZACAO_KM'
+  | 'REMOVER'
+  | 'RODIZIO'
+  | 'TROCA_MANUTENCAO'
+  | 'ENVIO_RECAPAGEM'
+  | 'RETORNO_RECAPAGEM'
+  | 'DESCARTE';
+
 export interface PneuMovimentacaoRequest {
-  tipo: string; // INSTALACAO | REMOVER | RODIZIO | TROCA_MANUTENCAO | ENVIO_RECAPAGEM | RETORNO_RECAPAGEM | DESCARTE
+  tipo: TipoMovimentacaoPneu;
   kmEvento?: number | null;
   observacao?: string | null;
 
@@ -62,9 +72,15 @@ export interface PneuMovimentacaoRequest {
   kmInstalacao?: number | null;
 }
 
+export interface AtualizacaoKmPneuRequest {
+  tipo: 'ATUALIZACAO_KM';
+  kmEvento: number;
+  observacao?: string | null;
+}
+
 export interface PneuMovimentacaoResponse {
   id: string;
-  tipo: string;
+  tipo: TipoMovimentacaoPneu;
   dataEvento: string; // ISO
   kmEvento?: number | null;
   observacao?: string | null;
