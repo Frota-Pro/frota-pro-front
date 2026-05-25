@@ -24,11 +24,18 @@
     />
 
     <select [(ngModel)]="filtroStatus">
-      <option value="">Todos</option>
+      <option value="">Todos os estados</option>
       <option value="NAO_INICIADA">NAO_INICIADA</option>
       <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
       <option value="CONCLUIDA">CONCLUIDA</option>
       <option value="CANCELADA">CANCELADA</option>
+    </select>
+
+    <select [(ngModel)]="filtroDesempenho">
+      <option value="">Todos os desempenhos</option>
+      <option value="NAO_INICIADO">Não iniciado</option>
+      <option value="BATEU">Meta atingida</option>
+      <option value="NAO_BATEU">Meta não atingida</option>
     </select>
 
     <button class="btn" type="button" (click)="carregar()" [disabled]="loading">
@@ -90,12 +97,16 @@
         <strong>{{ desempenhoUnificadoTotal() }}</strong>
       </div>
       <div class="summary-card success">
-        <span>Total que bateu</span>
+        <span>Metas atingidas</span>
         <strong>{{ desempenhoUnificadoBateu() }}</strong>
       </div>
       <div class="summary-card danger">
-        <span>Total que não bateu</span>
+        <span>Metas não atingidas</span>
         <strong>{{ desempenhoUnificadoNaoBateu() }}</strong>
+      </div>
+      <div class="summary-card">
+        <span>Não iniciadas</span>
+        <strong>{{ desempenhoUnificadoNaoIniciado() }}</strong>
       </div>
       <div class="summary-card">
         <span>Percentual de sucesso</span>
@@ -146,9 +157,9 @@
           </td>
           <td>
             <span class="pill"
-                  [class.pill-success]="metaAtingidaClasse(l.metaAtingida, l.status) === 'success'"
-                  [class.pill-danger]="metaAtingidaClasse(l.metaAtingida, l.status) === 'danger'"
-                  [class.pill-muted]="metaAtingidaClasse(l.metaAtingida, l.status) === 'neutral'">
+                  [class.pill-success]="resultadoClasse(l.status) === 'success'"
+                  [class.pill-danger]="resultadoClasse(l.status) === 'danger'"
+                  [class.pill-muted]="resultadoClasse(l.status) === 'neutral'">
               {{ desempenhoStatusLabel(l) }}
             </span>
           </td>
@@ -243,10 +254,10 @@
           <td>{{ regraAtingimentoLabel(l.regraAtingimento) }}</td>
           <td>
             <span class="pill"
-                  [class.pill-success]="metaAtingidaClasse(l.metaAtingida, l.status) === 'success'"
-                  [class.pill-danger]="metaAtingidaClasse(l.metaAtingida, l.status) === 'danger'"
-                  [class.pill-muted]="metaAtingidaClasse(l.metaAtingida, l.status) === 'neutral'">
-              {{ metaAtingidaLabel(l.metaAtingida, l.status) }}
+                  [class.pill-success]="resultadoClasse(l.status) === 'success'"
+                  [class.pill-danger]="resultadoClasse(l.status) === 'danger'"
+                  [class.pill-muted]="resultadoClasse(l.status) === 'neutral'">
+              {{ resultadoLabel(l.status) }}
             </span>
           </td>
         </tr>
@@ -311,12 +322,11 @@
           <td>
               <span
                 class="pill"
-                *ngIf="m.metaAtingida !== null && m.metaAtingida !== undefined || m.statusDesempenho"
-                [class.pill-success]="metaAtingidaClasse(m.metaAtingida, m.statusDesempenho) === 'success'"
-                [class.pill-danger]="metaAtingidaClasse(m.metaAtingida, m.statusDesempenho) === 'danger'"
-                [class.pill-muted]="metaAtingidaClasse(m.metaAtingida, m.statusDesempenho) === 'neutral'"
+                [class.pill-success]="resultadoClasse(m.statusDesempenho) === 'success'"
+                [class.pill-danger]="resultadoClasse(m.statusDesempenho) === 'danger'"
+                [class.pill-muted]="resultadoClasse(m.statusDesempenho) === 'neutral'"
               >
-                {{ metaAtingidaLabel(m.metaAtingida, m.statusDesempenho) }}
+                {{ resultadoLabel(m.statusDesempenho) }}
               </span>
               <span
                 class="pill"

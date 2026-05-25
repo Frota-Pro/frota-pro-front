@@ -1,5 +1,6 @@
 export type RegraAtingimentoMeta = 'MENOR_OU_IGUAL' | 'MAIOR_OU_IGUAL' | string;
-export type StatusDesempenhoMeta = 'BATEU' | 'NAO_BATEU' | 'NAO_INICIADO' | string;
+export type StatusDesempenhoMeta = 'NAO_INICIADO' | 'BATEU' | 'NAO_BATEU';
+export type StatusDesempenhoMetaMotorista = StatusDesempenhoMeta | 'SEM META';
 
 export interface TipoMetaResponse {
   codigo?: string | null;
@@ -26,7 +27,7 @@ export interface MetaResponse {
   regraAtingimento?: RegraAtingimentoMeta | null;
   percentual?: number | null;
   metaAtingida?: boolean | null;
-  statusDesempenho?: StatusDesempenhoMeta | null;
+  statusDesempenho: StatusDesempenhoMeta;
 
   caminhaoCodigo?: string | null;
   caminhaoDescricao?: string | null;
@@ -52,7 +53,7 @@ export interface DesempenhoCategoriaMetaLinha {
   valorRealizado: number;
   percentual: number;
   metaAtingida: boolean;
-  status?: StatusDesempenhoMeta | null;
+  status: StatusDesempenhoMeta;
 }
 
 export interface DesempenhoCategoriaMetaResponse {

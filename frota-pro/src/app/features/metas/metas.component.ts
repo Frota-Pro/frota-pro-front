@@ -15,6 +15,7 @@ import {
   DesempenhoMetasResponse,
   MetaRequest,
   MetaResponse,
+  StatusDesempenhoMeta,
   TipoMetaResponse
 } from '../../core/api/meta-api.models';
 import { PageResponse } from '../../core/api/page.models';
@@ -26,6 +27,11 @@ import { MotoristaResponse } from '../../core/api/motorista-api.models';
 import { CategoriaCaminhaoApiService } from '../../core/api/categoria-caminhao-api.service';
 import { CategoriaCaminhaoResponse } from '../../core/api/categoria-caminhao-api.models';
 import { RelatorioPdfApiService } from '../../core/api/relatorio-pdf-api.service';
+import {
+  normalizeStatusDesempenho,
+  statusDesempenhoClass,
+  statusDesempenhoLabel
+} from '../../shared/utils/meta-performance-status';
 
 type StatusMeta = 'NAO_INICIADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' | string;
 type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA' | string;
@@ -44,6 +50,7 @@ export class MetasComponent implements OnInit, OnDestroy {
   // filtros
   searchTerm = '';
   filtroStatus: '' | 'NAO_INICIADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' = '';
+  filtroDesempenho: '' | StatusDesempenhoMeta = '';
 
   // paginação
   page = 0;
@@ -223,11 +230,15 @@ export class MetasComponent implements OnInit, OnDestroy {
   }
 
   desempenhoUnificadoBateu(): number {
-    return this.desempenhoUnificadoLinhas.filter((l) => this.metaStatusKey(l.status, l.metaAtingida) === 'BATEU').length;
+    return this.desempenhoUnificadoLinhas.filter((l) => normalizeStatusDesempenho(l.status) === 'BATEU').length;
   }
 
   desempenhoUnificadoNaoBateu(): number {
-    return this.desempenhoUnificadoLinhas.filter((l) => this.metaStatusKey(l.status, l.metaAtingida) === 'NAO_BATEU').length;
+    return this.desempenhoUnificadoLinhas.filter((l) => normalizeStatusDesempenho(l.status) === 'NAO_BATEU').length;
+  }
+
+  desempenhoUnificadoNaoIniciado(): number {
+    return this.desempenhoUnificadoLinhas.filter((l) => normalizeStatusDesempenho(l.status) === 'NAO_INICIADO').length;
   }
 
   desempenhoUnificadoPercentualSucesso(): string {
@@ -249,11 +260,16 @@ export class MetasComponent implements OnInit, OnDestroy {
   get metasFiltradas(): MetaResponse[] {
     const t = (this.searchTerm || '').toLowerCase().trim();
     const st = (this.filtroStatus || '').toUpperCase().trim();
+    const desempenho = this.filtroDesempenho;
 
     return (this.metas || []).filter((m) => {
       if (st) {
         const status = this.getStatusLabel(m);
         if (status !== st) return false;
+      }
+
+      if (desempenho && normalizeStatusDesempenho(m.statusDesempenho) !== desempenho) {
+        return false;
       }
 
       if (t) {
@@ -855,12 +871,12 @@ export class MetasComponent implements OnInit, OnDestroy {
     }
   }
 
-  metaAtingidaLabel(metaAtingida: boolean | null | undefined, status?: string | null): string {
-    return this.metaStatusLabel(status, metaAtingida);
+  resultadoLabel(status?: string | null): string {
+    return statusDesempenhoLabel(status);
   }
 
-  metaAtingidaClasse(metaAtingida: boolean | null | undefined, status?: string | null): 'success' | 'danger' | 'neutral' {
-    return this.metaStatusClass(status, metaAtingida);
+  resultadoClasse(status?: string | null): 'success' | 'danger' | 'neutral' {
+    return statusDesempenhoClass(status);
   }
 
   desempenhoPercent(linha: DesempenhoCategoriaMetaLinha): number {
@@ -890,7 +906,7 @@ export class MetasComponent implements OnInit, OnDestroy {
   }
 
   desempenhoStatusLabel(linha: DesempenhoMetasLinha): string {
-    return this.metaStatusLabel(linha.status, linha.metaAtingida);
+    return this.resultadoLabel(linha.status);
   }
 
   formatNumber(value: number | null | undefined, dec = 2): string {
@@ -899,29 +915,6 @@ export class MetasComponent implements OnInit, OnDestroy {
       minimumFractionDigits: dec,
       maximumFractionDigits: dec,
     }).format(Number.isFinite(n) ? n : 0);
-  }
-
-  metaStatusLabel(status?: string | null, metaAtingida?: boolean | null): string {
-    const key = this.metaStatusKey(status, metaAtingida);
-    if (key === 'BATEU') return 'Bateu';
-    if (key === 'NAO_BATEU') return 'Não bateu';
-    if (key === 'NAO_INICIADO') return 'Não iniciado';
-    return status || '—';
-  }
-
-  metaStatusClass(status?: string | null, metaAtingida?: boolean | null): 'success' | 'danger' | 'neutral' {
-    const key = this.metaStatusKey(status, metaAtingida);
-    if (key === 'BATEU') return 'success';
-    if (key === 'NAO_BATEU') return 'danger';
-    return 'neutral';
-  }
-
-  private metaStatusKey(status?: string | null, metaAtingida?: boolean | null): string {
-    const s = String(status || '').trim().toUpperCase();
-    if (s === 'BATEU' || s === 'NAO_BATEU' || s === 'NAO_INICIADO') return s;
-    if (metaAtingida === true) return 'BATEU';
-    if (metaAtingida === false) return 'NAO_BATEU';
-    return s;
   }
 
   private clampPercent(value: number | null | undefined): number {

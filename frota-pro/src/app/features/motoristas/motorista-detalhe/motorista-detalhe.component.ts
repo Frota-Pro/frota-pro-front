@@ -15,6 +15,7 @@ import { CargaResponse } from '../../../core/api/carga-api.models';
 import { DocumentoMotoristaApiService } from '../../../core/api/documento-motorista-api.service';
 import { DocumentoMotoristaResponse, TipoDocumentoMotorista } from '../../../core/api/documento-motorista-api.models';
 import { formatKgFromTon } from '../../../shared/utils/weight';
+import { statusDesempenhoClass, statusDesempenhoLabel } from '../../../shared/utils/meta-performance-status';
 
 type TabKey = 'cargas' | 'meta' | 'docs';
 
@@ -199,6 +200,14 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
         next: (r) => (this.meta = r),
         error: () => (this.meta = null),
       });
+  }
+
+  metaStatusLabel(status: string | null | undefined): string {
+    return statusDesempenhoLabel(status);
+  }
+
+  metaStatusClass(status: string | null | undefined): 'success' | 'danger' | 'neutral' {
+    return statusDesempenhoClass(status);
   }
 
   // ---------------- EDITAR ----------------

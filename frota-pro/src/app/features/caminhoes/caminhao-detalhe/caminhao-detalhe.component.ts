@@ -29,6 +29,7 @@ import {
   TipoDocumentoCaminhao,
 } from '../../../core/api/documento-caminhao-api.models';
 import { formatKgFromTon } from '../../../shared/utils/weight';
+import { statusDesempenhoClass, statusDesempenhoLabel } from '../../../shared/utils/meta-performance-status';
 
 type TabKey = 'cargas' | 'abastecimentos' | 'os';
 
@@ -194,22 +195,14 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
     return this.clampPercent(metaItem.percentual);
   }
 
-  metaAtingida(metaItem: MetaResponse): boolean {
-    return metaItem.metaAtingida === true;
-  }
-
   metaResultadoLabel(metaItem: MetaResponse): string {
-    const key = this.metaStatusKey(metaItem.statusDesempenho, metaItem.metaAtingida);
-    if (key === 'BATEU') return 'Bateu';
-    if (key === 'NAO_BATEU') return 'Não bateu';
-    if (key === 'NAO_INICIADO') return 'Não iniciado';
-    return this.normalizeMetaStatus(metaItem.statusMeta) || 'SEM STATUS';
+    return statusDesempenhoLabel(metaItem.statusDesempenho);
   }
 
   metaResultadoClasse(metaItem: MetaResponse): 'ok' | 'warn' | 'active' {
-    const key = this.metaStatusKey(metaItem.statusDesempenho, metaItem.metaAtingida);
-    if (key === 'BATEU') return 'ok';
-    if (key === 'NAO_BATEU') return 'warn';
+    const statusClass = statusDesempenhoClass(metaItem.statusDesempenho);
+    if (statusClass === 'success') return 'ok';
+    if (statusClass === 'danger') return 'warn';
     return 'active';
   }
 
@@ -325,14 +318,6 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
     const n = Number(value ?? 0);
     if (!Number.isFinite(n)) return 0;
     return Math.max(0, Math.min(100, n));
-  }
-
-  private metaStatusKey(status?: string | null, metaAtingida?: boolean | null): string {
-    const s = String(status || '').trim().toUpperCase();
-    if (s === 'BATEU' || s === 'NAO_BATEU' || s === 'NAO_INICIADO') return s;
-    if (metaAtingida === true) return 'BATEU';
-    if (metaAtingida === false) return 'NAO_BATEU';
-    return s;
   }
 
   // ------------------ TABS ------------------

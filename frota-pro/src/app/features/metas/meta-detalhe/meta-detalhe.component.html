@@ -35,6 +35,13 @@
                 [class.pill-muted]="(m.statusMeta || '').toUpperCase() !== 'EM_ANDAMENTO'">
             {{ statusUiLabel(m.statusMeta) }}
           </span>
+
+          <span class="pill"
+                [class.pill-success]="resultadoClasse(m) === 'success'"
+                [class.pill-danger]="resultadoClasse(m) === 'danger'"
+                [class.pill-muted]="resultadoClasse(m) === 'neutral'">
+            {{ resultadoLabel(m) }}
+          </span>
         </div>
 
         <p class="subtitle" *ngIf="m.descricao; else noDesc">
@@ -163,13 +170,13 @@
 
       <div class="resume-grid">
         <div class="resume-item">
-          <div class="resume-label">Status</div>
+          <div class="resume-label">Estado da meta</div>
           <div class="resume-value mono">{{ statusUiLabel(m.statusMeta) }}</div>
         </div>
 
         <div class="resume-item">
-          <div class="resume-label">Tipo</div>
-          <div class="resume-value mono">{{ m.tipoMeta || '—' }}</div>
+          <div class="resume-label">Desempenho</div>
+          <div class="resume-value">{{ resultadoLabel(m) }}</div>
         </div>
 
         <div class="resume-item">
@@ -186,9 +193,9 @@
       <div class="tips">
         <div class="tips-title">Sugestões</div>
         <ul>
-          <li *ngIf="progressPercent() < 50">Acompanhe o realizado com mais frequência para evitar ficar abaixo da meta.</li>
-          <li *ngIf="progressPercent() >= 50 && progressPercent() < 100">Meta em andamento com bom progresso. Mantenha o ritmo.</li>
-          <li *ngIf="progressPercent() >= 100">Meta atingida. Você pode finalizar quando desejar.</li>
+          <li *ngIf="resultadoStatus(m) === 'NAO_INICIADO'">O desempenho ainda não foi iniciado; registre a realização para acompanhar a meta.</li>
+          <li *ngIf="resultadoStatus(m) === 'NAO_BATEU'">A meta ainda não foi atingida; acompanhe os valores realizados.</li>
+          <li *ngIf="resultadoStatus(m) === 'BATEU'">Meta atingida. Você pode finalizar quando desejar.</li>
           <li *ngIf="!isFinalizada()">Finalize a meta quando o período encerrar e os valores estiverem consolidados.</li>
         </ul>
       </div>
@@ -217,7 +224,7 @@
             <th>Tipo</th>
             <th>Meta</th>
             <th>Realizado</th>
-            <th>Status</th>
+            <th>Desempenho</th>
             <th></th>
           </tr>
           </thead>
@@ -230,9 +237,10 @@
             <td class="mono">{{ formatNumber(h.valorRealizado, 2) }} <span class="muted">{{ h.unidade }}</span></td>
             <td>
               <span class="pill small"
-                    [class.pill-success]="(h.statusMeta || '').toUpperCase() === 'EM_ANDAMENTO'"
-                    [class.pill-muted]="(h.statusMeta || '').toUpperCase() !== 'EM_ANDAMENTO'">
-                {{ statusUiLabel(h.statusMeta) }}
+                    [class.pill-success]="resultadoClasse(h) === 'success'"
+                    [class.pill-danger]="resultadoClasse(h) === 'danger'"
+                    [class.pill-muted]="resultadoClasse(h) === 'neutral'">
+                {{ resultadoLabel(h) }}
               </span>
             </td>
             <td class="right">

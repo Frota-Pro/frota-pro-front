@@ -1,3 +1,5 @@
+import { StatusDesempenhoMetaMotorista } from './meta-api.models';
+
 export type StatusMotorista = 'DISPONIVEL' | 'EM_ROTA' | 'INATIVO' | 'FERIAS' | 'AFASTADO' | string;
 
 export interface MotoristaResponse {
@@ -65,4 +67,5 @@ export interface RelatorioMetaMensalMotoristaResponse {
   mediaGeralKmPorLitro?: number | null;
 
   realizadoToneladaPercentual?: number | null;
+  status?: StatusDesempenhoMetaMotorista | null;
 }

@@ -146,6 +146,19 @@
       <div class="subloading" *ngIf="metaLoading">Carregando relatório...</div>
 
       <div class="meta-grid" *ngIf="!metaLoading && meta as r; else metaEmpty">
+        <div class="kpi small" *ngIf="r.status">
+          <div class="kpi-head"><span class="kpi-label">Desempenho</span></div>
+          <div class="kpi-value">
+            <span class="tag status-meta"
+                  [class.success]="metaStatusClass(r.status) === 'success'"
+                  [class.danger]="metaStatusClass(r.status) === 'danger'"
+                  [class.neutral]="metaStatusClass(r.status) === 'neutral'">
+              {{ metaStatusLabel(r.status) }}
+            </span>
+          </div>
+          <div class="kpi-sub">Status informado pela API</div>
+        </div>
+
         <div class="kpi small">
           <div class="kpi-head"><span class="kpi-label">Peso (kg)</span></div>
           <div class="kpi-value">{{ formatKgFromTon(r.totalTonelada, 0) }}</div>

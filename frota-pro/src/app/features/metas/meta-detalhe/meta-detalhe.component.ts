@@ -7,6 +7,11 @@ import { finalize } from 'rxjs/operators';
 import { MetaApiService } from '../../../core/api/meta-api.service';
 import { MetaRequest, MetaResponse, TipoMetaResponse } from '../../../core/api/meta-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import {
+  normalizeStatusDesempenho,
+  statusDesempenhoClass,
+  statusDesempenhoLabel
+} from '../../../shared/utils/meta-performance-status';
 
 type TabKey = 'resumo' | 'historico';
 type TipoMetaKey = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA' | string;
@@ -299,6 +304,18 @@ export class MetaDetalheComponent implements OnInit {
     if (!s) return 'EM_ANDAMENTO';
     if (s === 'FINALIZADA') return 'CONCLUIDA';
     return s;
+  }
+
+  resultadoLabel(meta: MetaResponse): string {
+    return statusDesempenhoLabel(meta.statusDesempenho);
+  }
+
+  resultadoClasse(meta: MetaResponse): 'success' | 'danger' | 'neutral' {
+    return statusDesempenhoClass(meta.statusDesempenho);
+  }
+
+  resultadoStatus(meta: MetaResponse): 'NAO_INICIADO' | 'BATEU' | 'NAO_BATEU' | 'SEM_META' | null {
+    return normalizeStatusDesempenho(meta.statusDesempenho);
   }
 
   private validateForm(form: MetaRequest): string[] {
