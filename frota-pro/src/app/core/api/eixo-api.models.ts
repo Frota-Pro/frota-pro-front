@@ -1,5 +1,5 @@
 export interface EixoCaminhaoResponse {
-  id?: string | null;
+  id?: string | number | null;
   numero?: number | null;
   numeroEixo?: number | null;
   eixoNumero?: number | null;

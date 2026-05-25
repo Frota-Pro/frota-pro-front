@@ -80,6 +80,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
   eixosError: string | null = null;
   criandoEixo = false;
   novoEixoNumero: number | null = null;
+  excluindoEixoId: string | number | null = null;
 
   editForm: CaminhaoRequest = {
     descricao: '',
@@ -252,6 +253,26 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
 
   eixoNumero(eixo: EixoCaminhaoResponse): number | null {
     return eixo.numero ?? eixo.eixoNumero ?? eixo.numeroEixo ?? null;
+  }
+
+  excluirEixo(eixo: EixoCaminhaoResponse): void {
+    if (!this.podeCadastrarEixo() || eixo.id == null) return;
+
+    const numero = this.eixoNumero(eixo);
+    if (!confirm(`Deseja excluir o eixo ${numero ?? ''} deste caminhão?`)) return;
+
+    this.excluindoEixoId = eixo.id;
+    this.eixosError = null;
+    this.eixoApi
+      .deletar(eixo.id)
+      .pipe(finalize(() => (this.excluindoEixoId = null)))
+      .subscribe({
+        next: () => this.carregarEixos(),
+        error: (err) => {
+          console.error(err);
+          this.eixosError = err?.error?.message || 'Não foi possível excluir o eixo.';
+        },
+      });
   }
 
   voltar(): void {

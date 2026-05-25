@@ -4,14 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(eixo): implement eixo selection and loading in carga-detalhe component">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/api/eixo-api.models.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/eixo-api.models.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/core/api/eixo-api.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/core/api/eixo-api.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhao-detalhe/caminhao-detalhe.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhao-detalhe/caminhao-detalhe.component.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhao-detalhe/caminhao-detalhe.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhao-detalhe/caminhao-detalhe.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhao-detalhe/caminhao-detalhe.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/caminhoes/caminhao-detalhe/caminhao-detalhe.component.ts" afterDir="false" />
-    </list>
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(eixo): implement eixo management with loading and creation in caminhão details" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -172,15 +165,7 @@
       <workItem from="1779383260465" duration="34000" />
       <workItem from="1779383316343" duration="5843000" />
       <workItem from="1779454345001" duration="6458000" />
-      <workItem from="1779719046972" duration="5157000" />
-    </task>
-    <task id="LOCAL-00006" summary="Adiciona módulo de detalhes da manutenção com componentes, serviços e estilos. Implementa listagem, edição e upload de documentos, além de visualização de itens e paradas.">
-      <option name="closed" value="true" />
-      <created>1770063592790</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1770063592790</updated>
+      <workItem from="1779719046972" duration="5470000" />
     </task>
     <task id="LOCAL-00007" summary="Adiciona módulo de oficinas com componentes, serviços e estilos. Implementa listagem, criação, edição e exclusão de oficinas, além de integração com a API para gerenciamento de pneus.">
       <option name="closed" value="true" />
@@ -566,7 +551,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779730177164</updated>
     </task>
-    <option name="localTasksCounter" value="55" />
+    <task id="LOCAL-00055" summary="feat(eixo): implement eixo management with loading and creation in caminhão details">
+      <option name="closed" value="true" />
+      <created>1779730642273</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1779730642273</updated>
+    </task>
+    <option name="localTasksCounter" value="56" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -584,7 +577,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: refatora exibição de status de metas, adiciona novos estilos e melhora mensagens" />
     <MESSAGE value="feat: melhora acessibilidade na lista de caminhões e refina estilos" />
     <MESSAGE value="feat: melhora acessibilidade nos detalhes do caminhão e adiciona estilos focados" />
     <MESSAGE value="feat: adiciona suporte a IDs e filtros detalhados em integrações com WinThor, refatora sincronizações e melhora usabilidade" />
@@ -609,7 +601,8 @@
     <MESSAGE value="feat(jobs): refactor job retry logic and enhance status display with labels" />
     <MESSAGE value="feat(workspace): update task summaries and adjust local tasks counter" />
     <MESSAGE value="feat(eixo): implement eixo selection and loading in carga-detalhe component" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(eixo): implement eixo selection and loading in carga-detalhe component" />
+    <MESSAGE value="feat(eixo): implement eixo management with loading and creation in caminhão details" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(eixo): implement eixo management with loading and creation in caminhão details" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

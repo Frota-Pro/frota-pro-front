@@ -19,4 +19,8 @@ export class EixoApiService extends BaseApiService {
   criar(payload: EixoRequest) {
     return this.http.post<void>(`${this.apiUrl}/eixo`, payload);
   }
+
+  deletar(id: string | number) {
+    return this.http.delete<void>(`${this.apiUrl}/eixo/${encodeURIComponent(String(id))}`);
+  }
 }

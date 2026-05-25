@@ -157,6 +157,15 @@
         <span class="label">Eixo</span>
         <strong class="mono">{{ eixoNumero(eixo) ?? '—' }}</strong>
         <span class="muted" *ngIf="eixo.descricao">{{ eixo.descricao }}</span>
+        <button
+          class="btn danger small eixo-delete"
+          type="button"
+          *ngIf="podeCadastrarEixo() && eixo.id != null"
+          (click)="excluirEixo(eixo)"
+          [disabled]="excluindoEixoId === eixo.id"
+        >
+          {{ excluindoEixoId === eixo.id ? 'Excluindo...' : 'Excluir' }}
+        </button>
       </div>
     </div>
 
