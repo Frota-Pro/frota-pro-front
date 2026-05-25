@@ -5,3 +5,8 @@ export interface EixoCaminhaoResponse {
   eixoNumero?: number | null;
   descricao?: string | null;
 }
+
+export interface EixoRequest {
+  numero: number;
+  codigoCaminhao: string;
+}

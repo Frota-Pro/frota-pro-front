@@ -28,6 +28,9 @@ import {
   DocumentoCaminhaoResponse,
   TipoDocumentoCaminhao,
 } from '../../../core/api/documento-caminhao-api.models';
+import { EixoApiService } from '../../../core/api/eixo-api.service';
+import { EixoCaminhaoResponse } from '../../../core/api/eixo-api.models';
+import { AuthUserService } from '../../../core/auth/auth-user.service';
 import { formatKgFromTon } from '../../../shared/utils/weight';
 import { statusDesempenhoClass, statusDesempenhoLabel } from '../../../shared/utils/meta-performance-status';
 
@@ -70,6 +73,13 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
   // Categorias + Modal edição
   categorias: CategoriaCaminhaoResponse[] = [];
   showEditModal = false;
+
+  // Eixos
+  eixos: EixoCaminhaoResponse[] = [];
+  eixosLoading = false;
+  eixosError: string | null = null;
+  criandoEixo = false;
+  novoEixoNumero: number | null = null;
 
   editForm: CaminhaoRequest = {
     descricao: '',
@@ -133,6 +143,8 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
     private manutencaoApi: ManutencaoApiService,
     private metaApi: MetaApiService,
     private documentoApi: DocumentoCaminhaoApiService,
+    private eixoApi: EixoApiService,
+    private authUser: AuthUserService,
     private sanitizer: DomSanitizer
   ) {}
 
@@ -168,6 +180,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           this.data = res;
+          this.carregarEixos();
           this.carregarMetasHistorico();
           this.carregarDocumentos();
         },
@@ -185,6 +198,60 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
       next: (p) => (this.categorias = (p.content || []).filter((c) => c.ativo !== false)),
       error: () => (this.categorias = []),
     });
+  }
+
+  carregarEixos(): void {
+    this.eixosLoading = true;
+    this.eixosError = null;
+
+    this.eixoApi
+      .listarPorCaminhao(this.codigo)
+      .pipe(finalize(() => (this.eixosLoading = false)))
+      .subscribe({
+        next: (res) => {
+          this.eixos = Array.isArray(res) ? res : res.content || [];
+        },
+        error: (err) => {
+          console.error(err);
+          this.eixos = [];
+          this.eixosError = 'Não foi possível carregar os eixos do caminhão.';
+        },
+      });
+  }
+
+  podeCadastrarEixo(): boolean {
+    const authorities = this.authUser.snapshot?.authorities || [];
+    return authorities.includes('ROLE_ADMIN') || authorities.includes('ROLE_GERENTE_LOGISTICA');
+  }
+
+  salvarEixo(): void {
+    if (!this.podeCadastrarEixo()) return;
+
+    const numero = Number(this.novoEixoNumero);
+    if (!Number.isInteger(numero) || numero <= 0) {
+      this.eixosError = 'Informe um número de eixo válido.';
+      return;
+    }
+
+    this.criandoEixo = true;
+    this.eixosError = null;
+    this.eixoApi
+      .criar({ numero, codigoCaminhao: this.codigo })
+      .pipe(finalize(() => (this.criandoEixo = false)))
+      .subscribe({
+        next: () => {
+          this.novoEixoNumero = null;
+          this.carregarEixos();
+        },
+        error: (err) => {
+          console.error(err);
+          this.eixosError = err?.error?.message || 'Não foi possível cadastrar o eixo.';
+        },
+      });
+  }
+
+  eixoNumero(eixo: EixoCaminhaoResponse): number | null {
+    return eixo.numero ?? eixo.eixoNumero ?? eixo.numeroEixo ?? null;
   }
 
   voltar(): void {

@@ -127,6 +127,46 @@
     </div>
   </div>
 
+  <!-- EIXOS -->
+  <div class="card">
+    <div class="section-head">
+      <div>
+        <div class="card-title">Eixos</div>
+        <div class="muted">Cadastre os eixos antes de vincular pneus em manutenção ou parada.</div>
+      </div>
+      <button class="btn ghost small" type="button" (click)="carregarEixos()" [disabled]="eixosLoading">
+        {{ eixosLoading ? 'Atualizando...' : 'Atualizar' }}
+      </button>
+    </div>
+
+    <div class="eixo-create" *ngIf="podeCadastrarEixo()">
+      <div class="field">
+        <label for="novo-eixo-numero">Número do eixo</label>
+        <input id="novo-eixo-numero" type="number" min="1" step="1" [(ngModel)]="novoEixoNumero" placeholder="Ex.: 1" />
+      </div>
+      <button class="btn primary" type="button" (click)="salvarEixo()" [disabled]="criandoEixo">
+        {{ criandoEixo ? 'Cadastrando...' : 'Adicionar eixo' }}
+      </button>
+    </div>
+
+    <div class="alert error" *ngIf="eixosError" role="alert" aria-live="assertive">{{ eixosError }}</div>
+    <div class="subloading" *ngIf="eixosLoading" role="status" aria-live="polite">Carregando eixos...</div>
+
+    <div class="eixo-list" *ngIf="!eixosLoading && eixos.length > 0; else eixosEmpty">
+      <div class="eixo-item" *ngFor="let eixo of eixos">
+        <span class="label">Eixo</span>
+        <strong class="mono">{{ eixoNumero(eixo) ?? '—' }}</strong>
+        <span class="muted" *ngIf="eixo.descricao">{{ eixo.descricao }}</span>
+      </div>
+    </div>
+
+    <ng-template #eixosEmpty>
+      <div class="empty small" *ngIf="!eixosLoading && !eixosError">
+        <div class="txt">Nenhum eixo cadastrado para este caminhão.</div>
+      </div>
+    </ng-template>
+  </div>
+
   <!-- METAS -->
   <div class="card">
     <div class="card-title">Metas do caminhão</div>
