@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(metas): refactor meta performance status handling with unified labels and classes">
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(jobs): refactor job retry logic and enhance status display with labels">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -167,15 +167,7 @@
       <workItem from="1779383260465" duration="34000" />
       <workItem from="1779383316343" duration="5843000" />
       <workItem from="1779454345001" duration="6458000" />
-      <workItem from="1779719046972" duration="2080000" />
-    </task>
-    <task id="LOCAL-00003" summary="Adiciona módulo de detalhes da carga com componentes, serviços e estilos. Implementa listagem, edição e upload de documentos, além de visualização de paradas e anexos.">
-      <option name="closed" value="true" />
-      <created>1769523010297</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1769523010297</updated>
+      <workItem from="1779719046972" duration="2725000" />
     </task>
     <task id="LOCAL-00004" summary="Adiciona funcionalidades ao módulo de abastecimento. Implementa listagem, filtragem, criação, atualização e exclusão de abastecimentos, além de refatoração de tipos e interfaces para melhor integração com a API.">
       <option name="closed" value="true" />
@@ -561,7 +553,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779719928309</updated>
     </task>
-    <option name="localTasksCounter" value="52" />
+    <task id="LOCAL-00052" summary="feat(jobs): refactor job retry logic and enhance status display with labels">
+      <option name="closed" value="true" />
+      <created>1779727410863</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1779727410863</updated>
+    </task>
+    <option name="localTasksCounter" value="53" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -579,7 +579,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: adiciona validações de kmEvento e exibe campo condicionalmente no detalhe de pneus" />
     <MESSAGE value="feat: adiciona filtros de período e status no histórico de metas do caminhão, melhora usabilidade e exibição de dados" />
     <MESSAGE value="feat: valida duplicidade de metas ativas, adiciona campo obrigatório de status e ajusta mensagens de validação" />
     <MESSAGE value="feat: refatora exibição de status de metas, adiciona novos estilos e melhora mensagens" />
@@ -604,7 +603,8 @@
     <MESSAGE value="feat(metas): implement unified performance metrics dashboard with filtering and PDF generation" />
     <MESSAGE value="feat(metas): enhance meta status handling with unified labels and classes" />
     <MESSAGE value="feat(metas): refactor meta performance status handling with unified labels and classes" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(metas): refactor meta performance status handling with unified labels and classes" />
+    <MESSAGE value="feat(jobs): refactor job retry logic and enhance status display with labels" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(jobs): refactor job retry logic and enhance status display with labels" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
