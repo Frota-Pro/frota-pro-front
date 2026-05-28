@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(eixo): add eixo deletion functionality in caminhão details">
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(movimentacoes): add movimentacoes-sem-carga component and related API services">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/movimentacoes-sem-carga/movimentacoes-sem-carga.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/movimentacoes-sem-carga/movimentacoes-sem-carga.component.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/movimentacoes-sem-carga/movimentacoes-sem-carga.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/movimentacoes-sem-carga/movimentacoes-sem-carga.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frota-pro/src/app/features/movimentacoes-sem-carga/movimentacoes-sem-carga.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frota-pro/src/app/features/movimentacoes-sem-carga/movimentacoes-sem-carga.component.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -169,14 +172,7 @@
       <workItem from="1779454345001" duration="6458000" />
       <workItem from="1779719046972" duration="6937000" />
       <workItem from="1779969969652" duration="7000" />
-    </task>
-    <task id="LOCAL-00008" summary="Adiciona módulo de oficinas com componentes, serviços e estilos. Implementa listagem, criação, edição e exclusão de oficinas, além de integração com a API para gerenciamento de pneus.">
-      <option name="closed" value="true" />
-      <created>1770757353198</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1770757353198</updated>
+      <workItem from="1779987233876" duration="1143000" />
     </task>
     <task id="LOCAL-00009" summary="Adiciona funcionalidade de logs ao módulo Winthor. Implementa listagem, filtragem e cópia de logs, além de suporte a autoatualização e seleção de fonte.">
       <option name="closed" value="true" />
@@ -562,7 +558,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779731146799</updated>
     </task>
-    <option name="localTasksCounter" value="57" />
+    <task id="LOCAL-00057" summary="feat(movimentacoes): add movimentacoes-sem-carga component and related API services">
+      <option name="closed" value="true" />
+      <created>1779987784310</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1779987784311</updated>
+    </task>
+    <option name="localTasksCounter" value="58" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -580,7 +584,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: melhora acessibilidade nos detalhes do caminhão e adiciona estilos focados" />
     <MESSAGE value="feat: adiciona suporte a IDs e filtros detalhados em integrações com WinThor, refatora sincronizações e melhora usabilidade" />
     <MESSAGE value="feat: adiciona suporte a filtro por empresa ID em jobs do WinThor, refatora consultas e melhora feedback ao usuário" />
     <MESSAGE value="refactor: ajusta construção de parâmetros de status em listJobs e atualiza task metadata" />
@@ -605,7 +608,8 @@
     <MESSAGE value="feat(eixo): implement eixo selection and loading in carga-detalhe component" />
     <MESSAGE value="feat(eixo): implement eixo management with loading and creation in caminhão details" />
     <MESSAGE value="feat(eixo): add eixo deletion functionality in caminhão details" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(eixo): add eixo deletion functionality in caminhão details" />
+    <MESSAGE value="feat(movimentacoes): add movimentacoes-sem-carga component and related API services" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(movimentacoes): add movimentacoes-sem-carga component and related API services" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

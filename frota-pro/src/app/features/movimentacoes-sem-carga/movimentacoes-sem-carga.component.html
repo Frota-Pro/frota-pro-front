@@ -16,13 +16,26 @@
   <section class="filters">
     <div class="field">
       <label for="codigo-caminhao">Caminhão</label>
-      <input
-        id="codigo-caminhao"
-        type="text"
-        placeholder="Ex: CAM-000001"
-        [(ngModel)]="filtros.codigoCaminhao"
-        (keyup.enter)="carregar(true)"
-      />
+      <div class="autocomplete">
+        <input
+          id="codigo-caminhao"
+          type="text"
+          placeholder="Ex: CAM-000001"
+          [(ngModel)]="filtros.codigoCaminhao"
+          (ngModelChange)="onInputCaminhao()"
+          (focus)="onFocusCaminhao()"
+          (blur)="onBlurSugestao()"
+          (keyup.enter)="carregar(true)"
+          autocomplete="off"
+        />
+        <ul class="suggest" *ngIf="showSugCaminhao && sugestoesCaminhao.length > 0">
+          <li *ngFor="let c of sugestoesCaminhao" (mousedown)="selectCaminhao(c)">
+            <strong>{{ c.codigo }}</strong>
+            <span>{{ c.placa || '-' }}</span>
+            <small>{{ c.descricao || c.marca || c.modelo || '-' }}</small>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="field">

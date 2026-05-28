@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
+import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
+import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
 import { MovimentacaoSemCargaApiService } from '../../core/api/movimentacao-sem-carga-api.service';
 import {
   MovimentacaoSemCargaResponse,
@@ -16,7 +18,7 @@ import {
   templateUrl: './movimentacoes-sem-carga.component.html',
   styleUrls: ['./movimentacoes-sem-carga.component.css'],
 })
-export class MovimentacoesSemCargaComponent implements OnInit {
+export class MovimentacoesSemCargaComponent implements OnInit, OnDestroy {
   filtros = {
     codigoCaminhao: '',
     inicio: '',
@@ -35,12 +37,27 @@ export class MovimentacoesSemCargaComponent implements OnInit {
 
   movimentacoes: MovimentacaoSemCargaResponse[] = [];
   resumo: MovimentacaoSemCargaResumoResponse | null = null;
+  caminhoes: CaminhaoResponse[] = [];
+  showSugCaminhao = false;
+  readonly sugestoesMax = 8;
+  private autocompleteBlurTimer: any = null;
 
-  constructor(private api: MovimentacaoSemCargaApiService) {}
+  constructor(
+    private api: MovimentacaoSemCargaApiService,
+    private caminhaoApi: CaminhaoApiService
+  ) {}
 
   ngOnInit(): void {
     this.definirPeriodoAtual();
+    this.preloadCaminhoes();
     this.carregar();
+  }
+
+  ngOnDestroy(): void {
+    if (this.autocompleteBlurTimer) {
+      clearTimeout(this.autocompleteBlurTimer);
+      this.autocompleteBlurTimer = null;
+    }
   }
 
   carregar(resetPage = false): void {
@@ -121,6 +138,39 @@ export class MovimentacoesSemCargaComponent implements OnInit {
     return row.id;
   }
 
+  get sugestoesCaminhao(): CaminhaoResponse[] {
+    const q = (this.filtros.codigoCaminhao || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.caminhoes || [])
+      .filter((c) => c.ativo !== false)
+      .filter((c) => {
+        const hay = [c.codigo, c.codigoExterno, c.placa, c.descricao, c.marca, c.modelo]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  onFocusCaminhao(): void {
+    this.showSugCaminhao = (this.filtros.codigoCaminhao || '').trim().length > 0;
+  }
+
+  onInputCaminhao(): void {
+    this.showSugCaminhao = (this.filtros.codigoCaminhao || '').trim().length > 0;
+  }
+
+  onBlurSugestao(): void {
+    if (this.autocompleteBlurTimer) clearTimeout(this.autocompleteBlurTimer);
+    this.autocompleteBlurTimer = setTimeout(() => (this.showSugCaminhao = false), 140);
+  }
+
+  selectCaminhao(c: CaminhaoResponse): void {
+    this.filtros.codigoCaminhao = c.codigo || c.codigoExterno || '';
+    this.showSugCaminhao = false;
+  }
+
   formatDateBr(value: string | null | undefined): string {
     const v = String(value || '').trim();
     if (!v) return '—';
@@ -154,5 +204,12 @@ export class MovimentacoesSemCargaComponent implements OnInit {
     const d = String(now.getDate()).padStart(2, '0');
     this.filtros.inicio = `${y}-${m}-01`;
     this.filtros.fim = `${y}-${m}-${d}`;
+  }
+
+  private preloadCaminhoes(): void {
+    this.caminhaoApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
+      next: (res) => (this.caminhoes = res.content || []),
+      error: () => (this.caminhoes = []),
+    });
   }
 }
