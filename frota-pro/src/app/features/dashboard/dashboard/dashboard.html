@@ -43,6 +43,11 @@
         <span *ngIf="!isClosed">Abastecimentos</span>
       </a>
 
+      <a class="menu-item" routerLink="movimentacoes-sem-carga" routerLinkActive="active">
+        <i class="icon fas fa-route"></i>
+        <span *ngIf="!isClosed">KM sem carga</span>
+      </a>
+
       <a class="menu-item" routerLink="metas" routerLinkActive="active">
         <i class="icon fas fa-bullseye"></i>
         <span *ngIf="!isClosed">Metas</span>

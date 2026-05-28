@@ -95,6 +95,14 @@ export const routes: Routes = [
             .then((m) => m.AbastecimentosComponent),
       },
 
+      // Movimentações sem carga
+      {
+        path: 'movimentacoes-sem-carga',
+        loadComponent: () =>
+          import('./features/movimentacoes-sem-carga/movimentacoes-sem-carga.component')
+            .then((m) => m.MovimentacoesSemCargaComponent),
+      },
+
       // Oficina - Manutenções
       {
         path: 'manutencoes',

@@ -56,7 +56,7 @@
 
   <div class="table-wrap" *ngIf="!loading; else loadingTpl" [attr.aria-busy]="loading">
     <table class="table" *ngIf="filtered.length > 0; else emptyTpl">
-      <caption class="sr-only">Lista de caminhões com código, placa, descrição, categoria, status e ações.</caption>
+      <caption class="sr-only">Lista de caminhões com código, placa, descrição, categoria, odômetro da última carga, status e ações.</caption>
       <thead>
       <tr>
         <th class="col-check">
@@ -72,6 +72,7 @@
         <th>Descrição</th>
         <th>Marca/Modelo</th>
         <th>Categoria</th>
+        <th>Última carga</th>
         <th>Status</th>
         <th class="col-actions">Ações</th>
       </tr>
@@ -112,6 +113,13 @@
 
         <td>
           <span class="tag">{{ c.categoriaDescricao || '—' }}</span>
+        </td>
+
+        <td>
+          <div class="stack">
+            <strong>{{ formatNumber(c.odometroUltimaCarga, 0) }} km</strong>
+            <small class="muted">Odômetro final</small>
+          </div>
         </td>
 
         <td>

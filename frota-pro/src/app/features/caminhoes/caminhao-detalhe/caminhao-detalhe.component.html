@@ -50,6 +50,14 @@
       <div class="kpi-value">{{ d.ordensServicoAbertas }}</div>
       <div class="kpi-sub">Abertas</div>
     </div>
+
+    <div class="kpi">
+      <div class="kpi-head">
+        <span class="kpi-label">KM Sem Carga</span>
+      </div>
+      <div class="kpi-value">{{ formatNumber(d.kmSemCarga, 0) }} km</div>
+      <div class="kpi-sub">Registrado automaticamente</div>
+    </div>
   </div>
 
   <!-- INFO CARDS -->
@@ -86,6 +94,11 @@
         <div class="info">
           <span class="label">Código Externo</span>
           <span class="value mono">{{ d.caminhao.codigoExterno || '—' }}</span>
+        </div>
+
+        <div class="info">
+          <span class="label">Odômetro da Última Carga</span>
+          <span class="value">{{ formatNumber(d.caminhao.odometroUltimaCarga, 0) }} km</span>
         </div>
       </div>
     </div>

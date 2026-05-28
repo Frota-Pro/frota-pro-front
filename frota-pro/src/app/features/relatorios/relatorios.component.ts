@@ -28,6 +28,7 @@ type TipoMeta = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TR
 type ReportDef = {
   key: ReportKey;
   title: string;
+  note?: string;
   needsPeriodo?: boolean;
   needsCaminhao?: boolean;
   needsMotorista?: boolean;
@@ -56,11 +57,24 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     // ✅ Abastecimentos: periodo obrigatório, caminhão/motorista opcionais (não colocar needsCaminhao/needsMotorista)
     { key: 'ABASTECIMENTOS', title: 'Abastecimentos por Período', needsPeriodo: true, enabled: true },
 
-    { key: 'CUSTO_CAMINHAO', title: 'Custo por Caminhão', needsPeriodo: true, needsCaminhao: true, enabled: true },
+    {
+      key: 'CUSTO_CAMINHAO',
+      title: 'Custo por Caminhão',
+      note: 'Inclui o total de KM sem carga no retorno e no PDF.',
+      needsPeriodo: true,
+      needsCaminhao: true,
+      enabled: true,
+    },
     { key: 'MANUTENCOES_CAMINHAO', title: 'Histórico de Manutenção (Caminhão)', needsPeriodo: true, needsCaminhao: true, enabled: true },
     { key: 'RANKING_MOTORISTAS', title: 'Ranking de Motoristas', needsPeriodo: true, enabled: true },
     { key: 'METAS_MOTORISTAS', title: 'Metas dos Motoristas', needsPeriodo: true, needsTipoMeta: true, enabled: true },
-    { key: 'DESPESAS_CATEGORIAS', title: 'Despesas por Categoria', needsPeriodo: true, enabled: true },
+    {
+      key: 'DESPESAS_CATEGORIAS',
+      title: 'Despesas por Categoria',
+      note: 'Inclui o total de KM sem carga no retorno e no PDF.',
+      needsPeriodo: true,
+      enabled: true,
+    },
     { key: 'CARGA_COMPLETA', title: 'Relatório Completo da Carga', needsNumeroCarga: true, enabled: true },
     { key: 'META_MENSAL_MOTORISTA', title: 'Meta Mensal do Motorista', needsPeriodo: true, needsMotorista: true, enabled: true },
 

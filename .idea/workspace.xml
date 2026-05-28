@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(eixo): implement eixo management with loading and creation in caminhão details" />
+    <list default="true" id="1499d649-983b-4c13-b2d4-e1835fe2da03" name="Changes" comment="feat(eixo): add eixo deletion functionality in caminhão details">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -42,7 +44,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="175" />
+    <option name="cachedIndexableFilesCount" value="178" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -165,15 +167,8 @@
       <workItem from="1779383260465" duration="34000" />
       <workItem from="1779383316343" duration="5843000" />
       <workItem from="1779454345001" duration="6458000" />
-      <workItem from="1779719046972" duration="5470000" />
-    </task>
-    <task id="LOCAL-00007" summary="Adiciona módulo de oficinas com componentes, serviços e estilos. Implementa listagem, criação, edição e exclusão de oficinas, além de integração com a API para gerenciamento de pneus.">
-      <option name="closed" value="true" />
-      <created>1770407734211</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1770407734211</updated>
+      <workItem from="1779719046972" duration="6937000" />
+      <workItem from="1779969969652" duration="7000" />
     </task>
     <task id="LOCAL-00008" summary="Adiciona módulo de oficinas com componentes, serviços e estilos. Implementa listagem, criação, edição e exclusão de oficinas, além de integração com a API para gerenciamento de pneus.">
       <option name="closed" value="true" />
@@ -559,7 +554,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779730642273</updated>
     </task>
-    <option name="localTasksCounter" value="56" />
+    <task id="LOCAL-00056" summary="feat(eixo): add eixo deletion functionality in caminhão details">
+      <option name="closed" value="true" />
+      <created>1779731146799</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1779731146799</updated>
+    </task>
+    <option name="localTasksCounter" value="57" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -577,7 +580,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: melhora acessibilidade na lista de caminhões e refina estilos" />
     <MESSAGE value="feat: melhora acessibilidade nos detalhes do caminhão e adiciona estilos focados" />
     <MESSAGE value="feat: adiciona suporte a IDs e filtros detalhados em integrações com WinThor, refatora sincronizações e melhora usabilidade" />
     <MESSAGE value="feat: adiciona suporte a filtro por empresa ID em jobs do WinThor, refatora consultas e melhora feedback ao usuário" />
@@ -602,7 +604,8 @@
     <MESSAGE value="feat(workspace): update task summaries and adjust local tasks counter" />
     <MESSAGE value="feat(eixo): implement eixo selection and loading in carga-detalhe component" />
     <MESSAGE value="feat(eixo): implement eixo management with loading and creation in caminhão details" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(eixo): implement eixo management with loading and creation in caminhão details" />
+    <MESSAGE value="feat(eixo): add eixo deletion functionality in caminhão details" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(eixo): add eixo deletion functionality in caminhão details" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

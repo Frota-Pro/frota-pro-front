@@ -185,6 +185,13 @@ export class CaminhoesListComponent implements OnInit, OnDestroy {
     return this.caminhoes || [];
   }
 
+  formatNumber(v: number | null | undefined, dec = 0): string {
+    if (v === null || v === undefined) return '—';
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '—';
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+
   abrirDetalhe(c: CaminhaoResponse): void {
     this.router.navigate(['/dashboard/caminhoes', c.codigo]);
   }

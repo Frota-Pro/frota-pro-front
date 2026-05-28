@@ -29,6 +29,10 @@
           </select>
         </div>
 
+        <div class="info-note" *ngIf="selectedDef?.note">
+          {{ selectedDef?.note }}
+        </div>
+
         <div class="field" *ngIf="selectedDef?.needsPeriodo">
           <label>Início</label>
           <input type="date" [(ngModel)]="form.inicio" />

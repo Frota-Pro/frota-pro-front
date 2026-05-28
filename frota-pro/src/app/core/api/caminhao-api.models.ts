@@ -26,6 +26,8 @@ export interface CaminhaoResponse {
 
   status?: StatusCaminhao | null;
   ativo: boolean;
+
+  odometroUltimaCarga?: number | null;
 }
 
 export interface CaminhaoRequest {
@@ -58,6 +60,8 @@ export interface CaminhaoDetalheResponse {
   pesoTransportado: number;
 
   ordensServicoAbertas: number;
+
+  kmSemCarga?: number | null;
 
   metasAtivas: MetaResponse[];
 }

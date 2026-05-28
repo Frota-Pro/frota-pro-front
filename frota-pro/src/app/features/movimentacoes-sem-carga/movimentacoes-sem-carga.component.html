@@ -1,0 +1,117 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>Movimentações sem carga</h1>
+      <p>Consulte os deslocamentos registrados automaticamente entre cargas.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn ghost" type="button" (click)="limpar()">Limpar</button>
+      <button class="btn primary" type="button" (click)="carregar(true)" [disabled]="loading">
+        {{ loading ? 'Consultando...' : 'Consultar' }}
+      </button>
+    </div>
+  </div>
+
+  <section class="filters">
+    <div class="field">
+      <label for="codigo-caminhao">Caminhão</label>
+      <input
+        id="codigo-caminhao"
+        type="text"
+        placeholder="Ex: CAM-000001"
+        [(ngModel)]="filtros.codigoCaminhao"
+        (keyup.enter)="carregar(true)"
+      />
+    </div>
+
+    <div class="field">
+      <label for="inicio">Início</label>
+      <input id="inicio" type="date" [(ngModel)]="filtros.inicio" />
+    </div>
+
+    <div class="field">
+      <label for="fim">Fim</label>
+      <input id="fim" type="date" [(ngModel)]="filtros.fim" />
+    </div>
+  </section>
+
+  <section class="summary-grid">
+    <div class="summary-card">
+      <span class="label">Total encontrado</span>
+      <strong>{{ totalElements }}</strong>
+      <small>movimentações no filtro atual</small>
+    </div>
+
+    <div class="summary-card" [class.muted-card]="!resumo && !resumoLoading">
+      <span class="label">KM sem carga</span>
+      <strong *ngIf="!resumoLoading">{{ resumo ? formatNumber(resumo.totalKmRodado, 0) : '—' }} km</strong>
+      <strong *ngIf="resumoLoading">...</strong>
+      <small *ngIf="resumo">{{ formatDateBr(resumo.periodoInicio) }} até {{ formatDateBr(resumo.periodoFim) }}</small>
+      <small *ngIf="!resumo && !resumoLoading">Informe caminhão, início e fim para carregar o resumo.</small>
+    </div>
+
+    <div class="summary-card" [class.muted-card]="!resumo && !resumoLoading">
+      <span class="label">Custo estimado</span>
+      <strong *ngIf="!resumoLoading">{{ resumo ? formatBRL(resumo.custoEstimadoTotal) : '—' }}</strong>
+      <strong *ngIf="resumoLoading">...</strong>
+      <small *ngIf="resumo" class="mono">{{ resumo.codigoCaminhao }}</small>
+      <small *ngIf="resumoError">{{ resumoError }}</small>
+    </div>
+  </section>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <section class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="movimentacoes.length > 0; else emptyTpl">
+      <thead>
+      <tr>
+        <th>Data</th>
+        <th>Caminhão</th>
+        <th>Placa</th>
+        <th>Carga início</th>
+        <th class="right">KM origem</th>
+        <th class="right">KM destino</th>
+        <th class="right">KM rodado</th>
+        <th class="right">Média usada</th>
+        <th class="right">Valor litro</th>
+        <th class="right">Custo estimado</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let m of movimentacoes; trackBy: trackById">
+        <td>{{ formatDateBr(m.dataMovimentacao) }}</td>
+        <td class="mono">{{ m.codigoCaminhao }}</td>
+        <td class="plate">{{ m.placaCaminhao || '—' }}</td>
+        <td class="mono">{{ m.numeroCargaInicio || '—' }}</td>
+        <td class="right">{{ formatNumber(m.kmOrigem, 0) }}</td>
+        <td class="right">{{ formatNumber(m.kmDestino, 0) }}</td>
+        <td class="right"><strong>{{ formatNumber(m.kmRodado, 0) }} km</strong></td>
+        <td class="right">{{ formatNumber(m.mediaKmLitroUsada, 2) }} km/L</td>
+        <td class="right">{{ formatBRL(m.valorLitroMedio) }}</td>
+        <td class="right">{{ formatBRL(m.custoEstimado) }}</td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <h3>Nenhuma movimentação sem carga encontrada</h3>
+        <p>Ajuste os filtros para consultar outro período ou caminhão.</p>
+      </div>
+    </ng-template>
+
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn ghost" type="button" (click)="prevPage()" [disabled]="page <= 0">Anterior</button>
+      <div class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</div>
+      <button class="btn ghost" type="button" (click)="nextPage()" [disabled]="page + 1 >= totalPages">Próxima</button>
+    </div>
+  </section>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Carregando movimentações...</span>
+    </div>
+  </ng-template>
+</div>

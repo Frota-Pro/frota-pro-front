@@ -194,6 +194,15 @@ input::placeholder {
   font-size: 13px;
 }
 
+.info-note {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+  font-size: 13px;
+}
+
 /* ===== Mini Actions ===== */
 .mini-actions {
   display: flex;
