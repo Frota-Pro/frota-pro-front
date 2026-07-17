@@ -22,6 +22,9 @@ export interface CaminhaoResponse {
   categoriaCodigo?: string | null;
   categoriaDescricao?: string | null;
 
+  motoristaTitularCodigo?: string | null;
+  motoristaTitularNome?: string | null;
+
   dtLicenciamento?: string | null;
 
   status?: StatusCaminhao | null;
@@ -45,6 +48,7 @@ export interface CaminhaoRequest {
   maxPeso?: number | null;
 
   categoria?: string | null; // CODIGO da categoria
+  motoristaTitular?: string | null; // CODIGO do motorista titular
   dtLicenciamento?: string | null; // dd/MM/yyyy
 }
 

@@ -11,6 +11,9 @@ import { CategoriaCaminhaoApiService } from '../../../core/api/categoria-caminha
 import { CaminhaoDetalheResponse, CaminhaoRequest } from '../../../core/api/caminhao-api.models';
 import { CategoriaCaminhaoResponse } from '../../../core/api/categoria-caminhao-api.models';
 
+import { MotoristaApiService } from '../../../core/api/motorista-api.service';
+import { MotoristaResponse } from '../../../core/api/motorista-api.models';
+
 import { MetaResponse } from '../../../core/api/meta-api.models';
 import { MetaApiService } from '../../../core/api/meta-api.service';
 
@@ -72,6 +75,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
 
   // Categorias + Modal edição
   categorias: CategoriaCaminhaoResponse[] = [];
+  motoristas: MotoristaResponse[] = [];
   showEditModal = false;
 
   // Eixos
@@ -88,6 +92,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
     marca: '',
     placa: '',
     categoria: null,
+    motoristaTitular: null,
     dtLicenciamento: null,
     codigoExterno: null,
     cor: null,
@@ -143,6 +148,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
     private abastecimentoApi: AbastecimentoApiService,
     private manutencaoApi: ManutencaoApiService,
     private metaApi: MetaApiService,
+    private motoristaApi: MotoristaApiService,
     private documentoApi: DocumentoCaminhaoApiService,
     private eixoApi: EixoApiService,
     private authUser: AuthUserService,
@@ -158,6 +164,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
 
     this.initPeriodoMetas();
     this.carregarCategorias();
+    this.carregarMotoristas();
     this.carregarBase();
     this.carregarTab();
     this.metasInvalidatedSub = this.metaApi.invalidated$.subscribe(() => {
@@ -198,6 +205,13 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
     this.categoriaApi.listarTodas().subscribe({
       next: (p) => (this.categorias = (p.content || []).filter((c) => c.ativo !== false)),
       error: () => (this.categorias = []),
+    });
+  }
+
+  carregarMotoristas(): void {
+    this.motoristaApi.listar({ size: 500, ativo: true }).subscribe({
+      next: (p) => (this.motoristas = p.content || []),
+      error: () => (this.motoristas = []),
     });
   }
 
@@ -472,6 +486,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
       tara: c.tara ?? null,
       maxPeso: c.maxPeso ?? null,
       categoria: c.categoriaCodigo || null,
+      motoristaTitular: c.motoristaTitularCodigo || null,
       dtLicenciamento: c.dtLicenciamento || null,
     };
 
@@ -500,7 +515,8 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error(err);
-          alert('Não foi possível salvar as alterações.');
+          const msg = err?.error?.error || err?.error?.message || 'Não foi possível salvar as alterações.';
+          alert(msg);
         },
       });
   }

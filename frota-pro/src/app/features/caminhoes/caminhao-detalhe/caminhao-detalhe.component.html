@@ -82,6 +82,11 @@
         </div>
 
         <div class="info">
+          <span class="label">Motorista Titular</span>
+          <span class="value">{{ d.caminhao.motoristaTitularNome || '—' }}</span>
+        </div>
+
+        <div class="info">
           <span class="label">Status</span>
           <span class="badge active">{{ statusLabel(d.caminhao.status || '') }}</span>
         </div>
@@ -531,6 +536,16 @@
             <option [ngValue]="null">—</option>
             <option *ngFor="let cat of categorias" [ngValue]="cat.codigo">
               {{ cat.descricao }} ({{ cat.codigo }})
+            </option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Motorista Titular</label>
+          <select [(ngModel)]="editForm.motoristaTitular">
+            <option [ngValue]="null">—</option>
+            <option *ngFor="let mot of motoristas" [ngValue]="mot.codigo">
+              {{ mot.nome }} ({{ mot.codigo }})
             </option>
           </select>
         </div>
