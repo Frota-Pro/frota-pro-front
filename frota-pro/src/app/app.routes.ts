@@ -61,6 +61,14 @@ export const routes: Routes = [
             .then(m => m.CaminhaoDetalheComponent),
       },
 
+      // Rotas
+      {
+        path: 'rotas',
+        loadComponent: () =>
+          import('./features/rotas/rotas-list/rotas-list.component')
+            .then(m => m.RotasListComponent),
+      },
+
       // Cargas
       {
         path: 'cargas',

@@ -1,0 +1,153 @@
+<div class="page">
+
+  <!-- TOASTS -->
+  <div class="toast-stack" *ngIf="toasts.length" role="status" aria-live="polite" aria-atomic="false">
+    <div class="toast" *ngFor="let t of toasts" [class]="'toast ' + t.type" (click)="dismissToast(t.id)" tabindex="0">
+      <span class="dot" aria-hidden="true"></span>
+      <div class="msg">{{ t.message }}</div>
+      <button class="close" type="button" aria-label="Fechar" (click)="dismissToast(t.id); $event.stopPropagation()">✕</button>
+    </div>
+  </div>
+
+  <div class="header">
+    <div>
+      <h1>Rotas</h1>
+      <p>Cadastre e edite as rotas usadas nas cargas.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
+      <button class="btn primary" type="button" (click)="openNovaRota()">+ Nova rota</button>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="rotas.length > 0; else emptyTpl">
+      <caption class="sr-only">Lista de rotas com código, cidade de início, cidades e quantidade de dias.</caption>
+      <thead>
+      <tr>
+        <th>Código</th>
+        <th>Cidade de Início</th>
+        <th>Cidades da Rota</th>
+        <th>Dias</th>
+        <th class="col-actions">Ações</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let r of rotas">
+        <td class="mono">{{ r.codigo }}</td>
+        <td><strong>{{ r.cidadeInicio }}</strong></td>
+        <td>
+          <div class="chips">
+            <span class="tag" *ngFor="let c of r.cidades">{{ c }}</span>
+          </div>
+        </td>
+        <td>{{ r.quantidadeDeDias }}</td>
+
+        <td class="row-actions">
+          <button class="btn small" type="button" (click)="verClientes(r)">Clientes</button>
+          <button class="btn small" type="button" (click)="openEditarRota(r)">Editar</button>
+          <button class="btn small danger" type="button" (click)="excluir(r)">Excluir</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <div class="icon">🗺️</div>
+        <h3>Nenhuma rota cadastrada</h3>
+        <p>Cadastre uma rota para começar.</p>
+      </div>
+    </ng-template>
+
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn ghost" (click)="prevPage()" [disabled]="page <= 0">◀</button>
+      <div class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</div>
+      <button class="btn ghost" (click)="nextPage()" [disabled]="page + 1 >= totalPages">▶</button>
+    </div>
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <span>Carregando...</span>
+    </div>
+  </ng-template>
+
+  <!-- MODAL CRIAR/EDITAR ROTA -->
+  <div class="backdrop" *ngIf="showRotaModal" (click)="closeRotaModal()"></div>
+  <div class="modal" *ngIf="showRotaModal">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar rota' : 'Nova rota' }}</h2>
+      <button class="icon" (click)="closeRotaModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <label>Cidade de Início</label>
+      <input [(ngModel)]="form.cidadeInicio" placeholder="Ex: Cajazeiras" />
+
+      <label>Cidades da rota (separadas por vírgula)</label>
+      <input [(ngModel)]="cidadesTexto" placeholder="Ex: Cajazeiras, Sousa, Patos" />
+
+      <label>Quantidade de dias</label>
+      <input type="number" min="0" [(ngModel)]="form.quantidadeDeDias" />
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" (click)="closeRotaModal()">Cancelar</button>
+      <button class="btn primary" (click)="salvarRota()">Salvar</button>
+    </div>
+  </div>
+
+  <!-- MODAL CLIENTES HISTÓRICO -->
+  <div class="backdrop" *ngIf="showClientesModal" (click)="closeClientesModal()"></div>
+  <div class="modal modal-wide" *ngIf="showClientesModal">
+    <div class="modal-header">
+      <h2>Clientes da rota {{ clientesRotaCodigo }}</h2>
+      <button class="icon" (click)="closeClientesModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="muted">
+        Calculado a partir do histórico de cargas que já usaram esta rota — quanto mais vezes o cliente
+        aparecer, mais consistente é a associação dele com esta rota.
+      </p>
+
+      <div class="loading" *ngIf="clientesLoading">
+        <div class="spinner"></div>
+        <span>Carregando...</span>
+      </div>
+
+      <table class="table" *ngIf="!clientesLoading && clientesHistorico.length > 0">
+        <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Cargas</th>
+          <th>Última carga</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let c of clientesHistorico">
+          <td>{{ c.cliente }}</td>
+          <td>{{ c.quantidadeCargas }}</td>
+          <td>{{ formatDateBr(c.ultimaCargaEm) }}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <div class="empty" *ngIf="!clientesLoading && clientesHistorico.length === 0">
+        <div class="icon">🧾</div>
+        <h3>Nenhum histórico ainda</h3>
+        <p>Essa rota ainda não teve cargas com clientes registrados.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" (click)="closeClientesModal()">Fechar</button>
+    </div>
+  </div>
+</div>
