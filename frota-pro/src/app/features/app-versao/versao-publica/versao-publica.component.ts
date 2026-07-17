@@ -27,7 +27,9 @@ export class VersaoPublicaComponent implements OnInit {
     this.appVersaoService.atualPublico().subscribe({
       next: (res) => {
         this.versao = res;
-        this.urlDownload = res.urlDownload || this.urlDownload;
+        // Não usa res.urlDownload diretamente: o backend retorna o caminho
+        // relativo à própria API (sem o prefixo "/api" do proxy do nginx),
+        // então usamos sempre a URL já montada com o prefixo correto.
         this.estado = 'ok';
       },
       error: (err) => {
