@@ -1,0 +1,67 @@
+<div class="container">
+  <h2>Versão do App</h2>
+
+  <!-- versão atual -->
+  <div class="card">
+    <div class="card-title">
+      <h3>Versão publicada atualmente</h3>
+      <span class="sub">O que os motoristas recebem hoje ao abrir o link de download</span>
+    </div>
+
+    <div *ngIf="carregandoAtual" class="empty">Carregando...</div>
+
+    <div *ngIf="!carregandoAtual && versaoAtual" class="versao-atual">
+      <div class="versao-nome">
+        v{{ versaoAtual.versaoNome }}
+        <span class="pill" [class.ok]="!versaoAtual.obrigatoria" [class.off]="versaoAtual.obrigatoria">
+          {{ versaoAtual.obrigatoria ? 'Obrigatória' : 'Opcional' }}
+        </span>
+      </div>
+      <p class="notas" *ngIf="versaoAtual.notas">{{ versaoAtual.notas }}</p>
+      <div class="meta">
+        <span>{{ formatarTamanho(versaoAtual.tamanhoBytes) }}</span>
+        <span>Publicado em {{ versaoAtual.publicadoEm | date:'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="!carregandoAtual && !versaoAtual" class="empty">
+      Nenhuma versão publicada ainda.
+    </div>
+  </div>
+
+  <!-- form de publicação -->
+  <div class="card">
+    <div class="card-title">
+      <h3>Publicar nova versão</h3>
+      <span class="sub">Envie o .apk e preencha os dados da release</span>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Arquivo .apk</label>
+        <input type="file" accept=".apk" (change)="onArquivoSelecionado($event)">
+      </div>
+
+      <div class="field">
+        <label>Nome da versão</label>
+        <input type="text" [(ngModel)]="form.versaoNome" placeholder="Ex: 2.4.0">
+      </div>
+
+      <div class="field field-wide">
+        <label>Notas da versão</label>
+        <textarea [(ngModel)]="form.notas" rows="3" placeholder="Ex: Correção no envio de fotos e melhorias de desempenho."></textarea>
+      </div>
+    </div>
+
+    <div class="row-actions">
+      <label class="role-item">
+        <input type="checkbox" [(ngModel)]="form.obrigatoria">
+        Atualização obrigatória
+      </label>
+
+      <button class="btn btn-primary" (click)="publicar()" [disabled]="enviando">
+        {{ enviando ? 'Publicando...' : 'Publicar versão' }}
+      </button>
+    </div>
+  </div>
+</div>

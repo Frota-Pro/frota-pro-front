@@ -129,6 +129,12 @@
 
         <ul class="submenu" *ngIf="submenuAdministracaoAberto && !isClosed">
           <li routerLink="/dashboard/usuarios" routerLinkActive="active">Usuários</li>
+          <li
+            *ngIf="(user$ | async)?.authorities?.includes('ROLE_ADMIN')"
+            routerLink="/dashboard/app-versao/publicar"
+            routerLinkActive="active">
+            Versão do App
+          </li>
           <!-- ❌ removido: Logs -->
         </ul>
       </li>

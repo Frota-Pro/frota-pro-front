@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { adminGuard } from './core/auth/admin.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -8,6 +9,14 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () =>
       import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+  },
+
+  // Página pública de download do app (link enviado aos motoristas)
+  {
+    path: 'versao-app',
+    loadComponent: () =>
+      import('./features/app-versao/versao-publica/versao-publica.component')
+        .then((m) => m.VersaoPublicaComponent),
   },
 
   {
@@ -158,6 +167,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/usuarios/usuarios.component')
             .then(m => m.UsuariosComponent)
+      },
+      {
+        path: 'app-versao/publicar',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/app-versao/publicar-versao/publicar-versao.component')
+            .then(m => m.PublicarVersaoComponent)
       },
 
       // ❌ removido: admin/logs

@@ -1,0 +1,56 @@
+<div class="page">
+  <div class="card">
+    <img src="assets/logo.png" alt="FrotaPRO" class="logo">
+
+    <ng-container [ngSwitch]="estado">
+
+      <div *ngSwitchCase="'carregando'" class="estado">
+        <div class="spinner"></div>
+        <p>Verificando versão disponível...</p>
+      </div>
+
+      <div *ngSwitchCase="'ok'" class="conteudo">
+        <div class="icone-app">
+          <i class="fas fa-mobile-screen-button"></i>
+        </div>
+
+        <h1>App FrotaPRO</h1>
+        <div class="versao-badge">
+          Versão {{ versao?.versaoNome }}
+          <span class="tag-obrigatoria" *ngIf="versao?.obrigatoria">Atualização obrigatória</span>
+        </div>
+
+        <p class="notas" *ngIf="versao?.notas">{{ versao?.notas }}</p>
+
+        <a class="btn-download" [href]="urlDownload">
+          <i class="fas fa-download"></i>
+          Baixar APK
+        </a>
+
+        <div class="meta">
+          <span *ngIf="versao?.tamanhoBytes">{{ formatarTamanho(versao?.tamanhoBytes) }}</span>
+          <span *ngIf="versao?.publicadoEm">Publicado em {{ versao?.publicadoEm | date:'dd/MM/yyyy' }}</span>
+        </div>
+
+        <p class="ajuda">
+          Após o download, abra o arquivo no seu Android e permita a instalação de fontes desconhecidas caso solicitado.
+        </p>
+      </div>
+
+      <div *ngSwitchCase="'sem-versao'" class="estado">
+        <i class="fas fa-circle-info estado-icone"></i>
+        <p>Nenhuma versão do app disponível para download no momento.</p>
+        <p class="ajuda">Fale com o suporte da sua empresa para mais informações.</p>
+      </div>
+
+      <div *ngSwitchCase="'erro'" class="estado">
+        <i class="fas fa-triangle-exclamation estado-icone erro"></i>
+        <p>Não foi possível verificar a versão do app agora.</p>
+        <p class="ajuda">Tente novamente em instantes.</p>
+      </div>
+
+    </ng-container>
+  </div>
+
+  <div class="rodape">FrotaPRO &copy; {{ anoAtual }}</div>
+</div>
