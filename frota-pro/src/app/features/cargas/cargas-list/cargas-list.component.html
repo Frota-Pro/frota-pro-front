@@ -18,7 +18,7 @@
   <div class="header">
     <div>
       <h1>Cargas</h1>
-      <p>Pesquise por código interno/externo e por período de saída.</p>
+      <p>Pesquise por código interno/externo, placa ou motorista e por período de saída.</p>
     </div>
 
     <div class="actions">
@@ -32,7 +32,7 @@
            [(ngModel)]="q"
            (ngModelChange)="onSearchChange()"
            (keyup.enter)="aplicarFiltros()"
-           placeholder="Buscar por código interno/externo..." />
+           placeholder="Buscar por código interno/externo, placa ou motorista..." />
 
     <div class="periodo">
       <label>

@@ -15,7 +15,7 @@ export class CargaApiService extends BaseApiService {
   /**
    * GET {{host}}/carga?q=&inicio=&fim=
    * Filtros:
-   * - q: numeroCarga ou numeroCargaExterno (contém)
+   * - q: numeroCarga, numeroCargaExterno, placa do caminhão ou nome do motorista (contém)
    * - inicio/fim: periodo por dtSaida (ISO yyyy-MM-dd)
    */
   listar(
