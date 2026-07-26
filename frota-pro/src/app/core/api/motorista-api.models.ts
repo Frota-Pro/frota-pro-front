@@ -29,6 +29,20 @@ export interface MotoristaRequest {
   validadeCnh: string | null; // dd/MM/yyyy
 }
 
+export type TipoPlataformaDispositivo = 'ANDROID' | 'IOS' | 'OUTRO' | string;
+
+export interface MotoristaDispositivoAppResponse {
+  codigoMotorista: string;
+  nomeMotorista: string;
+
+  dispositivoAppVersao?: string | null;
+  dispositivoAppPlataforma?: TipoPlataformaDispositivo | null;
+  dispositivoAppReportadoEm?: string | null; // yyyy-MM-ddTHH:mm:ss
+
+  versaoMaisRecenteDisponivel?: string | null;
+  desatualizado: boolean;
+}
+
 export interface RelatorioMetaMensalMotoristaLinha {
   data?: string | null;
   lote?: string | null;

@@ -1,0 +1,91 @@
+<div class="page">
+
+  <!-- TOASTS -->
+  <div class="toast-stack" *ngIf="toasts.length">
+    <div class="toast" *ngFor="let t of toasts" [class]="'toast ' + t.type" (click)="dismissToast(t.id)">
+      <span class="dot" aria-hidden="true"></span>
+      <div class="msg">{{ t.message }}</div>
+      <button class="close" type="button" aria-label="Fechar"
+              (click)="dismissToast(t.id); $event.stopPropagation()">✕</button>
+    </div>
+  </div>
+
+  <div class="header">
+    <div>
+      <h1>Versões do App</h1>
+      <p>Qual versão do app cada motorista tem instalada no celular, e quem está desatualizado.</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input class="search"
+           [(ngModel)]="q"
+           (ngModelChange)="onSearchChange()"
+           (keyup.enter)="page=0; carregarPagina()"
+           placeholder="Buscar por nome ou código do motorista" />
+
+    <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="linhas.length > 0; else emptyTpl">
+      <thead>
+      <tr>
+        <th>Motorista</th>
+        <th>Versão instalada</th>
+        <th>Plataforma</th>
+        <th>Última vez visto</th>
+        <th>Versão mais recente</th>
+        <th>Status</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let m of linhas">
+        <td>
+          <div class="stack">
+            <strong>{{ m.nomeMotorista }}</strong>
+            <small class="muted">{{ m.codigoMotorista }}</small>
+          </div>
+        </td>
+
+        <td class="mono">{{ m.dispositivoAppVersao || '—' }}</td>
+        <td>{{ m.dispositivoAppPlataforma || '—' }}</td>
+        <td>{{ m.dispositivoAppReportadoEm ? (m.dispositivoAppReportadoEm | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
+        <td class="mono">{{ m.versaoMaisRecenteDisponivel || '—' }}</td>
+
+        <td>
+          <span class="status"
+                [class.inactive]="m.desatualizado"
+                [class.neutral]="!m.dispositivoAppVersao">
+            {{ !m.dispositivoAppVersao ? 'Nunca reportou' : (m.desatualizado ? 'Desatualizado' : 'Atualizado') }}
+          </span>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <div class="icon">📱</div>
+        <h3>Nenhum motorista com usuário vinculado</h3>
+        <p>Só aparecem aqui motoristas que têm um usuário de acesso ao app.</p>
+      </div>
+    </ng-template>
+
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn ghost" (click)="prevPage()" [disabled]="page <= 0">◀</button>
+      <div class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</div>
+      <button class="btn ghost" (click)="nextPage()" [disabled]="page + 1 >= totalPages">▶</button>
+    </div>
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Carregando...</span>
+    </div>
+  </ng-template>
+</div>

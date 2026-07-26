@@ -2,7 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
-import { MotoristaRequest, MotoristaResponse, RelatorioMetaMensalMotoristaResponse } from './motorista-api.models';
+import {
+  MotoristaDispositivoAppResponse,
+  MotoristaRequest,
+  MotoristaResponse,
+  RelatorioMetaMensalMotoristaResponse,
+} from './motorista-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class MotoristaApiService extends BaseApiService {
@@ -34,6 +39,19 @@ export class MotoristaApiService extends BaseApiService {
 
   deletar(codigo: string) {
     return this.http.delete<void>(`${this.apiUrl}/motorista/${encodeURIComponent(codigo)}`);
+  }
+
+  listarDispositivosApp(opts: { page?: number; size?: number; sort?: string; q?: string | null } = {}) {
+    let params = new HttpParams();
+    if (opts.page != null) params = params.set('page', String(opts.page));
+    if (opts.size != null) params = params.set('size', String(opts.size));
+    if (opts.sort) params = params.set('sort', opts.sort);
+    if (opts.q) params = params.set('q', opts.q);
+
+    return this.http.get<PageResponse<MotoristaDispositivoAppResponse>>(
+      `${this.apiUrl}/motorista/dispositivo-app`,
+      { params }
+    );
   }
 
   metaMensal(codigoMotorista: string, inicioYYYYMMDD: string, fimYYYYMMDD: string) {

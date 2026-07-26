@@ -177,6 +177,12 @@ export const routes: Routes = [
             .then(m => m.UsuariosComponent)
       },
       {
+        path: 'motoristas/dispositivo-app',
+        loadComponent: () =>
+          import('./features/motoristas-dispositivo-app/motoristas-dispositivo-app.component')
+            .then(m => m.MotoristasDispositivoAppComponent)
+      },
+      {
         path: 'app-versao/publicar',
         canActivate: [adminGuard],
         loadComponent: () =>
