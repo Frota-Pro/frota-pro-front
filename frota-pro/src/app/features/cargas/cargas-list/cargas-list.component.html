@@ -68,8 +68,8 @@
       <tr *ngFor="let c of rows" (dblclick)="abrirDetalhe(c)">
         <td>
           <div class="stack">
-            <strong class="mono">{{ c.numeroCarga }}</strong>
-            <small class="muted" *ngIf="c.numeroCargaExterno">Ext: {{ c.numeroCargaExterno }}</small>
+            <strong class="mono">{{ c.numeroCargaExibicao }}</strong>
+            <small class="muted" *ngIf="numeroCargaSecundario(c)">{{ numeroCargaSecundarioLabel(c) }}: {{ numeroCargaSecundario(c) }}</small>
             <span class="transfer-badge"
                   *ngIf="c.transferenciaPendente || c.statusTransferencia === 'PENDENTE_SYNC'"
                   title="Peso, valor e notas aguardam atualização pela sincronização">

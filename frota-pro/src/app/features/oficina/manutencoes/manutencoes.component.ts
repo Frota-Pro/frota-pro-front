@@ -183,6 +183,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
         r.codigoOficina,
         r.oficina,
         r.parada?.numeroCarga,
+        r.parada?.numeroCargaExibicao,
       ]
         .filter(Boolean)
         .join(' ')
@@ -503,7 +504,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
       if (!uniq.has(id)) {
         uniq.set(id, {
           id,
-          numeroCarga: String(r.parada?.numeroCarga || '').trim() || '-',
+          numeroCarga: String(r.parada?.numeroCargaExibicao || r.parada?.numeroCarga || '').trim() || '-',
         });
       }
     }

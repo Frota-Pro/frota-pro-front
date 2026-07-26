@@ -4,6 +4,8 @@ export interface MovimentacaoSemCargaResponse {
   codigoCaminhao: string;
   placaCaminhao: string;
   numeroCargaInicio: string;
+  /** Número a ser exibido ao usuário: externo se a integração estiver ativa, senão interno. */
+  numeroCargaInicioExibicao: string;
   kmOrigem: number;
   kmDestino: number;
   kmRodado: number;

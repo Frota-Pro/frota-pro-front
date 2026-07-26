@@ -5,7 +5,11 @@ import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 
 import { CargaApiService } from '../../../core/api/carga-api.service';
-import { CargaMinResponse } from '../../../core/api/carga-api.models';
+import {
+  CargaMinResponse,
+  numeroCargaSecundario,
+  numeroCargaSecundarioLabel,
+} from '../../../core/api/carga-api.models';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -24,6 +28,9 @@ interface ToastItem {
   styleUrls: ['./cargas-list.component.css'],
 })
 export class CargasListComponent implements OnInit, OnDestroy {
+  protected readonly numeroCargaSecundario = numeroCargaSecundario;
+  protected readonly numeroCargaSecundarioLabel = numeroCargaSecundarioLabel;
+
   loading = false;
   errorMsg: string | null = null;
 

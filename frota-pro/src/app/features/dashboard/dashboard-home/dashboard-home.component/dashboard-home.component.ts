@@ -152,7 +152,7 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
 
     // Cargas recentes
     this.cargasRecentes = (res.cargasRecentes ?? []).map((c) => ({
-      numero: c.numeroCarga,
+      numero: c.numeroCargaExibicao,
       origem: c.origem || 'N/A',
       destino: c.destino || 'N/A',
       valor: this.formatMoney(c.valorTotal),

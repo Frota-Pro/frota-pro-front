@@ -8,6 +8,8 @@ export type StatusTransferenciaCarga = 'SEM_TRANSFERENCIA' | 'PENDENTE_SYNC' | '
 export interface CargaMinResponse {
   numeroCarga: string;
   numeroCargaExterno?: string | null;
+  /** Número a ser exibido ao usuário: externo se a integração estiver ativa, senão interno. */
+  numeroCargaExibicao: string;
   dtSaida?: string | null;
   pesoCarga?: number | null;
   valorTotal?: number | null;
@@ -22,6 +24,8 @@ export interface CargaResponse {
   id: string;
   numeroCarga: string;
   numeroCargaExterno?: string | null;
+  /** Número a ser exibido ao usuário: externo se a integração estiver ativa, senão interno. */
+  numeroCargaExibicao: string;
 
   dtSaida?: string | null;
   dtPrevista?: string | null;
@@ -79,4 +83,28 @@ export interface CargaRequest {
 
 export interface MarcarTransferenciaCargaRequest {
   numeroCargaDestino?: string | null;
+}
+
+/** Tipo mínimo que qualquer carga com número de exibição precisa ter. */
+export interface CargaComNumeroExibicao {
+  numeroCarga: string;
+  numeroCargaExterno?: string | null;
+  numeroCargaExibicao: string;
+}
+
+/**
+ * O número que NÃO foi escolhido como destaque (interno ou externo, o que
+ * sobrar), pra mostrar como referência secundária na tela. Null se não
+ * houver um segundo número diferente pra mostrar.
+ */
+export function numeroCargaSecundario(carga: CargaComNumeroExibicao): string | null {
+  const outro = carga.numeroCargaExibicao === carga.numeroCarga
+    ? carga.numeroCargaExterno
+    : carga.numeroCarga;
+  return outro && outro !== carga.numeroCargaExibicao ? outro : null;
+}
+
+/** Rótulo pro número secundário: diz de onde ele vem, já que qual deles é o "principal" varia. */
+export function numeroCargaSecundarioLabel(carga: CargaComNumeroExibicao): string {
+  return carga.numeroCargaExibicao === carga.numeroCarga ? 'Externo' : 'Sistema';
 }

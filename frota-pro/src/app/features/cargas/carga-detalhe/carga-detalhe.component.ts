@@ -11,7 +11,12 @@ import { EixoApiService } from '../../../core/api/eixo-api.service';
 import { EixoCaminhaoResponse } from '../../../core/api/eixo-api.models';
 import { formatKgFromTon } from '../../../shared/utils/weight';
 
-import { CargaResponse, ClienteCargaResponse } from '../../../core/api/carga-api.models';
+import {
+  CargaResponse,
+  ClienteCargaResponse,
+  numeroCargaSecundario,
+  numeroCargaSecundarioLabel,
+} from '../../../core/api/carga-api.models';
 import {
   AnexoParadaResponse,
   ParadaCargaRequest,
@@ -76,6 +81,9 @@ type ParadaForm = Partial<ParadaCargaRequest> & {
   styleUrls: ['./carga-detalhe.component.css'],
 })
 export class CargaDetalheComponent implements OnInit {
+  protected readonly numeroCargaSecundario = numeroCargaSecundario;
+  protected readonly numeroCargaSecundarioLabel = numeroCargaSecundarioLabel;
+
   numeroCarga = '';
 
   loading = false;

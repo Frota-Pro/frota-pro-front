@@ -19,10 +19,10 @@
       <div class="titlebox">
         <h1>Detalhes da Carga</h1>
         <p class="subtitle" *ngIf="carga">
-          <span class="mono">{{ carga.numeroCarga }}</span>
+          <span class="mono">{{ carga.numeroCargaExibicao }}</span>
           <span class="dot">•</span>
-          <span *ngIf="carga.numeroCargaExterno; else semExterno">Ext: {{ carga.numeroCargaExterno }}</span>
-          <ng-template #semExterno><span class="muted">Sem código externo</span></ng-template>
+          <span *ngIf="numeroCargaSecundario(carga) as secundario; else semSecundario">{{ numeroCargaSecundarioLabel(carga) }}: {{ secundario }}</span>
+          <ng-template #semSecundario><span class="muted">Sem outro código</span></ng-template>
           <ng-container *ngIf="labelStatusTransferencia(carga.statusTransferencia)">
             <span class="dot">•</span>
             <span class="transfer-inline">{{ labelStatusTransferencia(carga.statusTransferencia) }}</span>
@@ -328,7 +328,7 @@
       <div>
         <h3>Marcar transferência</h3>
         <p class="muted" *ngIf="carga">
-          Carga antiga <span class="mono">{{ carga.numeroCarga }}</span>
+          Carga antiga <span class="mono">{{ carga.numeroCargaExibicao }}</span>
         </p>
       </div>
       <button class="btn ghost" type="button" (click)="fecharTransferenciaModal()" [disabled]="savingTransferencia">✕</button>

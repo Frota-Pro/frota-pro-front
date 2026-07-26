@@ -1,5 +1,7 @@
 export interface DashboardCargaRecenteResponse {
   numeroCarga: string;
+  /** Número a ser exibido ao usuário: externo se a integração estiver ativa, senão interno. */
+  numeroCargaExibicao: string;
   origem: string;
   destino: string;
 

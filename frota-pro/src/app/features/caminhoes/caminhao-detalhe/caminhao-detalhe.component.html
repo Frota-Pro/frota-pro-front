@@ -294,7 +294,7 @@
         </thead>
         <tbody>
         <tr *ngFor="let c of cargas">
-          <td class="mono">{{ c.numeroCarga }}</td>
+          <td class="mono">{{ c.numeroCargaExibicao }}</td>
           <td>{{ c.dtSaida || '—' }}</td>
           <td><span class="tag">{{ c.statusCarga }}</span></td>
           <td>{{ formatKgFromTon(c.pesoCarga, 0) }} kg</td>

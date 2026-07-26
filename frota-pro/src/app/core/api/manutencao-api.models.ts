@@ -12,6 +12,8 @@ export interface ManutencaoItemResponse {
 export interface ParadaResumoResponse {
   id: string;
   numeroCarga?: string | null;
+  /** Número a ser exibido ao usuário: externo se a integração estiver ativa, senão interno. */
+  numeroCargaExibicao?: string | null;
   tipoParada?: string | null;
   dtInicio?: string | null;
   dtFim?: string | null;

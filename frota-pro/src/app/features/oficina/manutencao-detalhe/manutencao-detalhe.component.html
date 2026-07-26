@@ -29,7 +29,7 @@
         <div><span class="k">Caminhão</span><span class="v">{{ manutencao.caminhao || '—' }} <span class="muted">({{ manutencao.codigoCaminhao }})</span></span></div>
         <div><span class="k">Oficina</span><span class="v">{{ manutencao.oficina || '—' }} <span class="muted" *ngIf="manutencao.codigoOficina">({{ manutencao.codigoOficina }})</span></span></div>
 
-        <div><span class="k">Carga</span><span class="v">{{ manutencao.parada?.numeroCarga || '—' }}</span></div>
+        <div><span class="k">Carga</span><span class="v">{{ manutencao.parada?.numeroCargaExibicao || '—' }}</span></div>
         <div><span class="k">Parada</span><span class="v mono">{{ manutencao.parada?.id || '—' }}</span></div>
 
         <div class="total">
