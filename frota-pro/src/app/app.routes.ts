@@ -41,6 +41,12 @@ export const routes: Routes = [
             .then(m => m.MotoristasListComponent),
       },
       {
+        path: 'motoristas/dispositivo-app',
+        loadComponent: () =>
+          import('./features/motoristas-dispositivo-app/motoristas-dispositivo-app.component')
+            .then(m => m.MotoristasDispositivoAppComponent)
+      },
+      {
         path: 'motoristas/:codigo',
         loadComponent: () =>
           import('./features/motoristas/motorista-detalhe/motorista-detalhe.component')
@@ -175,12 +181,6 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/usuarios/usuarios.component')
             .then(m => m.UsuariosComponent)
-      },
-      {
-        path: 'motoristas/dispositivo-app',
-        loadComponent: () =>
-          import('./features/motoristas-dispositivo-app/motoristas-dispositivo-app.component')
-            .then(m => m.MotoristasDispositivoAppComponent)
       },
       {
         path: 'app-versao/publicar',
