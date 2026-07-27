@@ -454,6 +454,36 @@
   color:#111827;
 }
 
+.cliente-clickable{
+  cursor:pointer;
+  transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+.cliente-clickable:hover{
+  background:#fafafa;
+  border-color:#dbe3ee;
+  box-shadow: 0 10px 22px rgba(15,23,42,0.07);
+}
+
+.cliente-hint{
+  margin-top:8px;
+  font-size:12px;
+}
+
+/* =========================================================
+   NOTAS FISCAIS (DOCUMENTOS DO CLIENTE)
+   ========================================================= */
+.nf-row{
+  flex-wrap:wrap;
+}
+
+.nf-email-box{
+  flex-basis:100%;
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+.nf-email-box .input{ flex:1; }
+
 /* =========================================================
    PARADAS
    ========================================================= */

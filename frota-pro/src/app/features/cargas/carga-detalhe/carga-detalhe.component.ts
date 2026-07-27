@@ -9,6 +9,8 @@ import { ParadaCargaApiService } from '../../../core/api/parada-carga-api.servic
 import { ArquivoApiService } from '../../../core/api/arquivo-api.service';
 import { EixoApiService } from '../../../core/api/eixo-api.service';
 import { EixoCaminhaoResponse } from '../../../core/api/eixo-api.models';
+import { NotaFiscalApiService } from '../../../core/api/nota-fiscal-api.service';
+import { NotaFiscalResumoResponse } from '../../../core/api/nota-fiscal-api.models';
 import { formatKgFromTon } from '../../../shared/utils/weight';
 
 import {
@@ -169,6 +171,17 @@ export class CargaDetalheComponent implements OnInit {
   previewMime: string | null = null;
   showArquivoModal = false;
 
+  // ===== Notas fiscais (cliente) =====
+  showNotasFiscaisModal = false;
+  clienteNotasFiscais: string | null = null;
+  notasFiscais: NotaFiscalResumoResponse[] = [];
+  loadingNotasFiscais = false;
+  notasFiscaisErro: string | null = null;
+  baixandoNota: { numeroNota: number; tipo: 'xml' | 'pdf' } | null = null;
+  notaEmailAlvo: NotaFiscalResumoResponse | null = null;
+  notaEmailDestinatario = '';
+  enviandoEmailNota = false;
+
   // ===== Regras =====
   readonly OBS_MIN = 5;
   readonly OBS_MAX = 800;
@@ -214,7 +227,8 @@ export class CargaDetalheComponent implements OnInit {
     private cargaApi: CargaApiService,
     private paradaApi: ParadaCargaApiService,
     private arquivoApi: ArquivoApiService,
-    private eixoApi: EixoApiService
+    private eixoApi: EixoApiService,
+    private notaFiscalApi: NotaFiscalApiService
   ) {}
 
   // =========================
@@ -541,6 +555,137 @@ export class CargaDetalheComponent implements OnInit {
         this.toast('error', 'Não foi possível baixar o arquivo.', 'Arquivo');
       },
     });
+  }
+
+  // =========================
+  // Notas fiscais (cliente)
+  // =========================
+  documentosFiscaisDisponiveis(): boolean {
+    return !!this.carga && this.carga.statusCarga !== 'FINALIZADA';
+  }
+
+  private mensagemErro(err: any, fallback: string): string {
+    return err?.error?.error || fallback;
+  }
+
+  abrirNotasFiscais(cliente: string): void {
+    if (!this.carga) return;
+
+    this.showNotasFiscaisModal = true;
+    this.clienteNotasFiscais = cliente;
+    this.notasFiscais = [];
+    this.notasFiscaisErro = null;
+    this.notaEmailAlvo = null;
+    this.notaEmailDestinatario = '';
+    this.loadingNotasFiscais = true;
+
+    this.notaFiscalApi
+      .listar(this.carga.numeroCarga, cliente)
+      .pipe(finalize(() => (this.loadingNotasFiscais = false)))
+      .subscribe({
+        next: (notas) => (this.notasFiscais = notas || []),
+        error: (err) => {
+          console.error(err);
+          this.notasFiscais = [];
+          this.notasFiscaisErro = this.mensagemErro(
+            err,
+            'Não foi possível carregar os documentos fiscais deste cliente.'
+          );
+        },
+      });
+  }
+
+  fecharNotasFiscais(): void {
+    this.showNotasFiscaisModal = false;
+    this.clienteNotasFiscais = null;
+    this.notasFiscais = [];
+    this.notaEmailAlvo = null;
+  }
+
+  private baixarBlob(blob: Blob, nome: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nome;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  baixarNotaXml(nota: NotaFiscalResumoResponse): void {
+    if (!this.carga) return;
+
+    this.baixandoNota = { numeroNota: nota.numeroNota, tipo: 'xml' };
+
+    this.notaFiscalApi
+      .baixarXmlBlob(this.carga.numeroCarga, nota.numeroNota)
+      .pipe(finalize(() => (this.baixandoNota = null)))
+      .subscribe({
+        next: (blob) => {
+          this.baixarBlob(blob, `NF_${nota.numeroNota}.xml`);
+          this.toast('success', 'Download do XML iniciado.', 'Nota fiscal');
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', this.mensagemErro(err, 'Não foi possível baixar o XML.'), 'Nota fiscal');
+        },
+      });
+  }
+
+  baixarNotaPdf(nota: NotaFiscalResumoResponse): void {
+    if (!this.carga) return;
+
+    this.baixandoNota = { numeroNota: nota.numeroNota, tipo: 'pdf' };
+
+    this.notaFiscalApi
+      .baixarPdfBlob(this.carga.numeroCarga, nota.numeroNota)
+      .pipe(finalize(() => (this.baixandoNota = null)))
+      .subscribe({
+        next: (blob) => {
+          this.baixarBlob(blob, `NF_${nota.numeroNota}.pdf`);
+          this.toast('success', 'Download do PDF (DANFE) iniciado.', 'Nota fiscal');
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', this.mensagemErro(err, 'Não foi possível baixar o PDF.'), 'Nota fiscal');
+        },
+      });
+  }
+
+  abrirEnviarEmail(nota: NotaFiscalResumoResponse): void {
+    this.notaEmailAlvo = nota;
+    // Pré-preenche com o e-mail cadastrado do cliente no WinThor, se houver — o usuário pode trocar à vontade.
+    this.notaEmailDestinatario = (nota.emailCliente || '').trim();
+  }
+
+  cancelarEnviarEmail(): void {
+    this.notaEmailAlvo = null;
+    this.notaEmailDestinatario = '';
+  }
+
+  confirmarEnviarEmail(): void {
+    if (!this.carga || !this.notaEmailAlvo) return;
+
+    const destinatario = this.notaEmailDestinatario.trim();
+    if (!destinatario) {
+      this.toast('warning', 'Informe o e-mail do destinatário.', 'Nota fiscal');
+      return;
+    }
+
+    this.enviandoEmailNota = true;
+
+    this.notaFiscalApi
+      .enviarEmail(this.carga.numeroCarga, this.notaEmailAlvo.numeroNota, { destinatario })
+      .pipe(finalize(() => (this.enviandoEmailNota = false)))
+      .subscribe({
+        next: () => {
+          this.toast('success', `E-mail enviado para ${destinatario}.`, 'Nota fiscal');
+          this.cancelarEnviarEmail();
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', this.mensagemErro(err, 'Não foi possível enviar o e-mail.'), 'Nota fiscal');
+        },
+      });
   }
 
   // =========================

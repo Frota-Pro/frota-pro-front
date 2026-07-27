@@ -161,7 +161,7 @@
 
           <div class="card-body">
             <div class="clientes" *ngIf="(carga.clientes?.length || 0) > 0; else semClientes">
-              <div class="cliente" *ngFor="let cl of carga.clientes">
+              <div class="cliente cliente-clickable" *ngFor="let cl of carga.clientes" (click)="abrirNotasFiscais(cl.cliente)">
                 <div class="cliente-head">
                   <strong>{{ cl.cliente }}</strong>
                   <span class="pill">{{ (cl.notas?.length || 0) }} nota(s)</span>
@@ -169,6 +169,10 @@
 
                 <div class="notas">
                   <span class="nota mono" *ngFor="let n of cl.notas">{{ n }}</span>
+                </div>
+
+                <div class="cliente-hint muted" *ngIf="documentosFiscaisDisponiveis()">
+                  Ver documentos fiscais (XML/PDF) ›
                 </div>
               </div>
             </div>
@@ -879,6 +883,89 @@
       <button class="btn primary" type="button" (click)="salvarParada()" [disabled]="savingParada">
         {{ savingParada ? 'Salvando...' : 'Salvar parada' }}
       </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- =============== MODAL: DOCUMENTOS FISCAIS DO CLIENTE =============== -->
+<div class="modal-backdrop" *ngIf="showNotasFiscaisModal" (click)="fecharNotasFiscais()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h3>Documentos Fiscais</h3>
+        <p class="muted" *ngIf="clienteNotasFiscais">{{ clienteNotasFiscais }}</p>
+      </div>
+      <button class="btn ghost" type="button" (click)="fecharNotasFiscais()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="loading-sm" *ngIf="loadingNotasFiscais">
+        <div class="spinner small"></div>
+        <span>Buscando notas fiscais no WinThor...</span>
+      </div>
+
+      <div class="alert" *ngIf="!loadingNotasFiscais && notasFiscaisErro">{{ notasFiscaisErro }}</div>
+
+      <div *ngIf="!loadingNotasFiscais && !notasFiscaisErro">
+
+        <div class="anexos" *ngIf="notasFiscais.length > 0; else semNotasFiscais">
+          <div class="anexo-row nf-row" *ngFor="let n of notasFiscais">
+            <div class="anexo-left">
+              <div class="anexo-title">
+                <strong class="mono">NF {{ n.numeroNota }}</strong>
+                <span class="muted" *ngIf="n.serie">• Série {{ n.serie }}</span>
+              </div>
+            </div>
+
+            <div class="anexo-actions">
+              <button class="btn small ghost"
+                      type="button"
+                      (click)="baixarNotaXml(n)"
+                      [disabled]="baixandoNota?.numeroNota === n.numeroNota">
+                {{ (baixandoNota?.numeroNota === n.numeroNota && baixandoNota?.tipo === 'xml') ? 'Baixando...' : 'Baixar XML' }}
+              </button>
+              <button class="btn small ghost"
+                      type="button"
+                      (click)="baixarNotaPdf(n)"
+                      [disabled]="baixandoNota?.numeroNota === n.numeroNota">
+                {{ (baixandoNota?.numeroNota === n.numeroNota && baixandoNota?.tipo === 'pdf') ? 'Baixando...' : 'Baixar PDF' }}
+              </button>
+              <button class="btn small" type="button" (click)="abrirEnviarEmail(n)">
+                Enviar por e-mail
+              </button>
+            </div>
+
+            <div class="nf-email-box" *ngIf="notaEmailAlvo?.numeroNota === n.numeroNota">
+              <input class="input"
+                     type="email"
+                     [(ngModel)]="notaEmailDestinatario"
+                     placeholder="email@destinatario.com"
+                     [disabled]="enviandoEmailNota" />
+              <button class="btn primary small" type="button" (click)="confirmarEnviarEmail()" [disabled]="enviandoEmailNota">
+                {{ enviandoEmailNota ? 'Enviando...' : 'Enviar' }}
+              </button>
+              <button class="btn ghost small" type="button" (click)="cancelarEnviarEmail()" [disabled]="enviandoEmailNota">
+                Cancelar
+              </button>
+              <div class="muted smallline" *ngIf="n.emailCliente">
+                Sugerido a partir do cadastro do cliente no WinThor — pode alterar se estiver errado.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #semNotasFiscais>
+          <div class="empty-sm">
+            <h3>Nenhuma nota fiscal encontrada</h3>
+            <p>Não há notas fiscais para este cliente nesta carga.</p>
+          </div>
+        </ng-template>
+
+      </div>
+
     </div>
 
   </div>
