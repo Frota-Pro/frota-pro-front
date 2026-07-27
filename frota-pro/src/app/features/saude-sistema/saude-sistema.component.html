@@ -1,0 +1,178 @@
+<div class="page">
+
+  <!-- TOASTS -->
+  <div class="toast-stack" *ngIf="toasts.length">
+    <div class="toast" *ngFor="let t of toasts" [class]="'toast ' + t.type" (click)="dismissToast(t.id)">
+      <span class="dot" aria-hidden="true"></span>
+      <div class="msg">{{ t.message }}</div>
+      <button class="close" type="button" aria-label="Fechar"
+              (click)="dismissToast(t.id); $event.stopPropagation()">✕</button>
+    </div>
+  </div>
+
+  <div class="header">
+    <div>
+      <h1>Saúde do Sistema</h1>
+      <p>Quem está de fato usando o app e onde estão os atrasos operacionais.</p>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Carregando...</span>
+  </div>
+
+  <ng-container *ngIf="!loading && data as d">
+
+    <!-- ADOÇÃO DO APP -->
+    <div class="section">
+      <h2>Adoção do app</h2>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Motoristas com usuário</span>
+          <span class="kpi-value">{{ d.totalMotoristasComUsuario }}</span>
+        </div>
+        <div class="kpi-card success">
+          <span class="kpi-label">Ativos nos últimos 7 dias</span>
+          <span class="kpi-value">{{ d.motoristasAtivosUltimos7Dias }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Ativos nos últimos 30 dias</span>
+          <span class="kpi-value">{{ d.motoristasAtivosUltimos30Dias }}</span>
+        </div>
+        <div class="kpi-card" [class.danger]="d.motoristasNuncaAcessaram > 0">
+          <span class="kpi-label">Nunca acessaram</span>
+          <span class="kpi-value">{{ d.motoristasNuncaAcessaram }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Total de acessos (acumulado)</span>
+          <span class="kpi-value">{{ d.totalAcessosAcumulado }}</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" *ngIf="d.motoristas.length > 0; else emptyMotoristasTpl">
+          <thead>
+          <tr>
+            <th>Motorista</th>
+            <th>Último acesso</th>
+            <th>Total de logins</th>
+            <th>Versão do app</th>
+            <th>Status</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let m of d.motoristas">
+            <td>
+              <div class="stack">
+                <strong>{{ m.nomeMotorista }}</strong>
+                <small class="muted">{{ m.codigoMotorista }}</small>
+              </div>
+            </td>
+            <td>{{ m.ultimoLoginEm ? (m.ultimoLoginEm | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
+            <td class="mono">{{ m.totalLogins }}</td>
+            <td class="mono">{{ m.dispositivoAppVersao || '—' }}</td>
+            <td>
+              <span class="status" [class]="'status ' + statusAcessoClass(m.diasSemAcesso)">
+                {{ diasSemAcessoLabel(m.diasSemAcesso) }}
+              </span>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+
+        <ng-template #emptyMotoristasTpl>
+          <div class="empty">
+            <div class="icon">📱</div>
+            <h3>Nenhum motorista com usuário vinculado</h3>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- ATRASOS -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Atrasos operacionais</h2>
+
+        <div class="periodo">
+          <label>
+            <span>Início</span>
+            <input type="date" [(ngModel)]="inicio" />
+          </label>
+          <label>
+            <span>Fim</span>
+            <input type="date" [(ngModel)]="fim" />
+          </label>
+          <button class="btn primary" type="button" (click)="aplicarPeriodo()">Aplicar</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Cargas finalizadas no período</span>
+          <span class="kpi-value">{{ d.totalCargasFinalizadasPeriodo }}</span>
+        </div>
+        <div class="kpi-card" [class.danger]="d.percentualAtrasoInicio > 20">
+          <span class="kpi-label">Iniciaram atrasadas</span>
+          <span class="kpi-value">{{ d.cargasComAtrasoInicio }} <small>({{ d.percentualAtrasoInicio }}%)</small></span>
+        </div>
+        <div class="kpi-card" [class.danger]="d.percentualAtrasoFim > 20">
+          <span class="kpi-label">Chegaram atrasadas</span>
+          <span class="kpi-value">{{ d.cargasComAtrasoFim }} <small>({{ d.percentualAtrasoFim }}%)</small></span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Atraso médio ao iniciar</span>
+          <span class="kpi-value">{{ d.atrasoMedioInicioDias }} <small>dias</small></span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Atraso médio ao finalizar</span>
+          <span class="kpi-value">{{ d.atrasoMedioFimDias }} <small>dias</small></span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" *ngIf="d.rankingAtrasoMotoristas.length > 0; else emptyAtrasoTpl">
+          <thead>
+          <tr>
+            <th>Motorista</th>
+            <th>Cargas no período</th>
+            <th>Atrasaram ao iniciar</th>
+            <th>Atrasaram ao finalizar</th>
+            <th>Média atraso início</th>
+            <th>Média atraso fim</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let r of d.rankingAtrasoMotoristas">
+            <td>
+              <div class="stack">
+                <strong>{{ r.nomeMotorista }}</strong>
+                <small class="muted">{{ r.codigoMotorista }}</small>
+              </div>
+            </td>
+            <td class="mono">{{ r.totalCargas }}</td>
+            <td class="mono">{{ r.cargasAtrasoInicio }}</td>
+            <td class="mono">{{ r.cargasAtrasoFim }}</td>
+            <td class="mono">{{ r.mediaAtrasoInicioDias }}d</td>
+            <td class="mono">{{ r.mediaAtrasoFimDias }}d</td>
+          </tr>
+          </tbody>
+        </table>
+
+        <ng-template #emptyAtrasoTpl>
+          <div class="empty">
+            <div class="icon">🚚</div>
+            <h3>Nenhuma carga finalizada no período</h3>
+            <p>Altere o período pra ver os atrasos.</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>

@@ -189,6 +189,13 @@ export const routes: Routes = [
           import('./features/app-versao/publicar-versao/publicar-versao.component')
             .then(m => m.PublicarVersaoComponent)
       },
+      {
+        path: 'saude-sistema',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/saude-sistema/saude-sistema.component')
+            .then(m => m.SaudeSistemaComponent)
+      },
 
       // ❌ removido: admin/logs
 

@@ -141,6 +141,12 @@
             routerLinkActive="active">
             Versão do App
           </li>
+          <li
+            *ngIf="(user$ | async)?.authorities?.includes('ROLE_ADMIN')"
+            routerLink="/dashboard/saude-sistema"
+            routerLinkActive="active">
+            Saúde do Sistema
+          </li>
           <!-- ❌ removido: Logs -->
         </ul>
       </li>

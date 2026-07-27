@@ -49,3 +49,51 @@ export interface DashboardMetasResponse {
   categoriasPiorDesempenho: DashboardMetaCategoriaDesempenho[];
   topCaminhoesDentroMeta: DashboardMetaCaminhaoDesempenho[];
 }
+
+export interface MotoristaAcessoResponse {
+  codigoMotorista: string;
+  nomeMotorista: string;
+
+  ultimoLoginEm: string | null;
+  totalLogins: number;
+  diasSemAcesso: number | null;
+
+  dispositivoAppVersao: string | null;
+  dispositivoAppReportadoEm: string | null;
+}
+
+export interface MotoristaAtrasoResponse {
+  codigoMotorista: string;
+  nomeMotorista: string;
+
+  totalCargas: number;
+  cargasAtrasoInicio: number;
+  cargasAtrasoFim: number;
+
+  mediaAtrasoInicioDias: number;
+  mediaAtrasoFimDias: number;
+}
+
+export interface SaudeSistemaResponse {
+  totalMotoristasComUsuario: number;
+  motoristasAtivosUltimos7Dias: number;
+  motoristasAtivosUltimos30Dias: number;
+  motoristasNuncaAcessaram: number;
+  totalAcessosAcumulado: number;
+  motoristas: MotoristaAcessoResponse[];
+
+  periodoInicio: string;
+  periodoFim: string;
+  totalCargasFinalizadasPeriodo: number;
+
+  cargasComAtrasoInicio: number;
+  cargasComAtrasoFim: number;
+
+  percentualAtrasoInicio: number;
+  percentualAtrasoFim: number;
+
+  atrasoMedioInicioDias: number;
+  atrasoMedioFimDias: number;
+
+  rankingAtrasoMotoristas: MotoristaAtrasoResponse[];
+}
