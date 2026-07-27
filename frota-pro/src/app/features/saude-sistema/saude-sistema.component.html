@@ -93,6 +93,50 @@
       </div>
     </div>
 
+    <!-- SAÚDE DA INFRAESTRUTURA (Spring Actuator) -->
+    <div class="section" *ngIf="d.metricasAtuador as m">
+      <div class="section-header">
+        <h2>Saúde da infraestrutura</h2>
+        <span class="status" [class]="'status ' + statusSaudeClass(m.statusGeral)">{{ m.statusGeral }}</span>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Uptime</span>
+          <span class="kpi-value">{{ formatUptime(m.uptimeSegundos) }}</span>
+        </div>
+        <div class="kpi-card" [class.danger]="m.cpuUsoPercentual !== null && m.cpuUsoPercentual > 85">
+          <span class="kpi-label">Uso de CPU</span>
+          <span class="kpi-value">{{ m.cpuUsoPercentual !== null ? m.cpuUsoPercentual + '%' : '—' }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Memória (heap)</span>
+          <span class="kpi-value" *ngIf="m.memoriaUsadaMb !== null && m.memoriaMaximaMb !== null">
+            {{ m.memoriaUsadaMb | number:'1.0-0' }} <small>/ {{ m.memoriaMaximaMb | number:'1.0-0' }} MB</small>
+          </span>
+          <span class="kpi-value" *ngIf="m.memoriaUsadaMb === null || m.memoriaMaximaMb === null">—</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Conexões de banco</span>
+          <span class="kpi-value" *ngIf="m.conexoesBancoAtivas !== null; else semConexoes">
+            {{ m.conexoesBancoAtivas }} <small>/ {{ m.conexoesBancoMaximas }}</small>
+          </span>
+          <ng-template #semConexoes><span class="kpi-value">—</span></ng-template>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Total de requisições HTTP</span>
+          <span class="kpi-value">{{ m.totalRequisicoesHttp }}</span>
+        </div>
+      </div>
+
+      <div class="componentes" *ngIf="statusComponentesEntries(m.statusComponentes).length > 0">
+        <span class="status" *ngFor="let c of statusComponentesEntries(m.statusComponentes)"
+              [class]="'status ' + statusSaudeClass(c.status)">
+          {{ c.nome }}: {{ c.status }}
+        </span>
+      </div>
+    </div>
+
     <!-- ATRASOS -->
     <div class="section">
       <div class="section-header">

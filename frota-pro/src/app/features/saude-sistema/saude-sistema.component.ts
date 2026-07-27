@@ -108,4 +108,25 @@ export class SaudeSistemaComponent implements OnInit, OnDestroy {
     if (dias <= 30) return 'warning';
     return 'inactive';
   }
+
+  statusSaudeClass(status: string | null | undefined): string {
+    if (status === 'UP') return 'success';
+    if (status === 'DOWN' || status === 'OUT_OF_SERVICE') return 'inactive';
+    return 'warning';
+  }
+
+  formatUptime(segundos: number | null): string {
+    if (segundos === null || segundos === undefined) return '—';
+    const dias = Math.floor(segundos / 86400);
+    const horas = Math.floor((segundos % 86400) / 3600);
+    const minutos = Math.floor((segundos % 3600) / 60);
+    if (dias > 0) return `${dias}d ${horas}h`;
+    if (horas > 0) return `${horas}h ${minutos}min`;
+    return `${minutos}min`;
+  }
+
+  statusComponentesEntries(statusComponentes: Record<string, string> | null | undefined): Array<{ nome: string; status: string }> {
+    if (!statusComponentes) return [];
+    return Object.entries(statusComponentes).map(([nome, status]) => ({ nome, status }));
+  }
 }

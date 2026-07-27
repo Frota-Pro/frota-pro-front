@@ -74,6 +74,23 @@ export interface MotoristaAtrasoResponse {
   mediaAtrasoFimDias: number;
 }
 
+export interface MetricasAtuadorResponse {
+  statusGeral: string;
+  statusComponentes: Record<string, string>;
+
+  uptimeSegundos: number | null;
+
+  memoriaUsadaMb: number | null;
+  memoriaMaximaMb: number | null;
+
+  cpuUsoPercentual: number | null;
+
+  conexoesBancoAtivas: number | null;
+  conexoesBancoMaximas: number | null;
+
+  totalRequisicoesHttp: number;
+}
+
 export interface SaudeSistemaResponse {
   totalMotoristasComUsuario: number;
   motoristasAtivosUltimos7Dias: number;
@@ -96,4 +113,6 @@ export interface SaudeSistemaResponse {
   atrasoMedioFimDias: number;
 
   rankingAtrasoMotoristas: MotoristaAtrasoResponse[];
+
+  metricasAtuador: MetricasAtuadorResponse | null;
 }
