@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
 import { CategoriaCaminhaoApiService } from '../../../core/api/categoria-caminhao-api.service';
 import {
@@ -93,20 +93,7 @@ export class CaminhoesListComponent implements OnInit, OnDestroy {
   }
 
   private extractApiError(err: unknown): string {
-    const e = err as HttpErrorResponse;
-    const body: any = e?.error;
-
-    // padrão do seu back: ValidationError { error: "Erro de validação", errors: [{name,message}] }
-    if (body?.errors && Array.isArray(body.errors) && body.errors.length) {
-      const msgs = body.errors
-        .map((x: any) => x?.message)
-        .filter(Boolean);
-      if (msgs.length) return msgs.join(' • ');
-    }
-
-    if (typeof body?.error === 'string' && body.error.trim()) return body.error;
-    if (typeof e?.message === 'string' && e.message.trim()) return e.message;
-    return 'Ocorreu um erro ao processar a solicitação.';
+    return extrairMensagemErro(err);
   }
 
   private normalizarPlaca(placa: string): string {

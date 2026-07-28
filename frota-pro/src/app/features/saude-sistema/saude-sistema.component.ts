@@ -2,8 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
 
+import { extrairMensagemErro } from '../../core/utils/api-error.util';
 import { DashboardApiService } from '../../core/api/dashboard-api.service';
 import { SaudeSistemaResponse } from '../../core/api/dashboard-api.models';
 
@@ -66,11 +66,7 @@ export class SaudeSistemaComponent implements OnInit, OnDestroy {
   }
 
   private extractApiError(err: unknown): string {
-    const e = err as HttpErrorResponse;
-    const body: any = e?.error;
-    if (typeof body?.message === 'string' && body.message.trim()) return body.message;
-    if (typeof e?.message === 'string' && e.message.trim()) return e.message;
-    return 'Ocorreu um erro ao carregar as métricas do sistema.';
+    return extrairMensagemErro(err, 'Ocorreu um erro ao carregar as métricas do sistema.');
   }
 
   carregar(): void {

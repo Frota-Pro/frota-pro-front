@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { CargaApiService } from '../../../core/api/carga-api.service';
 import { ParadaCargaApiService } from '../../../core/api/parada-carga-api.service';
 import { ArquivoApiService } from '../../../core/api/arquivo-api.service';
@@ -565,7 +566,7 @@ export class CargaDetalheComponent implements OnInit {
   }
 
   private mensagemErro(err: any, fallback: string): string {
-    return err?.error?.error || fallback;
+    return extrairMensagemErro(err, fallback);
   }
 
   abrirNotasFiscais(cliente: string): void {

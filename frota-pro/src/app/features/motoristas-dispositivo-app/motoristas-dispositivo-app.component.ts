@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
 
+import { extrairMensagemErro } from '../../core/utils/api-error.util';
 import { MotoristaApiService } from '../../core/api/motorista-api.service';
 import { MotoristaDispositivoAppResponse } from '../../core/api/motorista-api.models';
 
@@ -62,19 +62,7 @@ export class MotoristasDispositivoAppComponent implements OnInit, OnDestroy {
   }
 
   private extractApiError(err: unknown): string {
-    const e = err as HttpErrorResponse;
-    const body: any = e?.error;
-
-    if (body?.errors && Array.isArray(body.errors) && body.errors.length) {
-      const msgs = body.errors.map((x: any) => x?.message).filter(Boolean);
-      if (msgs.length) return msgs.join(' • ');
-    }
-
-    if (typeof body?.error === 'string' && body.error.trim()) return body.error;
-    if (typeof body?.message === 'string' && body.message.trim()) return body.message;
-    if (typeof e?.message === 'string' && e.message.trim()) return e.message;
-
-    return 'Ocorreu um erro ao carregar as versões instaladas.';
+    return extrairMensagemErro(err, 'Ocorreu um erro ao carregar as versões instaladas.');
   }
 
   onSearchChange(): void {
