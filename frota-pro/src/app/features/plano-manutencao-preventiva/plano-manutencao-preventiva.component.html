@@ -1,0 +1,184 @@
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>Planos de manutenção preventiva</h1>
+      <p>Cadastre intervalos por km e/ou dias e receba alertas quando estiverem vencendo.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" type="button" (click)="abrirNovo()">+ Novo plano</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="field-autocomplete" style="flex:1; min-width:260px;">
+      <input class="search"
+             [(ngModel)]="filtroCaminhao"
+             (ngModelChange)="aplicarFiltros()"
+             (focus)="onFocusFiltroCaminhao()"
+             (blur)="onBlurFiltroSugestao()"
+             placeholder="Filtro por caminhão (código/placa)" />
+      <ul class="field-suggest" *ngIf="showSugFiltroCaminhao && sugestoesFiltroCaminhao.length > 0">
+        <li *ngFor="let c of sugestoesFiltroCaminhao" (mousedown)="selecionarFiltroCaminhao(c)">
+          <strong>{{ c.codigo }}</strong>
+          <span>{{ c.placa || '-' }}</span>
+          <small>{{ c.descricao || '-' }}</small>
+        </li>
+      </ul>
+    </div>
+
+    <select class="select" [(ngModel)]="filtroAtivo" (change)="aplicarFiltros()">
+      <option value="true">Ativos</option>
+      <option value="false">Inativos</option>
+      <option value="">Todos</option>
+    </select>
+
+    <button class="btn ghost" type="button" (click)="limparFiltros()">Limpar</button>
+    <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="rows.length > 0; else emptyTpl">
+      <thead>
+      <tr>
+        <th>Caminhão</th>
+        <th>Descrição</th>
+        <th>Intervalo</th>
+        <th>Última execução</th>
+        <th>Próximo vencimento</th>
+        <th>Odômetro atual</th>
+        <th>Status</th>
+        <th class="col-actions">Ações</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let p of rows">
+        <td>
+          <div class="stack">
+            <strong>{{ p.codigoCaminhao }}</strong>
+            <small class="muted" *ngIf="p.caminhao">{{ p.caminhao }}</small>
+          </div>
+        </td>
+
+        <td>{{ p.descricao }}</td>
+
+        <td>
+          <div class="stack">
+            <span *ngIf="p.intervaloKm != null">a cada {{ formatKm(p.intervaloKm) }}</span>
+            <span *ngIf="p.intervaloDias != null">a cada {{ p.intervaloDias }} dias</span>
+          </div>
+        </td>
+
+        <td>
+          <div class="stack">
+            <small class="muted" *ngIf="p.ultimoKmExecutado != null">{{ formatKm(p.ultimoKmExecutado) }}</small>
+            <small class="muted" *ngIf="p.ultimaDataExecutada">{{ formatDateBr(p.ultimaDataExecutada) }}</small>
+          </div>
+        </td>
+
+        <td>
+          <div class="stack">
+            <span *ngIf="p.proximoKm != null">{{ formatKm(p.proximoKm) }}</span>
+            <span *ngIf="p.proximaData">{{ formatDateBr(p.proximaData) }}</span>
+            <span *ngIf="p.proximoKm == null && !p.proximaData" class="muted">—</span>
+          </div>
+        </td>
+
+        <td class="mono">{{ formatKm(p.odometroAtualCaminhao) }}</td>
+
+        <td>
+          <span class="status" [class.inactive]="!p.ativo">{{ p.ativo ? 'ATIVO' : 'INATIVO' }}</span>
+        </td>
+
+        <td class="row-actions">
+          <button class="btn small" type="button" (click)="abrirEdicao(p)">Editar</button>
+          <button class="btn small danger" type="button" (click)="excluir(p)">Excluir</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <div class="icon">🔧</div>
+        <h3>Nenhum plano cadastrado</h3>
+        <p>Cadastre um plano de manutenção preventiva ou ajuste os filtros.</p>
+      </div>
+    </ng-template>
+
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn small" [disabled]="page<=0" (click)="carregarPagina(page-1)">Anterior</button>
+      <span class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</span>
+      <button class="btn small" [disabled]="page+1>=totalPages" (click)="carregarPagina(page+1)">Próxima</button>
+    </div>
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Carregando planos...</div>
+    </div>
+  </ng-template>
+
+  <!-- MODAL -->
+  <div class="backdrop" *ngIf="showModal" (click)="fecharModal()"></div>
+
+  <div class="modal" *ngIf="showModal">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar plano' : 'Novo plano' }}</h2>
+      <button class="icon" type="button" (click)="fecharModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <label>Caminhão (código ou externo)</label>
+      <div class="field-autocomplete">
+        <input
+          [(ngModel)]="form.caminhao"
+          placeholder="CAM-000001"
+          autocomplete="off"
+          (focus)="onFocusFormCaminhao()"
+          (blur)="onBlurFormSugestao()"
+        />
+        <ul class="field-suggest" *ngIf="showSugCaminhao && sugestoesFormCaminhao.length > 0">
+          <li *ngFor="let c of sugestoesFormCaminhao" (mousedown)="selecionarFormCaminhao(c)">
+            <strong>{{ c.codigo }}</strong>
+            <span>{{ c.placa || '-' }}</span>
+            <small>{{ c.descricao || '-' }}</small>
+          </li>
+        </ul>
+      </div>
+
+      <label>Descrição</label>
+      <input [(ngModel)]="form.descricao" placeholder="Ex.: Troca de óleo do motor" />
+
+      <div class="row">
+        <div class="col">
+          <label>Intervalo por KM</label>
+          <input type="number" [(ngModel)]="form.intervaloKm" placeholder="Ex.: 10000" />
+        </div>
+        <div class="col">
+          <label>Intervalo por dias</label>
+          <input type="number" [(ngModel)]="form.intervaloDias" placeholder="Ex.: 180" />
+        </div>
+      </div>
+      <small class="muted">Informe ao menos um dos dois intervalos.</small>
+
+      <label class="checkbox-row">
+        <input type="checkbox" [(ngModel)]="form.ativo" />
+        Plano ativo
+      </label>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="fecharModal()">Cancelar</button>
+      <button class="btn primary" type="button" [disabled]="saving" (click)="salvar()">
+        {{ isEditing ? 'Salvar' : 'Criar' }}
+      </button>
+    </div>
+  </div>
+
+</div>

@@ -1,5 +1,7 @@
 export type TipoItemManutencao = 'PECA' | 'SERVICO' | string;
 
+export type StatusAprovacaoManutencao = 'PENDENTE' | 'APROVADO' | 'REJEITADO';
+
 export interface ManutencaoItemResponse {
   id?: string;
   tipo: TipoItemManutencao;
@@ -46,6 +48,14 @@ export interface ManutencaoResponse {
   oficina?: string | null;
 
   parada?: ParadaResumoResponse | null;
+
+  kmOdometro?: number | null;
+  planoManutencaoPreventivaId?: string | null;
+  planoManutencaoPreventivaDescricao?: string | null;
+
+  valorOrcado?: number | null;
+  statusAprovacao?: StatusAprovacaoManutencao | null;
+  observacaoAprovacao?: string | null;
 }
 
 /** REQUESTS */
@@ -91,4 +101,14 @@ export interface ManutencaoRequest {
 
   // fallback (se não tiver itens, pode salvar valor direto)
   valor?: number | null;
+
+  kmOdometro?: number | null;
+  planoManutencaoPreventivaId?: string | null;
+
+  valorOrcado?: number | null;
+}
+
+export interface AprovarManutencaoRequest {
+  statusAprovacao: StatusAprovacaoManutencao;
+  observacao?: string | null;
 }

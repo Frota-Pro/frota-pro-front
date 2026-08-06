@@ -14,9 +14,8 @@
   background: #fff; border-radius: 16px; padding: 12px;
   box-shadow: 0 1px 8px rgba(0,0,0,.06);
 }
-.search { height: 38px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 12px; min-width: 300px; flex: 1; }
+.search { height: 38px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 12px; min-width: 260px; }
 .select { height: 38px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 10px; background: #fff; }
-.bulk { display: flex; gap: 8px; align-items: center; }
 
 .btn {
   height: 38px; border-radius: 12px; border: 1px solid #e5e7eb;
@@ -26,17 +25,17 @@
 .btn.ghost { background: #fff; }
 .btn.danger { border-color: rgba(239,68,68,.25); background: rgba(239,68,68,.08); }
 .btn.small { height: 32px; border-radius: 10px; font-size: 12px; padding: 0 10px; }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
 
 .alert { color: #b91c1c; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.20); padding: 10px 12px; border-radius: 12px; }
 
 .table-wrap { background: #fff; border-radius: 16px; box-shadow: 0 1px 8px rgba(0,0,0,.06); overflow: auto; border: 1px solid #eef2f7; }
-.table { width: 100%; min-width: 1040px; border-collapse: collapse; }
+.table { width: 100%; min-width: 960px; border-collapse: collapse; }
 .table thead th {
   text-align: left; font-size: 12px; color: #6b7280; background: #fafafa;
   padding: 12px 14px; border-bottom: 1px solid #eef2f7;
 }
 .table tbody td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-.table tbody tr:hover { background: #fcfcfc; cursor: pointer; }
 
 .col-actions { text-align: right; }
 .row-actions { text-align: right; display: flex; justify-content: flex-end; gap: 8px; }
@@ -44,8 +43,6 @@
 .mono { font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 .stack { display: flex; flex-direction: column; gap: 3px; }
 .muted { color: #6b7280; font-size: 12px; }
-
-.tag { display: inline-flex; padding: 6px 10px; border-radius: 999px; border: 1px solid #eef2f7; background: #fff; font-size: 12px; }
 
 .status { display: inline-flex; padding: 6px 10px; border-radius: 999px; background: rgba(34,197,94,.10); border: 1px solid rgba(34,197,94,.25); font-size: 12px; }
 .status.inactive { background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.25); }
@@ -67,8 +64,8 @@
 .modal {
   position: fixed; z-index: 60; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: min(720px, calc(100vw - 24px));
-  max-height: min(90vh, 760px);
+  width: min(560px, calc(100vw - 24px));
+  max-height: min(90vh, 640px);
   background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
   overflow: hidden;
   display: flex;
@@ -88,7 +85,9 @@
 }
 .modal-body label { font-size: 12px; color: #6b7280; }
 .modal-body input, .modal-body select { height: 38px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 10px; }
-.modal-body textarea { border-radius: 12px; border: 1px solid #e5e7eb; padding: 8px 10px; font: inherit; resize: vertical; }
+.checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #111827; }
+.checkbox-row input { height: auto; }
+
 .field-autocomplete { position: relative; }
 .field-suggest {
   position: absolute;
@@ -122,16 +121,6 @@
 .row { display:flex; gap: 10px; min-width: 0; }
 .col { flex: 1; display:flex; flex-direction: column; gap: 6px; }
 
-.divider { height: 1px; background: #eef2f7; margin: 4px 0; }
-.items-head { display:flex; justify-content: space-between; align-items:center; }
-
-.item-row { display:flex; gap: 8px; align-items:center; flex-wrap: wrap; }
-.item-row input, .item-row select { height: 36px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 10px; }
-.item-row input { min-width: 160px; }
-.item-row select { min-width: 130px; }
-
-.total { display:flex; justify-content: space-between; align-items:center; padding: 10px 12px; border: 1px solid #eef2f7; border-radius: 12px; background: #fafafa; }
-
 .modal-footer {
   padding: 12px 14px;
   display: flex;
@@ -145,10 +134,6 @@
 @media (max-width: 760px) {
   .actions { flex-direction: column; width: 100%; }
   .search { min-width: 100%; }
-  .modal { width: min(720px, calc(100vw - 18px)); }
+  .modal { width: min(560px, calc(100vw - 18px)); }
   .row { flex-direction: column; }
-  .item-row { flex-direction: column; align-items: stretch; }
-  .item-row input,
-  .item-row select,
-  .item-row .btn { width: 100% !important; }
 }

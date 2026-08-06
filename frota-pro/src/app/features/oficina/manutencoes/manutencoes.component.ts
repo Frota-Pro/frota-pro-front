@@ -4,13 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { ManutencaoApiService } from '../../../core/api/manutencao-api.service';
-import { ManutencaoRequest, ManutencaoResponse, ManutencaoItemRequest } from '../../../core/api/manutencao-api.models';
+import { ManutencaoRequest, ManutencaoResponse, ManutencaoItemRequest, AprovarManutencaoRequest, StatusAprovacaoManutencao } from '../../../core/api/manutencao-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
 import { CaminhaoResponse } from '../../../core/api/caminhao-api.models';
 import { OficinaApiService } from '../../../core/api/oficina-api.service';
 import { OficinaResponse } from '../../../core/api/oficina-api.models';
+import { PlanoManutencaoPreventivaApiService } from '../../../core/api/plano-manutencao-preventiva-api.service';
+import { PlanoManutencaoPreventivaResponse } from '../../../core/api/plano-manutencao-preventiva-api.models';
 
 type StatusManutencao = 'ABERTA' | 'EM_ANDAMENTO' | 'FINALIZADA' | 'CANCELADA' | string;
 type TipoManutencao = 'PREVENTIVA' | 'CORRETIVA' | string;
@@ -59,6 +62,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
   filtered: ManutencaoVM[] = [];
   caminhoes: CaminhaoResponse[] = [];
   oficinas: OficinaResponse[] = [];
+  planos: PlanoManutencaoPreventivaResponse[] = [];
 
   // modal
   showModal = false;
@@ -67,6 +71,12 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
 
   // form
   form = this.emptyForm();
+  planoQuery = ''; // texto exibido/buscado no autocomplete do plano preventivo
+
+  // aprovação de orçamento
+  showAprovacaoModal = false;
+  aprovacaoTarget: ManutencaoVM | null = null;
+  aprovacaoForm: AprovarManutencaoRequest = { statusAprovacao: 'APROVADO', observacao: '' };
 
   // debounce
   private filtroTimer: any = null;
@@ -76,12 +86,14 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
   showSugManCaminhao = false;
   showSugManOficina = false;
   showSugManParada = false;
+  showSugManPlano = false;
   readonly sugestoesMax = 8;
 
   constructor(
     private api: ManutencaoApiService,
     private caminhaoApi: CaminhaoApiService,
     private oficinaApi: OficinaApiService,
+    private planoApi: PlanoManutencaoPreventivaApiService,
     private router: Router,
     private toast: ToastService,
   ) {}
@@ -161,7 +173,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
           this.applyLocalFilter();
         },
         error: (err) => {
-          this.errorMsg = err?.error?.message || 'Erro ao carregar manutenções.';
+          this.errorMsg = extrairMensagemErro(err, 'Erro ao carregar manutenções.');
         },
       });
   }
@@ -211,6 +223,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     this.isEditing = false;
     this.editingCodigo = null;
     this.form = this.emptyForm();
+    this.planoQuery = '';
     this.resetAutoComplete();
     this.showModal = true;
   }
@@ -224,11 +237,15 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     this.form.caminhao = m.codigoCaminhao || '';
     this.form.oficina = m.codigoOficina || '';
     this.form.tipoManutencao = m.tipoManutencao || 'CORRETIVA';
-    this.form.statusManutencao = m.statusManutencao || 'ABERTA';
+    this.form.statusManutencao = this.normalizarStatusParaSelect(m.statusManutencao);
     this.form.dataInicioManutencao = (m.dataInicioManutencao || '').slice(0, 10);
     this.form.dataFimManutencao = (m.dataFimManutencao || '').slice(0, 10);
     this.form.observacoes = m.observacoes || '';
     this.form.paradaId = m.parada?.id || '';
+    this.form.kmOdometro = m.kmOdometro ?? null;
+    this.form.planoManutencaoPreventivaId = m.planoManutencaoPreventivaId || null;
+    this.form.valorOrcado = m.valorOrcado ?? null;
+    this.planoQuery = m.planoManutencaoPreventivaDescricao || '';
 
     // itens
     this.form.itens = (m.itens || []).map(i => ({
@@ -252,7 +269,22 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     this.isEditing = false;
     this.editingCodigo = null;
     this.form = this.emptyForm();
+    this.planoQuery = '';
     this.resetAutoComplete();
+  }
+
+  /** A API responde com os valores reais do enum (AGENDADA/CONCLUIDA), mas o <select> do
+   * formulário usa os nomes legados (ABERTA/FINALIZADA) que o back também aceita ao salvar. */
+  private normalizarStatusParaSelect(status?: string | null): StatusManutencao {
+    switch (status) {
+      case 'AGENDADA': return 'ABERTA';
+      case 'CONCLUIDA': return 'FINALIZADA';
+      case 'EM_ANDAMENTO': return 'EM_ANDAMENTO';
+      case 'CANCELADA': return 'CANCELADA';
+      case 'ABERTA': return 'ABERTA';
+      case 'FINALIZADA': return 'FINALIZADA';
+      default: return 'ABERTA';
+    }
   }
 
   emptyItem(): ManutencaoItemRequest {
@@ -272,6 +304,9 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
       observacoes: '',
       itens: [this.emptyItem()],
       valor: 0,
+      kmOdometro: null,
+      planoManutencaoPreventivaId: null,
+      valorOrcado: null,
     };
   }
 
@@ -348,6 +383,11 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
         valorUnitario: Number(i.valorUnitario || 0),
       })),
       valor: Number(this.form.valor || 0),
+      kmOdometro: this.form.kmOdometro != null && this.form.kmOdometro !== ('' as any)
+        ? Number(this.form.kmOdometro) : null,
+      planoManutencaoPreventivaId: this.form.planoManutencaoPreventivaId || null,
+      valorOrcado: this.form.valorOrcado != null && this.form.valorOrcado !== ('' as any)
+        ? Number(this.form.valorOrcado) : null,
     };
 
     this.loading = true;
@@ -364,7 +404,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
           this.carregarPagina();
         },
         error: (err) => {
-          this.errorMsg = err?.error?.message || 'Erro ao salvar manutenção.';
+          this.errorMsg = extrairMensagemErro(err, 'Erro ao salvar manutenção.');
         }
       });
   }
@@ -389,7 +429,40 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => this.carregarPagina(),
         error: (err) => {
-          this.errorMsg = err?.error?.message || 'Erro ao excluir manutenção.';
+          this.errorMsg = extrairMensagemErro(err, 'Erro ao excluir manutenção.');
+        },
+      });
+  }
+
+  // ====== aprovação de orçamento ======
+
+  abrirAprovacao(m: ManutencaoVM): void {
+    this.aprovacaoTarget = m;
+    this.aprovacaoForm = { statusAprovacao: 'APROVADO', observacao: '' };
+    this.showAprovacaoModal = true;
+  }
+
+  fecharAprovacao(): void {
+    this.showAprovacaoModal = false;
+    this.aprovacaoTarget = null;
+  }
+
+  confirmarAprovacao(): void {
+    if (!this.aprovacaoTarget?.codigo) return;
+
+    this.loading = true;
+    this.errorMsg = null;
+
+    this.api.aprovarOrcamento(this.aprovacaoTarget.codigo, this.aprovacaoForm)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => {
+          this.toast.success('Orçamento ' + (this.aprovacaoForm.statusAprovacao === 'APROVADO' ? 'aprovado' : 'rejeitado') + '.');
+          this.fecharAprovacao();
+          this.carregarPagina();
+        },
+        error: (err) => {
+          this.errorMsg = extrairMensagemErro(err, 'Erro ao decidir orçamento.');
         },
       });
   }
@@ -430,6 +503,21 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
       .slice(0, this.sugestoesMax);
   }
 
+  get sugestoesManPlano(): PlanoManutencaoPreventivaResponse[] {
+    const q = String(this.planoQuery || '').trim().toLowerCase();
+    const caminhao = String(this.form.caminhao || '').trim().toLowerCase();
+
+    return (this.planos || [])
+      .filter((p) => p.ativo !== false)
+      .filter((p) => !caminhao || String(p.codigoCaminhao || '').toLowerCase() === caminhao)
+      .filter((p) => {
+        if (!q) return true;
+        const hay = [p.descricao, p.codigoCaminhao].map((x) => String(x || '').toLowerCase()).join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
   get sugestoesManParada(): ParadaSugestao[] {
     const q = String(this.form.paradaId || '').trim().toLowerCase();
     if (!q) return [];
@@ -462,6 +550,23 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     const hasQuery = String(this.form.oficina || '').trim().length > 0;
     this.closeAllSugestoes();
     this.showSugManOficina = hasQuery;
+  }
+
+  onFocusManPlano(): void {
+    this.closeAllSugestoes();
+    this.showSugManPlano = true;
+  }
+
+  onInputManPlano(): void {
+    this.form.planoManutencaoPreventivaId = null;
+    this.closeAllSugestoes();
+    this.showSugManPlano = true;
+  }
+
+  selectManPlano(p: PlanoManutencaoPreventivaResponse): void {
+    this.form.planoManutencaoPreventivaId = p.id;
+    this.planoQuery = p.descricao;
+    this.closeAllSugestoes();
   }
 
   onFocusManParada(): void {
@@ -521,12 +626,17 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
       next: (res) => (this.oficinas = res.content || []),
       error: () => (this.oficinas = []),
     });
+    this.planoApi.listar({ page: 0, size: 200, sort: 'descricao,asc', ativo: true }).subscribe({
+      next: (res) => (this.planos = res.content || []),
+      error: () => (this.planos = []),
+    });
   }
 
   private closeAllSugestoes(): void {
     this.showSugManCaminhao = false;
     this.showSugManOficina = false;
     this.showSugManParada = false;
+    this.showSugManPlano = false;
   }
 
   private resetAutoComplete(): void {

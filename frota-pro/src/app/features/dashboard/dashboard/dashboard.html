@@ -64,6 +64,11 @@
         <span *ngIf="!isClosed">Relatórios</span>
       </a>
 
+      <a class="menu-item" routerLink="multas" routerLinkActive="active">
+        <i class="icon fas fa-gavel"></i>
+        <span *ngIf="!isClosed">Multas</span>
+      </a>
+
       <!-- OFICINA -->
       <li class="menu-item submenu-wrapper" [class.open]="submenuOficinaAberto">
 
@@ -84,6 +89,7 @@
 
         <ul class="submenu" *ngIf="submenuOficinaAberto && !isClosed">
           <li routerLink="/dashboard/manutencoes" routerLinkActive="active">Manutenções</li>
+          <li routerLink="/dashboard/planos-manutencao-preventiva" routerLinkActive="active">Planos Preventivos</li>
           <li routerLink="/dashboard/oficinas" routerLinkActive="active">Oficinas</li>
           <li routerLink="/dashboard/pneus" routerLinkActive="active">Vida Útil do Pneu</li>
         </ul>
@@ -146,6 +152,12 @@
             routerLink="/dashboard/saude-sistema"
             routerLinkActive="active">
             Saúde do Sistema
+          </li>
+          <li
+            *ngIf="(user$ | async)?.authorities?.includes('ROLE_ADMIN')"
+            routerLink="/dashboard/configuracao-empresa"
+            routerLinkActive="active">
+            Configurações da Empresa
           </li>
           <!-- ❌ removido: Logs -->
         </ul>

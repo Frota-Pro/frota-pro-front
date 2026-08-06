@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
-import { ManutencaoRequest, ManutencaoResponse } from './manutencao-api.models';
+import { AprovarManutencaoRequest, ManutencaoRequest, ManutencaoResponse } from './manutencao-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class ManutencaoApiService extends BaseApiService {
@@ -58,6 +58,13 @@ export class ManutencaoApiService extends BaseApiService {
 
   deletar(codigo: string) {
     return this.http.delete<void>(`${this.apiUrl}/manutencao/${encodeURIComponent(codigo)}`);
+  }
+
+  aprovarOrcamento(codigo: string, payload: AprovarManutencaoRequest) {
+    return this.http.patch<ManutencaoResponse>(
+      `${this.apiUrl}/manutencao/${encodeURIComponent(codigo)}/aprovacao`,
+      payload
+    );
   }
 
   listarPorCaminhao(codigoCaminhao: string, opts: { page?: number; size?: number; sort?: string } = {}) {

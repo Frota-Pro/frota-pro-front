@@ -11,6 +11,13 @@ export const routes: Routes = [
       import('./features/auth/login/login.component').then((m) => m.LoginComponent),
   },
 
+  {
+    path: 'trocar-senha',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/auth/trocar-senha/trocar-senha.component').then((m) => m.TrocarSenhaComponent),
+  },
+
   // Página pública de download do app (link enviado aos motoristas)
   {
     path: 'versao-app',
@@ -126,6 +133,14 @@ export const routes: Routes = [
             .then((m) => m.MovimentacoesSemCargaComponent),
       },
 
+      // Multas
+      {
+        path: 'multas',
+        loadComponent: () =>
+          import('./features/multas/multas.component')
+            .then((m) => m.MultasComponent),
+      },
+
       // Oficina - Manutenções
       {
         path: 'manutencoes',
@@ -138,6 +153,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/oficina/manutencao-detalhe/manutencao-detalhe.component')
             .then(m => m.ManutencaoDetalheComponent),
+      },
+      {
+        path: 'planos-manutencao-preventiva',
+        loadComponent: () =>
+          import('./features/plano-manutencao-preventiva/plano-manutencao-preventiva.component')
+            .then(m => m.PlanoManutencaoPreventivaComponent),
       },
 
       // Oficinas
@@ -195,6 +216,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/saude-sistema/saude-sistema.component')
             .then(m => m.SaudeSistemaComponent)
+      },
+      {
+        path: 'configuracao-empresa',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/configuracao-empresa/configuracao-empresa.component')
+            .then(m => m.ConfiguracaoEmpresaComponent)
       },
 
       // ❌ removido: admin/logs
