@@ -6,6 +6,7 @@ import { finalize } from 'rxjs/operators';
 import { catchError, map } from 'rxjs/operators';
 import { Observable, of, Subscription } from 'rxjs';
 
+import { extrairMensagemErro } from '../../core/utils/api-error.util';
 import { MetaApiService } from '../../core/api/meta-api.service';
 import {
   DesempenhoCategoriaMetaLinha,
@@ -163,7 +164,7 @@ export class MetasComponent implements OnInit, OnDestroy {
           this.metas = [];
           this.totalPages = 0;
           this.totalElements = 0;
-          this.errorMsg = 'Não foi possível carregar as metas.';
+          this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar as metas.');
         },
       });
   }
@@ -186,7 +187,7 @@ export class MetasComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           this.desempenhoUnificadoLinhas = [];
-          this.desempenhoUnificadoError = 'Não foi possível carregar o desempenho unificado de metas.';
+          this.desempenhoUnificadoError = extrairMensagemErro(err, 'Não foi possível carregar o desempenho unificado de metas.');
         },
       });
   }
@@ -216,7 +217,7 @@ export class MetasComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error(err);
-          this.desempenhoUnificadoError = 'Não foi possível gerar o PDF de desempenho de metas.';
+          this.desempenhoUnificadoError = extrairMensagemErro(err, 'Não foi possível gerar o PDF de desempenho de metas.');
         },
       });
   }
@@ -526,7 +527,7 @@ export class MetasComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           this.desempenhoCategoria = null;
-          this.desempenhoError = 'Não foi possível carregar o desempenho da categoria.';
+          this.desempenhoError = extrairMensagemErro(err, 'Não foi possível carregar o desempenho da categoria.');
         },
       });
   }
@@ -561,7 +562,7 @@ export class MetasComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error(err);
-          this.desempenhoError = 'Não foi possível gerar o PDF de metas por categoria.';
+          this.desempenhoError = extrairMensagemErro(err, 'Não foi possível gerar o PDF de metas por categoria.');
         },
       });
   }
@@ -634,7 +635,7 @@ export class MetasComponent implements OnInit, OnDestroy {
           },
           error: (err) => {
             console.error(err);
-            this.toast.error('Não foi possível salvar a meta.');
+            this.toast.error(extrairMensagemErro(err, 'Não foi possível salvar a meta.'));
           },
         });
     });
@@ -668,7 +669,7 @@ export class MetasComponent implements OnInit, OnDestroy {
           this.carregar();
           this.toast.success('Meta concluída com sucesso.');
         },
-        error: () => this.toast.error('Não foi possível concluir a meta.'),
+        error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível concluir a meta.')),
       });
   }
 
@@ -683,7 +684,7 @@ export class MetasComponent implements OnInit, OnDestroy {
           this.carregar();
           this.toast.success('Meta excluída com sucesso.');
         },
-        error: () => this.toast.error('Não foi possível excluir a meta.'),
+        error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível excluir a meta.')),
       });
   }
 

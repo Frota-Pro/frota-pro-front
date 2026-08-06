@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { MetaApiService } from '../../../core/api/meta-api.service';
 import { MetaRequest, MetaResponse, TipoMetaResponse } from '../../../core/api/meta-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
@@ -100,7 +101,7 @@ export class MetaDetalheComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.errorMsg = 'Não foi possível carregar o detalhamento da meta.';
+          this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar o detalhamento da meta.');
           this.data = null;
         },
       });
@@ -264,7 +265,7 @@ export class MetaDetalheComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toast.error('Não foi possível salvar as alterações.');
+          this.toast.error(extrairMensagemErro(err, 'Não foi possível salvar as alterações.'));
         },
       });
   }
@@ -282,7 +283,7 @@ export class MetaDetalheComponent implements OnInit {
           this.toast.success('Meta excluída com sucesso.');
           this.voltar();
         },
-        error: () => this.toast.error('Não foi possível excluir a meta.'),
+        error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível excluir a meta.')),
       });
   }
 

@@ -289,8 +289,8 @@ export class CargaDetalheComponent implements OnInit {
           console.error(err);
           this.carga = null;
           this.paradas = [];
-          this.errorMsg = 'Não foi possível carregar os detalhes da carga.';
-          this.toast('error', 'Falha ao carregar detalhes da carga.', 'Erro');
+          this.errorMsg = this.mensagemErro(err, 'Não foi possível carregar os detalhes da carga.');
+          this.toast('error', this.errorMsg, 'Erro');
         },
       });
   }
@@ -306,7 +306,7 @@ export class CargaDetalheComponent implements OnInit {
         error: (err) => {
           console.error(err);
           this.paradas = [];
-          this.toast('error', 'Não foi possível carregar as paradas.', 'Paradas');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível carregar as paradas.'), 'Paradas');
         },
       });
   }
@@ -356,7 +356,7 @@ export class CargaDetalheComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toast('error', 'Não foi possível salvar a ordem de entrega.', 'Ordem');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível salvar a ordem de entrega.'), 'Ordem');
         },
       });
   }
@@ -403,7 +403,7 @@ export class CargaDetalheComponent implements OnInit {
         },
         error: (err2) => {
           console.error(err2);
-          this.toast('error', 'Não foi possível salvar a observação.', 'Observação');
+          this.toast('error', this.mensagemErro(err2, 'Não foi possível salvar a observação.'), 'Observação');
         },
       });
   }
@@ -442,7 +442,7 @@ export class CargaDetalheComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toast('error', 'Não foi possível marcar a carga como transferência.', 'Transferência');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível marcar a carga como transferência.'), 'Transferência');
         },
       });
   }
@@ -466,7 +466,7 @@ export class CargaDetalheComponent implements OnInit {
         error: (err) => {
           console.error(err);
           this.anexosParada = [];
-          this.toast('error', 'Não foi possível listar os anexos dessa parada.', 'Anexos');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível listar os anexos dessa parada.'), 'Anexos');
         },
       });
   }
@@ -514,7 +514,7 @@ export class CargaDetalheComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toast('error', 'Não foi possível enviar o anexo.', 'Anexos');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível enviar o anexo.'), 'Anexos');
         },
       });
   }
@@ -528,7 +528,7 @@ export class CargaDetalheComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.toast('error', 'Não foi possível abrir o preview do arquivo.', 'Arquivo');
+        this.toast('error', this.mensagemErro(err, 'Não foi possível abrir o preview do arquivo.'), 'Arquivo');
       },
     });
   }
@@ -553,7 +553,7 @@ export class CargaDetalheComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.toast('error', 'Não foi possível baixar o arquivo.', 'Arquivo');
+        this.toast('error', this.mensagemErro(err, 'Não foi possível baixar o arquivo.'), 'Arquivo');
       },
     });
   }
@@ -752,9 +752,9 @@ export class CargaDetalheComponent implements OnInit {
         next: (res) => {
           this.eixosCaminhao = Array.isArray(res) ? res : (res.content || []);
         },
-        error: () => {
+        error: (err) => {
           this.eixosCaminhao = [];
-          this.toast('error', 'Não foi possível carregar os eixos cadastrados do caminhão.', 'Pneus');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível carregar os eixos cadastrados do caminhão.'), 'Pneus');
         },
       });
   }
@@ -1029,7 +1029,7 @@ export class CargaDetalheComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toast('error', 'Não foi possível cadastrar a parada.', 'Paradas');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível cadastrar a parada.'), 'Paradas');
         },
       });
   }

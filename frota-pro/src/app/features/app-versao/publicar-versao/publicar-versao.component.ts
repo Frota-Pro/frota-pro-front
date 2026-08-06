@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { AppVersaoApiService } from '../../../core/api/app-versao-api.service';
 import { AppVersaoAtualResponse } from '../../../core/api/app-versao-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
@@ -85,7 +86,7 @@ export class PublicarVersaoComponent implements OnInit {
         },
         error: (err) => {
           console.error('[PublicarVersao] erro ao publicar', err);
-          this.toast.error('Erro ao publicar a versão.');
+          this.toast.error(extrairMensagemErro(err, 'Erro ao publicar a versão.'));
           this.enviando = false;
         },
       });

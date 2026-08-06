@@ -6,6 +6,7 @@ import { finalize } from 'rxjs/operators';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
 import { CategoriaCaminhaoApiService } from '../../../core/api/categoria-caminhao-api.service';
 import { CaminhaoDetalheResponse, CaminhaoRequest } from '../../../core/api/caminhao-api.models';
@@ -196,7 +197,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
           console.error(err);
           this.data = null;
           this.metasHistorico = [];
-          this.errorMsg = 'Não foi possível carregar o detalhamento do caminhão.';
+          this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar o detalhamento do caminhão.');
         },
       });
   }
@@ -229,7 +230,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           this.eixos = [];
-          this.eixosError = 'Não foi possível carregar os eixos do caminhão.';
+          this.eixosError = extrairMensagemErro(err, 'Não foi possível carregar os eixos do caminhão.');
         },
       });
   }
@@ -260,7 +261,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error(err);
-          this.eixosError = err?.error?.message || 'Não foi possível cadastrar o eixo.';
+          this.eixosError = extrairMensagemErro(err, 'Não foi possível cadastrar o eixo.');
         },
       });
   }
@@ -284,7 +285,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
         next: () => this.carregarEixos(),
         error: (err) => {
           console.error(err);
-          this.eixosError = err?.error?.message || 'Não foi possível excluir o eixo.';
+          this.eixosError = extrairMensagemErro(err, 'Não foi possível excluir o eixo.');
         },
       });
   }
@@ -515,8 +516,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error(err);
-          const msg = err?.error?.error || err?.error?.message || 'Não foi possível salvar as alterações.';
-          alert(msg);
+          alert(extrairMensagemErro(err, 'Não foi possível salvar as alterações.'));
         },
       });
   }
@@ -545,7 +545,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           this.docs = [];
-          this.docsError = 'Não foi possível carregar os documentos.';
+          this.docsError = extrairMensagemErro(err, 'Não foi possível carregar os documentos.');
         },
       });
   }
@@ -578,7 +578,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error(err);
-          alert('Não foi possível enviar o documento.');
+          alert(extrairMensagemErro(err, 'Não foi possível enviar o documento.'));
         },
       });
   }
@@ -612,6 +612,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
         this.previewUrl = null;
         this.previewSafeUrl = null;
         this.showPreview = true;
+        alert(extrairMensagemErro(err, 'Não foi possível abrir o preview do documento.'));
       },
     });
   }
@@ -656,7 +657,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error(err);
-        alert('Não foi possível baixar o arquivo.');
+        alert(extrairMensagemErro(err, 'Não foi possível baixar o arquivo.'));
       },
     });
   }

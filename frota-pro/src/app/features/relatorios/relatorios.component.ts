@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { finalize } from 'rxjs';
 
+import { extrairMensagemErro } from '../../core/utils/api-error.util';
 import { PneuApiService } from '../../core/api/pneu-api.service';
 import { PneuVidaUtilRelatorioLinha, PneuVidaUtilRelatorioResponse } from '../../core/api/pneu-api.models';
 import { RelatorioPdfApiService } from '../../core/api/relatorio-pdf-api.service';
@@ -239,7 +240,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
           },
           error: (e) => {
             this.vidaUtilResult = null;
-            this.errorMsg = e?.error?.message || 'Erro ao carregar relatório de vida útil.';
+            this.errorMsg = extrairMensagemErro(e, 'Erro ao carregar relatório de vida útil.');
           },
         });
       return;
@@ -316,7 +317,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
         },
         error: (e) => {
           // às vezes erro vem como Blob (application/json) — mantém fallback simples
-          this.errorMsg = e?.error?.message || 'Erro ao gerar PDF.';
+          this.errorMsg = extrairMensagemErro(e, 'Erro ao gerar PDF.');
         },
       });
   }
@@ -365,7 +366,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
           URL.revokeObjectURL(url);
         },
         error: (e) => {
-          this.errorMsg = e?.error?.message || 'Erro ao exportar PDF.';
+          this.errorMsg = extrairMensagemErro(e, 'Erro ao exportar PDF.');
         },
       });
   }

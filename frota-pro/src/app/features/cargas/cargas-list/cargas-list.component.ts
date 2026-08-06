@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { CargaApiService } from '../../../core/api/carga-api.service';
 import {
   CargaMinResponse,
@@ -174,7 +175,7 @@ export class CargasListComponent implements OnInit, OnDestroy {
           console.error(err);
           this.rows = [];
           this.totalPages = 0;
-          this.errorMsg = 'Não foi possível carregar as cargas.';
+          this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar as cargas.');
           this.toast('error', this.errorMsg, 'Erro');
         },
       });

@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { OficinaApiService } from '../../../core/api/oficina-api.service';
 import { OficinaResponse } from '../../../core/api/oficina-api.models';
 import { OficinaDashboardResponse } from '../../../core/api/oficina-dashboard.models';
@@ -76,7 +77,7 @@ export class OficinaDetalheComponent implements OnInit {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (o) => this.oficina = o,
-        error: (err) => this.erro = err?.error?.message || 'Erro ao carregar oficina.',
+        error: (err) => this.erro = extrairMensagemErro(err, 'Erro ao carregar oficina.'),
       });
   }
 
@@ -97,7 +98,7 @@ export class OficinaDetalheComponent implements OnInit {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (d) => this.dash = d,
-        error: (err) => this.erro = err?.error?.message || 'Erro ao carregar dashboard.',
+        error: (err) => this.erro = extrairMensagemErro(err, 'Erro ao carregar dashboard.'),
       });
   }
 

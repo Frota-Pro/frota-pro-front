@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
 import { ToastService } from '../../shared/ui/toast/toast.service';
+import { extrairMensagemErro } from '../../core/utils/api-error.util';
 
 import { AbastecimentoApiService } from '../../core/api/abastecimento-api.service';
 import { AbastecimentoRequest, AbastecimentoResponse } from '../../core/api/abastecimento-api.models';
@@ -374,7 +375,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
           this.abastecimentos = (res.content || []).map((a) => this.toVM(a));
         },
         error: (err) => {
-          this.erro = err?.error?.message || 'Falha ao carregar abastecimentos.';
+          this.erro = extrairMensagemErro(err, 'Falha ao carregar abastecimentos.');
           this.abastecimentos = [];
         },
       });
@@ -793,7 +794,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
           this.buscar(0);
         },
         error: (err) => {
-          this.toast.error(err?.error?.message || 'Falha ao salvar abastecimento.');
+          this.toast.error(extrairMensagemErro(err, 'Falha ao salvar abastecimento.'));
         },
       });
   }
@@ -817,7 +818,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
           this.metaApi.invalidate();
           this.buscar(0);
         },
-        error: (err) => this.toast.error(err?.error?.message || 'Falha ao excluir abastecimento.'),
+        error: (err) => this.toast.error(extrairMensagemErro(err, 'Falha ao excluir abastecimento.')),
       });
   }
 

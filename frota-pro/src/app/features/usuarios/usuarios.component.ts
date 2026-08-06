@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+import { extrairMensagemErro } from '../../core/utils/api-error.util';
 import { UsuarioApiService } from '../../core/api/usuario-api.service';
 import {
   UsuarioResponse,
@@ -77,7 +78,7 @@ export class UsuariosComponent implements OnInit {
       },
       error: (err) => {
         console.error('[Usuarios] erro API', err);
-        this.toast.error('Erro ao carregar usuários.');
+        this.toast.error(extrairMensagemErro(err, 'Erro ao carregar usuários.'));
         this.loading = false;
       }
     });
@@ -93,16 +94,22 @@ export class UsuariosComponent implements OnInit {
       };
 
       this.usuarioService.atualizar(this.usuarioSelecionado.id, update)
-        .subscribe(() => {
-          this.cancelar();
-          this.carregar();
+        .subscribe({
+          next: () => {
+            this.cancelar();
+            this.carregar();
+          },
+          error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível salvar o usuário.')),
         });
 
     } else {
       this.usuarioService.criar(this.form)
-        .subscribe(() => {
-          this.cancelar();
-          this.carregar();
+        .subscribe({
+          next: () => {
+            this.cancelar();
+            this.carregar();
+          },
+          error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível criar o usuário.')),
         });
     }
   }
@@ -135,7 +142,10 @@ export class UsuariosComponent implements OnInit {
 
   alternarAtivo(usuario: UsuarioResponse) {
     this.usuarioService.atualizarAtivo(usuario.id, !usuario.ativo)
-      .subscribe(() => this.carregar());
+      .subscribe({
+        next: () => this.carregar(),
+        error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível alterar o status do usuário.')),
+      });
   }
 
   resetarSenha(usuario: UsuarioResponse) {
@@ -143,7 +153,10 @@ export class UsuariosComponent implements OnInit {
     if (!novaSenha) return;
 
     this.usuarioService.atualizarSenha(usuario.id, { novaSenha })
-      .subscribe(() => this.toast.success('Senha atualizada com sucesso'));
+      .subscribe({
+        next: () => this.toast.success('Senha atualizada com sucesso'),
+        error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível atualizar a senha.')),
+      });
   }
 
   toggleRole(role: string) {
@@ -177,7 +190,7 @@ export class UsuariosComponent implements OnInit {
       },
       error: (err) => {
         console.error('[Usuarios] erro criarUsuarioMotorista', err);
-        this.toast.error('Erro ao criar usuário para o motorista.');
+        this.toast.error(extrairMensagemErro(err, 'Erro ao criar usuário para o motorista.'));
       }
     });
   }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { IntegracaoWinthorApiService } from '../../../core/api/integracao-winthor-api.service';
 import {
   IntegracaoWinthorConfigResponse,
@@ -592,9 +593,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
   }
 
   showError(userMsg: string, err: any): void {
-    const apiMsg = err?.error?.message || err?.error?.erro || err?.message;
-    const text = apiMsg ? `${userMsg} (${apiMsg})` : userMsg;
-    this.showToast('error', text);
+    this.showToast('error', extrairMensagemErro(err, userMsg));
     // eslint-disable-next-line no-console
     console.error(userMsg, err);
   }

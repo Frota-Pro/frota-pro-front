@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { PneuApiService } from '../../../core/api/pneu-api.service';
 import { PneuRequest, PneuResponse, PneuVidaUtilResponse } from '../../../core/api/pneu-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
@@ -98,7 +99,7 @@ export class PneusComponent implements OnInit, OnDestroy {
           this.vidaMap = {};
           this.prefetchVidaUtil();
         },
-        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao carregar pneus.',
+        error: (err) => this.errorMsg = extrairMensagemErro(err, 'Erro ao carregar pneus.'),
       });
   }
 
@@ -260,7 +261,7 @@ export class PneusComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: () => { this.closeModal(); this.carregarPagina(); },
-        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao salvar pneu.',
+        error: (err) => this.errorMsg = extrairMensagemErro(err, 'Erro ao salvar pneu.'),
       });
   }
 
@@ -282,7 +283,7 @@ export class PneusComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: () => this.carregarPagina(),
-        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao excluir pneu.',
+        error: (err) => this.errorMsg = extrairMensagemErro(err, 'Erro ao excluir pneu.'),
       });
   }
 

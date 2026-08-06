@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { PneuApiService } from '../../../core/api/pneu-api.service';
 import {
   PneuResponse,
@@ -113,7 +114,7 @@ export class PneuDetalheComponent implements OnInit, OnDestroy {
           this.carregarVida();
           this.carregarMovimentacoes();
         },
-        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao carregar pneu.',
+        error: (err) => this.errorMsg = extrairMensagemErro(err, 'Erro ao carregar pneu.'),
       });
   }
 
@@ -331,7 +332,7 @@ export class PneuDetalheComponent implements OnInit, OnDestroy {
   }
 
   private showEventoError(err: any, fallback: string): void {
-    const message = err?.error?.message || err?.error?.erro || fallback;
+    const message = extrairMensagemErro(err, fallback);
     this.errorMsg = message;
     this.toast.error(message);
   }

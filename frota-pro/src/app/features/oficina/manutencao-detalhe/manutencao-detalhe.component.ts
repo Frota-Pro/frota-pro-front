@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { ManutencaoApiService } from '../../../core/api/manutencao-api.service';
 import { ManutencaoRequest, ManutencaoResponse } from '../../../core/api/manutencao-api.models';
 import { DocumentoManutencaoApiService } from '../../../core/api/documento-manutencao-api.service';
@@ -72,7 +73,7 @@ export class ManutencaoDetalheComponent implements OnInit {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (m) => this.manutencao = m,
-        error: (err) => this.erro = err?.error?.message || 'Erro ao carregar manutenção.',
+        error: (err) => this.erro = extrairMensagemErro(err, 'Erro ao carregar manutenção.'),
       });
   }
 
@@ -111,7 +112,7 @@ export class ManutencaoDetalheComponent implements OnInit {
           this.tipoDoc = 'OUTRO';
           this.carregarDocs();
         },
-        error: (err) => this.toast.error(err?.error?.message || 'Erro ao enviar documento.'),
+        error: (err) => this.toast.error(extrairMensagemErro(err, 'Erro ao enviar documento.')),
       });
   }
 
