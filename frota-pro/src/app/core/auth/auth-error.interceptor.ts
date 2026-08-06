@@ -17,6 +17,13 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      if (error.status === 403 && error.headers.get('X-Must-Change-Password') === 'true') {
+        if (!router.url.startsWith('/trocar-senha')) {
+          router.navigate(['/trocar-senha']);
+        }
+        return throwError(() => error);
+      }
+
       if (error.status !== 401 || isAuthRequest) {
         return throwError(() => error);
       }
