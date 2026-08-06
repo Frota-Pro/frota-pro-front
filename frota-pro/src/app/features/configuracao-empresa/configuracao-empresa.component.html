@@ -1,0 +1,97 @@
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>Configurações da Empresa</h1>
+      <p>Logo do DANFE e template do e-mail usado para enviar notas fiscais.</p>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <div>Carregando configurações...</div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- Logo -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Logo (aparece no DANFE)</h2>
+      </div>
+      <div class="card-body">
+        <div class="logo-row">
+          <div class="logo-preview">
+            <img *ngIf="config?.logo" [src]="config?.logo?.urlPreview" alt="Logo da empresa" />
+            <span *ngIf="!config?.logo" class="logo-empty">Nenhuma logo enviada</span>
+          </div>
+
+          <div class="logo-upload">
+            <input type="file" accept="image/*" (change)="onLogoSelecionada($event)" />
+            <button class="btn primary" type="button" (click)="enviarLogo()" [disabled]="uploadingLogo">
+              {{ uploadingLogo ? 'Enviando...' : 'Enviar logo' }}
+            </button>
+            <p class="muted-sm">
+              Essa logo aparece no DANFE como identificação do emitente. Use uma imagem com fundo transparente ou branco.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E-mail -->
+    <div class="card">
+      <div class="card-header">
+        <h2>E-mail de envio de nota fiscal</h2>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Nome da empresa</label>
+          <input type="text" [(ngModel)]="form.nomeEmpresa" placeholder="Ex: Armazém Galdino" />
+          <span class="muted-sm">Disponível como placeholder <code>&#123;nomeEmpresa&#125;</code> no assunto/corpo.</span>
+        </div>
+
+        <div class="field">
+          <label>E-mail remetente</label>
+          <input type="email" [(ngModel)]="form.emailRemetente" placeholder="Ex: notas@suaempresa.com.br" />
+          <span class="muted-sm">Precisa ser um remetente verificado na sua conta do Resend.</span>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label>Assunto</label>
+            <button class="btn ghost small" type="button" (click)="usarAssuntoPadrao()">Usar padrão</button>
+          </div>
+          <input type="text" [(ngModel)]="form.emailAssunto" placeholder="Ex: Nota fiscal {{ '{numeroNota}' }} - Sua Empresa" />
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label>Corpo do e-mail (HTML)</label>
+            <button class="btn ghost small" type="button" (click)="usarCorpoPadrao()">Usar padrão</button>
+          </div>
+          <textarea rows="10" [(ngModel)]="form.emailCorpoHtml" placeholder="HTML do corpo do e-mail"></textarea>
+          <span class="muted-sm">
+            Placeholders disponíveis: <code>&#123;numeroNota&#125;</code>, <code>&#123;nomeEmpresa&#125;</code>.
+            Cuidado: o conteúdo é enviado como HTML puro, sem validação — confira o resultado com cuidado.
+          </span>
+        </div>
+
+        <div class="preview-box" *ngIf="form.emailCorpoHtml">
+          <div class="preview-label">Pré-visualização</div>
+          <div class="preview-content" [innerHTML]="form.emailCorpoHtml"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions-bar">
+      <button class="btn primary" type="button" (click)="salvar()" [disabled]="saving">
+        {{ saving ? 'Salvando...' : 'Salvar configurações' }}
+      </button>
+    </div>
+
+  </ng-container>
+
+</div>
