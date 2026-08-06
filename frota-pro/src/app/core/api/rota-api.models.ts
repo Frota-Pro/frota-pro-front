@@ -14,6 +14,7 @@ export interface RotaRequest {
 
 export interface ClienteHistoricoRotaResponse {
   cliente: string;
+  cidade: string | null;
   quantidadeCargas: number;
   ultimaCargaEm: string | null; // yyyy-MM-dd
 }

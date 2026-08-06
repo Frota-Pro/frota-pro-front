@@ -122,22 +122,27 @@
         <span>Carregando...</span>
       </div>
 
-      <table class="table" *ngIf="!clientesLoading && clientesHistorico.length > 0">
-        <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Cargas</th>
-          <th>Última carga</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let c of clientesHistorico">
-          <td>{{ c.cliente }}</td>
-          <td>{{ c.quantidadeCargas }}</td>
-          <td>{{ formatDateBr(c.ultimaCargaEm) }}</td>
-        </tr>
-        </tbody>
-      </table>
+      <div *ngIf="!clientesLoading && clientesHistorico.length > 0" class="cidades-agrupadas">
+        <div class="cidade-grupo" *ngFor="let grupo of clientesAgrupadosPorCidade">
+          <h3 class="cidade-titulo">{{ grupo.cidade }}</h3>
+          <table class="table">
+            <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Cargas</th>
+              <th>Última carga</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let c of grupo.clientes">
+              <td>{{ c.cliente }}</td>
+              <td>{{ c.quantidadeCargas }}</td>
+              <td>{{ formatDateBr(c.ultimaCargaEm) }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <div class="empty" *ngIf="!clientesLoading && clientesHistorico.length === 0">
         <div class="icon">🧾</div>

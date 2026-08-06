@@ -122,6 +122,10 @@
 
 .modal-footer { padding: 12px 14px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eef2f7; }
 
+.cidades-agrupadas { display: flex; flex-direction: column; gap: 16px; }
+.cidade-grupo { display: flex; flex-direction: column; gap: 6px; }
+.cidade-titulo { margin: 0; font-size: 13px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: .02em; }
+
 @media (max-width: 760px) {
   .actions { flex-direction: column; width: 100%; }
 }

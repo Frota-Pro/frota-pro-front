@@ -15,6 +15,11 @@ interface ToastItem {
   message: string;
 }
 
+interface GrupoClientesPorCidade {
+  cidade: string;
+  clientes: ClienteHistoricoRotaResponse[];
+}
+
 @Component({
   selector: 'app-rotas-list',
   standalone: true,
@@ -212,6 +217,25 @@ export class RotasListComponent implements OnInit, OnDestroy {
     this.showClientesModal = false;
     this.clientesRotaCodigo = null;
     this.clientesHistorico = [];
+  }
+
+  /** Agrupa a lista (já vem ordenada por cidade da API) em blocos por cidade,
+   * para exibir "cidade -> clientes daquela cidade" no modal. Clientes sem
+   * cidade cadastrada no WinThor caem no grupo "Sem cidade". */
+  get clientesAgrupadosPorCidade(): GrupoClientesPorCidade[] {
+    const grupos: GrupoClientesPorCidade[] = [];
+
+    for (const c of this.clientesHistorico) {
+      const cidade = (c.cidade || '').trim() || 'Sem cidade';
+      let grupo = grupos.find((g) => g.cidade === cidade);
+      if (!grupo) {
+        grupo = { cidade, clientes: [] };
+        grupos.push(grupo);
+      }
+      grupo.clientes.push(c);
+    }
+
+    return grupos;
   }
 
   formatDateBr(value: string | null | undefined): string {
