@@ -226,6 +226,13 @@ export const routes: Routes = [
           import('./features/configuracao-empresa/configuracao-empresa.component')
             .then(m => m.ConfiguracaoEmpresaComponent)
       },
+      {
+        path: 'parametros-sistema',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/parametros-sistema/parametros-sistema.component')
+            .then(m => m.ParametrosSistemaComponent)
+      },
 
       // ❌ removido: admin/logs
 

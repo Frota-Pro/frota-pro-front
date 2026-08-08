@@ -159,6 +159,12 @@
             routerLinkActive="active">
             Configurações da Empresa
           </li>
+          <li
+            *ngIf="(user$ | async)?.authorities?.includes('ROLE_ADMIN')"
+            routerLink="/dashboard/parametros-sistema"
+            routerLinkActive="active">
+            Parâmetros do Sistema
+          </li>
           <!-- ❌ removido: Logs -->
         </ul>
       </li>

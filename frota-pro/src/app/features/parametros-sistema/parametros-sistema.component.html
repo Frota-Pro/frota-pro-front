@@ -1,0 +1,65 @@
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>Parâmetros do Sistema</h1>
+      <p>Regras de negócio das rotinas automáticas de aviso — antes fixas no código, agora ajustáveis por aqui.</p>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <div>Carregando parâmetros...</div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Vencimentos e manutenção</h2>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Dias de antecedência para avisar de vencimento de documento</label>
+          <input type="number" min="0" [(ngModel)]="form.diasAntecedenciaVencimentoDocumento" />
+          <span class="muted-sm">Usado no aviso de vencimento da CNH do motorista e dos documentos do caminhão.</span>
+        </div>
+
+        <div class="field">
+          <label>Km de antecedência para avisar de troca de pneu</label>
+          <input type="number" min="0" [(ngModel)]="form.kmAntecedenciaTrocaPneu" />
+          <span class="muted-sm">Quantos km antes do previsto no plano de manutenção preventiva o sistema já avisa.</span>
+        </div>
+
+        <div class="field">
+          <label>Dias de manutenção parada antes de avisar</label>
+          <input type="number" min="0" [(ngModel)]="form.diasManutencaoEstagnada" />
+          <span class="muted-sm">Quantos dias uma manutenção pode ficar agendada/em andamento sem concluir antes do sistema avisar.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Multas</h2>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Dias de antecedência para avisar de prazo de multa</label>
+          <input type="number" min="0" [(ngModel)]="form.diasAntecedenciaPrazoMulta" />
+          <span class="muted-sm">Vale tanto para o prazo de pagamento quanto para o prazo de recurso da multa.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions-bar">
+      <button class="btn primary" type="button" (click)="salvar()" [disabled]="saving">
+        {{ saving ? 'Salvando...' : 'Salvar parâmetros' }}
+      </button>
+    </div>
+
+  </ng-container>
+
+</div>
