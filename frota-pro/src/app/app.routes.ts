@@ -74,13 +74,15 @@ export const routes: Routes = [
             .then(m => m.CaminhaoDetalheComponent),
       },
 
-      // Rotas
+      // Roteirização (cidades + rotas)
       {
-        path: 'rotas',
+        path: 'roteirizacao',
         loadComponent: () =>
-          import('./features/rotas/rotas-list/rotas-list.component')
-            .then(m => m.RotasListComponent),
+          import('./features/roteirizacao/roteirizacao.component')
+            .then(m => m.RoteirizacaoComponent),
       },
+      // mantém o link antigo funcionando (bookmarks, etc.)
+      { path: 'rotas', redirectTo: 'roteirizacao', pathMatch: 'full' },
 
       // Cargas
       {
