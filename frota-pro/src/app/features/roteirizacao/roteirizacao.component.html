@@ -19,6 +19,7 @@
   <!-- Tabs -->
   <div class="tabs">
     <button class="tab" [class.active]="tab==='cidades'" (click)="setTab('cidades')" type="button">Cidades</button>
+    <button class="tab" [class.active]="tab==='roteirizar'" (click)="setTab('roteirizar')" type="button">Roteirizar</button>
     <button class="tab" [class.active]="tab==='rotas'" (click)="setTab('rotas')" type="button">Rotas</button>
   </div>
 
@@ -83,6 +84,70 @@
         <p>Assim que cargas com notas fiscais forem sincronizadas, as cidades aparecem aqui.</p>
       </div>
     </ng-template>
+  </ng-container>
+
+  <!-- ========================= -->
+  <!-- ROTEIRIZAR -->
+  <!-- ========================= -->
+  <ng-container *ngIf="tab==='roteirizar'">
+    <div class="header sub-header">
+      <div>
+        <p class="muted">
+          Escolha uma cidade e defina a ordem em que os clientes devem ser visitados. Essa ordem passa a
+          valer automaticamente nas próximas cargas sincronizadas pra essa cidade — cargas já sincronizadas
+          não mudam.
+        </p>
+      </div>
+    </div>
+
+    <div class="roteirizar-select">
+      <label>Cidade</label>
+      <select [(ngModel)]="cidadeRoteirizarSel" (ngModelChange)="onSelecionarCidadeRoteirizar()">
+        <option value="">Selecione uma cidade...</option>
+        <option *ngFor="let c of cidadesParaSelecao" [value]="c">{{ c }}</option>
+      </select>
+      <span class="muted" *ngIf="cidadesParaSelecaoLoading">Carregando cidades...</span>
+    </div>
+
+    <div class="loading" *ngIf="roteirizacaoLoading">
+      <div class="spinner"></div>
+      <span>Carregando...</span>
+    </div>
+
+    <div class="roteirizar-grid" *ngIf="!roteirizacaoLoading && roteirizacaoCarregada">
+      <div class="roteirizar-col">
+        <h3>Sem posição ainda ({{ semPosicao.length }})</h3>
+        <p class="muted" *ngIf="semPosicao.length === 0">Todos os clientes já vistos nessa cidade têm posição definida.</p>
+        <ul class="roteirizar-lista">
+          <li *ngFor="let cliente of semPosicao">
+            <span>{{ cliente }}</span>
+            <button class="btn small" type="button" (click)="adicionarNaOrdem(cliente)">Adicionar ▶</button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="roteirizar-col">
+        <h3>Ordem de entrega ({{ ordenados.length }})</h3>
+        <p class="muted" *ngIf="ordenados.length === 0">Nenhum cliente posicionado ainda — adicione da lista ao lado.</p>
+        <ol class="roteirizar-lista">
+          <li *ngFor="let cliente of ordenados; let i = index">
+            <span class="pos">{{ i + 1 }}</span>
+            <span class="nome">{{ cliente }}</span>
+            <div class="roteirizar-acoes">
+              <button class="btn small" type="button" (click)="moverParaCima(i)" [disabled]="i === 0" title="Subir">▲</button>
+              <button class="btn small" type="button" (click)="moverParaBaixo(i)" [disabled]="i === ordenados.length - 1" title="Descer">▼</button>
+              <button class="btn small danger" type="button" (click)="removerDaOrdem(i)" title="Remover da ordem">✕</button>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="actions" *ngIf="!roteirizacaoLoading && roteirizacaoCarregada">
+      <button class="btn primary" type="button" (click)="salvarRoteirizacao()" [disabled]="roteirizacaoSalvando">
+        {{ roteirizacaoSalvando ? 'Salvando...' : 'Salvar ordem' }}
+      </button>
+    </div>
   </ng-container>
 
   <!-- ========================= -->

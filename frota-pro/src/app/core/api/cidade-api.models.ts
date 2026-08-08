@@ -3,3 +3,13 @@ export interface CidadeResumoResponse {
   quantidadeClientes: number;
   quantidadeCargas: number;
 }
+
+export interface RoteirizacaoCidadeResponse {
+  cidade: string;
+  clientesOrdenados: string[];
+  clientesSemPosicao: string[];
+}
+
+export interface RoteirizacaoCidadeRequest {
+  clientesOrdenados: string[];
+}

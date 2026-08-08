@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
 import { extrairMensagemErro } from '../../core/utils/api-error.util';
@@ -8,7 +9,7 @@ import { CidadeResumoResponse } from '../../core/api/cidade-api.models';
 import { ClienteHistoricoRotaResponse } from '../../core/api/rota-api.models';
 import { RotasListComponent } from '../rotas/rotas-list/rotas-list.component';
 
-type TabKey = 'cidades' | 'rotas';
+type TabKey = 'cidades' | 'roteirizar' | 'rotas';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 interface ToastItem {
@@ -20,7 +21,7 @@ interface ToastItem {
 @Component({
   selector: 'app-roteirizacao',
   standalone: true,
-  imports: [CommonModule, RotasListComponent],
+  imports: [CommonModule, FormsModule, RotasListComponent],
   templateUrl: './roteirizacao.component.html',
   styleUrls: ['./roteirizacao.component.css'],
 })
@@ -42,6 +43,16 @@ export class RoteirizacaoComponent implements OnInit {
   clientesLoading = false;
   clientes: ClienteHistoricoRotaResponse[] = [];
 
+  // Roteirizar (ordenar clientes por cidade)
+  cidadesParaSelecao: string[] = [];
+  cidadesParaSelecaoLoading = false;
+  cidadeRoteirizarSel = '';
+  roteirizacaoLoading = false;
+  roteirizacaoSalvando = false;
+  roteirizacaoCarregada = false;
+  ordenados: string[] = [];
+  semPosicao: string[] = [];
+
   // toasts
   toasts: ToastItem[] = [];
 
@@ -53,6 +64,9 @@ export class RoteirizacaoComponent implements OnInit {
 
   setTab(tab: TabKey): void {
     this.tab = tab;
+    if (tab === 'roteirizar' && this.cidadesParaSelecao.length === 0) {
+      this.carregarCidadesParaSelecao();
+    }
   }
 
   private toast(type: ToastType, message: string, ttlMs = 4200): void {
@@ -120,6 +134,93 @@ export class RoteirizacaoComponent implements OnInit {
     this.showClientesModal = false;
     this.cidadeSelecionada = null;
     this.clientes = [];
+  }
+
+  // ------------------------
+  // Roteirizar (ordem de entrega por cidade)
+  // ------------------------
+  carregarCidadesParaSelecao(): void {
+    this.cidadesParaSelecaoLoading = true;
+
+    this.api
+      .listar({ page: 0, size: 500 })
+      .pipe(finalize(() => (this.cidadesParaSelecaoLoading = false)))
+      .subscribe({
+        next: (res) => {
+          this.cidadesParaSelecao = (res.content || []).map((c) => c.cidade);
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', extrairMensagemErro(err) || 'Não foi possível carregar a lista de cidades.');
+        },
+      });
+  }
+
+  onSelecionarCidadeRoteirizar(): void {
+    this.ordenados = [];
+    this.semPosicao = [];
+    this.roteirizacaoCarregada = false;
+
+    if (!this.cidadeRoteirizarSel) return;
+
+    this.roteirizacaoLoading = true;
+    this.api
+      .roteirizacao(this.cidadeRoteirizarSel)
+      .pipe(finalize(() => (this.roteirizacaoLoading = false)))
+      .subscribe({
+        next: (res) => {
+          this.ordenados = [...(res.clientesOrdenados || [])];
+          this.semPosicao = [...(res.clientesSemPosicao || [])];
+          this.roteirizacaoCarregada = true;
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', extrairMensagemErro(err) || 'Não foi possível carregar a roteirização dessa cidade.');
+        },
+      });
+  }
+
+  adicionarNaOrdem(cliente: string): void {
+    this.semPosicao = this.semPosicao.filter((c) => c !== cliente);
+    this.ordenados = [...this.ordenados, cliente];
+  }
+
+  removerDaOrdem(index: number): void {
+    const cliente = this.ordenados[index];
+    this.ordenados = this.ordenados.filter((_, i) => i !== index);
+    this.semPosicao = [...this.semPosicao, cliente];
+  }
+
+  moverParaCima(index: number): void {
+    if (index <= 0) return;
+    const lista = [...this.ordenados];
+    [lista[index - 1], lista[index]] = [lista[index], lista[index - 1]];
+    this.ordenados = lista;
+  }
+
+  moverParaBaixo(index: number): void {
+    if (index >= this.ordenados.length - 1) return;
+    const lista = [...this.ordenados];
+    [lista[index], lista[index + 1]] = [lista[index + 1], lista[index]];
+    this.ordenados = lista;
+  }
+
+  salvarRoteirizacao(): void {
+    if (!this.cidadeRoteirizarSel) return;
+
+    this.roteirizacaoSalvando = true;
+    this.api
+      .salvarRoteirizacao(this.cidadeRoteirizarSel, { clientesOrdenados: this.ordenados })
+      .pipe(finalize(() => (this.roteirizacaoSalvando = false)))
+      .subscribe({
+        next: () => {
+          this.toast('success', 'Ordem de entrega salva. Vale a partir da próxima carga sincronizada.');
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', extrairMensagemErro(err) || 'Não foi possível salvar a roteirização.');
+        },
+      });
   }
 
   formatDateBr(value: string | null | undefined): string {
