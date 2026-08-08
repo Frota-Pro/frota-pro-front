@@ -93,6 +93,12 @@
 .col-actions { text-align: right; }
 .row-actions { text-align: right; display: flex; justify-content: flex-end; gap: 8px; }
 
+.pagination {
+  display: flex; justify-content: center; align-items: center; gap: 10px;
+  padding: 12px; background: #fff; border-top: 1px solid #eef2f7;
+}
+.pageinfo { color: #6b7280; font-size: 13px; }
+
 .muted { color: #6b7280; font-size: 12px; }
 
 .loading { display: flex; gap: 10px; align-items: center; padding: 14px; background: #fff; border-radius: 16px; box-shadow: 0 1px 8px rgba(0,0,0,.06); }

@@ -31,6 +31,10 @@ export class RoteirizacaoComponent implements OnInit {
   cidades: CidadeResumoResponse[] = [];
   loading = false;
   errorMsg: string | null = null;
+  page = 0;
+  size = 10;
+  totalElements = 0;
+  totalPages = 0;
 
   // Modal clientes da cidade
   showClientesModal = false;
@@ -66,11 +70,13 @@ export class RoteirizacaoComponent implements OnInit {
     this.errorMsg = null;
 
     this.api
-      .listar()
+      .listar({ page: this.page, size: this.size })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (res) => {
-          this.cidades = res || [];
+          this.cidades = res.content || [];
+          this.totalElements = res.totalElements || 0;
+          this.totalPages = res.totalPages || 0;
         },
         error: (err) => {
           console.error(err);
@@ -78,6 +84,18 @@ export class RoteirizacaoComponent implements OnInit {
           this.toast('error', extrairMensagemErro(err) || this.errorMsg);
         },
       });
+  }
+
+  prevPage(): void {
+    if (this.page <= 0) return;
+    this.page -= 1;
+    this.carregarCidades();
+  }
+
+  nextPage(): void {
+    if (this.page + 1 >= this.totalPages) return;
+    this.page += 1;
+    this.carregarCidades();
   }
 
   abrirClientes(cidade: string): void {

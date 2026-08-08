@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
+import { PageResponse } from './page.models';
 import { CidadeResumoResponse } from './cidade-api.models';
 import { ClienteHistoricoRotaResponse } from './rota-api.models';
 
@@ -10,8 +11,12 @@ export class CidadeApiService extends BaseApiService {
     super(http);
   }
 
-  listar() {
-    return this.http.get<CidadeResumoResponse[]>(`${this.apiUrl}/cidades`);
+  listar(opts: { page?: number; size?: number } = {}) {
+    let params = new HttpParams();
+    if (opts.page != null) params = params.set('page', String(opts.page));
+    if (opts.size != null) params = params.set('size', String(opts.size));
+
+    return this.http.get<PageResponse<CidadeResumoResponse>>(`${this.apiUrl}/cidades`, { params });
   }
 
   clientes(cidade: string) {

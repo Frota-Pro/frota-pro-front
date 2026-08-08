@@ -61,6 +61,12 @@
         </tr>
         </tbody>
       </table>
+
+      <div class="pagination" *ngIf="totalPages > 0">
+        <button class="btn ghost" (click)="prevPage()" [disabled]="page <= 0">◀</button>
+        <div class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</div>
+        <button class="btn ghost" (click)="nextPage()" [disabled]="page + 1 >= totalPages">▶</button>
+      </div>
     </div>
 
     <ng-template #loadingTpl>
