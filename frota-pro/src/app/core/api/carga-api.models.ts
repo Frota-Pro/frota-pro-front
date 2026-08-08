@@ -59,6 +59,9 @@ export interface CargaResponse {
   ordemEntregaClientes?: string[];
 
   observacaoMotorista?: string | null;
+
+  /** true quando o motorista desta carga foi corrigido manualmente e o sync do WinThor não sobrescreve mais. */
+  motoristaDefinidoManualmente?: boolean;
 }
 
 export interface CargaRequest {
@@ -81,8 +84,8 @@ export interface CargaRequest {
   codigosAjudantes?: string[] | null;
 }
 
-export interface MarcarTransferenciaCargaRequest {
-  numeroCargaDestino?: string | null;
+export interface TransferirMotoristaCargaRequest {
+  codigoMotorista: string;
 }
 
 /** Tipo mínimo que qualquer carga com número de exibição precisa ter. */

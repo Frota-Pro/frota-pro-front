@@ -32,8 +32,8 @@
     </div>
 
     <div class="right">
-      <button class="btn primary" type="button" (click)="abrirTransferenciaModal()" [disabled]="loading">
-        Marcar transferência
+      <button class="btn primary" type="button" (click)="abrirTransferirMotoristaModal()" [disabled]="loading">
+        Transferir motorista
       </button>
       <button class="btn" type="button" (click)="carregar()" [disabled]="loading">Atualizar</button>
     </div>
@@ -122,7 +122,10 @@
             <div class="info-grid">
               <div class="info-item">
                 <div class="info-label">Motorista</div>
-                <div class="info-value">{{ carga.nomeMotorista || '—' }}</div>
+                <div class="info-value">
+                  {{ carga.nomeMotorista || '—' }}
+                  <span class="badge warn" *ngIf="carga.motoristaDefinidoManualmente" title="Corrigido manualmente — o sync do WinThor não sobrescreve mais o motorista desta carga.">Transferido</span>
+                </div>
                 <div class="info-sub muted">Código: {{ carga.codigoMotorista || '—' }}</div>
               </div>
 
@@ -324,38 +327,43 @@
   </ng-container>
 </div>
 
-<!-- =============== MODAL: MARCAR TRANSFERÊNCIA =============== -->
-<div class="modal-backdrop" *ngIf="showTransferenciaModal" (click)="fecharTransferenciaModal()">
+<!-- =============== MODAL: TRANSFERIR MOTORISTA =============== -->
+<div class="modal-backdrop" *ngIf="showTransferirMotoristaModal" (click)="fecharTransferirMotoristaModal()">
   <div class="modal transfer-modal" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
       <div>
-        <h3>Marcar transferência</h3>
+        <h3>Transferir motorista</h3>
         <p class="muted" *ngIf="carga">
-          Carga antiga <span class="mono">{{ carga.numeroCargaExibicao }}</span>
+          Carga <span class="mono">{{ carga.numeroCargaExibicao }}</span>
         </p>
       </div>
-      <button class="btn ghost" type="button" (click)="fecharTransferenciaModal()" [disabled]="savingTransferencia">✕</button>
+      <button class="btn ghost" type="button" (click)="fecharTransferirMotoristaModal()" [disabled]="savingTransferirMotorista">✕</button>
     </div>
 
     <div class="modal-body">
       <p class="muted help">
-        Informe a carga nova/destino se já souber. A correção de peso, valor e notas será feita pela sincronização.
+        Use quando a carga foi faturada pra um motorista no WinThor, mas outro foi quem realmente saiu
+        com ela (o MDF-e/minuta não mudam pra refletir isso). A partir daqui, as próximas sincronizações
+        do WinThor não vão mais sobrescrever o motorista desta carga.
       </p>
 
       <label class="f">
-        <span class="f-label">Carga destino (opcional)</span>
-        <input class="control"
-               [(ngModel)]="numeroCargaDestinoTransferencia"
-               placeholder="Ex.: CAR-000020"
-               [disabled]="savingTransferencia" />
+        <span class="f-label">Motorista que saiu com a carga</span>
+        <select class="control"
+                [(ngModel)]="codigoMotoristaTransferencia"
+                [disabled]="savingTransferirMotorista || motoristasParaTransferenciaLoading">
+          <option value="">Selecione...</option>
+          <option *ngFor="let m of motoristasParaTransferencia" [value]="m.codigo">{{ m.codigo }} — {{ m.nome }}</option>
+        </select>
+        <span class="muted" *ngIf="motoristasParaTransferenciaLoading">Carregando motoristas...</span>
       </label>
     </div>
 
     <div class="modal-footer sticky-footer">
-      <button class="btn ghost" type="button" (click)="fecharTransferenciaModal()" [disabled]="savingTransferencia">Cancelar</button>
-      <button class="btn primary" type="button" (click)="marcarTransferencia()" [disabled]="savingTransferencia">
-        {{ savingTransferencia ? 'Marcando...' : 'Marcar transferência' }}
+      <button class="btn ghost" type="button" (click)="fecharTransferirMotoristaModal()" [disabled]="savingTransferirMotorista">Cancelar</button>
+      <button class="btn primary" type="button" (click)="transferirMotorista()" [disabled]="savingTransferirMotorista">
+        {{ savingTransferirMotorista ? 'Transferindo...' : 'Transferir' }}
       </button>
     </div>
 

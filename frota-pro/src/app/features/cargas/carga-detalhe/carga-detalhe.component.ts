@@ -6,6 +6,8 @@ import { finalize } from 'rxjs/operators';
 
 import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { CargaApiService } from '../../../core/api/carga-api.service';
+import { MotoristaApiService } from '../../../core/api/motorista-api.service';
+import { MotoristaResponse } from '../../../core/api/motorista-api.models';
 import { ParadaCargaApiService } from '../../../core/api/parada-carga-api.service';
 import { ArquivoApiService } from '../../../core/api/arquivo-api.service';
 import { EixoApiService } from '../../../core/api/eixo-api.service';
@@ -113,10 +115,14 @@ export class CargaDetalheComponent implements OnInit {
   observacao = '';
   savingObs = false;
 
-  // ===== Transferência =====
-  showTransferenciaModal = false;
-  numeroCargaDestinoTransferencia = '';
-  savingTransferencia = false;
+  // ===== Transferir motorista =====
+  // Carga faturada pra um motorista no WinThor, mas outro foi quem
+  // realmente saiu com ela (MDF-e/minuta não mudam pra refletir isso).
+  showTransferirMotoristaModal = false;
+  motoristasParaTransferencia: MotoristaResponse[] = [];
+  motoristasParaTransferenciaLoading = false;
+  codigoMotoristaTransferencia = '';
+  savingTransferirMotorista = false;
 
   // ===== Preview Parada =====
   showParadaModal = false;
@@ -226,6 +232,7 @@ export class CargaDetalheComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private cargaApi: CargaApiService,
+    private motoristaApi: MotoristaApiService,
     private paradaApi: ParadaCargaApiService,
     private arquivoApi: ArquivoApiService,
     private eixoApi: EixoApiService,
@@ -409,40 +416,58 @@ export class CargaDetalheComponent implements OnInit {
   }
 
   // =========================
-  // Transferência
+  // Transferir motorista
   // =========================
-  abrirTransferenciaModal(): void {
-    this.numeroCargaDestinoTransferencia = '';
-    this.showTransferenciaModal = true;
+  // Carga faturada pra um motorista no WinThor, mas outro foi quem
+  // realmente saiu com ela (o MDF-e/minuta não mudam pra refletir isso).
+  abrirTransferirMotoristaModal(): void {
+    this.codigoMotoristaTransferencia = '';
+    this.showTransferirMotoristaModal = true;
+
+    if (this.motoristasParaTransferencia.length === 0) {
+      this.motoristasParaTransferenciaLoading = true;
+      this.motoristaApi
+        .listar({ page: 0, size: 1000, sort: 'nome,asc', ativo: true })
+        .pipe(finalize(() => (this.motoristasParaTransferenciaLoading = false)))
+        .subscribe({
+          next: (res) => (this.motoristasParaTransferencia = res.content || []),
+          error: (err) => {
+            console.error(err);
+            this.toast('error', this.mensagemErro(err, 'Não foi possível carregar a lista de motoristas.'), 'Transferir motorista');
+          },
+        });
+    }
   }
 
-  fecharTransferenciaModal(): void {
-    if (this.savingTransferencia) return;
-    this.showTransferenciaModal = false;
-    this.numeroCargaDestinoTransferencia = '';
+  fecharTransferirMotoristaModal(): void {
+    if (this.savingTransferirMotorista) return;
+    this.showTransferirMotoristaModal = false;
+    this.codigoMotoristaTransferencia = '';
   }
 
-  marcarTransferencia(): void {
+  transferirMotorista(): void {
     if (!this.carga) return;
 
-    const numeroCargaDestino = this.numeroCargaDestinoTransferencia.trim();
-    const body = numeroCargaDestino ? { numeroCargaDestino } : {};
+    const codigoMotorista = this.codigoMotoristaTransferencia.trim();
+    if (!codigoMotorista) {
+      return this.toast('warning', 'Selecione o motorista que saiu com a carga.', 'Transferir motorista');
+    }
 
-    this.savingTransferencia = true;
+    this.savingTransferirMotorista = true;
 
     this.cargaApi
-      .marcarTransferencia(this.carga.numeroCarga, body)
-      .pipe(finalize(() => (this.savingTransferencia = false)))
+      .transferirMotorista(this.carga.numeroCarga, { codigoMotorista })
+      .pipe(finalize(() => (this.savingTransferirMotorista = false)))
       .subscribe({
         next: () => {
-          this.showTransferenciaModal = false;
-          this.numeroCargaDestinoTransferencia = '';
-          this.toast('success', 'Carga marcada como transferência.', 'Transferência');
+          this.showTransferirMotoristaModal = false;
+          this.codigoMotoristaTransferencia = '';
+          this.toast('success', 'Motorista da carga atualizado.', 'Transferir motorista');
           this.carregar();
         },
         error: (err) => {
           console.error(err);
-          this.toast('error', this.mensagemErro(err, 'Não foi possível marcar a carga como transferência.'), 'Transferência');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível transferir a carga para outro motorista.'), 'Transferir motorista');
         },
       });
   }

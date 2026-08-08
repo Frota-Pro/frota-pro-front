@@ -5,7 +5,7 @@ import { PageResponse } from './page.models';
 import {
   CargaMinResponse,
   CargaResponse,
-  MarcarTransferenciaCargaRequest
+  TransferirMotoristaCargaRequest
 } from './carga-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -67,10 +67,10 @@ export class CargaApiService extends BaseApiService {
     );
   }
 
-  /** PATCH {{host}}/carga/{numeroCarga}/marcar-transferencia */
-  marcarTransferencia(numeroCarga: string, request: MarcarTransferenciaCargaRequest = {}) {
-    return this.http.patch<void>(
-      `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/marcar-transferencia`,
+  /** PATCH {{host}}/carga/{numeroCarga}/transferir-motorista */
+  transferirMotorista(numeroCarga: string, request: TransferirMotoristaCargaRequest) {
+    return this.http.patch<CargaResponse>(
+      `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/transferir-motorista`,
       request
     );
   }
