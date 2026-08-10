@@ -59,7 +59,7 @@
           <span class="muted-sm">Precisa ser um remetente verificado na sua conta do Resend.</span>
         </div>
 
-        <div class="field">
+        <div class="field field-full">
           <div class="field-label-row">
             <label>Assunto</label>
             <button class="btn ghost small" type="button" (click)="usarAssuntoPadrao()">Usar padrão</button>
@@ -67,7 +67,7 @@
           <input type="text" [(ngModel)]="form.emailAssunto" placeholder="Ex: Nota fiscal {{ '{numeroNota}' }} - Sua Empresa" />
         </div>
 
-        <div class="field">
+        <div class="field field-full">
           <div class="field-label-row">
             <label>Corpo do e-mail (HTML)</label>
             <button class="btn ghost small" type="button" (click)="usarCorpoPadrao()">Usar padrão</button>

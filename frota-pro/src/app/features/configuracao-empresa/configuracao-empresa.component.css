@@ -1,4 +1,4 @@
-.page { padding: 18px; display: flex; flex-direction: column; gap: 12px; max-width: 820px; }
+.page { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
 
 .header {
   background: #fff; border-radius: 16px; padding: 14px;
@@ -39,9 +39,15 @@
   border-bottom: 1px solid #eef2f7;
 }
 .card-header h2 { margin: 0; font-size: 15px; }
-.card-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.card-body {
+  padding: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px 24px;
+  align-items: start;
+}
 
-.logo-row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+.logo-row { grid-column: 1 / -1; display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
 .logo-preview {
   width: 160px;
   height: 100px;
@@ -59,6 +65,7 @@
 .logo-upload { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 220px; }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
+.field-full { grid-column: 1 / -1; }
 .field label { font-size: 12px; font-weight: 600; color: #374151; }
 .field input, .field textarea {
   height: 38px;
@@ -81,6 +88,7 @@
 .muted-sm code { background: #f3f4f6; border-radius: 4px; padding: 1px 4px; }
 
 .preview-box {
+  grid-column: 1 / -1;
   border: 1px solid #eef2f7;
   border-radius: 12px;
   overflow: hidden;
