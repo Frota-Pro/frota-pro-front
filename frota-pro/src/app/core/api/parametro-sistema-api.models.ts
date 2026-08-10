@@ -3,6 +3,10 @@ export interface ParametroSistemaResponse {
   kmAntecedenciaTrocaPneu: number;
   diasManutencaoEstagnada: number;
   diasAntecedenciaPrazoMulta: number;
+
+  validarMotivoAlteracaoPesoValorCarga: boolean;
+  codigosDevolucaoPermitidos: string | null;
+  permitirAtualizacaoPorTransferencia: boolean;
 }
 
 export interface ParametroSistemaUpdateRequest {
@@ -10,4 +14,8 @@ export interface ParametroSistemaUpdateRequest {
   kmAntecedenciaTrocaPneu: number;
   diasManutencaoEstagnada: number;
   diasAntecedenciaPrazoMulta: number;
+
+  validarMotivoAlteracaoPesoValorCarga: boolean;
+  codigosDevolucaoPermitidos: string | null;
+  permitirAtualizacaoPorTransferencia: boolean;
 }

@@ -26,6 +26,9 @@ export class ParametrosSistemaComponent implements OnInit {
     kmAntecedenciaTrocaPneu: 500,
     diasManutencaoEstagnada: 7,
     diasAntecedenciaPrazoMulta: 5,
+    validarMotivoAlteracaoPesoValorCarga: false,
+    codigosDevolucaoPermitidos: '',
+    permitirAtualizacaoPorTransferencia: true,
   };
 
   constructor(
@@ -50,6 +53,9 @@ export class ParametrosSistemaComponent implements OnInit {
             kmAntecedenciaTrocaPneu: res.kmAntecedenciaTrocaPneu,
             diasManutencaoEstagnada: res.diasManutencaoEstagnada,
             diasAntecedenciaPrazoMulta: res.diasAntecedenciaPrazoMulta,
+            validarMotivoAlteracaoPesoValorCarga: res.validarMotivoAlteracaoPesoValorCarga,
+            codigosDevolucaoPermitidos: res.codigosDevolucaoPermitidos ?? '',
+            permitirAtualizacaoPorTransferencia: res.permitirAtualizacaoPorTransferencia,
           };
         },
         error: (err) => (this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar os parâmetros.')),

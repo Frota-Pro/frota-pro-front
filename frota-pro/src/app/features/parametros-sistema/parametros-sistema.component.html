@@ -16,6 +16,8 @@
 
   <ng-container *ngIf="!loading">
 
+    <div class="section-title">Avisos automáticos</div>
+
     <div class="card">
       <div class="card-header">
         <h2>Vencimentos e manutenção</h2>
@@ -51,6 +53,51 @@
           <input type="number" min="0" [(ngModel)]="form.diasAntecedenciaPrazoMulta" />
           <span class="muted-sm">Vale tanto para o prazo de pagamento quanto para o prazo de recurso da multa.</span>
         </div>
+      </div>
+    </div>
+
+    <div class="section-title">Sincronização de peso/valor da carga (WinThor)</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Devolução</h2>
+      </div>
+      <div class="card-body">
+        <label class="row">
+          <span>
+            Validar motivo de diminuição de peso/valor
+            <span class="muted-sm block">Se desligado (padrão), a sincronização sempre sobrescreve peso e valor da carga com o que vier do WinThor. Ligado, uma <strong>diminuição</strong> só é aplicada se houver um motivo reconhecido — devolução com código permitido aqui, ou transferência de pedido (categoria "Transferência" abaixo). Aumentos nunca são bloqueados.</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="form.validarMotivoAlteracaoPesoValorCarga" />
+            <span class="slider"></span>
+          </label>
+        </label>
+
+        <div class="field" *ngIf="form.validarMotivoAlteracaoPesoValorCarga">
+          <label>Códigos de devolução permitidos (CODDEVOL)</label>
+          <input type="text" [(ngModel)]="form.codigosDevolucaoPermitidos" placeholder="Ex.: 53,56" />
+          <span class="muted-sm">Separe vários códigos por vírgula. Deixe em branco para não aceitar nenhum código de devolução como motivo (mais restritivo).</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Transferência</h2>
+      </div>
+      <div class="card-body">
+        <label class="row">
+          <span>
+            Transferência de pedido autoriza atualização
+            <span class="muted-sm block">Ligado (padrão), qualquer transferência de pedido pra outro carregamento no WinThor (PCLOGTRANSFNFCARREG) já autoriza a diminuição de peso/valor. Desligado, transferência não é aceita como motivo — só os códigos de devolução da categoria "Devolução" autorizam.</span>
+            <span class="muted-sm block" *ngIf="!form.validarMotivoAlteracaoPesoValorCarga">Só tem efeito quando "Validar motivo de diminuição de peso/valor" (categoria Devolução) estiver ligado.</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="form.permitirAtualizacaoPorTransferencia" />
+            <span class="slider"></span>
+          </label>
+        </label>
       </div>
     </div>
 
