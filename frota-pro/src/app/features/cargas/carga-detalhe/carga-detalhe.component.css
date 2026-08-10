@@ -392,6 +392,9 @@
 }
 .info-item:hover{ border-color:#dbe3ee; box-shadow: 0 8px 18px rgba(15,23,42,0.06); }
 
+.info-item-clickable{ cursor:pointer; }
+.info-item-clickable:hover{ background:#fafafa; border-color:#dbe3ee; box-shadow: 0 10px 22px rgba(15,23,42,0.07); }
+
 .info-label{ font-size:12px; color: var(--muted); margin-bottom:4px; }
 .info-value{ font-size:13px; font-weight:900; color: var(--text); }
 .info-sub{ font-size:12px; margin-top:2px; color: var(--muted); }
@@ -468,6 +471,12 @@
   margin-top:8px;
   font-size:12px;
 }
+.cliente-hint.hint-warn{
+  color:#92400e;
+  font-weight:700;
+}
+
+.alert a{ color:#991b1b; font-weight:800; text-decoration:underline; }
 
 /* =========================================================
    NOTAS FISCAIS (DOCUMENTOS DO CLIENTE)
@@ -610,7 +619,7 @@
   justify-content:center;
   align-items:center;
   padding:18px;
-  z-index:999;
+  z-index:2000;
 }
 
 .modal{
@@ -707,6 +716,17 @@
    ANEXOS
    ========================================================= */
 .anexos{ display:flex; flex-direction:column; gap:10px; }
+
+.anexo-row.dev-row{
+  display:block;
+}
+.dev-col{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  width:100%;
+}
+.dev-col .anexo-title{ margin-bottom:2px; }
 
 .anexo-row{
   display:flex;

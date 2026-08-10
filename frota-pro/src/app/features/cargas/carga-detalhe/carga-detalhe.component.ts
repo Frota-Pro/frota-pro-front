@@ -14,6 +14,8 @@ import { EixoApiService } from '../../../core/api/eixo-api.service';
 import { EixoCaminhaoResponse } from '../../../core/api/eixo-api.models';
 import { NotaFiscalApiService } from '../../../core/api/nota-fiscal-api.service';
 import { NotaFiscalResumoResponse } from '../../../core/api/nota-fiscal-api.models';
+import { DevolucaoTransferenciaApiService } from '../../../core/api/devolucao-transferencia-api.service';
+import { DevolucaoResponse, TransferenciaResponse } from '../../../core/api/devolucao-transferencia-api.models';
 import { formatKgFromTon } from '../../../shared/utils/weight';
 
 import {
@@ -78,6 +80,12 @@ type ParadaForm = Partial<ParadaCargaRequest> & {
   itensTrocadosText: string;
 };
 
+interface GrupoClientesPorCidade {
+  cidade: string;
+  semRoteirizacao: boolean;
+  clientes: ClienteCargaResponse[];
+}
+
 @Component({
   selector: 'app-carga-detalhe',
   standalone: true,
@@ -95,6 +103,9 @@ export class CargaDetalheComponent implements OnInit {
   errorMsg: string | null = null;
 
   carga: CargaResponse | null = null;
+
+  // ===== Clientes e Notas (agrupado por cidade) =====
+  cidadeSelecionada: string | null = null;
 
   // ===== Toasts =====
   toasts: ToastItem[] = [];
@@ -189,6 +200,18 @@ export class CargaDetalheComponent implements OnInit {
   notaEmailDestinatario = '';
   enviandoEmailNota = false;
 
+  // ===== Devolução (detalhe) =====
+  showDevolucaoModal = false;
+  devolucoes: DevolucaoResponse[] = [];
+  loadingDevolucoes = false;
+  devolucoesErro: string | null = null;
+
+  // ===== Transferência (detalhe) =====
+  showTransferenciaModal = false;
+  transferencias: TransferenciaResponse[] = [];
+  loadingTransferencias = false;
+  transferenciasErro: string | null = null;
+
   // ===== Regras =====
   readonly OBS_MIN = 5;
   readonly OBS_MAX = 800;
@@ -236,7 +259,8 @@ export class CargaDetalheComponent implements OnInit {
     private paradaApi: ParadaCargaApiService,
     private arquivoApi: ArquivoApiService,
     private eixoApi: EixoApiService,
-    private notaFiscalApi: NotaFiscalApiService
+    private notaFiscalApi: NotaFiscalApiService,
+    private devolucaoTransferenciaApi: DevolucaoTransferenciaApiService
   ) {}
 
   // =========================
@@ -273,6 +297,7 @@ export class CargaDetalheComponent implements OnInit {
   carregar(): void {
     this.loading = true;
     this.errorMsg = null;
+    this.cidadeSelecionada = null;
 
     this.cargaApi.buscar(this.numeroCarga)
       .pipe(finalize(() => (this.loading = false)))
@@ -327,6 +352,46 @@ export class CargaDetalheComponent implements OnInit {
       if (c?.cliente) set.add(c.cliente);
     }
     return Array.from(set);
+  }
+
+  /** Clientes agrupados por cidade — cidades sem cliente roteirizado ficam marcadas. */
+  get clientesAgrupadosPorCidade(): GrupoClientesPorCidade[] {
+    const clientes = this.carga?.clientes || [];
+    const naoRoteirizados = new Set(this.carga?.clientesNaoRoteirizados || []);
+
+    const porCidade = new Map<string, ClienteCargaResponse[]>();
+    for (const c of clientes) {
+      const cidade = (c.cidade || '').trim() || 'Sem cidade';
+      if (!porCidade.has(cidade)) porCidade.set(cidade, []);
+      porCidade.get(cidade)!.push(c);
+    }
+
+    const grupos: GrupoClientesPorCidade[] = Array.from(porCidade.entries()).map(([cidade, clis]) => ({
+      cidade,
+      semRoteirizacao: clis.length > 0 && clis.every((c) => naoRoteirizados.has(c.cliente)),
+      clientes: clis,
+    }));
+
+    grupos.sort((a, b) => {
+      if (a.cidade === 'Sem cidade') return 1;
+      if (b.cidade === 'Sem cidade') return -1;
+      return a.cidade.localeCompare(b.cidade, 'pt-BR');
+    });
+
+    return grupos;
+  }
+
+  get grupoCidadeSelecionado(): GrupoClientesPorCidade | null {
+    if (!this.cidadeSelecionada) return null;
+    return this.clientesAgrupadosPorCidade.find((g) => g.cidade === this.cidadeSelecionada) || null;
+  }
+
+  selecionarCidade(cidade: string): void {
+    this.cidadeSelecionada = cidade;
+  }
+
+  voltarParaCidades(): void {
+    this.cidadeSelecionada = null;
   }
 
   moverCliente(idx: number, dir: -1 | 1): void {
@@ -712,6 +777,66 @@ export class CargaDetalheComponent implements OnInit {
           this.toast('error', this.mensagemErro(err, 'Não foi possível enviar o e-mail.'), 'Nota fiscal');
         },
       });
+  }
+
+  // =========================
+  // Devolução (detalhe)
+  // =========================
+  abrirDevolucoes(): void {
+    if (!this.carga) return;
+
+    this.showDevolucaoModal = true;
+    this.devolucoes = [];
+    this.devolucoesErro = null;
+    this.loadingDevolucoes = true;
+
+    this.devolucaoTransferenciaApi
+      .devolucoes(this.carga.numeroCarga)
+      .pipe(finalize(() => (this.loadingDevolucoes = false)))
+      .subscribe({
+        next: (itens) => (this.devolucoes = itens || []),
+        error: (err) => {
+          console.error(err);
+          this.devolucoes = [];
+          this.devolucoesErro = this.mensagemErro(err, 'Não foi possível carregar os detalhes da devolução.');
+        },
+      });
+  }
+
+  fecharDevolucoes(): void {
+    this.showDevolucaoModal = false;
+    this.devolucoes = [];
+    this.devolucoesErro = null;
+  }
+
+  // =========================
+  // Transferência (detalhe)
+  // =========================
+  abrirTransferencias(): void {
+    if (!this.carga) return;
+
+    this.showTransferenciaModal = true;
+    this.transferencias = [];
+    this.transferenciasErro = null;
+    this.loadingTransferencias = true;
+
+    this.devolucaoTransferenciaApi
+      .transferencias(this.carga.numeroCarga)
+      .pipe(finalize(() => (this.loadingTransferencias = false)))
+      .subscribe({
+        next: (itens) => (this.transferencias = itens || []),
+        error: (err) => {
+          console.error(err);
+          this.transferencias = [];
+          this.transferenciasErro = this.mensagemErro(err, 'Não foi possível carregar os detalhes da transferência.');
+        },
+      });
+  }
+
+  fecharTransferencias(): void {
+    this.showTransferenciaModal = false;
+    this.transferencias = [];
+    this.transferenciasErro = null;
   }
 
   // =========================
