@@ -124,9 +124,9 @@
 .dot{ margin:0 8px; color:#cbd5e1; }
 
 /* Modal */
-.backdrop{ position:fixed; inset:0; background: rgba(17,24,39,.55); z-index:50; }
+.backdrop{ position:fixed; inset:0; background: rgba(17,24,39,.55); z-index:2000; }
 .modal{
-  position:fixed; z-index:60; top:50%; left:50%;
+  position:fixed; z-index:2001; top:50%; left:50%;
   transform: translate(-50%, -50%);
   width:min(760px, calc(100vw - 24px));
   background:#fff; border-radius:16px;
