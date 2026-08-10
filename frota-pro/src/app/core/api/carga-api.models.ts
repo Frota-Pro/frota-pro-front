@@ -1,5 +1,6 @@
 export interface ClienteCargaResponse {
   cliente: string;
+  cidade?: string | null;
   notas: string[];
 }
 
@@ -18,6 +19,15 @@ export interface CargaMinResponse {
   statusTransferencia?: StatusTransferenciaCarga | null;
   nomeMotorista?: string | null;
   placaCaminhao?: string | null;
+
+  /** Códigos de devolução (CODDEVOL) encontrados no último sync com o WinThor pra esta carga. */
+  codigosDevolucaoEncontrados?: string[];
+
+  /** true se o último sync encontrou transferência de pedido desta carga pra outro carregamento no WinThor. */
+  teveTransferencia?: boolean;
+
+  /** true se uma diminuição de peso/valor vinda do WinThor foi ignorada por falta de motivo reconhecido. */
+  diminuicaoPesoValorBloqueada?: boolean;
 }
 
 export interface CargaResponse {
@@ -58,10 +68,22 @@ export interface CargaResponse {
 
   ordemEntregaClientes?: string[];
 
+  /** Clientes desta carga sem posição parametrizada na roteirização da cidade deles. */
+  clientesNaoRoteirizados?: string[];
+
   observacaoMotorista?: string | null;
 
   /** true quando o motorista desta carga foi corrigido manualmente e o sync do WinThor não sobrescreve mais. */
   motoristaDefinidoManualmente?: boolean;
+
+  /** Códigos de devolução (CODDEVOL) encontrados no último sync com o WinThor pra esta carga. */
+  codigosDevolucaoEncontrados?: string[];
+
+  /** true se o último sync encontrou transferência de pedido desta carga pra outro carregamento no WinThor. */
+  teveTransferencia?: boolean;
+
+  /** true se uma diminuição de peso/valor vinda do WinThor foi ignorada por falta de motivo reconhecido. */
+  diminuicaoPesoValorBloqueada?: boolean;
 }
 
 export interface CargaRequest {
