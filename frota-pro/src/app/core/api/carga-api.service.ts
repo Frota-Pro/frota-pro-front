@@ -5,6 +5,7 @@ import { PageResponse } from './page.models';
 import {
   CargaMinResponse,
   CargaResponse,
+  RelatorioCargasSumidasWinThorResponse,
   TransferirMotoristaCargaRequest
 } from './carga-api.models';
 
@@ -42,6 +43,22 @@ export class CargaApiService extends BaseApiService {
   /** GET {{host}}/carga/{numeroCarga} */
   buscar(numeroCarga: string) {
     return this.http.get<CargaResponse>(`${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}`);
+  }
+
+  /** POST {{host}}/carga/verificar-winthor — roda a reconciliação agora, sem esperar o job de 3h. */
+  verificarWinThor() {
+    return this.http.post<void>(`${this.apiUrl}/carga/verificar-winthor`, {});
+  }
+
+  /** GET {{host}}/carga/relatorio-sumidas — cargas marcadas como não encontradas mais no WinThor. */
+  relatorioSumidas(opts: { inicio?: string | null; fim?: string | null; motorista?: string | null; caminhao?: string | null } = {}) {
+    let params = new HttpParams();
+    if (opts.inicio) params = params.set('inicio', opts.inicio);
+    if (opts.fim) params = params.set('fim', opts.fim);
+    if (opts.motorista) params = params.set('motorista', opts.motorista);
+    if (opts.caminhao) params = params.set('caminhao', opts.caminhao);
+
+    return this.http.get<RelatorioCargasSumidasWinThorResponse>(`${this.apiUrl}/carga/relatorio-sumidas`, { params });
   }
 
   /** GET {{host}}/carga/externo/{codigoExterno} */

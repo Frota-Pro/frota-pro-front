@@ -28,6 +28,9 @@ export interface CargaMinResponse {
 
   /** true se uma diminuição de peso/valor vinda do WinThor foi ignorada por falta de motivo reconhecido. */
   diminuicaoPesoValorBloqueada?: boolean;
+
+  /** true se a última verificação de reconciliação não encontrou mais essa carga no WinThor. */
+  naoEncontradaNoWinThor?: boolean;
 }
 
 export interface CargaResponse {
@@ -84,6 +87,31 @@ export interface CargaResponse {
 
   /** true se uma diminuição de peso/valor vinda do WinThor foi ignorada por falta de motivo reconhecido. */
   diminuicaoPesoValorBloqueada?: boolean;
+
+  /** true se a última verificação de reconciliação não encontrou mais essa carga no WinThor. */
+  naoEncontradaNoWinThor?: boolean;
+
+  dataVerificacaoWinThor?: string | null;
+}
+
+export interface RelatorioCargaSumidaLinha {
+  numeroCarga: string;
+  numeroCargaExterno?: string | null;
+  statusCarga: string;
+  dtSaida?: string | null;
+  pesoCarga?: number | null;
+  valorTotal?: number | null;
+  codigoMotorista?: string | null;
+  nomeMotorista?: string | null;
+  codigoCaminhao?: string | null;
+  placaCaminhao?: string | null;
+  codigoRota?: string | null;
+  dataVerificacaoWinThor?: string | null;
+}
+
+export interface RelatorioCargasSumidasWinThorResponse {
+  total: number;
+  linhas: RelatorioCargaSumidaLinha[];
 }
 
 export interface CargaRequest {

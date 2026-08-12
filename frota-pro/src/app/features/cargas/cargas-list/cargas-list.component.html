@@ -88,7 +88,12 @@
             {{ labelStatusTransferencia(c.statusTransferencia) }}
           </span>
 
-          <div class="flags-row" *ngIf="c.codigosDevolucaoEncontrados?.length || c.teveTransferencia || c.diminuicaoPesoValorBloqueada">
+          <div class="flags-row" *ngIf="c.codigosDevolucaoEncontrados?.length || c.teveTransferencia || c.diminuicaoPesoValorBloqueada || c.naoEncontradaNoWinThor">
+            <span class="badge sumida"
+                  *ngIf="c.naoEncontradaNoWinThor"
+                  title="Sincronizada antes, mas não foi mais encontrada no WinThor — pode ter sido cancelada ou desvinculada lá. Verifique antes de iniciar a viagem.">
+              ⚠ Sumiu do WinThor
+            </span>
             <span class="badge devolucao"
                   *ngIf="c.codigosDevolucaoEncontrados?.length"
                   [title]="'Devolução no WinThor — código(s): ' + c.codigosDevolucaoEncontrados!.join(', ')">

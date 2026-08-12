@@ -122,6 +122,20 @@ export class RelatorioPdfApiService extends BaseApiService {
     });
   }
 
+  cargasSumidasWinThor(opts: { inicio?: string | null; fim?: string | null; motorista?: string | null; caminhao?: string | null } = {}) {
+    let params = new HttpParams();
+    if (opts.inicio) params = params.set('inicio', opts.inicio);
+    if (opts.fim) params = params.set('fim', opts.fim);
+    if (opts.motorista) params = params.set('motorista', opts.motorista);
+    if (opts.caminhao) params = params.set('caminhao', opts.caminhao);
+
+    return this.http.get(`${this.apiUrl}/relatorios/pdf/carga/sumidas-winthor`, {
+      params,
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
   desempenhoMetas(paramsInput: DesempenhoMetasParams) {
     let params = new HttpParams()
       .set('inicio', paramsInput.inicio)

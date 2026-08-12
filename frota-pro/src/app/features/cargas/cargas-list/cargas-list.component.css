@@ -284,6 +284,13 @@
   color: #991b1b;
 }
 
+.badge.sumida {
+  border-color: rgba(220, 38, 38, 0.5);
+  background: rgba(220, 38, 38, 0.16);
+  color: #7f1d1d;
+  font-weight: 800;
+}
+
 .empty {
   padding: 28px 10px;
   text-align: center;

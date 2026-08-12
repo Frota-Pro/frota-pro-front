@@ -49,6 +49,16 @@
 
   <ng-container *ngIf="!loading && carga">
 
+    <div class="transfer-alert sumida" *ngIf="carga.naoEncontradaNoWinThor">
+      <div class="transfer-alert-title">⚠ Carga não encontrada no WinThor</div>
+      <div class="transfer-alert-text">
+        Essa carga foi sincronizada antes, mas a última verificação
+        <span *ngIf="carga.dataVerificacaoWinThor">({{ carga.dataVerificacaoWinThor | date:'dd/MM/yyyy HH:mm' }})</span>
+        não encontrou mais nota fiscal vinculada ao carregamento {{ carga.numeroCargaExterno }} no WinThor —
+        pode ter sido cancelada ou desvinculada lá. Confira antes de liberar o motorista pra essa viagem.
+      </div>
+    </div>
+
     <div class="transfer-alert"
          *ngIf="transferenciaPendente() || labelStatusTransferencia(carga.statusTransferencia)"
          [class.done]="carga.statusTransferencia === 'CONCLUIDA'">

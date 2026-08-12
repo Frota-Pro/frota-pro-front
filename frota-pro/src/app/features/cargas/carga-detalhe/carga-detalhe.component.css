@@ -323,6 +323,12 @@
   color:#064e3b;
 }
 
+.transfer-alert.sumida{
+  border-color: rgba(220,38,38,.4);
+  background: rgba(220,38,38,.10);
+  color:#7f1d1d;
+}
+
 .transfer-alert-title{
   font-weight:900;
   font-size:13px;
