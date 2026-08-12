@@ -29,6 +29,8 @@ export class ParametrosSistemaComponent implements OnInit {
     validarMotivoAlteracaoPesoValorCarga: false,
     codigosDevolucaoPermitidos: '',
     permitirAtualizacaoPorTransferencia: true,
+    validarTempoMinimoCarga: false,
+    tempoMinimoEntregaPadraoMinutos: 30,
   };
 
   constructor(
@@ -56,6 +58,8 @@ export class ParametrosSistemaComponent implements OnInit {
             validarMotivoAlteracaoPesoValorCarga: res.validarMotivoAlteracaoPesoValorCarga,
             codigosDevolucaoPermitidos: res.codigosDevolucaoPermitidos ?? '',
             permitirAtualizacaoPorTransferencia: res.permitirAtualizacaoPorTransferencia,
+            validarTempoMinimoCarga: res.validarTempoMinimoCarga,
+            tempoMinimoEntregaPadraoMinutos: res.tempoMinimoEntregaPadraoMinutos,
           };
         },
         error: (err) => (this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar os parâmetros.')),

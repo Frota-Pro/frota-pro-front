@@ -52,6 +52,8 @@ export class RoteirizacaoComponent implements OnInit {
   roteirizacaoCarregada = false;
   ordenados: string[] = [];
   semPosicao: string[] = [];
+  /** Null = sem override — usa o padrão global de Parâmetros do Sistema. */
+  tempoMinimoEntregaMinutos: number | null = null;
 
   // toasts
   toasts: ToastItem[] = [];
@@ -159,6 +161,7 @@ export class RoteirizacaoComponent implements OnInit {
   onSelecionarCidadeRoteirizar(): void {
     this.ordenados = [];
     this.semPosicao = [];
+    this.tempoMinimoEntregaMinutos = null;
     this.roteirizacaoCarregada = false;
 
     if (!this.cidadeRoteirizarSel) return;
@@ -171,6 +174,7 @@ export class RoteirizacaoComponent implements OnInit {
         next: (res) => {
           this.ordenados = [...(res.clientesOrdenados || [])];
           this.semPosicao = [...(res.clientesSemPosicao || [])];
+          this.tempoMinimoEntregaMinutos = res.tempoMinimoEntregaMinutos ?? null;
           this.roteirizacaoCarregada = true;
         },
         error: (err) => {
@@ -210,7 +214,10 @@ export class RoteirizacaoComponent implements OnInit {
 
     this.roteirizacaoSalvando = true;
     this.api
-      .salvarRoteirizacao(this.cidadeRoteirizarSel, { clientesOrdenados: this.ordenados })
+      .salvarRoteirizacao(this.cidadeRoteirizarSel, {
+        clientesOrdenados: this.ordenados,
+        tempoMinimoEntregaMinutos: this.tempoMinimoEntregaMinutos,
+      })
       .pipe(finalize(() => (this.roteirizacaoSalvando = false)))
       .subscribe({
         next: () => {

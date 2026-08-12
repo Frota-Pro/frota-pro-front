@@ -114,6 +114,15 @@
       <span>Carregando...</span>
     </div>
 
+    <div class="roteirizar-tempo-minimo" *ngIf="!roteirizacaoLoading && roteirizacaoCarregada">
+      <label>Tempo mínimo de entrega nessa cidade (min)</label>
+      <input type="number" min="0" [(ngModel)]="tempoMinimoEntregaMinutos" placeholder="Padrão global" />
+      <span class="muted">
+        Opcional — sobrescreve o padrão global (Parâmetros do Sistema) só pra {{ cidadeRoteirizarSel }}.
+        Deixe em branco pra usar o padrão. Só tem efeito se o parâmetro estiver ligado.
+      </span>
+    </div>
+
     <div class="roteirizar-grid" *ngIf="!roteirizacaoLoading && roteirizacaoCarregada">
       <div class="roteirizar-col">
         <h3>Sem posição ainda ({{ semPosicao.length }})</h3>

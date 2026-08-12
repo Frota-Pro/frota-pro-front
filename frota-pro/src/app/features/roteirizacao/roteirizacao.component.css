@@ -140,6 +140,18 @@
   border: 1px solid #e5e7eb; padding: 0 10px; font-size: 13px;
 }
 
+.roteirizar-tempo-minimo {
+  display: flex; flex-direction: column; gap: 6px;
+  background: #fff; border-radius: 16px; padding: 14px;
+  box-shadow: 0 1px 8px rgba(0,0,0,.06); margin-bottom: 12px;
+}
+.roteirizar-tempo-minimo label { font-size: 13px; color: #374151; font-weight: 600; }
+.roteirizar-tempo-minimo input {
+  max-width: 220px; height: 38px; border-radius: 12px;
+  border: 1px solid #e5e7eb; padding: 0 12px; font-size: 13px;
+}
+.roteirizar-tempo-minimo .muted { font-size: 11px; color: #6b7280; }
+
 .roteirizar-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
 }

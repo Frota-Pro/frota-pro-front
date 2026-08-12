@@ -101,6 +101,32 @@
       </div>
     </div>
 
+    <div class="section-title">Tempo mínimo de entrega</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Carga finalizada rápido demais</h2>
+      </div>
+      <div class="card-body">
+        <label class="row">
+          <span>
+            Validar tempo mínimo entre iniciar e finalizar a carga
+            <span class="muted-sm block">Se desligado (padrão), o motorista pode finalizar a carga a qualquer momento depois de iniciar. Ligado, o sistema bloqueia a finalização antes do tempo mínimo esperado — pensado pra evitar iniciar/abastecer/finalizar tudo em poucos minutos.</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="form.validarTempoMinimoCarga" />
+            <span class="slider"></span>
+          </label>
+        </label>
+
+        <div class="field" *ngIf="form.validarTempoMinimoCarga">
+          <label>Tempo mínimo padrão (minutos)</label>
+          <input type="number" min="0" [(ngModel)]="form.tempoMinimoEntregaPadraoMinutos" />
+          <span class="muted-sm">Usado quando a cidade da rota não tem um tempo específico configurado. Dá pra sobrescrever por cidade na tela de Roteirização.</span>
+        </div>
+      </div>
+    </div>
+
     <div class="actions-bar">
       <button class="btn primary" type="button" (click)="salvar()" [disabled]="saving">
         {{ saving ? 'Salvando...' : 'Salvar parâmetros' }}
