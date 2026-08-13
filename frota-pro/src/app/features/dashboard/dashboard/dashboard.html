@@ -23,6 +23,11 @@
         <span *ngIf="!isClosed">Dashboard</span>
       </a>
 
+      <a class="menu-item" routerLink="analytics" routerLinkActive="active">
+        <i class="icon fas fa-chart-line"></i>
+        <span *ngIf="!isClosed">Analytics</span>
+      </a>
+
       <a class="menu-item" routerLink="caminhoes" routerLinkActive="active">
         <i class="icon fas fa-truck"></i>
         <span *ngIf="!isClosed">Caminhões</span>
@@ -46,6 +51,11 @@
       <a class="menu-item" routerLink="abastecimentos" routerLinkActive="active">
         <i class="icon fas fa-gas-pump"></i>
         <span *ngIf="!isClosed">Abastecimentos</span>
+      </a>
+
+      <a class="menu-item" routerLink="postos-abastecimento" routerLinkActive="active">
+        <i class="icon fas fa-store"></i>
+        <span *ngIf="!isClosed">Postos de Abastecimento</span>
       </a>
 
       <a class="menu-item" routerLink="movimentacoes-sem-carga" routerLinkActive="active">

@@ -1,0 +1,305 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>Analytics</h1>
+      <p>Visão geral da frota, motoristas, caminhões e abastecimento.</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'frota'" (click)="trocarAba('frota')">Visão da Frota</button>
+    <button class="tab" [class.active]="activeTab === 'motorista'" (click)="trocarAba('motorista')">Por Motorista</button>
+    <button class="tab" [class.active]="activeTab === 'caminhao'" (click)="trocarAba('caminhao')">Por Caminhão</button>
+    <button class="tab" [class.active]="activeTab === 'abastecimento'" (click)="trocarAba('abastecimento')">Abastecimento</button>
+  </div>
+
+  <div class="toolbar">
+    <div class="field">
+      <label>Início</label>
+      <input type="date" [(ngModel)]="form.inicio" />
+    </div>
+    <div class="field">
+      <label>Fim</label>
+      <input type="date" [(ngModel)]="form.fim" />
+    </div>
+
+    <div class="field autocomplete" *ngIf="activeTab === 'motorista'">
+      <label>Motorista</label>
+      <input
+        type="text"
+        placeholder="Nome ou código"
+        [(ngModel)]="form.codigoMotorista"
+        (ngModelChange)="onInputMotorista()"
+        autocomplete="off"
+        (focus)="onFocusMotorista()"
+        (blur)="onBlurSugestao()"
+      />
+      <ul class="suggest" *ngIf="showSugMotorista && sugestoesMotorista.length > 0">
+        <li *ngFor="let m of sugestoesMotorista" (mousedown)="selecionarMotorista(m)">
+          <strong>{{ m.codigo }}</strong>
+          <span>{{ m.nome || '-' }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="field autocomplete" *ngIf="activeTab === 'caminhao'">
+      <label>Caminhão</label>
+      <input
+        type="text"
+        placeholder="Nome, placa ou código"
+        [(ngModel)]="form.codigoCaminhao"
+        (ngModelChange)="onInputCaminhao()"
+        autocomplete="off"
+        (focus)="onFocusCaminhao()"
+        (blur)="onBlurSugestao()"
+      />
+      <ul class="suggest" *ngIf="showSugCaminhao && sugestoesCaminhao.length > 0">
+        <li *ngFor="let c of sugestoesCaminhao" (mousedown)="selecionarCaminhao(c)">
+          <strong>{{ c.codigo }}</strong>
+          <span>{{ c.placa || '-' }}</span>
+          <small>{{ c.descricao || '-' }}</small>
+        </li>
+      </ul>
+    </div>
+
+    <button class="btn primary" type="button" [disabled]="loading" (click)="buscarAbaAtiva()">
+      {{ loading ? 'Carregando...' : 'Aplicar' }}
+    </button>
+
+    <div class="quick-periods">
+      <button class="btn ghost" type="button" (click)="aplicarPeriodoRapido(7)">7 dias</button>
+      <button class="btn ghost" type="button" (click)="aplicarPeriodoRapido(30)">30 dias</button>
+      <button class="btn ghost" type="button" (click)="aplicarPeriodoRapido(90)">90 dias</button>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="loading-block" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Carregando dados do período...</span>
+  </div>
+
+  <!-- ===== VISÃO DA FROTA ===== -->
+  <ng-container *ngIf="!loading && activeTab === 'frota' && dadosFrota as dados">
+    <section class="kpi-grid">
+      <div class="kpi"><span class="kpi-label">Cargas finalizadas</span><span class="kpi-value">{{ formatNumber(dados.totalCargasFinalizadas) }}</span></div>
+      <div class="kpi"><span class="kpi-label">Km rodado</span><span class="kpi-value">{{ formatNumber(dados.totalKmRodado) }} km</span></div>
+      <div class="kpi"><span class="kpi-label">Litros abastecidos</span><span class="kpi-value">{{ formatNumber(dados.totalLitros, 1) }} L</span></div>
+      <div class="kpi"><span class="kpi-label">Custo com combustível</span><span class="kpi-value">{{ formatMoney(dados.totalCustoCombustivel) }}</span></div>
+      <div class="kpi"><span class="kpi-label">Média km/L</span><span class="kpi-value">{{ formatNumber(dados.mediaKmPorLitro, 2) }}</span></div>
+    </section>
+
+    <section class="chart-grid">
+      <div class="panel">
+        <h3>Cargas finalizadas &amp; km rodado por semana</h3>
+        <div class="empty" *ngIf="(dados.serieSemanal?.length || 0) === 0">Sem dados no período.</div>
+        <google-chart *ngIf="(dados.serieSemanal?.length || 0) > 0" [type]="chartCargasKm.type" [data]="chartCargasKm.data" [columns]="chartCargasKm.columns" [options]="chartCargasKm.options" [style.width.%]="100"></google-chart>
+      </div>
+      <div class="panel">
+        <h3>Litros &amp; custo de combustível por semana</h3>
+        <div class="empty" *ngIf="(dados.serieSemanal?.length || 0) === 0">Sem dados no período.</div>
+        <google-chart *ngIf="(dados.serieSemanal?.length || 0) > 0" [type]="chartLitrosCusto.type" [data]="chartLitrosCusto.data" [columns]="chartLitrosCusto.columns" [options]="chartLitrosCusto.options" [style.width.%]="100"></google-chart>
+      </div>
+    </section>
+
+    <section class="ranking-grid">
+      <div class="panel">
+        <h3>Motoristas — mais km rodado</h3>
+        <div class="empty" *ngIf="(dados.topMotoristas?.length || 0) === 0">Nenhum motorista com carga finalizada no período.</div>
+        <table class="table" *ngIf="(dados.topMotoristas?.length || 0) > 0">
+          <thead><tr><th>Motorista</th><th class="right">Cargas</th><th class="right">Km rodado</th></tr></thead>
+          <tbody>
+          <tr *ngFor="let m of dados.topMotoristas; trackBy: trackByMotorista">
+            <td><strong>{{ m.nomeMotorista }}</strong><br><small class="muted">{{ m.codigoMotorista }}</small></td>
+            <td class="right">{{ formatNumber(m.totalCargas) }}</td>
+            <td class="right">{{ formatNumber(m.totalKmRodado) }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h3>Motoristas — menos km rodado</h3>
+        <div class="empty" *ngIf="(dados.piorMotoristas?.length || 0) === 0">Nenhum motorista com carga finalizada no período.</div>
+        <table class="table" *ngIf="(dados.piorMotoristas?.length || 0) > 0">
+          <thead><tr><th>Motorista</th><th class="right">Cargas</th><th class="right">Km rodado</th></tr></thead>
+          <tbody>
+          <tr *ngFor="let m of dados.piorMotoristas; trackBy: trackByMotorista">
+            <td><strong>{{ m.nomeMotorista }}</strong><br><small class="muted">{{ m.codigoMotorista }}</small></td>
+            <td class="right">{{ formatNumber(m.totalCargas) }}</td>
+            <td class="right">{{ formatNumber(m.totalKmRodado) }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h3>Caminhões — melhor consumo (km/L)</h3>
+        <div class="empty" *ngIf="(dados.topCaminhoesConsumo?.length || 0) === 0">Nenhum abastecimento com média calculada no período.</div>
+        <table class="table" *ngIf="(dados.topCaminhoesConsumo?.length || 0) > 0">
+          <thead><tr><th>Caminhão</th><th class="right">Km/L</th><th class="right">Litros</th></tr></thead>
+          <tbody>
+          <tr *ngFor="let c of dados.topCaminhoesConsumo; trackBy: trackByCaminhao">
+            <td>{{ c.caminhao }}</td>
+            <td class="right"><span class="badge success">{{ formatNumber(c.mediaKmPorLitro, 2) }}</span></td>
+            <td class="right">{{ formatNumber(c.totalLitros, 1) }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h3>Caminhões — pior consumo (km/L)</h3>
+        <div class="empty" *ngIf="(dados.piorCaminhoesConsumo?.length || 0) === 0">Nenhum abastecimento com média calculada no período.</div>
+        <table class="table" *ngIf="(dados.piorCaminhoesConsumo?.length || 0) > 0">
+          <thead><tr><th>Caminhão</th><th class="right">Km/L</th><th class="right">Litros</th></tr></thead>
+          <tbody>
+          <tr *ngFor="let c of dados.piorCaminhoesConsumo; trackBy: trackByCaminhao">
+            <td>{{ c.caminhao }}</td>
+            <td class="right"><span class="badge warning">{{ formatNumber(c.mediaKmPorLitro, 2) }}</span></td>
+            <td class="right">{{ formatNumber(c.totalLitros, 1) }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+
+  <!-- ===== POR MOTORISTA ===== -->
+  <ng-container *ngIf="!loading && activeTab === 'motorista'">
+    <div class="empty-state" *ngIf="!form.codigoMotorista">
+      <span class="empty-icon">👤</span>
+      Busque um motorista acima pra ver o desempenho dele no período.
+    </div>
+
+    <ng-container *ngIf="dadosMotorista as dados">
+      <div class="selected-title">{{ dados.nomeMotorista }} <small class="muted">{{ dados.codigoMotorista }}</small></div>
+
+      <section class="kpi-grid">
+        <div class="kpi"><span class="kpi-label">Cargas finalizadas</span><span class="kpi-value">{{ formatNumber(dados.totalCargas) }}</span></div>
+        <div class="kpi"><span class="kpi-label">Km rodado</span><span class="kpi-value">{{ formatNumber(dados.totalKmRodado) }} km</span></div>
+        <div class="kpi"><span class="kpi-label">Tonelada transportada</span><span class="kpi-value">{{ formatNumber(dados.totalTonelada, 2) }} t</span></div>
+        <div class="kpi"><span class="kpi-label">Valor das cargas</span><span class="kpi-value">{{ formatMoney(dados.totalValorCargas) }}</span></div>
+        <div class="kpi">
+          <span class="kpi-label">No prazo</span>
+          <span class="kpi-value">{{ formatNumber(dados.percentualCargasNoPrazo, 1) }}%</span>
+          <span class="kpi-sub">{{ formatNumber(dados.cargasNoPrazo) }} de {{ formatNumber(dados.totalCargas) }} · atraso médio {{ formatNumber(dados.mediaDiasAtrasoChegada, 1) }}d</span>
+        </div>
+      </section>
+
+      <section class="compare-grid">
+        <div class="panel">
+          <h3>Km por carga — motorista x frota</h3>
+          <div class="compare-row">
+            <div class="compare-item"><span class="muted">Este motorista</span><strong>{{ formatNumber(dados.mediaKmPorCargaMotorista, 1) }} km/carga</strong></div>
+            <div class="compare-item"><span class="muted">Média da frota</span><strong>{{ formatNumber(dados.mediaKmPorCargaFrota, 1) }} km/carga</strong></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Consumo médio</h3>
+          <div class="compare-row">
+            <div class="compare-item"><span class="muted">Km/L</span><strong>{{ formatNumber(dados.mediaKmPorLitro, 2) }}</strong></div>
+            <div class="compare-item"><span class="muted">Litros abastecidos</span><strong>{{ formatNumber(dados.totalLitros, 1) }} L</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="chart-grid single">
+        <div class="panel">
+          <h3>Cargas finalizadas &amp; km rodado por semana</h3>
+          <div class="empty" *ngIf="(dados.serieSemanal?.length || 0) === 0">Sem dados no período.</div>
+          <google-chart *ngIf="(dados.serieSemanal?.length || 0) > 0" [type]="chartMotorista.type" [data]="chartMotorista.data" [columns]="chartMotorista.columns" [options]="chartMotorista.options" [style.width.%]="100"></google-chart>
+        </div>
+      </section>
+    </ng-container>
+  </ng-container>
+
+  <!-- ===== POR CAMINHÃO ===== -->
+  <ng-container *ngIf="!loading && activeTab === 'caminhao'">
+    <div class="empty-state" *ngIf="!form.codigoCaminhao">
+      <span class="empty-icon">🚚</span>
+      Busque um caminhão acima pra ver o desempenho dele no período.
+    </div>
+
+    <ng-container *ngIf="dadosCaminhao as dados">
+      <div class="selected-title">{{ dados.descricaoCaminhao || dados.placaCaminhao }} <small class="muted">{{ dados.codigoCaminhao }} · {{ dados.placaCaminhao }}</small></div>
+
+      <section class="kpi-grid">
+        <div class="kpi"><span class="kpi-label">Cargas finalizadas</span><span class="kpi-value">{{ formatNumber(dados.totalCargas) }}</span></div>
+        <div class="kpi"><span class="kpi-label">Km rodado</span><span class="kpi-value">{{ formatNumber(dados.totalKmRodado) }} km</span></div>
+        <div class="kpi"><span class="kpi-label">Litros abastecidos</span><span class="kpi-value">{{ formatNumber(dados.totalLitros, 1) }} L</span></div>
+        <div class="kpi"><span class="kpi-label">Custo combustível</span><span class="kpi-value">{{ formatMoney(dados.totalCustoCombustivel) }}</span></div>
+        <div class="kpi"><span class="kpi-label">Custo manutenção</span><span class="kpi-value">{{ formatMoney(dados.totalCustoManutencao) }}</span><span class="kpi-sub">{{ formatNumber(dados.qtdManutencoes) }} OS no período</span></div>
+      </section>
+
+      <section class="compare-grid">
+        <div class="panel">
+          <h3>Consumo — este caminhão x frota</h3>
+          <div class="compare-row">
+            <div class="compare-item"><span class="muted">Este caminhão</span><strong [class.warn-text]="dados.mediaKmPorLitro < dados.mediaKmPorLitroFrota">{{ formatNumber(dados.mediaKmPorLitro, 2) }} km/L</strong></div>
+            <div class="compare-item"><span class="muted">Média da frota</span><strong>{{ formatNumber(dados.mediaKmPorLitroFrota, 2) }} km/L</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="chart-grid single">
+        <div class="panel">
+          <h3>Km rodado &amp; litros abastecidos por semana</h3>
+          <div class="empty" *ngIf="(dados.serieSemanal?.length || 0) === 0">Sem dados no período.</div>
+          <google-chart *ngIf="(dados.serieSemanal?.length || 0) > 0" [type]="chartCaminhao.type" [data]="chartCaminhao.data" [columns]="chartCaminhao.columns" [options]="chartCaminhao.options" [style.width.%]="100"></google-chart>
+        </div>
+      </section>
+    </ng-container>
+  </ng-container>
+
+  <!-- ===== ABASTECIMENTO ===== -->
+  <ng-container *ngIf="!loading && activeTab === 'abastecimento' && dadosAbastecimento as dados">
+    <section class="kpi-grid">
+      <div class="kpi"><span class="kpi-label">Litros abastecidos</span><span class="kpi-value">{{ formatNumber(dados.totalLitros, 1) }} L</span></div>
+      <div class="kpi"><span class="kpi-label">Custo total</span><span class="kpi-value">{{ formatMoney(dados.totalCusto) }}</span></div>
+      <div class="kpi"><span class="kpi-label">Preço médio por litro</span><span class="kpi-value">{{ formatMoney(dados.mediaPrecoLitro) }}</span></div>
+    </section>
+
+    <section class="chart-grid single">
+      <div class="panel">
+        <h3>Litros &amp; custo por semana</h3>
+        <div class="empty" *ngIf="(dados.serieSemanal?.length || 0) === 0">Sem dados no período.</div>
+        <google-chart *ngIf="(dados.serieSemanal?.length || 0) > 0" [type]="chartAbastecimento.type" [data]="chartAbastecimento.data" [columns]="chartAbastecimento.columns" [options]="chartAbastecimento.options" [style.width.%]="100"></google-chart>
+      </div>
+    </section>
+
+    <section class="ranking-grid">
+      <div class="panel">
+        <h3>Por posto</h3>
+        <div class="empty" *ngIf="(dados.porPosto?.length || 0) === 0">Nenhum abastecimento no período.</div>
+        <table class="table" *ngIf="(dados.porPosto?.length || 0) > 0">
+          <thead><tr><th>Posto</th><th class="right">Litros</th><th class="right">Total</th></tr></thead>
+          <tbody>
+          <tr *ngFor="let p of dados.porPosto; trackBy: trackByPosto">
+            <td>{{ p.posto }}</td>
+            <td class="right">{{ formatNumber(p.totalLitros, 1) }}</td>
+            <td class="right">{{ formatMoney(p.totalValor) }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h3>Por caminhão</h3>
+        <div class="empty" *ngIf="(dados.porCaminhao?.length || 0) === 0">Nenhum abastecimento no período.</div>
+        <table class="table" *ngIf="(dados.porCaminhao?.length || 0) > 0">
+          <thead><tr><th>Caminhão</th><th class="right">Km/L</th><th class="right">Litros</th><th class="right">Total</th></tr></thead>
+          <tbody>
+          <tr *ngFor="let c of dados.porCaminhao; trackBy: trackByResumoCaminhao">
+            <td>{{ c.caminhao }}</td>
+            <td class="right">{{ c.mediaKmPorLitro != null ? formatNumber(c.mediaKmPorLitro, 2) : '-' }}</td>
+            <td class="right">{{ formatNumber(c.totalLitros, 1) }}</td>
+            <td class="right">{{ formatMoney(c.totalValor) }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+</div>

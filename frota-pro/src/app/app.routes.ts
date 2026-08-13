@@ -40,6 +40,13 @@ export const routes: Routes = [
             .then((m) => m.DashboardHomeComponent),
       },
 
+      {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./features/analytics/analytics.component')
+            .then((m) => m.AnalyticsComponent),
+      },
+
       // Motoristas
       {
         path: 'motoristas',
@@ -161,6 +168,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/plano-manutencao-preventiva/plano-manutencao-preventiva.component')
             .then(m => m.PlanoManutencaoPreventivaComponent),
+      },
+
+      {
+        path: 'postos-abastecimento',
+        loadComponent: () =>
+          import('./features/postos-abastecimento/postos-abastecimento.component')
+            .then(m => m.PostosAbastecimentoComponent),
       },
 
       // Oficinas
