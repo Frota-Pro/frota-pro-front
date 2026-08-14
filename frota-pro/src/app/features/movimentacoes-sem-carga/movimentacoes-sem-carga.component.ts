@@ -3,6 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
+import { extrairMensagemErro } from '../../core/utils/api-error.util';
 import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
 import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
 import { MovimentacaoSemCargaApiService } from '../../core/api/movimentacao-sem-carga-api.service';
@@ -87,7 +88,7 @@ export class MovimentacoesSemCargaComponent implements OnInit, OnDestroy {
           this.movimentacoes = [];
           this.totalElements = 0;
           this.totalPages = 0;
-          this.errorMsg = 'Não foi possível carregar as movimentações sem carga.';
+          this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar as movimentações sem carga.');
         },
       });
 
@@ -111,7 +112,7 @@ export class MovimentacoesSemCargaComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           this.resumo = null;
-          this.resumoError = 'Não foi possível carregar o resumo para o caminhão informado.';
+          this.resumoError = extrairMensagemErro(err, 'Não foi possível carregar o resumo para o caminhão informado.');
         },
       });
   }

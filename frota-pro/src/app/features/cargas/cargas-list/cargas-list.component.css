@@ -253,6 +253,44 @@
   color: #065f46;
 }
 
+.flags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.flags-row .badge {
+  margin-right: 0;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.badge.devolucao {
+  border-color: rgba(245, 158, 11, 0.28);
+  background: rgba(245, 158, 11, 0.12);
+  color: #92400e;
+}
+
+.badge.transferencia {
+  border-color: rgba(59, 130, 246, 0.28);
+  background: rgba(59, 130, 246, 0.12);
+  color: #1e40af;
+}
+
+.badge.bloqueada {
+  border-color: rgba(239, 68, 68, 0.28);
+  background: rgba(239, 68, 68, 0.12);
+  color: #991b1b;
+}
+
+.badge.sumida {
+  border-color: rgba(220, 38, 38, 0.5);
+  background: rgba(220, 38, 38, 0.16);
+  color: #7f1d1d;
+  font-weight: 800;
+}
+
 .empty {
   padding: 28px 10px;
   text-align: center;

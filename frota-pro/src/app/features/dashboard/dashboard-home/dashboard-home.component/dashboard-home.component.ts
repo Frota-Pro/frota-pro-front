@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { StatCardComponent } from '../../../../shared/ui/stat-card/stat-card.component';
 import { ActionButtonComponent } from '../../../../shared/ui/action-button/action-button.component';
 
+import { extrairMensagemErro } from '../../../../core/utils/api-error.util';
 import { DashboardApiService } from '../../../../core/api/dashboard-api.service';
 import { DashboardMetasResponse, DashboardResumoResponse } from '../../../../core/api/dashboard-api.models';
 import { Observable, Subject, interval } from 'rxjs';
@@ -97,7 +98,7 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     this.dashboardApi.getResumo().subscribe({
       next: (res) => this.applyResumo(res),
       error: (err) => {
-        this.errorMsg = err?.error?.message || 'Erro ao carregar o dashboard.';
+        this.errorMsg = extrairMensagemErro(err, 'Erro ao carregar o dashboard.');
         this.loading = false;
       },
     });
@@ -124,9 +125,9 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
           };
           this.metasDashboardLoading = false;
         },
-        error: () => {
+        error: (err) => {
           this.metasDashboard = null;
-          this.metasDashboardError = 'Não foi possível carregar o dashboard de metas.';
+          this.metasDashboardError = extrairMensagemErro(err, 'Não foi possível carregar o dashboard de metas.');
           this.metasDashboardLoading = false;
         },
       });
@@ -311,8 +312,8 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
           this.notificationsLoading = false;
           this.notificationsLoadingMore = false;
         },
-        error: () => {
-          this.notificationsError = 'Não foi possível carregar notificações.';
+        error: (err) => {
+          this.notificationsError = extrairMensagemErro(err, 'Não foi possível carregar notificações.');
           this.notificationsLoading = false;
           this.notificationsLoadingMore = false;
         },
@@ -351,8 +352,8 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
           this.modalNotificationsLoading = false;
           this.modalNotificationsLoadingMore = false;
         },
-        error: () => {
-          this.modalNotificationsError = 'Não foi possível carregar notificações.';
+        error: (err) => {
+          this.modalNotificationsError = extrairMensagemErro(err, 'Não foi possível carregar notificações.');
           this.modalNotificationsLoading = false;
           this.modalNotificationsLoadingMore = false;
         },

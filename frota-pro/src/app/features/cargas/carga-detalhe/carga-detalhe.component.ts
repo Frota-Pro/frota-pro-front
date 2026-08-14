@@ -6,12 +6,16 @@ import { finalize } from 'rxjs/operators';
 
 import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { CargaApiService } from '../../../core/api/carga-api.service';
+import { MotoristaApiService } from '../../../core/api/motorista-api.service';
+import { MotoristaResponse } from '../../../core/api/motorista-api.models';
 import { ParadaCargaApiService } from '../../../core/api/parada-carga-api.service';
 import { ArquivoApiService } from '../../../core/api/arquivo-api.service';
 import { EixoApiService } from '../../../core/api/eixo-api.service';
 import { EixoCaminhaoResponse } from '../../../core/api/eixo-api.models';
 import { NotaFiscalApiService } from '../../../core/api/nota-fiscal-api.service';
 import { NotaFiscalResumoResponse } from '../../../core/api/nota-fiscal-api.models';
+import { DevolucaoTransferenciaApiService } from '../../../core/api/devolucao-transferencia-api.service';
+import { DevolucaoResponse, TransferenciaResponse } from '../../../core/api/devolucao-transferencia-api.models';
 import { formatKgFromTon } from '../../../shared/utils/weight';
 
 import {
@@ -76,6 +80,12 @@ type ParadaForm = Partial<ParadaCargaRequest> & {
   itensTrocadosText: string;
 };
 
+interface GrupoClientesPorCidade {
+  cidade: string;
+  semRoteirizacao: boolean;
+  clientes: ClienteCargaResponse[];
+}
+
 @Component({
   selector: 'app-carga-detalhe',
   standalone: true,
@@ -93,6 +103,9 @@ export class CargaDetalheComponent implements OnInit {
   errorMsg: string | null = null;
 
   carga: CargaResponse | null = null;
+
+  // ===== Clientes e Notas (agrupado por cidade) =====
+  cidadeSelecionada: string | null = null;
 
   // ===== Toasts =====
   toasts: ToastItem[] = [];
@@ -113,10 +126,14 @@ export class CargaDetalheComponent implements OnInit {
   observacao = '';
   savingObs = false;
 
-  // ===== Transferência =====
-  showTransferenciaModal = false;
-  numeroCargaDestinoTransferencia = '';
-  savingTransferencia = false;
+  // ===== Transferir motorista =====
+  // Carga faturada pra um motorista no WinThor, mas outro foi quem
+  // realmente saiu com ela (MDF-e/minuta não mudam pra refletir isso).
+  showTransferirMotoristaModal = false;
+  motoristasParaTransferencia: MotoristaResponse[] = [];
+  motoristasParaTransferenciaLoading = false;
+  codigoMotoristaTransferencia = '';
+  savingTransferirMotorista = false;
 
   // ===== Preview Parada =====
   showParadaModal = false;
@@ -183,6 +200,18 @@ export class CargaDetalheComponent implements OnInit {
   notaEmailDestinatario = '';
   enviandoEmailNota = false;
 
+  // ===== Devolução (detalhe) =====
+  showDevolucaoModal = false;
+  devolucoes: DevolucaoResponse[] = [];
+  loadingDevolucoes = false;
+  devolucoesErro: string | null = null;
+
+  // ===== Transferência (detalhe) =====
+  showTransferenciaModal = false;
+  transferencias: TransferenciaResponse[] = [];
+  loadingTransferencias = false;
+  transferenciasErro: string | null = null;
+
   // ===== Regras =====
   readonly OBS_MIN = 5;
   readonly OBS_MAX = 800;
@@ -226,10 +255,12 @@ export class CargaDetalheComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private cargaApi: CargaApiService,
+    private motoristaApi: MotoristaApiService,
     private paradaApi: ParadaCargaApiService,
     private arquivoApi: ArquivoApiService,
     private eixoApi: EixoApiService,
-    private notaFiscalApi: NotaFiscalApiService
+    private notaFiscalApi: NotaFiscalApiService,
+    private devolucaoTransferenciaApi: DevolucaoTransferenciaApiService
   ) {}
 
   // =========================
@@ -266,6 +297,7 @@ export class CargaDetalheComponent implements OnInit {
   carregar(): void {
     this.loading = true;
     this.errorMsg = null;
+    this.cidadeSelecionada = null;
 
     this.cargaApi.buscar(this.numeroCarga)
       .pipe(finalize(() => (this.loading = false)))
@@ -289,8 +321,8 @@ export class CargaDetalheComponent implements OnInit {
           console.error(err);
           this.carga = null;
           this.paradas = [];
-          this.errorMsg = 'Não foi possível carregar os detalhes da carga.';
-          this.toast('error', 'Falha ao carregar detalhes da carga.', 'Erro');
+          this.errorMsg = this.mensagemErro(err, 'Não foi possível carregar os detalhes da carga.');
+          this.toast('error', this.errorMsg, 'Erro');
         },
       });
   }
@@ -306,7 +338,7 @@ export class CargaDetalheComponent implements OnInit {
         error: (err) => {
           console.error(err);
           this.paradas = [];
-          this.toast('error', 'Não foi possível carregar as paradas.', 'Paradas');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível carregar as paradas.'), 'Paradas');
         },
       });
   }
@@ -320,6 +352,46 @@ export class CargaDetalheComponent implements OnInit {
       if (c?.cliente) set.add(c.cliente);
     }
     return Array.from(set);
+  }
+
+  /** Clientes agrupados por cidade — cidades sem cliente roteirizado ficam marcadas. */
+  get clientesAgrupadosPorCidade(): GrupoClientesPorCidade[] {
+    const clientes = this.carga?.clientes || [];
+    const naoRoteirizados = new Set(this.carga?.clientesNaoRoteirizados || []);
+
+    const porCidade = new Map<string, ClienteCargaResponse[]>();
+    for (const c of clientes) {
+      const cidade = (c.cidade || '').trim() || 'Sem cidade';
+      if (!porCidade.has(cidade)) porCidade.set(cidade, []);
+      porCidade.get(cidade)!.push(c);
+    }
+
+    const grupos: GrupoClientesPorCidade[] = Array.from(porCidade.entries()).map(([cidade, clis]) => ({
+      cidade,
+      semRoteirizacao: clis.length > 0 && clis.every((c) => naoRoteirizados.has(c.cliente)),
+      clientes: clis,
+    }));
+
+    grupos.sort((a, b) => {
+      if (a.cidade === 'Sem cidade') return 1;
+      if (b.cidade === 'Sem cidade') return -1;
+      return a.cidade.localeCompare(b.cidade, 'pt-BR');
+    });
+
+    return grupos;
+  }
+
+  get grupoCidadeSelecionado(): GrupoClientesPorCidade | null {
+    if (!this.cidadeSelecionada) return null;
+    return this.clientesAgrupadosPorCidade.find((g) => g.cidade === this.cidadeSelecionada) || null;
+  }
+
+  selecionarCidade(cidade: string): void {
+    this.cidadeSelecionada = cidade;
+  }
+
+  voltarParaCidades(): void {
+    this.cidadeSelecionada = null;
   }
 
   moverCliente(idx: number, dir: -1 | 1): void {
@@ -356,7 +428,7 @@ export class CargaDetalheComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toast('error', 'Não foi possível salvar a ordem de entrega.', 'Ordem');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível salvar a ordem de entrega.'), 'Ordem');
         },
       });
   }
@@ -403,46 +475,64 @@ export class CargaDetalheComponent implements OnInit {
         },
         error: (err2) => {
           console.error(err2);
-          this.toast('error', 'Não foi possível salvar a observação.', 'Observação');
+          this.toast('error', this.mensagemErro(err2, 'Não foi possível salvar a observação.'), 'Observação');
         },
       });
   }
 
   // =========================
-  // Transferência
+  // Transferir motorista
   // =========================
-  abrirTransferenciaModal(): void {
-    this.numeroCargaDestinoTransferencia = '';
-    this.showTransferenciaModal = true;
+  // Carga faturada pra um motorista no WinThor, mas outro foi quem
+  // realmente saiu com ela (o MDF-e/minuta não mudam pra refletir isso).
+  abrirTransferirMotoristaModal(): void {
+    this.codigoMotoristaTransferencia = '';
+    this.showTransferirMotoristaModal = true;
+
+    if (this.motoristasParaTransferencia.length === 0) {
+      this.motoristasParaTransferenciaLoading = true;
+      this.motoristaApi
+        .listar({ page: 0, size: 1000, sort: 'nome,asc', ativo: true })
+        .pipe(finalize(() => (this.motoristasParaTransferenciaLoading = false)))
+        .subscribe({
+          next: (res) => (this.motoristasParaTransferencia = res.content || []),
+          error: (err) => {
+            console.error(err);
+            this.toast('error', this.mensagemErro(err, 'Não foi possível carregar a lista de motoristas.'), 'Transferir motorista');
+          },
+        });
+    }
   }
 
-  fecharTransferenciaModal(): void {
-    if (this.savingTransferencia) return;
-    this.showTransferenciaModal = false;
-    this.numeroCargaDestinoTransferencia = '';
+  fecharTransferirMotoristaModal(): void {
+    if (this.savingTransferirMotorista) return;
+    this.showTransferirMotoristaModal = false;
+    this.codigoMotoristaTransferencia = '';
   }
 
-  marcarTransferencia(): void {
+  transferirMotorista(): void {
     if (!this.carga) return;
 
-    const numeroCargaDestino = this.numeroCargaDestinoTransferencia.trim();
-    const body = numeroCargaDestino ? { numeroCargaDestino } : {};
+    const codigoMotorista = this.codigoMotoristaTransferencia.trim();
+    if (!codigoMotorista) {
+      return this.toast('warning', 'Selecione o motorista que saiu com a carga.', 'Transferir motorista');
+    }
 
-    this.savingTransferencia = true;
+    this.savingTransferirMotorista = true;
 
     this.cargaApi
-      .marcarTransferencia(this.carga.numeroCarga, body)
-      .pipe(finalize(() => (this.savingTransferencia = false)))
+      .transferirMotorista(this.carga.numeroCarga, { codigoMotorista })
+      .pipe(finalize(() => (this.savingTransferirMotorista = false)))
       .subscribe({
         next: () => {
-          this.showTransferenciaModal = false;
-          this.numeroCargaDestinoTransferencia = '';
-          this.toast('success', 'Carga marcada como transferência.', 'Transferência');
+          this.showTransferirMotoristaModal = false;
+          this.codigoMotoristaTransferencia = '';
+          this.toast('success', 'Motorista da carga atualizado.', 'Transferir motorista');
           this.carregar();
         },
         error: (err) => {
           console.error(err);
-          this.toast('error', 'Não foi possível marcar a carga como transferência.', 'Transferência');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível transferir a carga para outro motorista.'), 'Transferir motorista');
         },
       });
   }
@@ -466,7 +556,7 @@ export class CargaDetalheComponent implements OnInit {
         error: (err) => {
           console.error(err);
           this.anexosParada = [];
-          this.toast('error', 'Não foi possível listar os anexos dessa parada.', 'Anexos');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível listar os anexos dessa parada.'), 'Anexos');
         },
       });
   }
@@ -514,7 +604,7 @@ export class CargaDetalheComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toast('error', 'Não foi possível enviar o anexo.', 'Anexos');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível enviar o anexo.'), 'Anexos');
         },
       });
   }
@@ -528,7 +618,7 @@ export class CargaDetalheComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.toast('error', 'Não foi possível abrir o preview do arquivo.', 'Arquivo');
+        this.toast('error', this.mensagemErro(err, 'Não foi possível abrir o preview do arquivo.'), 'Arquivo');
       },
     });
   }
@@ -553,7 +643,7 @@ export class CargaDetalheComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.toast('error', 'Não foi possível baixar o arquivo.', 'Arquivo');
+        this.toast('error', this.mensagemErro(err, 'Não foi possível baixar o arquivo.'), 'Arquivo');
       },
     });
   }
@@ -690,6 +780,66 @@ export class CargaDetalheComponent implements OnInit {
   }
 
   // =========================
+  // Devolução (detalhe)
+  // =========================
+  abrirDevolucoes(): void {
+    if (!this.carga) return;
+
+    this.showDevolucaoModal = true;
+    this.devolucoes = [];
+    this.devolucoesErro = null;
+    this.loadingDevolucoes = true;
+
+    this.devolucaoTransferenciaApi
+      .devolucoes(this.carga.numeroCarga)
+      .pipe(finalize(() => (this.loadingDevolucoes = false)))
+      .subscribe({
+        next: (itens) => (this.devolucoes = itens || []),
+        error: (err) => {
+          console.error(err);
+          this.devolucoes = [];
+          this.devolucoesErro = this.mensagemErro(err, 'Não foi possível carregar os detalhes da devolução.');
+        },
+      });
+  }
+
+  fecharDevolucoes(): void {
+    this.showDevolucaoModal = false;
+    this.devolucoes = [];
+    this.devolucoesErro = null;
+  }
+
+  // =========================
+  // Transferência (detalhe)
+  // =========================
+  abrirTransferencias(): void {
+    if (!this.carga) return;
+
+    this.showTransferenciaModal = true;
+    this.transferencias = [];
+    this.transferenciasErro = null;
+    this.loadingTransferencias = true;
+
+    this.devolucaoTransferenciaApi
+      .transferencias(this.carga.numeroCarga)
+      .pipe(finalize(() => (this.loadingTransferencias = false)))
+      .subscribe({
+        next: (itens) => (this.transferencias = itens || []),
+        error: (err) => {
+          console.error(err);
+          this.transferencias = [];
+          this.transferenciasErro = this.mensagemErro(err, 'Não foi possível carregar os detalhes da transferência.');
+        },
+      });
+  }
+
+  fecharTransferencias(): void {
+    this.showTransferenciaModal = false;
+    this.transferencias = [];
+    this.transferenciasErro = null;
+  }
+
+  // =========================
   // Nova Parada
   // =========================
   abrirNovaParada(): void {
@@ -752,9 +902,9 @@ export class CargaDetalheComponent implements OnInit {
         next: (res) => {
           this.eixosCaminhao = Array.isArray(res) ? res : (res.content || []);
         },
-        error: () => {
+        error: (err) => {
           this.eixosCaminhao = [];
-          this.toast('error', 'Não foi possível carregar os eixos cadastrados do caminhão.', 'Pneus');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível carregar os eixos cadastrados do caminhão.'), 'Pneus');
         },
       });
   }
@@ -1029,7 +1179,7 @@ export class CargaDetalheComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toast('error', 'Não foi possível cadastrar a parada.', 'Paradas');
+          this.toast('error', this.mensagemErro(err, 'Não foi possível cadastrar a parada.'), 'Paradas');
         },
       });
   }

@@ -87,6 +87,29 @@
           <span class="badge transfer-done" *ngIf="c.statusTransferencia === 'CONCLUIDA'">
             {{ labelStatusTransferencia(c.statusTransferencia) }}
           </span>
+
+          <div class="flags-row" *ngIf="c.codigosDevolucaoEncontrados?.length || c.teveTransferencia || c.diminuicaoPesoValorBloqueada || c.naoEncontradaNoWinThor">
+            <span class="badge sumida"
+                  *ngIf="c.naoEncontradaNoWinThor"
+                  title="Sincronizada antes, mas não foi mais encontrada no WinThor — pode ter sido cancelada ou desvinculada lá. Verifique antes de iniciar a viagem.">
+              ⚠ Sumiu do WinThor
+            </span>
+            <span class="badge devolucao"
+                  *ngIf="c.codigosDevolucaoEncontrados?.length"
+                  [title]="'Devolução no WinThor — código(s): ' + c.codigosDevolucaoEncontrados!.join(', ')">
+              Devolução {{ c.codigosDevolucaoEncontrados!.join(', ') }}
+            </span>
+            <span class="badge transferencia"
+                  *ngIf="c.teveTransferencia"
+                  title="Perdeu pedido transferido pra outro carregamento no WinThor">
+              Transferência
+            </span>
+            <span class="badge bloqueada"
+                  *ngIf="c.diminuicaoPesoValorBloqueada"
+                  title="Peso/valor diminuiu no WinThor mas foi ignorado — sem motivo permitido nos Parâmetros do Sistema">
+              Diminuição bloqueada
+            </span>
+          </div>
         </td>
         <td class="row-actions" (click)="$event.stopPropagation()">
           <button class="btn small" type="button" (click)="abrirDetalhe(c)">Ver</button>

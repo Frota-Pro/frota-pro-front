@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { OficinaApiService } from '../../../core/api/oficina-api.service';
 import { OficinaRequest, OficinaResponse } from '../../../core/api/oficina-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
@@ -82,7 +83,7 @@ export class OficinasComponent implements OnInit, OnDestroy {
           this.rows = res.content ?? [];
           this.applyLocalFilter();
         },
-        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao carregar oficinas.',
+        error: (err) => this.errorMsg = extrairMensagemErro(err, 'Erro ao carregar oficinas.'),
       });
   }
 
@@ -143,7 +144,7 @@ export class OficinasComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: () => { this.closeModal(); this.carregarPagina(); },
-        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao salvar oficina.',
+        error: (err) => this.errorMsg = extrairMensagemErro(err, 'Erro ao salvar oficina.'),
       });
   }
 
@@ -165,7 +166,7 @@ export class OficinasComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: () => this.carregarPagina(),
-        error: (err) => this.errorMsg = err?.error?.message || 'Erro ao excluir oficina.',
+        error: (err) => this.errorMsg = extrairMensagemErro(err, 'Erro ao excluir oficina.'),
       });
   }
 }

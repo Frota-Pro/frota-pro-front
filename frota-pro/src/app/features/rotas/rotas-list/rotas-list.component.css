@@ -99,9 +99,9 @@
 .empty { padding: 34px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #6b7280; }
 .empty .icon { font-size: 34px; }
 
-.backdrop { position: fixed; inset: 0; background: rgba(17,24,39,.55); z-index: 50; }
+.backdrop { position: fixed; inset: 0; background: rgba(17,24,39,.55); z-index: 2000; }
 .modal {
-  position: fixed; z-index: 60; top: 50%; left: 50%;
+  position: fixed; z-index: 2001; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   width: min(560px, calc(100vw - 24px));
   background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
@@ -121,6 +121,10 @@
 .modal-body input, .modal-body select { height: 38px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 10px; }
 
 .modal-footer { padding: 12px 14px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eef2f7; }
+
+.cidades-agrupadas { display: flex; flex-direction: column; gap: 16px; }
+.cidade-grupo { display: flex; flex-direction: column; gap: 6px; }
+.cidade-titulo { margin: 0; font-size: 13px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: .02em; }
 
 @media (max-width: 760px) {
   .actions { flex-direction: column; width: 100%; }

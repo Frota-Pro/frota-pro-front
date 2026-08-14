@@ -23,14 +23,19 @@
         <span *ngIf="!isClosed">Dashboard</span>
       </a>
 
+      <a class="menu-item" routerLink="analytics" routerLinkActive="active">
+        <i class="icon fas fa-chart-line"></i>
+        <span *ngIf="!isClosed">Analytics</span>
+      </a>
+
       <a class="menu-item" routerLink="caminhoes" routerLinkActive="active">
         <i class="icon fas fa-truck"></i>
         <span *ngIf="!isClosed">Caminhões</span>
       </a>
 
-      <a class="menu-item" routerLink="rotas" routerLinkActive="active">
+      <a class="menu-item" routerLink="roteirizacao" routerLinkActive="active">
         <i class="icon fas fa-map-marked-alt"></i>
-        <span *ngIf="!isClosed">Rotas</span>
+        <span *ngIf="!isClosed">Roteirização</span>
       </a>
 
       <a class="menu-item" routerLink="motoristas" routerLinkActive="active">
@@ -48,6 +53,11 @@
         <span *ngIf="!isClosed">Abastecimentos</span>
       </a>
 
+      <a class="menu-item" routerLink="postos-abastecimento" routerLinkActive="active">
+        <i class="icon fas fa-store"></i>
+        <span *ngIf="!isClosed">Postos de Abastecimento</span>
+      </a>
+
       <a class="menu-item" routerLink="movimentacoes-sem-carga" routerLinkActive="active">
         <i class="icon fas fa-route"></i>
         <span *ngIf="!isClosed">KM sem carga</span>
@@ -62,6 +72,11 @@
       <a class="menu-item" routerLink="relatorios" routerLinkActive="active">
         <i class="icon fas fa-file-pdf"></i>
         <span *ngIf="!isClosed">Relatórios</span>
+      </a>
+
+      <a class="menu-item" routerLink="multas" routerLinkActive="active">
+        <i class="icon fas fa-gavel"></i>
+        <span *ngIf="!isClosed">Multas</span>
       </a>
 
       <!-- OFICINA -->
@@ -84,6 +99,7 @@
 
         <ul class="submenu" *ngIf="submenuOficinaAberto && !isClosed">
           <li routerLink="/dashboard/manutencoes" routerLinkActive="active">Manutenções</li>
+          <li routerLink="/dashboard/planos-manutencao-preventiva" routerLinkActive="active">Planos Preventivos</li>
           <li routerLink="/dashboard/oficinas" routerLinkActive="active">Oficinas</li>
           <li routerLink="/dashboard/pneus" routerLinkActive="active">Vida Útil do Pneu</li>
         </ul>
@@ -146,6 +162,18 @@
             routerLink="/dashboard/saude-sistema"
             routerLinkActive="active">
             Saúde do Sistema
+          </li>
+          <li
+            *ngIf="(user$ | async)?.authorities?.includes('ROLE_ADMIN')"
+            routerLink="/dashboard/configuracao-empresa"
+            routerLinkActive="active">
+            Configurações da Empresa
+          </li>
+          <li
+            *ngIf="(user$ | async)?.authorities?.includes('ROLE_ADMIN')"
+            routerLink="/dashboard/parametros-sistema"
+            routerLinkActive="active">
+            Parâmetros do Sistema
           </li>
           <!-- ❌ removido: Logs -->
         </ul>

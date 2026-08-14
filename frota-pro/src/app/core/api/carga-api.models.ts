@@ -1,5 +1,6 @@
 export interface ClienteCargaResponse {
   cliente: string;
+  cidade?: string | null;
   notas: string[];
 }
 
@@ -18,6 +19,18 @@ export interface CargaMinResponse {
   statusTransferencia?: StatusTransferenciaCarga | null;
   nomeMotorista?: string | null;
   placaCaminhao?: string | null;
+
+  /** Códigos de devolução (CODDEVOL) encontrados no último sync com o WinThor pra esta carga. */
+  codigosDevolucaoEncontrados?: string[];
+
+  /** true se o último sync encontrou transferência de pedido desta carga pra outro carregamento no WinThor. */
+  teveTransferencia?: boolean;
+
+  /** true se uma diminuição de peso/valor vinda do WinThor foi ignorada por falta de motivo reconhecido. */
+  diminuicaoPesoValorBloqueada?: boolean;
+
+  /** true se a última verificação de reconciliação não encontrou mais essa carga no WinThor. */
+  naoEncontradaNoWinThor?: boolean;
 }
 
 export interface CargaResponse {
@@ -58,7 +71,47 @@ export interface CargaResponse {
 
   ordemEntregaClientes?: string[];
 
+  /** Clientes desta carga sem posição parametrizada na roteirização da cidade deles. */
+  clientesNaoRoteirizados?: string[];
+
   observacaoMotorista?: string | null;
+
+  /** true quando o motorista desta carga foi corrigido manualmente e o sync do WinThor não sobrescreve mais. */
+  motoristaDefinidoManualmente?: boolean;
+
+  /** Códigos de devolução (CODDEVOL) encontrados no último sync com o WinThor pra esta carga. */
+  codigosDevolucaoEncontrados?: string[];
+
+  /** true se o último sync encontrou transferência de pedido desta carga pra outro carregamento no WinThor. */
+  teveTransferencia?: boolean;
+
+  /** true se uma diminuição de peso/valor vinda do WinThor foi ignorada por falta de motivo reconhecido. */
+  diminuicaoPesoValorBloqueada?: boolean;
+
+  /** true se a última verificação de reconciliação não encontrou mais essa carga no WinThor. */
+  naoEncontradaNoWinThor?: boolean;
+
+  dataVerificacaoWinThor?: string | null;
+}
+
+export interface RelatorioCargaSumidaLinha {
+  numeroCarga: string;
+  numeroCargaExterno?: string | null;
+  statusCarga: string;
+  dtSaida?: string | null;
+  pesoCarga?: number | null;
+  valorTotal?: number | null;
+  codigoMotorista?: string | null;
+  nomeMotorista?: string | null;
+  codigoCaminhao?: string | null;
+  placaCaminhao?: string | null;
+  codigoRota?: string | null;
+  dataVerificacaoWinThor?: string | null;
+}
+
+export interface RelatorioCargasSumidasWinThorResponse {
+  total: number;
+  linhas: RelatorioCargaSumidaLinha[];
 }
 
 export interface CargaRequest {
@@ -81,8 +134,8 @@ export interface CargaRequest {
   codigosAjudantes?: string[] | null;
 }
 
-export interface MarcarTransferenciaCargaRequest {
-  numeroCargaDestino?: string | null;
+export interface TransferirMotoristaCargaRequest {
+  codigoMotorista: string;
 }
 
 /** Tipo mínimo que qualquer carga com número de exibição precisa ter. */

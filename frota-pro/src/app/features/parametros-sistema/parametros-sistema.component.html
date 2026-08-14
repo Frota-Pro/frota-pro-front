@@ -1,0 +1,138 @@
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>Parâmetros do Sistema</h1>
+      <p>Regras de negócio das rotinas automáticas de aviso — antes fixas no código, agora ajustáveis por aqui.</p>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <div>Carregando parâmetros...</div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <div class="section-title">Avisos automáticos</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Vencimentos e manutenção</h2>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Dias de antecedência para avisar de vencimento de documento</label>
+          <input type="number" min="0" [(ngModel)]="form.diasAntecedenciaVencimentoDocumento" />
+          <span class="muted-sm">Usado no aviso de vencimento da CNH do motorista e dos documentos do caminhão.</span>
+        </div>
+
+        <div class="field">
+          <label>Km de antecedência para avisar de troca de pneu</label>
+          <input type="number" min="0" [(ngModel)]="form.kmAntecedenciaTrocaPneu" />
+          <span class="muted-sm">Quantos km antes do previsto no plano de manutenção preventiva o sistema já avisa.</span>
+        </div>
+
+        <div class="field">
+          <label>Dias de manutenção parada antes de avisar</label>
+          <input type="number" min="0" [(ngModel)]="form.diasManutencaoEstagnada" />
+          <span class="muted-sm">Quantos dias uma manutenção pode ficar agendada/em andamento sem concluir antes do sistema avisar.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Multas</h2>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Dias de antecedência para avisar de prazo de multa</label>
+          <input type="number" min="0" [(ngModel)]="form.diasAntecedenciaPrazoMulta" />
+          <span class="muted-sm">Vale tanto para o prazo de pagamento quanto para o prazo de recurso da multa.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Sincronização de peso/valor da carga (WinThor)</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Devolução</h2>
+      </div>
+      <div class="card-body">
+        <label class="row">
+          <span>
+            Validar motivo de diminuição de peso/valor
+            <span class="muted-sm block">Se desligado (padrão), a sincronização sempre sobrescreve peso e valor da carga com o que vier do WinThor. Ligado, uma <strong>diminuição</strong> só é aplicada se houver um motivo reconhecido — devolução com código permitido aqui, ou transferência de pedido (categoria "Transferência" abaixo). Aumentos nunca são bloqueados.</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="form.validarMotivoAlteracaoPesoValorCarga" />
+            <span class="slider"></span>
+          </label>
+        </label>
+
+        <div class="field" *ngIf="form.validarMotivoAlteracaoPesoValorCarga">
+          <label>Códigos de devolução permitidos (CODDEVOL)</label>
+          <input type="text" [(ngModel)]="form.codigosDevolucaoPermitidos" placeholder="Ex.: 53,56" />
+          <span class="muted-sm">Separe vários códigos por vírgula. Deixe em branco para não aceitar nenhum código de devolução como motivo (mais restritivo).</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Transferência</h2>
+      </div>
+      <div class="card-body">
+        <label class="row">
+          <span>
+            Transferência de pedido autoriza atualização
+            <span class="muted-sm block">Ligado (padrão), qualquer transferência de pedido pra outro carregamento no WinThor (PCLOGTRANSFNFCARREG) já autoriza a diminuição de peso/valor. Desligado, transferência não é aceita como motivo — só os códigos de devolução da categoria "Devolução" autorizam.</span>
+            <span class="muted-sm block" *ngIf="!form.validarMotivoAlteracaoPesoValorCarga">Só tem efeito quando "Validar motivo de diminuição de peso/valor" (categoria Devolução) estiver ligado.</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="form.permitirAtualizacaoPorTransferencia" />
+            <span class="slider"></span>
+          </label>
+        </label>
+      </div>
+    </div>
+
+    <div class="section-title">Tempo mínimo de entrega</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Carga finalizada rápido demais</h2>
+      </div>
+      <div class="card-body">
+        <label class="row">
+          <span>
+            Validar tempo mínimo entre iniciar e finalizar a carga
+            <span class="muted-sm block">Se desligado (padrão), o motorista pode finalizar a carga a qualquer momento depois de iniciar. Ligado, o sistema bloqueia a finalização antes do tempo mínimo esperado — pensado pra evitar iniciar/abastecer/finalizar tudo em poucos minutos.</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="form.validarTempoMinimoCarga" />
+            <span class="slider"></span>
+          </label>
+        </label>
+
+        <div class="field" *ngIf="form.validarTempoMinimoCarga">
+          <label>Tempo mínimo padrão (minutos)</label>
+          <input type="number" min="0" [(ngModel)]="form.tempoMinimoEntregaPadraoMinutos" />
+          <span class="muted-sm">Usado quando a cidade da rota não tem um tempo específico configurado. Dá pra sobrescrever por cidade na tela de Roteirização.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions-bar">
+      <button class="btn primary" type="button" (click)="salvar()" [disabled]="saving">
+        {{ saving ? 'Salvando...' : 'Salvar parâmetros' }}
+      </button>
+    </div>
+
+  </ng-container>
+
+</div>

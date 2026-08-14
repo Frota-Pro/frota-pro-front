@@ -6,6 +6,7 @@ import { finalize } from 'rxjs/operators';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 
+import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { MotoristaApiService } from '../../../core/api/motorista-api.service';
 import { MotoristaRequest, MotoristaResponse, RelatorioMetaMensalMotoristaResponse } from '../../../core/api/motorista-api.models';
 import { MetaApiService } from '../../../core/api/meta-api.service';
@@ -142,7 +143,7 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           this.motorista = null;
-          this.errorMsg = 'Não foi possível carregar o motorista.';
+          this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar o motorista.');
         }
       });
   }
@@ -249,7 +250,7 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error(err);
-          alert('Não foi possível salvar a edição.');
+          alert(extrairMensagemErro(err, 'Não foi possível salvar a edição.'));
         }
       });
   }
@@ -277,7 +278,7 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           this.docs = [];
-          this.docsError = 'Não foi possível carregar os documentos.';
+          this.docsError = extrairMensagemErro(err, 'Não foi possível carregar os documentos.');
         }
       });
   }
@@ -310,7 +311,7 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error(err);
-          alert('Não foi possível enviar o documento.');
+          alert(extrairMensagemErro(err, 'Não foi possível enviar o documento.'));
         }
       });
   }
@@ -347,6 +348,7 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
         this.previewUrl = null;
         this.previewSafeUrl = null;
         this.showPreview = true;
+        alert(extrairMensagemErro(err, 'Não foi possível abrir o preview do documento.'));
       }
     });
   }
@@ -391,7 +393,7 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error(err);
-        alert('Não foi possível baixar o arquivo.');
+        alert(extrairMensagemErro(err, 'Não foi possível baixar o arquivo.'));
       }
     });
   }

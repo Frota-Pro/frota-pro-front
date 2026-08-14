@@ -41,9 +41,13 @@ export class LoginComponent {
     this.loading = true;
 
     this.auth.login({ login: l, senha: s } as any).subscribe({
-      next: () => {
+      next: (res) => {
         this.toast.success('Login realizado com sucesso!');
-        this.router.navigate(['/dashboard']);
+        if (res.mustChangePassword) {
+          this.router.navigate(['/trocar-senha']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (error: HttpErrorResponse) => {
         if (error.status === 429) {

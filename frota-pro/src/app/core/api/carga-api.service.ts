@@ -5,7 +5,8 @@ import { PageResponse } from './page.models';
 import {
   CargaMinResponse,
   CargaResponse,
-  MarcarTransferenciaCargaRequest
+  RelatorioCargasSumidasWinThorResponse,
+  TransferirMotoristaCargaRequest
 } from './carga-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -44,6 +45,22 @@ export class CargaApiService extends BaseApiService {
     return this.http.get<CargaResponse>(`${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}`);
   }
 
+  /** POST {{host}}/carga/verificar-winthor — roda a reconciliação agora, sem esperar o job de 3h. */
+  verificarWinThor() {
+    return this.http.post<void>(`${this.apiUrl}/carga/verificar-winthor`, {});
+  }
+
+  /** GET {{host}}/carga/relatorio-sumidas — cargas marcadas como não encontradas mais no WinThor. */
+  relatorioSumidas(opts: { inicio?: string | null; fim?: string | null; motorista?: string | null; caminhao?: string | null } = {}) {
+    let params = new HttpParams();
+    if (opts.inicio) params = params.set('inicio', opts.inicio);
+    if (opts.fim) params = params.set('fim', opts.fim);
+    if (opts.motorista) params = params.set('motorista', opts.motorista);
+    if (opts.caminhao) params = params.set('caminhao', opts.caminhao);
+
+    return this.http.get<RelatorioCargasSumidasWinThorResponse>(`${this.apiUrl}/carga/relatorio-sumidas`, { params });
+  }
+
   /** GET {{host}}/carga/externo/{codigoExterno} */
   buscarPorExterno(codigoExterno: string) {
     return this.http.get<CargaResponse>(
@@ -67,10 +84,10 @@ export class CargaApiService extends BaseApiService {
     );
   }
 
-  /** PATCH {{host}}/carga/{numeroCarga}/marcar-transferencia */
-  marcarTransferencia(numeroCarga: string, request: MarcarTransferenciaCargaRequest = {}) {
-    return this.http.patch<void>(
-      `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/marcar-transferencia`,
+  /** PATCH {{host}}/carga/{numeroCarga}/transferir-motorista */
+  transferirMotorista(numeroCarga: string, request: TransferirMotoristaCargaRequest) {
+    return this.http.patch<CargaResponse>(
+      `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/transferir-motorista`,
       request
     );
   }

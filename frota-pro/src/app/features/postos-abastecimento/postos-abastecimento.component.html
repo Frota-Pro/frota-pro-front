@@ -1,0 +1,139 @@
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>Postos de abastecimento</h1>
+      <p>Cadastre os postos com contrato — o motorista escolhe da lista no app, em vez de digitar.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" type="button" (click)="abrirNovo()">+ Novo posto</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input class="search"
+           [(ngModel)]="filtroQ"
+           (ngModelChange)="aplicarFiltros()"
+           placeholder="Buscar por código, nome, cidade ou CNPJ" />
+
+    <select class="select" [(ngModel)]="filtroAtivo" (change)="aplicarFiltros()">
+      <option value="true">Ativos</option>
+      <option value="false">Inativos</option>
+      <option value="">Todos</option>
+    </select>
+
+    <button class="btn ghost" type="button" (click)="limparFiltros()">Limpar</button>
+    <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="rows.length > 0; else emptyTpl">
+      <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>Cidade</th>
+        <th>CNPJ</th>
+        <th>Status</th>
+        <th class="col-actions">Ações</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let p of rows">
+        <td class="mono">{{ p.codigo }}</td>
+        <td>
+          <div class="stack">
+            <strong>{{ p.nome }}</strong>
+            <small class="muted" *ngIf="p.endereco">{{ p.endereco }}</small>
+          </div>
+        </td>
+        <td>{{ p.cidade || '—' }}{{ p.uf ? ' / ' + p.uf : '' }}</td>
+        <td class="mono">{{ p.cnpj || '—' }}</td>
+        <td>
+          <span class="status" [class.inactive]="!p.ativo">{{ p.ativo ? 'ATIVO' : 'INATIVO' }}</span>
+        </td>
+        <td class="row-actions">
+          <button class="btn small" type="button" (click)="abrirEdicao(p)">Editar</button>
+          <button class="btn small danger" type="button" (click)="excluir(p)">Excluir</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <div class="icon">⛽</div>
+        <h3>Nenhum posto cadastrado</h3>
+        <p>Cadastre um posto de abastecimento ou ajuste os filtros.</p>
+      </div>
+    </ng-template>
+
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn small" [disabled]="page<=0" (click)="carregarPagina(page-1)">Anterior</button>
+      <span class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</span>
+      <button class="btn small" [disabled]="page+1>=totalPages" (click)="carregarPagina(page+1)">Próxima</button>
+    </div>
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Carregando postos...</div>
+    </div>
+  </ng-template>
+
+  <!-- MODAL -->
+  <div class="backdrop" *ngIf="showModal" (click)="fecharModal()"></div>
+
+  <div class="modal" *ngIf="showModal">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar posto' : 'Novo posto' }}</h2>
+      <button class="icon" type="button" (click)="fecharModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <label>Código</label>
+      <input [(ngModel)]="form.codigo" placeholder="Ex.: POSTO-01" [disabled]="isEditing" />
+
+      <label>Nome</label>
+      <input [(ngModel)]="form.nome" placeholder="Ex.: Posto Ipiranga BR-232" />
+
+      <div class="row">
+        <div class="col">
+          <label>Cidade</label>
+          <input [(ngModel)]="form.cidade" placeholder="Ex.: Caruaru" />
+        </div>
+        <div class="col" style="flex: 0 0 90px;">
+          <label>UF</label>
+          <input [(ngModel)]="form.uf" placeholder="PE" maxlength="2" />
+        </div>
+      </div>
+
+      <label>Endereço (opcional)</label>
+      <input [(ngModel)]="form.endereco" placeholder="Ex.: BR-232, km 12" />
+
+      <label>CNPJ (opcional)</label>
+      <input [(ngModel)]="form.cnpj" placeholder="00.000.000/0000-00" />
+
+      <label>Observação (opcional)</label>
+      <input [(ngModel)]="form.observacao" placeholder="Ex.: contrato até 12/2026, desconto de R$0,05/L" />
+
+      <label class="checkbox-row">
+        <input type="checkbox" [(ngModel)]="form.ativo" />
+        Posto ativo (aparece pro motorista selecionar no app)
+      </label>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="fecharModal()">Cancelar</button>
+      <button class="btn primary" type="button" [disabled]="saving" (click)="salvar()">
+        {{ isEditing ? 'Salvar' : 'Criar' }}
+      </button>
+    </div>
+  </div>
+
+</div>

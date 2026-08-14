@@ -6,27 +6,54 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn ghost" type="button" (click)="limparPreview()" [disabled]="!pdfSafeUrl">Limpar</button>
-      <button class="btn primary" type="button" (click)="gerar()" [disabled]="loading">
-        {{ loading ? 'Gerando...' : 'Gerar' }}
-      </button>
+      <button class="btn ghost" type="button" (click)="limparPreview()" [disabled]="!podeLimpar">Limpar resultado</button>
     </div>
   </div>
 
-  <div class="grid">
-    <!-- filtros -->
-    <section class="card">
-      <h3>Filtros</h3>
+  <!-- passo 1: escolher o relatório -->
+  <section class="card picker-card">
+    <div class="step-title">
+      <span class="step-badge">1</span>
+      <h3>Escolha o relatório</h3>
+    </div>
 
-      <div class="form">
-        <div class="field">
-          <label>Tipo</label>
-          <select [(ngModel)]="form.tipo" (ngModelChange)="onTipoChange()">
-            <option value="">Selecione...</option>
-            <option *ngFor="let r of reports" [ngValue]="r.key" [disabled]="r.enabled === false">
-              {{ r.title }}
-            </option>
-          </select>
+    <div class="category-group" *ngFor="let cat of categorias">
+      <h4 class="category-title">{{ cat.nome }}</h4>
+      <div class="report-grid">
+        <button
+          type="button"
+          class="report-card"
+          *ngFor="let r of cat.reports"
+          [class.selected]="form.tipo === r.key"
+          [class.disabled]="r.enabled === false"
+          [disabled]="r.enabled === false"
+          (click)="selecionarTipo(r)"
+        >
+          <span class="report-icon">{{ r.icon }}</span>
+          <span class="report-title">{{ r.title }}</span>
+          <span class="report-short">{{ r.short }}</span>
+          <span class="report-badge" *ngIf="r.enabled === false">Em breve</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- passo 2: filtros + resultado -->
+  <div class="grid">
+    <section class="card filters-card" #filtrosCard>
+      <div class="step-title">
+        <span class="step-badge">2</span>
+        <h3>Filtros</h3>
+      </div>
+
+      <div class="no-selection" *ngIf="!selectedDef">
+        Selecione um relatório acima para ver os filtros disponíveis.
+      </div>
+
+      <div class="form" *ngIf="selectedDef">
+        <div class="selected-summary">
+          <span class="report-icon">{{ selectedDef.icon }}</span>
+          <span>{{ selectedDef.title }}</span>
         </div>
 
         <div class="info-note" *ngIf="selectedDef?.note">
@@ -59,7 +86,7 @@
           <div class="autocomplete">
             <input
               type="text"
-              placeholder="Ex: CAM-000030"
+              placeholder="Nome, placa ou código"
               [(ngModel)]="form.codigoCaminhao"
               (ngModelChange)="onInputRelCaminhao()"
               autocomplete="off"
@@ -103,12 +130,74 @@
           <input type="text" placeholder="Ex: PNEU-000001" [(ngModel)]="form.codigoPneu" />
         </div>
 
+        <!-- ✅ CARGAS SUMIDAS DO WINTHOR: filtros todos opcionais -->
+        <div class="field" *ngIf="form.tipo === 'CARGAS_SUMIDAS_WINTHOR'">
+          <label>Início (opcional)</label>
+          <input type="date" [(ngModel)]="form.inicio" />
+        </div>
+
+        <div class="field" *ngIf="form.tipo === 'CARGAS_SUMIDAS_WINTHOR'">
+          <label>Fim (opcional)</label>
+          <input type="date" [(ngModel)]="form.fim" />
+        </div>
+
+        <div class="field" *ngIf="form.tipo === 'CARGAS_SUMIDAS_WINTHOR'">
+          <label>Caminhão (opcional)</label>
+          <div class="autocomplete">
+            <input
+              type="text"
+              placeholder="Nome, placa ou código"
+              [(ngModel)]="form.codigoCaminhao"
+              (ngModelChange)="onInputRelCaminhao()"
+              autocomplete="off"
+              (focus)="onFocusRelCaminhao()"
+              (blur)="onBlurRelSugestao()"
+            />
+            <ul class="suggest" *ngIf="showSugRelCaminhao && sugestoesRelCaminhao.length > 0">
+              <li *ngFor="let c of sugestoesRelCaminhao" (mousedown)="selectRelCaminhao(c)">
+                <strong>{{ c.codigo }}</strong>
+                <span>{{ c.placa || '-' }}</span>
+                <small>{{ c.descricao || '-' }}</small>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="field" *ngIf="form.tipo === 'CARGAS_SUMIDAS_WINTHOR'">
+          <label>Motorista (opcional)</label>
+          <div class="autocomplete">
+            <input
+              type="text"
+              placeholder="Nome, código ou CNH"
+              [(ngModel)]="form.codigoMotorista"
+              (ngModelChange)="onInputRelMotorista()"
+              autocomplete="off"
+              (focus)="onFocusRelMotorista()"
+              (blur)="onBlurRelSugestao()"
+            />
+            <ul class="suggest" *ngIf="showSugRelMotorista && sugestoesRelMotorista.length > 0">
+              <li *ngFor="let m of sugestoesRelMotorista" (mousedown)="selectRelMotorista(m)">
+                <strong>{{ m.codigo }}</strong>
+                <span>{{ m.nome || '-' }}</span>
+                <small>{{ m.cnh || m.email || '-' }}</small>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <button class="btn ghost btn-block" type="button"
+                *ngIf="form.tipo === 'CARGAS_SUMIDAS_WINTHOR'"
+                (click)="verificarAgora()"
+                [disabled]="verificandoAgora">
+          {{ verificandoAgora ? 'Verificando...' : '🔄 Verificar agora (sem esperar o job de 3h)' }}
+        </button>
+
         <div class="field" *ngIf="form.tipo === 'ABASTECIMENTOS'">
           <label>Motorista (opcional)</label>
           <div class="autocomplete">
             <input
               type="text"
-              placeholder="Ex: MOT-000001"
+              placeholder="Nome, código ou CNH"
               [(ngModel)]="form.codigoMotorista"
               (ngModelChange)="onInputRelMotorista()"
               autocomplete="off"
@@ -127,11 +216,11 @@
 
         <!-- 🔒 outros relatórios: obrigatórios quando o tipo exigir -->
         <div class="field" *ngIf="selectedDef?.needsCaminhao && form.tipo !== 'ABASTECIMENTOS'">
-          <label>Caminhão (código)</label>
+          <label>Caminhão</label>
           <div class="autocomplete">
             <input
               type="text"
-              placeholder="Ex: CAM-000030"
+              placeholder="Nome, placa ou código"
               [(ngModel)]="form.codigoCaminhao"
               (ngModelChange)="onInputRelCaminhao()"
               autocomplete="off"
@@ -149,11 +238,11 @@
         </div>
 
         <div class="field" *ngIf="selectedDef?.needsMotorista && form.tipo !== 'ABASTECIMENTOS'">
-          <label>Motorista (código)</label>
+          <label>Motorista</label>
           <div class="autocomplete">
             <input
               type="text"
-              placeholder="Ex: MOT-000001"
+              placeholder="Nome, código ou CNH"
               [(ngModel)]="form.codigoMotorista"
               (ngModelChange)="onInputRelMotorista()"
               autocomplete="off"
@@ -171,23 +260,49 @@
         </div>
 
         <div class="field" *ngIf="selectedDef?.needsNumeroCarga">
-          <label>Número da Carga</label>
-          <input type="text" placeholder="Ex: 000001" [(ngModel)]="form.numeroCarga" />
+          <label>Carga</label>
+          <div class="autocomplete">
+            <input
+              type="text"
+              placeholder="Número, motorista ou placa"
+              [(ngModel)]="form.numeroCarga"
+              (ngModelChange)="onInputRelCarga()"
+              autocomplete="off"
+              (focus)="onFocusRelCarga()"
+              (blur)="onBlurRelSugestao()"
+            />
+            <ul class="suggest" *ngIf="showSugRelCarga && (cargaSearchLoading || sugestoesRelCarga.length > 0)">
+              <li class="suggest-loading" *ngIf="cargaSearchLoading">Buscando...</li>
+              <li *ngFor="let c of sugestoesRelCarga" (mousedown)="selectRelCarga(c)">
+                <strong>{{ c.numeroCargaExibicao }}</strong>
+                <span>{{ formatText(c.nomeMotorista) }}</span>
+                <small>{{ formatText(c.placaCaminhao) }} · {{ formatText(c.statusCarga) }}</small>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div class="alert" *ngIf="errorMsg">
           {{ errorMsg }}
         </div>
 
+        <button class="btn primary btn-block btn-generate" type="button" (click)="gerar()" [disabled]="loading">
+          {{ loading ? 'Gerando...' : '📄 Gerar relatório' }}
+        </button>
+
         <div class="mini-actions">
           <button class="btn" type="button" (click)="abrirNovaAba()"
-                  [disabled]="!pdfSafeUrl || form.tipo === 'VIDA_UTIL_PNEU'">Abrir</button>
+                  [disabled]="!pdfSafeUrl || form.tipo === 'VIDA_UTIL_PNEU' || form.tipo === 'CARGAS_SUMIDAS_WINTHOR'">Abrir em nova aba</button>
           <button class="btn success" type="button"
-                  *ngIf="form.tipo !== 'VIDA_UTIL_PNEU'"
+                  *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && form.tipo !== 'CARGAS_SUMIDAS_WINTHOR'"
                   (click)="baixar()" [disabled]="!pdfSafeUrl">Download</button>
           <button class="btn success" type="button"
                   *ngIf="form.tipo === 'VIDA_UTIL_PNEU'"
                   (click)="exportarVidaUtilPneuPdf()"
+                  [disabled]="loading">Exportar PDF</button>
+          <button class="btn success" type="button"
+                  *ngIf="form.tipo === 'CARGAS_SUMIDAS_WINTHOR'"
+                  (click)="exportarCargasSumidasWinThorPdf()"
                   [disabled]="loading">Exportar PDF</button>
         </div>
       </div>
@@ -196,12 +311,12 @@
     <!-- preview -->
     <section class="card preview-card">
       <div class="preview-head">
-        <h3>{{ form.tipo === 'VIDA_UTIL_PNEU' ? 'Resultado (JSON)' : 'Pré-visualização' }}</h3>
-        <span class="hint" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && lastFilename">{{ lastFilename }}</span>
+        <h3>{{ (form.tipo === 'VIDA_UTIL_PNEU' || form.tipo === 'CARGAS_SUMIDAS_WINTHOR') ? 'Resultado' : 'Pré-visualização' }}</h3>
+        <span class="hint" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && form.tipo !== 'CARGAS_SUMIDAS_WINTHOR' && lastFilename">{{ lastFilename }}</span>
       </div>
 
       <div class="table-wrap" *ngIf="form.tipo === 'VIDA_UTIL_PNEU'">
-        <div class="empty" *ngIf="vidaUtilLoading">Carregando relatório de vida útil...</div>
+        <div class="empty" *ngIf="vidaUtilLoading"><span class="spinner"></span>Carregando relatório de vida útil...</div>
 
         <div class="report-meta" *ngIf="!vidaUtilLoading && vidaUtilResult">
           <span><strong>Filtro Caminhão:</strong> {{ formatText(vidaUtilResult.filtroCaminhao) }}</span>
@@ -243,17 +358,74 @@
 
       <ng-template #emptyVidaUtil>
         <div class="empty" *ngIf="form.tipo === 'VIDA_UTIL_PNEU' && !vidaUtilLoading">
+          <span class="empty-icon">🛞</span>
           Gere o relatório para visualizar os dados aqui.
         </div>
       </ng-template>
 
-      <div class="preview-wrap" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && pdfSafeUrl; else empty">
+      <div class="table-wrap" *ngIf="form.tipo === 'CARGAS_SUMIDAS_WINTHOR'">
+        <div class="empty" *ngIf="cargasSumidasLoading"><span class="spinner"></span>Carregando relatório...</div>
+
+        <div class="report-meta" *ngIf="!cargasSumidasLoading && cargasSumidasResult">
+          <span><strong>Total:</strong> {{ cargasSumidasResult.total ?? 0 }}</span>
+        </div>
+
+        <table class="table" *ngIf="!cargasSumidasLoading && (cargasSumidasResult?.linhas?.length || 0) > 0; else emptyCargasSumidas">
+          <thead>
+          <tr>
+            <th>Carga</th>
+            <th>Externo (WinThor)</th>
+            <th>Status</th>
+            <th>Saída</th>
+            <th>Motorista</th>
+            <th>Caminhão</th>
+            <th>Rota</th>
+            <th class="right">Peso (kg)</th>
+            <th class="right">Valor</th>
+            <th>Verificado em</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let l of cargasSumidasResult?.linhas || []; trackBy: trackByCargaSumida">
+            <td>{{ formatText(l.numeroCarga) }}</td>
+            <td>{{ formatText(l.numeroCargaExterno) }}</td>
+            <td>{{ formatText(l.statusCarga) }}</td>
+            <td>{{ l.dtSaida ? (l.dtSaida | date:'dd/MM/yyyy') : '-' }}</td>
+            <td>{{ formatText(l.codigoMotorista) }} <span class="hint">{{ formatText(l.nomeMotorista) }}</span></td>
+            <td>{{ formatText(l.codigoCaminhao) }} <span class="hint">{{ formatText(l.placaCaminhao) }}</span></td>
+            <td>{{ formatText(l.codigoRota) }}</td>
+            <td class="right">{{ formatNumber(l.pesoCarga) }}</td>
+            <td class="right">{{ formatNumber(l.valorTotal) }}</td>
+            <td>{{ l.dataVerificacaoWinThor ? (l.dataVerificacaoWinThor | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #emptyCargasSumidas>
+        <div class="empty" *ngIf="form.tipo === 'CARGAS_SUMIDAS_WINTHOR' && !cargasSumidasLoading">
+          <ng-container *ngIf="cargasSumidasResult; else geraCargasSumidas">
+            <span class="empty-icon">👍</span>
+            Nenhuma carga sumida do WinThor encontrada com esses filtros.
+          </ng-container>
+          <ng-template #geraCargasSumidas>
+            <span class="empty-icon">⚠️</span>
+            Gere o relatório para visualizar os dados aqui.
+          </ng-template>
+        </div>
+      </ng-template>
+
+      <div class="preview-wrap" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && form.tipo !== 'CARGAS_SUMIDAS_WINTHOR' && pdfSafeUrl; else empty">
         <iframe class="pdf-frame" [src]="pdfSafeUrl"></iframe>
       </div>
 
       <ng-template #empty>
-        <div class="empty" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU'">
-          Gere um relatório para visualizar aqui.
+        <div class="empty" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && form.tipo !== 'CARGAS_SUMIDAS_WINTHOR'">
+          <ng-container *ngIf="loading; else emptyDefaultMsg"><span class="spinner"></span>Gerando PDF...</ng-container>
+          <ng-template #emptyDefaultMsg>
+            <span class="empty-icon">📄</span>
+            {{ selectedDef ? 'Preencha os filtros e clique em "Gerar relatório".' : 'Escolha um relatório acima para começar.' }}
+          </ng-template>
         </div>
       </ng-template>
     </section>

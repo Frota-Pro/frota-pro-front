@@ -1,9 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { finalize } from 'rxjs';
+import { Subject, finalize, debounceTime, distinctUntilChanged, switchMap, takeUntil, of } from 'rxjs';
 
+import { extrairMensagemErro } from '../../core/utils/api-error.util';
 import { PneuApiService } from '../../core/api/pneu-api.service';
 import { PneuVidaUtilRelatorioLinha, PneuVidaUtilRelatorioResponse } from '../../core/api/pneu-api.models';
 import { RelatorioPdfApiService } from '../../core/api/relatorio-pdf-api.service';
@@ -11,6 +12,9 @@ import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
 import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
 import { MotoristaApiService } from '../../core/api/motorista-api.service';
 import { MotoristaResponse } from '../../core/api/motorista-api.models';
+import { CargaApiService } from '../../core/api/carga-api.service';
+import { CargaMinResponse, RelatorioCargasSumidasWinThorResponse, RelatorioCargaSumidaLinha } from '../../core/api/carga-api.models';
+import { ToastService } from '../../shared/ui/toast/toast.service';
 
 type ReportKey =
   | 'ABASTECIMENTOS'
@@ -21,13 +25,19 @@ type ReportKey =
   | 'CARGA_COMPLETA'
   | 'META_MENSAL_MOTORISTA'
   | 'DESPESAS_CATEGORIAS'
-  | 'VIDA_UTIL_PNEU';
+  | 'VIDA_UTIL_PNEU'
+  | 'CARGAS_SUMIDAS_WINTHOR';
 
 type TipoMeta = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA';
+
+type ReportCategory = 'Motoristas' | 'Frota' | 'Cargas' | 'Financeiro';
 
 type ReportDef = {
   key: ReportKey;
   title: string;
+  category: ReportCategory;
+  icon: string;
+  short: string;
   note?: string;
   needsPeriodo?: boolean;
   needsCaminhao?: boolean;
@@ -45,41 +55,145 @@ type ReportDef = {
   styleUrls: ['./relatorios.component.css'],
 })
 export class RelatoriosComponent implements OnInit, OnDestroy {
+  @ViewChild('filtrosCard') filtrosCardRef?: ElementRef<HTMLElement>;
+
   constructor(
     private api: RelatorioPdfApiService,
     private pneuApi: PneuApiService,
     private caminhaoApi: CaminhaoApiService,
     private motoristaApi: MotoristaApiService,
-    private sanitizer: DomSanitizer
+    private cargaApi: CargaApiService,
+    private sanitizer: DomSanitizer,
+    private toast: ToastService
   ) {}
 
-  reports: ReportDef[] = [
-    // ✅ Abastecimentos: periodo obrigatório, caminhão/motorista opcionais (não colocar needsCaminhao/needsMotorista)
-    { key: 'ABASTECIMENTOS', title: 'Abastecimentos por Período', needsPeriodo: true, enabled: true },
+  /** Ordem em que as categorias aparecem no seletor de relatórios. */
+  readonly categoryOrder: ReportCategory[] = ['Motoristas', 'Frota', 'Cargas', 'Financeiro'];
 
+  reports: ReportDef[] = [
+    // ===== Motoristas =====
+    {
+      key: 'RANKING_MOTORISTAS',
+      title: 'Ranking de Motoristas',
+      category: 'Motoristas',
+      icon: '🏆',
+      short: 'Performance consolidada por motorista no período',
+      needsPeriodo: true,
+      enabled: true,
+    },
+    {
+      key: 'METAS_MOTORISTAS',
+      title: 'Metas dos Motoristas',
+      category: 'Motoristas',
+      icon: '🎯',
+      short: 'Realizado x meta por motorista, por tipo de meta',
+      needsPeriodo: true,
+      needsTipoMeta: true,
+      enabled: true,
+    },
+    {
+      key: 'META_MENSAL_MOTORISTA',
+      title: 'Meta Mensal do Motorista',
+      category: 'Motoristas',
+      icon: '👤',
+      short: 'Detalhe mensal de um motorista específico',
+      needsPeriodo: true,
+      needsMotorista: true,
+      enabled: true,
+    },
+
+    // ===== Frota =====
     {
       key: 'CUSTO_CAMINHAO',
       title: 'Custo por Caminhão',
+      category: 'Frota',
+      icon: '💰',
+      short: 'Custos consolidados de um caminhão no período',
       note: 'Inclui o total de KM sem carga no retorno e no PDF.',
       needsPeriodo: true,
       needsCaminhao: true,
       enabled: true,
     },
-    { key: 'MANUTENCOES_CAMINHAO', title: 'Histórico de Manutenção (Caminhão)', needsPeriodo: true, needsCaminhao: true, enabled: true },
-    { key: 'RANKING_MOTORISTAS', title: 'Ranking de Motoristas', needsPeriodo: true, enabled: true },
-    { key: 'METAS_MOTORISTAS', title: 'Metas dos Motoristas', needsPeriodo: true, needsTipoMeta: true, enabled: true },
+    {
+      key: 'MANUTENCOES_CAMINHAO',
+      title: 'Histórico de Manutenção',
+      category: 'Frota',
+      icon: '🔧',
+      short: 'Manutenções realizadas em um caminhão no período',
+      needsPeriodo: true,
+      needsCaminhao: true,
+      enabled: true,
+    },
+    {
+      key: 'VIDA_UTIL_PNEU',
+      title: 'Vida Útil do Pneu',
+      category: 'Frota',
+      icon: '🛞',
+      short: 'KM rodado x meta de vida de cada pneu',
+      enabled: true,
+    },
+
+    // ===== Cargas =====
+    {
+      key: 'CARGA_COMPLETA',
+      title: 'Relatório Completo da Carga',
+      category: 'Cargas',
+      icon: '📦',
+      short: 'Todos os dados de uma carga específica',
+      needsNumeroCarga: true,
+      enabled: true,
+    },
+    {
+      key: 'CARGAS_SUMIDAS_WINTHOR',
+      title: 'Cargas Sumidas do WinThor',
+      category: 'Cargas',
+      icon: '⚠️',
+      short: 'Cargas sincronizadas que sumiram do WinThor',
+      note: 'Cargas que já foram sincronizadas, mas a verificação mais recente não encontrou mais nota fiscal vinculada no WinThor. Filtros abaixo são opcionais.',
+      enabled: true,
+    },
+
+    // ===== Financeiro =====
+    {
+      key: 'ABASTECIMENTOS',
+      title: 'Abastecimentos por Período',
+      category: 'Financeiro',
+      icon: '⛽',
+      short: 'Todos os abastecimentos, com filtros opcionais',
+      // ✅ Abastecimentos: periodo obrigatório, caminhão/motorista opcionais (não colocar needsCaminhao/needsMotorista)
+      needsPeriodo: true,
+      enabled: true,
+    },
     {
       key: 'DESPESAS_CATEGORIAS',
       title: 'Despesas por Categoria',
+      category: 'Financeiro',
+      icon: '📊',
+      short: 'Despesas agrupadas por categoria no período',
       note: 'Inclui o total de KM sem carga no retorno e no PDF.',
       needsPeriodo: true,
       enabled: true,
     },
-    { key: 'CARGA_COMPLETA', title: 'Relatório Completo da Carga', needsNumeroCarga: true, enabled: true },
-    { key: 'META_MENSAL_MOTORISTA', title: 'Meta Mensal do Motorista', needsPeriodo: true, needsMotorista: true, enabled: true },
-
-    { key: 'VIDA_UTIL_PNEU', title: 'Vida Útil do Pneu', enabled: true },
   ];
+
+  /** Relatórios agrupados por categoria, na ordem de categoryOrder — usado pelo seletor em cards. */
+  get categorias(): { nome: ReportCategory; reports: ReportDef[] }[] {
+    return this.categoryOrder
+      .map((nome) => ({ nome, reports: this.reports.filter((r) => r.category === nome) }))
+      .filter((c) => c.reports.length > 0);
+  }
+
+  /** Seleciona um relatório a partir do card clicado (equivalente a mudar o <select> antigo). */
+  selecionarTipo(r: ReportDef): void {
+    if (r.enabled === false) return;
+    this.form.tipo = r.key;
+    this.onTipoChange();
+
+    // desce a tela até o card de filtros, pra quem tá num card lá embaixo (ex: Financeiro) não ter que rolar manualmente
+    setTimeout(() => {
+      this.filtrosCardRef?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 
   readonly tipoMetaOptions: { value: TipoMeta; label: string }[] = [
     { value: 'QUILOMETRAGEM', label: 'Quilometragem' },
@@ -103,11 +217,20 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
   errorMsg = '';
   vidaUtilLoading = false;
   vidaUtilResult: PneuVidaUtilRelatorioResponse | null = null;
+  cargasSumidasLoading = false;
+  cargasSumidasResult: RelatorioCargasSumidasWinThorResponse | null = null;
+  verificandoAgora = false;
   caminhoes: CaminhaoResponse[] = [];
   motoristas: MotoristaResponse[] = [];
   showSugRelCaminhao = false;
   showSugRelMotorista = false;
+  showSugRelCarga = false;
+  sugestoesRelCarga: CargaMinResponse[] = [];
+  cargaSearchLoading = false;
   readonly sugestoesMax = 8;
+
+  private readonly destroy$ = new Subject<void>();
+  private readonly cargaQuery$ = new Subject<string>();
 
   pdfSafeUrl: SafeResourceUrl | null = null;
   private objectUrl: string | null = null;
@@ -117,15 +240,44 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.preloadCombos();
+
+    this.cargaQuery$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((q) => {
+          if (!q) return of(null);
+          this.cargaSearchLoading = true;
+          return this.cargaApi.listar({ q, size: this.sugestoesMax, sort: 'dtSaida,desc' });
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (res) => {
+          this.cargaSearchLoading = false;
+          this.sugestoesRelCarga = res?.content || [];
+        },
+        error: () => {
+          this.cargaSearchLoading = false;
+          this.sugestoesRelCarga = [];
+        },
+      });
   }
 
   ngOnDestroy(): void {
     this.revokeObjectUrl();
     this.resetAutoComplete();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get selectedDef(): ReportDef | undefined {
     return this.reports.find(r => r.key === this.form.tipo);
+  }
+
+  /** Se há algo pra limpar no painel de resultado (PDF, tabela de vida útil ou de cargas sumidas). */
+  get podeLimpar(): boolean {
+    return !!this.pdfSafeUrl || !!this.vidaUtilResult || !!this.cargasSumidasResult;
   }
 
   /** ✅ limpa campos quando troca o tipo para evitar enviar filtro “sem querer” */
@@ -156,6 +308,9 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     if (def.key !== 'VIDA_UTIL_PNEU') {
       this.form.codigoPneu = '';
       this.vidaUtilResult = null;
+    }
+    if (def.key !== 'CARGAS_SUMIDAS_WINTHOR') {
+      this.cargasSumidasResult = null;
     }
     if (!def.needsTipoMeta) {
       this.form.tipoMeta = '';
@@ -198,11 +353,11 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
 
     // ✅ Abastecimentos: caminhão/motorista são opcionais, então não valida aqui
     if (def.key !== 'ABASTECIMENTOS') {
-      if (def.needsCaminhao && !this.form.codigoCaminhao) return 'Informe o código do caminhão.';
-      if (def.needsMotorista && !this.form.codigoMotorista) return 'Informe o código do motorista.';
+      if (def.needsCaminhao && !this.form.codigoCaminhao) return 'Selecione um caminhão.';
+      if (def.needsMotorista && !this.form.codigoMotorista) return 'Selecione um motorista.';
     }
 
-    if (def.needsNumeroCarga && !this.form.numeroCarga) return 'Informe o número da carga.';
+    if (def.needsNumeroCarga && !this.form.numeroCarga) return 'Selecione uma carga.';
 
     return null;
   }
@@ -217,6 +372,30 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     }
 
     const def = this.selectedDef!;
+
+    if (def.key === 'CARGAS_SUMIDAS_WINTHOR') {
+      this.loading = false;
+      this.cargasSumidasLoading = true;
+      this.pdfSafeUrl = null;
+      this.lastBlob = null;
+
+      this.cargaApi
+        .relatorioSumidas({
+          inicio: this.form.inicio || undefined,
+          fim: this.form.fim || undefined,
+          motorista: this.form.codigoMotorista || undefined,
+          caminhao: this.form.codigoCaminhao || undefined,
+        })
+        .pipe(finalize(() => (this.cargasSumidasLoading = false)))
+        .subscribe({
+          next: (res) => (this.cargasSumidasResult = res),
+          error: (e) => {
+            this.cargasSumidasResult = null;
+            this.errorMsg = extrairMensagemErro(e, 'Erro ao carregar relatório de cargas sumidas do WinThor.');
+          },
+        });
+      return;
+    }
 
     if (def.key === 'VIDA_UTIL_PNEU') {
       this.loading = false;
@@ -239,7 +418,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
           },
           error: (e) => {
             this.vidaUtilResult = null;
-            this.errorMsg = e?.error?.message || 'Erro ao carregar relatório de vida útil.';
+            this.errorMsg = extrairMensagemErro(e, 'Erro ao carregar relatório de vida útil.');
           },
         });
       return;
@@ -316,7 +495,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
         },
         error: (e) => {
           // às vezes erro vem como Blob (application/json) — mantém fallback simples
-          this.errorMsg = e?.error?.message || 'Erro ao gerar PDF.';
+          this.errorMsg = extrairMensagemErro(e, 'Erro ao gerar PDF.');
         },
       });
   }
@@ -342,6 +521,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     this.lastFilename = 'relatorio.pdf';
     this.pdfSafeUrl = null;
     this.vidaUtilResult = null;
+    this.cargasSumidasResult = null;
     this.revokeObjectUrl();
   }
 
@@ -365,9 +545,59 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
           URL.revokeObjectURL(url);
         },
         error: (e) => {
-          this.errorMsg = e?.error?.message || 'Erro ao exportar PDF.';
+          this.errorMsg = extrairMensagemErro(e, 'Erro ao exportar PDF.');
         },
       });
+  }
+
+  exportarCargasSumidasWinThorPdf() {
+    this.errorMsg = '';
+    this.loading = true;
+    this.api
+      .cargasSumidasWinThor({
+        inicio: this.form.inicio || undefined,
+        fim: this.form.fim || undefined,
+        motorista: this.form.codigoMotorista || undefined,
+        caminhao: this.form.codigoCaminhao || undefined,
+      })
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (res) => {
+          const blob = res.body;
+          if (!blob) {
+            this.errorMsg = 'PDF vazio retornado pela API.';
+            return;
+          }
+          const a = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          a.href = url;
+          a.download = this.extractFilename(res.headers.get('content-disposition'), 'relatorio-cargas-sumidas-winthor.pdf');
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        error: (e) => {
+          this.errorMsg = extrairMensagemErro(e, 'Erro ao exportar PDF.');
+        },
+      });
+  }
+
+  /** Roda a reconciliação agora (sem esperar o job de 3h) e recarrega o relatório. */
+  verificarAgora(): void {
+    this.verificandoAgora = true;
+    this.cargaApi
+      .verificarWinThor()
+      .pipe(finalize(() => (this.verificandoAgora = false)))
+      .subscribe({
+        next: () => {
+          this.toast.success('Verificação concluída — recarregando relatório...');
+          this.gerar();
+        },
+        error: (e) => this.toast.error(extrairMensagemErro(e, 'Não foi possível rodar a verificação agora.')),
+      });
+  }
+
+  trackByCargaSumida(_: number, row: RelatorioCargaSumidaLinha): string {
+    return row.numeroCarga;
   }
 
   formatText(v?: string | null): string {
@@ -461,6 +691,23 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     this.closeAllSugestoes();
   }
 
+  onFocusRelCarga(): void {
+    this.closeAllSugestoes();
+    this.showSugRelCarga = true;
+  }
+
+  onInputRelCarga(): void {
+    const q = (this.form.numeroCarga || '').trim();
+    this.closeAllSugestoes();
+    this.showSugRelCarga = q.length > 0;
+    this.cargaQuery$.next(q);
+  }
+
+  selectRelCarga(c: CargaMinResponse): void {
+    this.form.numeroCarga = c.numeroCarga;
+    this.closeAllSugestoes();
+  }
+
   private preloadCombos(): void {
     this.caminhaoApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
       next: (res) => (this.caminhoes = res.content || []),
@@ -475,6 +722,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
   private closeAllSugestoes(): void {
     this.showSugRelCaminhao = false;
     this.showSugRelMotorista = false;
+    this.showSugRelCarga = false;
   }
 
   private resetAutoComplete(): void {

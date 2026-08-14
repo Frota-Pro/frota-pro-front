@@ -1,0 +1,327 @@
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>Multas</h1>
+      <p>Cadastre e acompanhe as multas de trânsito da frota.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" type="button" (click)="abrirNova()">+ Nova multa</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="field-autocomplete">
+      <input
+        class="search"
+        [(ngModel)]="filtroCaminhao"
+        (focus)="onFocusCaminhao()"
+        (blur)="onBlurSugestao()"
+        placeholder="Caminhão (código)"
+        autocomplete="off"
+      />
+      <ul class="field-suggest" *ngIf="showSugCaminhao && sugestoesCaminhao.length > 0">
+        <li *ngFor="let c of sugestoesCaminhao" (mousedown)="selecionarCaminhaoFiltro(c)">
+          <strong>{{ c.codigo }}</strong>
+          <span>{{ c.placa || '-' }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="field-autocomplete">
+      <input
+        class="search"
+        [(ngModel)]="filtroMotorista"
+        (focus)="onFocusMotorista()"
+        (blur)="onBlurSugestao()"
+        placeholder="Motorista (código)"
+        autocomplete="off"
+      />
+      <ul class="field-suggest" *ngIf="showSugMotorista && sugestoesMotorista.length > 0">
+        <li *ngFor="let m of sugestoesMotorista" (mousedown)="selecionarMotoristaFiltro(m)">
+          <strong>{{ m.codigo }}</strong>
+          <span>{{ m.nome || '-' }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <select class="select" [(ngModel)]="filtroStatus" (ngModelChange)="aplicarFiltros()">
+      <option value="">Todos os status</option>
+      <option *ngFor="let s of STATUS" [value]="s">{{ labelStatus(s) }}</option>
+    </select>
+
+    <input class="date" type="date" [(ngModel)]="filtroInicio" (ngModelChange)="aplicarFiltros()" />
+    <input class="date" type="date" [(ngModel)]="filtroFim" (ngModelChange)="aplicarFiltros()" />
+
+    <button class="btn ghost" type="button" (click)="limparFiltros()">Limpar</button>
+    <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="rows.length > 0; else emptyTpl">
+      <thead>
+      <tr>
+        <th>Data</th>
+        <th>Caminhão</th>
+        <th>Motorista</th>
+        <th>Infração</th>
+        <th>Valor</th>
+        <th>Vencimento</th>
+        <th>Recurso</th>
+        <th>Responsável</th>
+        <th>Status</th>
+        <th class="col-actions">Ações</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let m of rows">
+        <td>{{ formatDateBr(m.dataInfracao) }}</td>
+        <td class="mono">{{ m.codigoCaminhao }}</td>
+        <td>{{ m.motorista || '—' }}</td>
+        <td>
+          {{ m.descricaoInfracao || '—' }}
+          <div class="muted-sm" *ngIf="m.gravidade">{{ labelGravidade(m.gravidade) }} · {{ m.pontos ?? 0 }} pts</div>
+        </td>
+        <td>{{ formatMoneyBRL(m.valor) }}</td>
+        <td [class.prazo-alerta]="prazoProximo(m.dataVencimentoPagamento) && m.statusPagamento === 'PENDENTE'">
+          {{ formatDateBr(m.dataVencimentoPagamento) }}
+        </td>
+        <td [class.prazo-alerta]="prazoProximo(m.dataLimiteRecurso) && m.statusPagamento === 'PENDENTE'">
+          {{ formatDateBr(m.dataLimiteRecurso) }}
+        </td>
+        <td>{{ labelResponsavel(m.responsavelPagamento) }}</td>
+        <td>
+          <select
+            class="select small"
+            [ngClass]="statusClass(m.statusPagamento)"
+            [ngModel]="m.statusPagamento"
+            (ngModelChange)="atualizarStatus(m, $event)"
+          >
+            <option *ngFor="let s of STATUS" [value]="s">{{ labelStatus(s) }}</option>
+          </select>
+        </td>
+
+        <td class="row-actions">
+          <button class="btn small" type="button" (click)="abrirAnexos(m)">Anexos</button>
+          <button class="btn small" type="button" (click)="abrirEdicao(m)">Editar</button>
+          <button class="btn small danger" type="button" (click)="excluir(m)">Excluir</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <div class="icon">🚔</div>
+        <h3>Nenhuma multa encontrada</h3>
+        <p>Cadastre uma multa ou ajuste os filtros.</p>
+      </div>
+    </ng-template>
+
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn small" [disabled]="page<=0" (click)="carregarPagina(page-1)">Anterior</button>
+      <span class="pageinfo">Página {{ page + 1 }} de {{ totalPages }} · {{ totalElements }} multa(s)</span>
+      <button class="btn small" [disabled]="page+1>=totalPages" (click)="carregarPagina(page+1)">Próxima</button>
+    </div>
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Carregando multas...</div>
+    </div>
+  </ng-template>
+
+  <!-- =============== MODAL CADASTRO/EDIÇÃO =============== -->
+  <div class="backdrop" *ngIf="showModal" (click)="fecharModal()"></div>
+
+  <div class="modal" *ngIf="showModal">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar multa' : 'Nova multa' }}</h2>
+      <button class="icon" type="button" (click)="fecharModal()" [disabled]="saving">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field">
+          <label>Caminhão (código) *</label>
+          <div class="field-autocomplete">
+            <input
+              type="text"
+              [(ngModel)]="form.caminhao"
+              (focus)="onFocusCaminhao()"
+              (blur)="onBlurSugestao()"
+              placeholder="Ex: CAM-000030"
+              autocomplete="off"
+            />
+            <ul class="field-suggest" *ngIf="showSugCaminhao && sugestoesCaminhao.length > 0">
+              <li *ngFor="let c of sugestoesCaminhao" (mousedown)="form.caminhao = c.codigo; showSugCaminhao = false">
+                <strong>{{ c.codigo }}</strong>
+                <span>{{ c.placa || '-' }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Motorista (código)</label>
+          <div class="field-autocomplete">
+            <input
+              type="text"
+              [(ngModel)]="form.motorista"
+              (focus)="onFocusMotorista()"
+              (blur)="onBlurSugestao()"
+              placeholder="Ex: MOT-000010"
+              autocomplete="off"
+            />
+            <ul class="field-suggest" *ngIf="showSugMotorista && sugestoesMotorista.length > 0">
+              <li *ngFor="let m of sugestoesMotorista" (mousedown)="form.motorista = m.codigo; showSugMotorista = false">
+                <strong>{{ m.codigo }}</strong>
+                <span>{{ m.nome || '-' }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Data da infração *</label>
+          <input type="date" [(ngModel)]="form.dataInfracao" />
+        </div>
+        <div class="field">
+          <label>Órgão autuador</label>
+          <input type="text" [(ngModel)]="form.orgaoAutuador" placeholder="Ex: DETRAN-SP" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Número do AIT</label>
+          <input type="text" [(ngModel)]="form.numeroAit" />
+        </div>
+        <div class="field">
+          <label>Valor (R$) *</label>
+          <input type="number" step="0.01" min="0" [(ngModel)]="form.valor" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Descrição da infração</label>
+        <input type="text" [(ngModel)]="form.descricaoInfracao" placeholder="Ex: Excesso de velocidade" />
+      </div>
+
+      <div class="form-row three">
+        <div class="field">
+          <label>Gravidade</label>
+          <select [(ngModel)]="form.gravidade">
+            <option [ngValue]="null">Selecione</option>
+            <option *ngFor="let g of GRAVIDADES" [value]="g">{{ labelGravidade(g) }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Pontos na CNH</label>
+          <input type="number" min="0" [(ngModel)]="form.pontos" />
+        </div>
+        <div class="field">
+          <label>Responsável pelo pagamento *</label>
+          <select [(ngModel)]="form.responsavelPagamento">
+            <option *ngFor="let r of RESPONSAVEIS" [value]="r">{{ labelResponsavel(r) }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Vencimento do pagamento</label>
+          <input type="date" [(ngModel)]="form.dataVencimentoPagamento" />
+        </div>
+        <div class="field">
+          <label>Limite para recurso</label>
+          <input type="date" [(ngModel)]="form.dataLimiteRecurso" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Observação</label>
+        <textarea rows="3" [(ngModel)]="form.observacao" placeholder="Opcional"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="fecharModal()" [disabled]="saving">Cancelar</button>
+      <button class="btn primary" type="button" (click)="salvar()" [disabled]="saving">
+        {{ saving ? 'Salvando...' : 'Salvar' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- =============== MODAL ANEXOS =============== -->
+  <div class="backdrop" *ngIf="showAnexosModal" (click)="fecharAnexos()"></div>
+
+  <div class="modal" *ngIf="showAnexosModal">
+    <div class="modal-header">
+      <h2>Anexos da multa</h2>
+      <button class="icon" type="button" (click)="fecharAnexos()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="muted-sm" *ngIf="multaAnexos">
+        Caminhão {{ multaAnexos.codigoCaminhao }} · {{ formatDateBr(multaAnexos.dataInfracao) }}
+      </p>
+
+      <div class="loading-sm" *ngIf="loadingAnexos">
+        <div class="spinner small"></div>
+        <span>Carregando anexos...</span>
+      </div>
+
+      <div class="anexos-list" *ngIf="!loadingAnexos">
+        <div class="anexo-row" *ngFor="let a of anexos">
+          <div class="anexo-left">
+            <strong>{{ a.tipoAnexo }}</strong>
+            <span class="muted-sm">{{ a.arquivo.nomeOriginal }}</span>
+          </div>
+          <div class="anexo-actions">
+            <a class="btn small" [href]="a.arquivo.urlPreview" target="_blank" rel="noopener">Ver</a>
+            <a class="btn small" [href]="a.arquivo.urlDownload">Baixar</a>
+          </div>
+        </div>
+
+        <div class="empty-sm" *ngIf="anexos.length === 0">
+          Nenhum anexo enviado ainda.
+        </div>
+      </div>
+
+      <div class="upload-box">
+        <div class="upload-grid">
+          <label>
+            <span class="muted-sm">Tipo</span>
+            <select [(ngModel)]="tipoAnexoUpload">
+              <option value="NOTIFICACAO">Notificação</option>
+              <option value="COMPROVANTE_PAGAMENTO">Comprovante de pagamento</option>
+              <option value="RECURSO">Recurso</option>
+            </select>
+          </label>
+
+          <label>
+            <span class="muted-sm">Arquivo</span>
+            <input type="file" (change)="onAnexoSelecionado($event)" />
+          </label>
+
+          <button class="btn primary" type="button" (click)="uploadAnexo()" [disabled]="uploadingAnexo">
+            {{ uploadingAnexo ? 'Enviando...' : 'Enviar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="fecharAnexos()">Fechar</button>
+    </div>
+  </div>
+
+</div>

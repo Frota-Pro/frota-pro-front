@@ -32,8 +32,8 @@
     </div>
 
     <div class="right">
-      <button class="btn primary" type="button" (click)="abrirTransferenciaModal()" [disabled]="loading">
-        Marcar transferência
+      <button class="btn primary" type="button" (click)="abrirTransferirMotoristaModal()" [disabled]="loading">
+        Transferir motorista
       </button>
       <button class="btn" type="button" (click)="carregar()" [disabled]="loading">Atualizar</button>
     </div>
@@ -48,6 +48,16 @@
   </div>
 
   <ng-container *ngIf="!loading && carga">
+
+    <div class="transfer-alert sumida" *ngIf="carga.naoEncontradaNoWinThor">
+      <div class="transfer-alert-title">⚠ Carga não encontrada no WinThor</div>
+      <div class="transfer-alert-text">
+        Essa carga foi sincronizada antes, mas a última verificação
+        <span *ngIf="carga.dataVerificacaoWinThor">({{ carga.dataVerificacaoWinThor | date:'dd/MM/yyyy HH:mm' }})</span>
+        não encontrou mais nota fiscal vinculada ao carregamento {{ carga.numeroCargaExterno }} no WinThor —
+        pode ter sido cancelada ou desvinculada lá. Confira antes de liberar o motorista pra essa viagem.
+      </div>
+    </div>
 
     <div class="transfer-alert"
          *ngIf="transferenciaPendente() || labelStatusTransferencia(carga.statusTransferencia)"
@@ -122,7 +132,10 @@
             <div class="info-grid">
               <div class="info-item">
                 <div class="info-label">Motorista</div>
-                <div class="info-value">{{ carga.nomeMotorista || '—' }}</div>
+                <div class="info-value">
+                  {{ carga.nomeMotorista || '—' }}
+                  <span class="badge warn" *ngIf="carga.motoristaDefinidoManualmente" title="Corrigido manualmente — o sync do WinThor não sobrescreve mais o motorista desta carga.">Transferido</span>
+                </div>
                 <div class="info-sub muted">Código: {{ carga.codigoMotorista || '—' }}</div>
               </div>
 
@@ -146,6 +159,35 @@
                   <ng-template #semAjudantes><span class="muted">Nenhum</span></ng-template>
                 </div>
               </div>
+
+              <div class="info-item"
+                   [class.info-item-clickable]="(carga.codigosDevolucaoEncontrados?.length || 0) > 0"
+                   (click)="(carga.codigosDevolucaoEncontrados?.length || 0) > 0 && abrirDevolucoes()">
+                <div class="info-label">Devolução (WinThor)</div>
+                <div class="info-value">
+                  <ng-container *ngIf="(carga.codigosDevolucaoEncontrados?.length || 0) > 0; else semDevolucao">
+                    <span class="tag" *ngFor="let cod of carga.codigosDevolucaoEncontrados" title="Código de devolução (CODDEVOL)">{{ cod }}</span>
+                  </ng-container>
+                  <ng-template #semDevolucao><span class="muted">Nenhuma</span></ng-template>
+                </div>
+                <div class="info-sub muted" *ngIf="(carga.codigosDevolucaoEncontrados?.length || 0) > 0">Ver detalhes (cliente, produto, motivo) ›</div>
+                <div class="info-sub muted" *ngIf="!(carga.codigosDevolucaoEncontrados?.length || 0)">Motivo encontrado no último sync com o WinThor.</div>
+              </div>
+
+              <div class="info-item"
+                   [class.info-item-clickable]="carga.teveTransferencia"
+                   (click)="carga.teveTransferencia && abrirTransferencias()">
+                <div class="info-label">Transferência de pedido (WinThor)</div>
+                <div class="info-value">
+                  {{ carga.teveTransferencia ? 'Sim' : 'Não' }}
+                  <span class="badge warn"
+                        *ngIf="carga.diminuicaoPesoValorBloqueada"
+                        title="No último sync, uma diminuição de peso e/ou valor vinda do WinThor foi ignorada — sem motivo permitido nos Parâmetros do Sistema.">
+                    Diminuição bloqueada
+                  </span>
+                </div>
+                <div class="info-sub muted" *ngIf="carga.teveTransferencia">Ver detalhes (pra qual carregamento) ›</div>
+              </div>
             </div>
           </div>
         </div>
@@ -160,22 +202,48 @@
           </div>
 
           <div class="card-body">
-            <div class="clientes" *ngIf="(carga.clientes?.length || 0) > 0; else semClientes">
-              <div class="cliente cliente-clickable" *ngFor="let cl of carga.clientes" (click)="abrirNotasFiscais(cl.cliente)">
-                <div class="cliente-head">
-                  <strong>{{ cl.cliente }}</strong>
-                  <span class="pill">{{ (cl.notas?.length || 0) }} nota(s)</span>
-                </div>
+            <ng-container *ngIf="(carga.clientes?.length || 0) > 0; else semClientes">
 
-                <div class="notas">
-                  <span class="nota mono" *ngFor="let n of cl.notas">{{ n }}</span>
-                </div>
-
-                <div class="cliente-hint muted" *ngIf="documentosFiscaisDisponiveis()">
-                  Ver documentos fiscais (XML/PDF) ›
+              <!-- Nível 1: cidades -->
+              <div class="clientes" *ngIf="!cidadeSelecionada">
+                <div class="cliente cliente-clickable" *ngFor="let g of clientesAgrupadosPorCidade" (click)="selecionarCidade(g.cidade)">
+                  <div class="cliente-head">
+                    <strong>{{ g.cidade }}</strong>
+                    <span class="pill">{{ g.clientes.length }} cliente(s)</span>
+                  </div>
+                  <div class="cliente-hint muted" *ngIf="!g.semRoteirizacao">Ver clientes ›</div>
+                  <div class="cliente-hint hint-warn" *ngIf="g.semRoteirizacao">⚠ Sem ordem de entrega salva — ver clientes ›</div>
                 </div>
               </div>
-            </div>
+
+              <!-- Nível 2: clientes da cidade selecionada -->
+              <ng-container *ngIf="cidadeSelecionada && grupoCidadeSelecionado as grupo">
+                <button class="btn ghost small" type="button" (click)="voltarParaCidades()">‹ Voltar pras cidades</button>
+
+                <div class="alert" style="margin-top:10px" *ngIf="grupo.semRoteirizacao">
+                  Nenhuma ordem de entrega salva para <strong>{{ grupo.cidade }}</strong> — a ordem dos clientes abaixo não reflete uma roteirização configurada.
+                  <a routerLink="/dashboard/roteirizacao">Configurar em Roteirização</a>.
+                </div>
+
+                <div class="clientes" style="margin-top:12px">
+                  <div class="cliente cliente-clickable" *ngFor="let cl of grupo.clientes" (click)="abrirNotasFiscais(cl.cliente)">
+                    <div class="cliente-head">
+                      <strong>{{ cl.cliente }}</strong>
+                      <span class="pill">{{ (cl.notas?.length || 0) }} nota(s)</span>
+                    </div>
+
+                    <div class="notas">
+                      <span class="nota mono" *ngFor="let n of cl.notas">{{ n }}</span>
+                    </div>
+
+                    <div class="cliente-hint muted" *ngIf="documentosFiscaisDisponiveis()">
+                      Ver documentos fiscais (XML/PDF) ›
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+
+            </ng-container>
 
             <ng-template #semClientes>
               <div class="empty-sm">
@@ -324,38 +392,43 @@
   </ng-container>
 </div>
 
-<!-- =============== MODAL: MARCAR TRANSFERÊNCIA =============== -->
-<div class="modal-backdrop" *ngIf="showTransferenciaModal" (click)="fecharTransferenciaModal()">
+<!-- =============== MODAL: TRANSFERIR MOTORISTA =============== -->
+<div class="modal-backdrop" *ngIf="showTransferirMotoristaModal" (click)="fecharTransferirMotoristaModal()">
   <div class="modal transfer-modal" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
       <div>
-        <h3>Marcar transferência</h3>
+        <h3>Transferir motorista</h3>
         <p class="muted" *ngIf="carga">
-          Carga antiga <span class="mono">{{ carga.numeroCargaExibicao }}</span>
+          Carga <span class="mono">{{ carga.numeroCargaExibicao }}</span>
         </p>
       </div>
-      <button class="btn ghost" type="button" (click)="fecharTransferenciaModal()" [disabled]="savingTransferencia">✕</button>
+      <button class="btn ghost" type="button" (click)="fecharTransferirMotoristaModal()" [disabled]="savingTransferirMotorista">✕</button>
     </div>
 
     <div class="modal-body">
       <p class="muted help">
-        Informe a carga nova/destino se já souber. A correção de peso, valor e notas será feita pela sincronização.
+        Use quando a carga foi faturada pra um motorista no WinThor, mas outro foi quem realmente saiu
+        com ela (o MDF-e/minuta não mudam pra refletir isso). A partir daqui, as próximas sincronizações
+        do WinThor não vão mais sobrescrever o motorista desta carga.
       </p>
 
       <label class="f">
-        <span class="f-label">Carga destino (opcional)</span>
-        <input class="control"
-               [(ngModel)]="numeroCargaDestinoTransferencia"
-               placeholder="Ex.: CAR-000020"
-               [disabled]="savingTransferencia" />
+        <span class="f-label">Motorista que saiu com a carga</span>
+        <select class="control"
+                [(ngModel)]="codigoMotoristaTransferencia"
+                [disabled]="savingTransferirMotorista || motoristasParaTransferenciaLoading">
+          <option value="">Selecione...</option>
+          <option *ngFor="let m of motoristasParaTransferencia" [value]="m.codigo">{{ m.codigo }} — {{ m.nome }}</option>
+        </select>
+        <span class="muted" *ngIf="motoristasParaTransferenciaLoading">Carregando motoristas...</span>
       </label>
     </div>
 
     <div class="modal-footer sticky-footer">
-      <button class="btn ghost" type="button" (click)="fecharTransferenciaModal()" [disabled]="savingTransferencia">Cancelar</button>
-      <button class="btn primary" type="button" (click)="marcarTransferencia()" [disabled]="savingTransferencia">
-        {{ savingTransferencia ? 'Marcando...' : 'Marcar transferência' }}
+      <button class="btn ghost" type="button" (click)="fecharTransferirMotoristaModal()" [disabled]="savingTransferirMotorista">Cancelar</button>
+      <button class="btn primary" type="button" (click)="transferirMotorista()" [disabled]="savingTransferirMotorista">
+        {{ savingTransferirMotorista ? 'Transferindo...' : 'Transferir' }}
       </button>
     </div>
 
@@ -961,6 +1034,137 @@
           <div class="empty-sm">
             <h3>Nenhuma nota fiscal encontrada</h3>
             <p>Não há notas fiscais para este cliente nesta carga.</p>
+          </div>
+        </ng-template>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- =============== MODAL: DEVOLUÇÃO (DETALHE) =============== -->
+<div class="modal-backdrop" *ngIf="showDevolucaoModal" (click)="fecharDevolucoes()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h3>Devolução</h3>
+        <p class="muted">Detalhe buscado ao vivo no WinThor — produto a produto.</p>
+      </div>
+      <button class="btn ghost" type="button" (click)="fecharDevolucoes()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="loading-sm" *ngIf="loadingDevolucoes">
+        <div class="spinner small"></div>
+        <span>Buscando devolução no WinThor...</span>
+      </div>
+
+      <div class="alert" *ngIf="!loadingDevolucoes && devolucoesErro">{{ devolucoesErro }}</div>
+
+      <div *ngIf="!loadingDevolucoes && !devolucoesErro">
+
+        <div class="anexos" *ngIf="devolucoes.length > 0; else semDevolucoesDetalhe">
+          <div class="anexo-row dev-row" *ngFor="let d of devolucoes">
+            <div class="dev-col">
+              <div class="anexo-title">
+                <strong>{{ d.descricaoProduto || 'Produto não identificado' }}</strong>
+                <span class="badge" *ngIf="d.codDevolucao != null">Cód. {{ d.codDevolucao }}</span>
+              </div>
+              <div class="muted smallline">
+                NF {{ d.numNota }}
+                <span *ngIf="d.numPedido"> • Pedido {{ d.numPedido }}</span>
+                <span *ngIf="d.dtEntrada"> • {{ d.dtEntrada | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="muted smallline" *ngIf="d.nomeCliente">
+                Cliente: {{ d.codCliente }} - {{ d.nomeCliente }}
+              </div>
+              <div class="muted smallline" *ngIf="d.motivo">
+                Motivo: {{ d.motivo }}
+              </div>
+              <div class="muted smallline">
+                Quantidade: <strong>{{ d.quantidade }}</strong> {{ d.unidade }}<span *ngIf="d.embalagem"> ({{ d.embalagem }})</span>
+                <span *ngIf="d.valorDevolucao != null"> • Valor: {{ formatMoneyBRL(d.valorDevolucao) }}</span>
+                <span *ngIf="d.pesoTotalKg != null"> • Peso: {{ d.pesoTotalKg }} kg</span>
+              </div>
+              <div class="muted smallline" *ngIf="d.fornecedor">
+                Fornecedor: {{ d.fornecedor }}
+              </div>
+              <div class="muted smallline" *ngIf="d.nomeMotoristaDevolucao">
+                Motorista da devolução: {{ d.nomeMotoristaDevolucao }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #semDevolucoesDetalhe>
+          <div class="empty-sm">
+            <h3>Nenhum detalhe encontrado</h3>
+            <p>Não foi possível encontrar as linhas de produto desta devolução no WinThor agora.</p>
+          </div>
+        </ng-template>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- =============== MODAL: TRANSFERÊNCIA (DETALHE) =============== -->
+<div class="modal-backdrop" *ngIf="showTransferenciaModal" (click)="fecharTransferencias()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h3>Transferência de pedido</h3>
+        <p class="muted">Detalhe buscado ao vivo no WinThor — nota a nota.</p>
+      </div>
+      <button class="btn ghost" type="button" (click)="fecharTransferencias()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="loading-sm" *ngIf="loadingTransferencias">
+        <div class="spinner small"></div>
+        <span>Buscando transferências no WinThor...</span>
+      </div>
+
+      <div class="alert" *ngIf="!loadingTransferencias && transferenciasErro">{{ transferenciasErro }}</div>
+
+      <div *ngIf="!loadingTransferencias && !transferenciasErro">
+
+        <div class="anexos" *ngIf="transferencias.length > 0; else semTransferenciasDetalhe">
+          <div class="anexo-row dev-row" *ngFor="let t of transferencias">
+            <div class="dev-col">
+              <div class="anexo-title">
+                <strong class="mono">NF {{ t.numNota }}</strong>
+                <span class="badge warn" *ngIf="t.direcao === 'PERDIDA'">Perdida</span>
+                <span class="badge transfer-done" *ngIf="t.direcao === 'RECEBIDA'">Recebida</span>
+              </div>
+              <div class="muted smallline" *ngIf="t.direcao === 'PERDIDA'">
+                Transferida para o carregamento <strong class="mono">{{ t.numCarAtual }}</strong>
+              </div>
+              <div class="muted smallline" *ngIf="t.direcao === 'RECEBIDA'">
+                Recebida do carregamento <strong class="mono">{{ t.numCarAnterior }}</strong>
+              </div>
+              <div class="muted smallline" *ngIf="t.motivo">
+                Motivo: {{ t.motivo }}
+              </div>
+              <div class="muted smallline" *ngIf="t.dtTransferencia">
+                Data: {{ t.dtTransferencia | date:'dd/MM/yyyy HH:mm' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #semTransferenciasDetalhe>
+          <div class="empty-sm">
+            <h3>Nenhum detalhe encontrado</h3>
+            <p>Não foi possível encontrar registros de transferência desta carga no WinThor agora.</p>
           </div>
         </ng-template>
 

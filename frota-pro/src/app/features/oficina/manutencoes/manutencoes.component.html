@@ -60,6 +60,7 @@
         <th>Início</th>
         <th>Fim</th>
         <th>Total</th>
+        <th>Orçamento</th>
         <th>Carga/Parada</th>
         <th class="col-actions">Ações</th>
       </tr>
@@ -105,6 +106,16 @@
         <td class="mono">{{ formatMoneyBRL(m.valor) }}</td>
 
         <td>
+          <div class="stack" *ngIf="m.valorOrcado != null; else semOrcamento">
+            <strong class="mono">{{ formatMoneyBRL(m.valorOrcado) }}</strong>
+            <span class="status" [class.inactive]="m.statusAprovacao === 'REJEITADO'">
+              {{ m.statusAprovacao }}
+            </span>
+          </div>
+          <ng-template #semOrcamento><span class="muted">—</span></ng-template>
+        </td>
+
+        <td>
           <div class="stack">
             <strong>{{ m.parada?.numeroCargaExibicao || '—' }}</strong>
             <small class="muted" *ngIf="m.parada?.id">Parada: {{ m.parada?.id }}</small>
@@ -114,6 +125,7 @@
         <td class="row-actions" (click)="$event.stopPropagation()">
           <button class="btn small" type="button" (click)="abrirDetalhe(m)">Ver</button>
           <button class="btn small" type="button" (click)="openEditar(m)">Editar</button>
+          <button class="btn small primary" type="button" *ngIf="m.statusAprovacao === 'PENDENTE'" (click)="abrirAprovacao(m)">Aprovar/Rejeitar</button>
           <button class="btn small danger" type="button" (click)="deletar(m)">Excluir</button>
         </td>
       </tr>
@@ -227,6 +239,35 @@
         </div>
       </div>
 
+      <div class="row">
+        <div class="col">
+          <label>Km odômetro</label>
+          <input type="number" [(ngModel)]="form.kmOdometro" placeholder="Opcional" />
+        </div>
+        <div class="col">
+          <label>Valor orçado</label>
+          <input type="number" [(ngModel)]="form.valorOrcado" placeholder="Opcional — exige aprovação" />
+        </div>
+      </div>
+
+      <label>Plano de manutenção preventiva</label>
+      <div class="field-autocomplete">
+        <input
+          [(ngModel)]="planoQuery"
+          (ngModelChange)="onInputManPlano()"
+          placeholder="Vincular a um plano preventivo (opcional)"
+          autocomplete="off"
+          (focus)="onFocusManPlano()"
+          (blur)="onBlurManSugestao()"
+        />
+        <ul class="field-suggest" *ngIf="showSugManPlano && sugestoesManPlano.length > 0">
+          <li *ngFor="let p of sugestoesManPlano" (mousedown)="selectManPlano(p)">
+            <strong>{{ p.descricao }}</strong>
+            <span>{{ p.codigoCaminhao }}</span>
+          </li>
+        </ul>
+      </div>
+
       <label>Parada (UUID ou carga)</label>
       <div class="field-autocomplete">
         <input
@@ -281,6 +322,34 @@
       <button class="btn primary" type="button" (click)="salvar()">
         {{ isEditing ? 'Salvar' : 'Criar' }}
       </button>
+    </div>
+  </div>
+
+  <!-- MODAL APROVAÇÃO DE ORÇAMENTO -->
+  <div class="backdrop" *ngIf="showAprovacaoModal" (click)="fecharAprovacao()"></div>
+
+  <div class="modal" *ngIf="showAprovacaoModal">
+    <div class="modal-header">
+      <h2>Orçamento — {{ aprovacaoTarget?.codigo }}</h2>
+      <button class="icon" type="button" (click)="fecharAprovacao()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p>Valor orçado: <strong class="mono">{{ formatMoneyBRL(aprovacaoTarget?.valorOrcado) }}</strong></p>
+
+      <label>Decisão</label>
+      <select [(ngModel)]="aprovacaoForm.statusAprovacao">
+        <option value="APROVADO">APROVAR</option>
+        <option value="REJEITADO">REJEITAR</option>
+      </select>
+
+      <label>Observação</label>
+      <textarea [(ngModel)]="aprovacaoForm.observacao" placeholder="Opcional" rows="3"></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="fecharAprovacao()">Cancelar</button>
+      <button class="btn primary" type="button" (click)="confirmarAprovacao()">Confirmar</button>
     </div>
   </div>
 
