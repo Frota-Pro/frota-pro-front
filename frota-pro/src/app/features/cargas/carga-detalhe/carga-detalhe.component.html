@@ -192,6 +192,72 @@
           </div>
         </div>
 
+        <!-- Card: Resumo de Desconto (devolução + transferência) -->
+        <div class="card"
+             *ngIf="carga.teveTransferencia || (carga.codigosDevolucaoEncontrados?.length || 0) > 0 || carga.diminuicaoPesoValorBloqueada">
+          <div class="card-header">
+            <h2>Impacto de Devolução/Transferência</h2>
+          </div>
+
+          <div class="card-body">
+            <div class="loading-sm" *ngIf="loadingResumoDesconto">
+              <div class="spinner small"></div>
+              <span>Calculando com base no WinThor...</span>
+            </div>
+
+            <ng-container *ngIf="!loadingResumoDesconto && resumoDesconto as r">
+
+              <div class="alert" [class.alert-warn]="r.descontoBloqueado" [class.alert-ok]="!r.descontoBloqueado && r.houveMovimentacao">
+                {{ r.mensagem }}
+              </div>
+
+              <div class="info-grid" *ngIf="r.houveMovimentacao">
+                <div class="info-item">
+                  <div class="info-label">Peso antes (estimado)</div>
+                  <div class="info-value">{{ formatKg(r.pesoOriginalKg) }} kg</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Peso hoje</div>
+                  <div class="info-value">{{ formatKg(r.pesoAtualKg) }} kg</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Peso perdido</div>
+                  <div class="info-value danger" *ngIf="r.pesoPerdidoKg > 0">− {{ formatKg(r.pesoPerdidoKg) }} kg</div>
+                  <div class="info-value muted" *ngIf="!(r.pesoPerdidoKg > 0)">—</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Peso recebido</div>
+                  <div class="info-value success" *ngIf="r.pesoRecebidoKg > 0">+ {{ formatKg(r.pesoRecebidoKg) }} kg</div>
+                  <div class="info-value muted" *ngIf="!(r.pesoRecebidoKg > 0)">—</div>
+                </div>
+
+                <div class="info-item">
+                  <div class="info-label">Valor antes (estimado)</div>
+                  <div class="info-value">{{ formatMoneyBRL(r.valorOriginal) }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Valor hoje</div>
+                  <div class="info-value">{{ formatMoneyBRL(r.valorAtual) }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Valor perdido</div>
+                  <div class="info-value danger" *ngIf="r.valorPerdido > 0">− {{ formatMoneyBRL(r.valorPerdido) }}</div>
+                  <div class="info-value muted" *ngIf="!(r.valorPerdido > 0)">—</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Valor recebido</div>
+                  <div class="info-value success" *ngIf="r.valorRecebido > 0">+ {{ formatMoneyBRL(r.valorRecebido) }}</div>
+                  <div class="info-value muted" *ngIf="!(r.valorRecebido > 0)">—</div>
+                </div>
+              </div>
+
+              <div class="info-sub muted" *ngIf="r.houveMovimentacao">
+                "Antes" é uma estimativa com base nas devoluções e transferências encontradas no WinThor agora — pode não bater 100% se algo mudou lá depois do último sync desta carga.
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
         <!-- Card: Clientes e Notas -->
         <div class="card">
           <div class="card-header">

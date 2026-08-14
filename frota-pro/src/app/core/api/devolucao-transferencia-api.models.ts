@@ -32,4 +32,25 @@ export interface TransferenciaResponse {
   dtTransferencia?: string | null;
   motivo?: string | null;
   direcao: DirecaoTransferencia;
+  pesoKg?: number | null;
+  valorTotal?: number | null;
+}
+
+/** Resumo de quanto peso/valor a carga perdeu/recebeu, comparado com o que está gravado nela hoje. */
+export interface ResumoDescontoCargaResponse {
+  pesoAtualKg: number;
+  valorAtual: number;
+
+  pesoPerdidoKg: number;
+  valorPerdido: number;
+
+  pesoRecebidoKg: number;
+  valorRecebido: number;
+
+  pesoOriginalKg: number;
+  valorOriginal: number;
+
+  descontoBloqueado: boolean;
+  houveMovimentacao: boolean;
+  mensagem: string;
 }

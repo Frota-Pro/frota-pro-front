@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
-import { DevolucaoResponse, TransferenciaResponse } from './devolucao-transferencia-api.models';
+import { DevolucaoResponse, ResumoDescontoCargaResponse, TransferenciaResponse } from './devolucao-transferencia-api.models';
 
 /**
  * Detalhe de devolução (produto a produto) e transferência de pedido
@@ -23,5 +23,9 @@ export class DevolucaoTransferenciaApiService extends BaseApiService {
 
   transferencias(numeroCarga: string) {
     return this.http.get<TransferenciaResponse[]>(`${this.base(numeroCarga)}/transferencias`);
+  }
+
+  descontoResumo(numeroCarga: string) {
+    return this.http.get<ResumoDescontoCargaResponse>(`${this.base(numeroCarga)}/desconto-resumo`);
   }
 }
