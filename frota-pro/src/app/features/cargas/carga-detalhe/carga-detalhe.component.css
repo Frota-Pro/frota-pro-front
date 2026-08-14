@@ -264,6 +264,19 @@
   margin-bottom:12px;
   color:#991b1b;
 }
+.alert.alert-warn{
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.25);
+  color:#92400e;
+}
+.alert.alert-ok{
+  background: rgba(16,185,129,0.08);
+  border-color: rgba(16,185,129,0.25);
+  color:#065f46;
+}
+
+.info-value.danger{ color:#991b1b; }
+.info-value.success{ color:#065f46; }
 
 .loading{
   display:grid;

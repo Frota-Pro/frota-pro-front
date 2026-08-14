@@ -15,8 +15,8 @@ import { EixoCaminhaoResponse } from '../../../core/api/eixo-api.models';
 import { NotaFiscalApiService } from '../../../core/api/nota-fiscal-api.service';
 import { NotaFiscalResumoResponse } from '../../../core/api/nota-fiscal-api.models';
 import { DevolucaoTransferenciaApiService } from '../../../core/api/devolucao-transferencia-api.service';
-import { DevolucaoResponse, TransferenciaResponse } from '../../../core/api/devolucao-transferencia-api.models';
-import { formatKgFromTon } from '../../../shared/utils/weight';
+import { DevolucaoResponse, ResumoDescontoCargaResponse, TransferenciaResponse } from '../../../core/api/devolucao-transferencia-api.models';
+import { formatKgFromTon, parseNumberLike } from '../../../shared/utils/weight';
 
 import {
   CargaResponse,
@@ -212,6 +212,10 @@ export class CargaDetalheComponent implements OnInit {
   loadingTransferencias = false;
   transferenciasErro: string | null = null;
 
+  // ===== Resumo de desconto (devolução + transferência combinados) =====
+  resumoDesconto: ResumoDescontoCargaResponse | null = null;
+  loadingResumoDesconto = false;
+
   // ===== Regras =====
   readonly OBS_MIN = 5;
   readonly OBS_MAX = 800;
@@ -316,6 +320,7 @@ export class CargaDetalheComponent implements OnInit {
           this.ordemDirty = false;
 
           this.carregarParadas();
+          this.carregarResumoDesconto();
         },
         error: (err) => {
           console.error(err);
@@ -840,6 +845,38 @@ export class CargaDetalheComponent implements OnInit {
   }
 
   // =========================
+  // Resumo de desconto (devolução + transferência combinados)
+  // =========================
+  private carregarResumoDesconto(): void {
+    this.resumoDesconto = null;
+
+    if (!this.carga) return;
+
+    // Só vale a pena chamar se há algo relevante pra essa carga —
+    // evita uma chamada extra ao WinThor pra cargas sem nenhuma
+    // devolução/transferência/bloqueio.
+    const relevante =
+      this.carga.teveTransferencia ||
+      (this.carga.codigosDevolucaoEncontrados?.length || 0) > 0 ||
+      this.carga.diminuicaoPesoValorBloqueada;
+
+    if (!relevante) return;
+
+    this.loadingResumoDesconto = true;
+
+    this.devolucaoTransferenciaApi
+      .descontoResumo(this.carga.numeroCarga)
+      .pipe(finalize(() => (this.loadingResumoDesconto = false)))
+      .subscribe({
+        next: (resumo) => (this.resumoDesconto = resumo),
+        error: (err) => {
+          console.error(err);
+          this.resumoDesconto = null;
+        },
+      });
+  }
+
+  // =========================
   // Nova Parada
   // =========================
   abrirNovaParada(): void {
@@ -1214,6 +1251,11 @@ export class CargaDetalheComponent implements OnInit {
 
   formatKgFromTon(v: number | string | null | undefined, dec = 0): string {
     return formatKgFromTon(v, dec);
+  }
+
+  /** Pra valores que já vêm em kg (ex.: ResumoDescontoCargaResponse) — sem converter de tonelada. */
+  formatKg(v: number | string | null | undefined, dec = 0): string {
+    return parseNumberLike(v).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
   }
 
   labelStatus(status: string): string {
