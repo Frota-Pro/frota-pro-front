@@ -247,6 +247,13 @@ export const routes: Routes = [
           import('./features/parametros-sistema/parametros-sistema.component')
             .then(m => m.ParametrosSistemaComponent)
       },
+      {
+        path: 'auditoria',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/auditoria/auditoria.component')
+            .then(m => m.AuditoriaComponent)
+      },
 
       // ❌ removido: admin/logs
 
