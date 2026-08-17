@@ -125,7 +125,7 @@
 
           <span class="num">{{ a.valorTotal || 0 | currency : 'BRL' }}</span>
 
-          <span class="truncate">{{ a.posto || '—' }}</span>
+          <span class="truncate">{{ a.posto || a.postoAbastecimentoNome || '—' }}</span>
 
           <div class="row-actions">
             <button
@@ -344,6 +344,19 @@
           <div class="ab-grid">
             <div class="ab-field">
               <label>Posto</label>
+              <select
+                [ngModel]="postoSelecionado"
+                (ngModelChange)="onSelecionarPostoCadastrado($event)"
+                name="postoSelecionado"
+              >
+                <option [ngValue]="null" disabled>Selecione...</option>
+                <option *ngFor="let p of postos" [ngValue]="p.codigo">{{ p.nome }}</option>
+                <option [ngValue]="kOutroPosto">Outro (digitar manualmente)</option>
+              </select>
+            </div>
+
+            <div class="ab-field" *ngIf="usandoOutroPosto">
+              <label>Nome do Posto</label>
               <input type="text" [(ngModel)]="novo.posto" name="posto" placeholder="Ex: Posto Central" />
             </div>
 

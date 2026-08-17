@@ -13,6 +13,12 @@ import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
 import { MotoristaApiService } from '../../core/api/motorista-api.service';
 import { MotoristaResponse } from '../../core/api/motorista-api.models';
 import { MetaApiService } from '../../core/api/meta-api.service';
+import { PostoAbastecimentoApiService } from '../../core/api/posto-abastecimento-api.service';
+import { PostoAbastecimentoResponse } from '../../core/api/posto-abastecimento-api.models';
+
+/** Sentinela pra representar "outro posto, digitar manualmente" no seletor —
+ * não é um código de posto de verdade. */
+const K_OUTRO_POSTO = '__outro__';
 
 type UUID = string;
 
@@ -74,6 +80,8 @@ interface AbastecimentoVM {
   formaPagamento?: string | null;
 
   posto?: string | null;
+  postoAbastecimentoCodigo?: string | null;
+  postoAbastecimentoNome?: string | null;
   cidade?: string | null;
   uf?: string | null;
 
@@ -137,6 +145,12 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
 
   caminhoes: CaminhaoResponse[] = [];
   motoristas: MotoristaResponse[] = [];
+  postos: PostoAbastecimentoResponse[] = [];
+  postosLoading = false;
+
+  readonly kOutroPosto = K_OUTRO_POSTO;
+  /** null = nada escolhido ainda; kOutroPosto = digitar manualmente; senão, código do posto cadastrado. */
+  postoSelecionado: string | null = null;
 
   // listagem
   carregando = false;
@@ -167,6 +181,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     private caminhaoApi: CaminhaoApiService,
     private motoristaApi: MotoristaApiService,
     private metaApi: MetaApiService,
+    private postoApi: PostoAbastecimentoApiService,
     private toast: ToastService,
   ) {}
 
@@ -210,6 +225,15 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       next: (res) => (this.motoristas = res.content || []),
       error: () => (this.motoristas = []),
     });
+
+    this.postosLoading = true;
+    this.postoApi
+      .listarAtivos()
+      .pipe(finalize(() => (this.postosLoading = false)))
+      .subscribe({
+        next: (postos) => (this.postos = postos || []),
+        error: () => (this.postos = []),
+      });
   }
 
   // =========================
@@ -335,7 +359,42 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       return false;
     }
 
+    if (this.postoSelecionado === null) {
+      this.toast.warn('Selecione o posto (cadastrado ou "Outro").', 'Validação');
+      return false;
+    }
+    if (this.usandoOutroPosto && !String(this.novo?.posto || '').trim()) {
+      this.toast.warn('Informe o nome do posto.', 'Validação');
+      return false;
+    }
+
     return true;
+  }
+
+  // =========================
+  // POSTO CADASTRADO
+  // =========================
+
+  get usandoOutroPosto(): boolean {
+    return this.postoSelecionado === this.kOutroPosto;
+  }
+
+  /**
+   * Ao escolher um posto cadastrado, preenche nome/cidade/UF automaticamente
+   * (o campo "Posto" livre fica reservado pra quando for "Outro" — o back
+   * exige exatamente um dos dois, nunca os dois nem nenhum).
+   */
+  onSelecionarPostoCadastrado(codigo: string | null): void {
+    this.postoSelecionado = codigo;
+
+    if (codigo && codigo !== this.kOutroPosto) {
+      const posto = this.postos.find((p) => p.codigo === codigo);
+      this.novo.posto = '';
+      this.novo.cidade = posto?.cidade || this.novo.cidade;
+      this.novo.uf = posto?.uf || this.novo.uf;
+    } else if (codigo === this.kOutroPosto) {
+      this.novo.posto = '';
+    }
   }
 
   /**
@@ -450,6 +509,8 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       formaPagamento: a.formaPagamento ?? null,
 
       posto: a.posto ?? null,
+      postoAbastecimentoCodigo: a.postoAbastecimentoCodigo ?? null,
+      postoAbastecimentoNome: a.postoAbastecimentoNome ?? null,
       cidade: a.cidade ?? null,
       uf: a.uf ?? null,
 
@@ -498,6 +559,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
           a.tipoCombustivel,
           a.formaPagamento,
           a.posto,
+          a.postoAbastecimentoNome,
           a.cidade,
           a.uf,
           a.numNotaOuCupom,
@@ -609,6 +671,8 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
 
     this.novo = this.novoVazio();
     this.novo.dtAbastecimento = this.nowAsDatetimeLocal(); // datetime-local
+    // Sem posto cadastrado nenhum: já cai direto no modo "digitar manualmente".
+    this.postoSelecionado = this.postos.length === 0 ? this.kOutroPosto : null;
     this.resetAutoComplete();
 
     this.showAddModal = true;
@@ -640,6 +704,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     this.novo.uf = a.uf || '';
     this.novo.numNotaOuCupom = a.numNotaOuCupom || '';
     this.novo.mediaKmLitro = a.mediaKmLitro ?? null;
+    this.postoSelecionado = a.postoAbastecimentoCodigo || this.kOutroPosto;
     this.resetAutoComplete();
 
     this.showAddModal = true;
@@ -801,7 +866,8 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       tipoCombustivel: String(this.novo.tipoCombustivel),
       formaPagamento: String(this.novo.formaPagamento),
 
-      posto: this.novo.posto || null,
+      posto: this.usandoOutroPosto ? this.novo.posto || null : null,
+      postoAbastecimento: this.usandoOutroPosto ? null : this.postoSelecionado,
       cidade: this.novo.cidade || null,
       uf: (this.novo.uf || null) ? String(this.novo.uf).trim().toUpperCase() : null,
       numNotaOuCupom: this.novo.numNotaOuCupom || null,
