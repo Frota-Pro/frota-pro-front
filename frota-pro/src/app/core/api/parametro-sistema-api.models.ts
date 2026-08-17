@@ -10,6 +10,8 @@ export interface ParametroSistemaResponse {
 
   validarTempoMinimoCarga: boolean;
   tempoMinimoEntregaPadraoMinutos: number;
+
+  diasRetencaoAuditoria: number;
 }
 
 export interface ParametroSistemaUpdateRequest {
@@ -24,4 +26,6 @@ export interface ParametroSistemaUpdateRequest {
 
   validarTempoMinimoCarga: boolean;
   tempoMinimoEntregaPadraoMinutos: number;
+
+  diasRetencaoAuditoria: number;
 }

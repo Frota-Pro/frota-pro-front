@@ -127,6 +127,21 @@
       </div>
     </div>
 
+    <div class="section-title">Auditoria</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Retenção da trilha de auditoria</h2>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Manter registros de auditoria por (dias)</label>
+          <input type="number" min="30" [(ngModel)]="form.diasRetencaoAuditoria" />
+          <span class="muted-sm">Todo dia às 6h30, o sistema apaga automaticamente da tela de Auditoria os registros mais antigos que esse prazo — evita que a tabela cresça sem limite. Mínimo de 30 dias.</span>
+        </div>
+      </div>
+    </div>
+
     <div class="actions-bar">
       <button class="btn primary" type="button" (click)="salvar()" [disabled]="saving">
         {{ saving ? 'Salvando...' : 'Salvar parâmetros' }}
