@@ -338,6 +338,35 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     return true;
   }
 
+  /**
+   * Compara o km digitado com o último km conhecido do caminhão selecionado
+   * (Caminhao.odometroUltimaCarga, já carregado em `caminhoes` pro
+   * autocomplete). Diferença grande (>2.000 km) pede confirmação extra —
+   * não bloqueia, só evita que um dígito digitado errado passe direto sem
+   * ninguém notar. Sem caminhão identificado ou sem histórico, não checa.
+   */
+  private confirmarKmPlausivel(): boolean {
+    const km = this.novo?.kmOdometro != null && this.novo?.kmOdometro !== '' ? Number(this.novo.kmOdometro) : null;
+    if (km == null || !Number.isFinite(km)) return true;
+
+    const ident = String(this.novo?.caminhao?.codigo || this.novo?.caminhao?.placa || '').trim().toLowerCase();
+    if (!ident) return true;
+
+    const caminhao = this.caminhoes.find(
+      (c) => String(c.codigo || '').toLowerCase() === ident || String(c.placa || '').toLowerCase() === ident
+    );
+    const referencia = caminhao?.odometroUltimaCarga;
+    if (referencia == null) return true;
+
+    const diferenca = Math.abs(km - referencia);
+    if (diferenca <= 2000) return true;
+
+    return confirm(
+      `O último km conhecido desse caminhão é ${referencia.toLocaleString('pt-BR')} km e você digitou ${km.toLocaleString('pt-BR')} km ` +
+        `(diferença de ${diferenca.toLocaleString('pt-BR')} km). Confere antes de continuar — confirmar mesmo assim?`
+    );
+  }
+
   // =========================
   // LISTAGEM (API)
   // =========================
@@ -748,6 +777,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
 
   saveAbastecimento() {
     if (!this.validarCadastro()) return;
+    if (!this.confirmarKmPlausivel()) return;
 
     const caminhaoIdent = String(this.novo?.caminhao?.codigo || this.novo?.caminhao?.placa || '').trim();
 
