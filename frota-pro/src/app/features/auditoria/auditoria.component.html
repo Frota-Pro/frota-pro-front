@@ -80,6 +80,46 @@
                 <div><strong>Status HTTP:</strong> {{ l.statusHttp ?? '—' }}</div>
                 <div><strong>IP:</strong> {{ l.ip || '—' }}</div>
               </div>
+
+              <!-- ATUALIZACAO: só os campos que mudaram, antes -> depois -->
+              <table class="diff-table" *ngIf="l.acao === 'ATUALIZACAO' && camposAlterados(l).length > 0">
+                <thead>
+                  <tr><th>Campo</th><th>Antes</th><th></th><th>Depois</th></tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let c of camposAlterados(l)">
+                    <td class="campo">{{ humanizarCampo(c.campo) }}</td>
+                    <td class="valor-antes">{{ formatarValor(c.antes) }}</td>
+                    <td class="seta">→</td>
+                    <td class="valor-depois">{{ formatarValor(c.depois) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p class="diff-vazio" *ngIf="l.acao === 'ATUALIZACAO' && camposAlterados(l).length === 0 && (l.dadosAntes || l.dadosDepois)">
+                Nenhum campo simples mudou nessa atualização.
+              </p>
+
+              <!-- CRIACAO: todos os campos do registro criado -->
+              <table class="diff-table" *ngIf="l.acao === 'CRIACAO' && camposCompletos(l.dadosDepois).length > 0">
+                <thead><tr><th>Campo</th><th colspan="3">Valor</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let c of camposCompletos(l.dadosDepois)">
+                    <td class="campo">{{ humanizarCampo(c.campo) }}</td>
+                    <td class="valor-depois" colspan="3">{{ formatarValor(c.valor) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- EXCLUSAO: todos os campos do registro excluído -->
+              <table class="diff-table" *ngIf="l.acao === 'EXCLUSAO' && camposCompletos(l.dadosAntes).length > 0">
+                <thead><tr><th>Campo</th><th colspan="3">Valor (antes de excluir)</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let c of camposCompletos(l.dadosAntes)">
+                    <td class="campo">{{ humanizarCampo(c.campo) }}</td>
+                    <td class="valor-antes" colspan="3">{{ formatarValor(c.valor) }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </td>
           </tr>
         </ng-container>

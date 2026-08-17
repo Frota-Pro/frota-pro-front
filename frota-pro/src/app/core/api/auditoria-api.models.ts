@@ -11,4 +11,6 @@ export interface LogAuditoriaResponse {
   endpoint?: string | null;
   statusHttp?: number | null;
   ip?: string | null;
+  dadosAntes?: Record<string, unknown> | null;
+  dadosDepois?: Record<string, unknown> | null;
 }

@@ -115,6 +115,43 @@ export class AuditoriaComponent implements OnInit {
     return item.id;
   }
 
+  /** Campos que mudaram numa ATUALIZACAO — só os que diferem entre antes/depois. */
+  camposAlterados(l: LogAuditoriaResponse): { campo: string; antes: unknown; depois: unknown }[] {
+    const antes = l.dadosAntes || {};
+    const depois = l.dadosDepois || {};
+    const chaves = new Set([...Object.keys(antes), ...Object.keys(depois)]);
+    const resultado: { campo: string; antes: unknown; depois: unknown }[] = [];
+    chaves.forEach((campo) => {
+      const a = (antes as any)[campo];
+      const d = (depois as any)[campo];
+      if (JSON.stringify(a) !== JSON.stringify(d)) {
+        resultado.push({ campo, antes: a, depois: d });
+      }
+    });
+    return resultado.sort((x, y) => x.campo.localeCompare(y.campo));
+  }
+
+  /** Todos os campos, pra CRIACAO (dadosDepois) ou EXCLUSAO (dadosAntes). */
+  camposCompletos(dados: Record<string, unknown> | null | undefined): { campo: string; valor: unknown }[] {
+    if (!dados) return [];
+    return Object.keys(dados)
+      .sort((a, b) => a.localeCompare(b))
+      .map((campo) => ({ campo, valor: (dados as any)[campo] }));
+  }
+
+  humanizarCampo(campo: string): string {
+    return campo
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (s) => s.toUpperCase())
+      .trim();
+  }
+
+  formatarValor(valor: unknown): string {
+    if (valor === null || valor === undefined || valor === '') return '—';
+    if (typeof valor === 'boolean') return valor ? 'Sim' : 'Não';
+    return String(valor);
+  }
+
   acaoClass(acao: string): string {
     switch (acao) {
       case 'LOGIN_SUCESSO': return 'acao-sucesso';
