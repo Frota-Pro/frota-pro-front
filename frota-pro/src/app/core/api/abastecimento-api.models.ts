@@ -27,6 +27,15 @@ export interface AbastecimentoResponse {
   numNotaOuCupom?: string | null;
 }
 
+/** Totais agregados no back — ver AbastecimentoApiService.resumoFiltrado. */
+export interface AbastecimentoResumoFiltroResponse {
+  totalLitros: number;
+  totalValor: number;
+  precoMedioLitro: number;
+  consumoMedioPonderado: number;
+  totalRegistros: number;
+}
+
 export interface AbastecimentoRequest {
   caminhao: string;              // codigo ou codigoExterno ou placa
   motorista?: string | null;     // codigo ou codigoExterno (opcional)

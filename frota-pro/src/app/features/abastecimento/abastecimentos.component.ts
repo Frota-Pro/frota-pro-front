@@ -7,7 +7,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
 import { extrairMensagemErro } from '../../core/utils/api-error.util';
 
 import { AbastecimentoApiService } from '../../core/api/abastecimento-api.service';
-import { AbastecimentoRequest, AbastecimentoResponse } from '../../core/api/abastecimento-api.models';
+import { AbastecimentoRequest, AbastecimentoResponse, AbastecimentoResumoFiltroResponse } from '../../core/api/abastecimento-api.models';
 import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
 import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
 import { MotoristaApiService } from '../../core/api/motorista-api.service';
@@ -162,6 +162,11 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   totalElements = 0;
 
   abastecimentos: AbastecimentoVM[] = [];
+
+  /** Totais calculados no back sobre TODOS os registros do filtro, não só a página atual. */
+  resumo: AbastecimentoResumoFiltroResponse | null = null;
+  /** Só usado quando nenhum período é escolhido — litros do mês corrente (card "Litros (mês)"). */
+  resumoLitrosMes: number | null = null;
 
   // debounce para disparar buscar() quando filtros mudarem
   private filtroTimer: any = null;
@@ -437,24 +442,10 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     this.carregando = true;
     this.erro = null;
 
-    const q = this.searchTerm?.trim() ? this.searchTerm.trim() : null;
-    const motorista = this.filtroMotorista?.trim() ? this.filtroMotorista.trim() : null;
-
-    const inicio = this.filtroDataInicio ? `${this.filtroDataInicio}T00:00:00` : null;
-    const fim = this.filtroDataFim ? `${this.filtroDataFim}T23:59:59` : null;
+    const filtro = this.buildFiltroParams();
 
     this.abastecimentoApi
-      .filtrar({
-        q,
-        caminhao: this.filtroCaminhao?.trim() || null,
-        motorista,
-        tipo: this.filtroTipo || null,
-        inicio,
-        fim,
-        page: this.page,
-        size: this.size,
-        sort: 'dtAbastecimento,desc',
-      })
+      .filtrar({ ...filtro, page: this.page, size: this.size, sort: 'dtAbastecimento,desc' })
       .pipe(finalize(() => (this.carregando = false)))
       .subscribe({
         next: (res) => {
@@ -465,8 +456,64 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.erro = extrairMensagemErro(err, 'Falha ao carregar abastecimentos.');
           this.abastecimentos = [];
+          this.totalPages = 0;
+          this.totalElements = 0;
         },
       });
+
+    this.carregarResumo(filtro);
+  }
+
+  private buildFiltroParams(): {
+    q: string | null;
+    caminhao: string | null;
+    motorista: string | null;
+    tipo: string | null;
+    inicio: string | null;
+    fim: string | null;
+  } {
+    return {
+      q: this.searchTerm?.trim() ? this.searchTerm.trim() : null,
+      caminhao: this.filtroCaminhao?.trim() || null,
+      motorista: this.filtroMotorista?.trim() ? this.filtroMotorista.trim() : null,
+      tipo: this.filtroTipo || null,
+      inicio: this.filtroDataInicio ? `${this.filtroDataInicio}T00:00:00` : null,
+      fim: this.filtroDataFim ? `${this.filtroDataFim}T23:59:59` : null,
+    };
+  }
+
+  /**
+   * Totais dos cards — sempre buscados no back sobre TODO o filtro (todas as
+   * páginas). Quando nenhum período é escolhido, o card de litros mostra o
+   * mês corrente por padrão — busca isso à parte, com o mesmo filtro mas
+   * datas limitadas ao mês atual.
+   */
+  private carregarResumo(filtro: ReturnType<AbastecimentosComponent['buildFiltroParams']>): void {
+    this.abastecimentoApi.resumoFiltrado(filtro).subscribe({
+      next: (res) => (this.resumo = res),
+      error: () => (this.resumo = null),
+    });
+
+    if (filtro.inicio || filtro.fim) {
+      this.resumoLitrosMes = null;
+      return;
+    }
+
+    const agora = new Date();
+    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1, 0, 0, 0);
+    const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59);
+
+    this.abastecimentoApi
+      .resumoFiltrado({ ...filtro, inicio: this.toIsoLocal(inicioMes), fim: this.toIsoLocal(fimMes) })
+      .subscribe({
+        next: (res) => (this.resumoLitrosMes = res.totalLitros ?? 0),
+        error: () => (this.resumoLitrosMes = null),
+      });
+  }
+
+  private toIsoLocal(d: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
 
   limparFiltros(): void {
@@ -519,130 +566,26 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   }
 
   // =========================
-  // FILTRO LOCAL (mantém HTML usando abastecimentosFiltrados)
+  // KPIs (calculados no back sobre TODO o filtro — ver carregarResumo)
   // =========================
-
-  get abastecimentosFiltrados(): AbastecimentoVM[] {
-    const term = (this.searchTerm || '').trim().toLowerCase();
-    const tipo = (this.filtroTipo || '').trim().toLowerCase();
-    const caminhao = (this.filtroCaminhao || '').trim().toLowerCase();
-    const motorista = (this.filtroMotorista || '').trim().toLowerCase();
-
-    const ini = this.filtroDataInicio ? new Date(`${this.filtroDataInicio}T00:00:00`) : null;
-    const fim = this.filtroDataFim ? new Date(`${this.filtroDataFim}T23:59:59`) : null;
-
-    return (this.abastecimentos || []).filter((a) => {
-      if (tipo && String(a.tipoCombustivel || '').toLowerCase() !== tipo) return false;
-
-      if (caminhao) {
-        const c1 = String(a.caminhao?.placa || '').toLowerCase();
-        const c2 = String(a.caminhao?.codigo || '').toLowerCase();
-        if (!c1.includes(caminhao) && !c2.includes(caminhao)) return false;
-      }
-
-      if (motorista) {
-        const m1 = String(a.motorista?.nome || '').toLowerCase();
-        const m2 = String(a.motorista?.codigo || '').toLowerCase();
-        if (!m1.includes(motorista) && !m2.includes(motorista)) return false;
-      }
-
-      if (ini || fim) {
-        const d = this.safeDate(a.dtAbastecimento);
-        if (!d) return false;
-        if (ini && d < ini) return false;
-        if (fim && d > fim) return false;
-      }
-
-      if (term) {
-        const hay = [
-          a.codigo,
-          a.tipoCombustivel,
-          a.formaPagamento,
-          a.posto,
-          a.postoAbastecimentoNome,
-          a.cidade,
-          a.uf,
-          a.numNotaOuCupom,
-          a.caminhao?.placa,
-          a.caminhao?.codigo,
-          a.motorista?.nome,
-          a.motorista?.codigo,
-        ]
-          .map((x) => String(x || '').toLowerCase())
-          .join(' | ');
-
-        if (!hay.includes(term)) return false;
-      }
-
-      return true;
-    });
-  }
-
-  private safeDate(iso: string | null | undefined): Date | null {
-    if (!iso) return null;
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  // =========================
-  // KPIs
-  // =========================
-
-  private get kpiBase(): AbastecimentoVM[] {
-    return this.abastecimentosFiltrados || [];
-  }
 
   get litersThisMonth(): number {
-    const base = this.kpiBase;
-
     if (this.filtroDataInicio || this.filtroDataFim) {
-      return base.reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
+      return this.resumo?.totalLitros ?? 0;
     }
-
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    return base
-      .filter((a) => {
-        const d = this.safeDate(a.dtAbastecimento);
-        return !!d && d.getFullYear() === y && d.getMonth() === m;
-      })
-      .reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
+    return this.resumoLitrosMes ?? 0;
   }
 
   get totalSpent(): number {
-    return this.kpiBase.reduce((acc, a) => acc + Number(a.valorTotal || 0), 0);
+    return this.resumo?.totalValor ?? 0;
   }
 
   get avgPricePerLiter(): number {
-    const litros = this.kpiBase.reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
-    if (!litros) return 0;
-    return this.totalSpent / litros;
+    return this.resumo?.precoMedioLitro ?? 0;
   }
 
   get avgConsumption(): number {
-    return this.calcAvgConsumption(this.kpiBase);
-  }
-
-  private calcAvgConsumption(items: AbastecimentoVM[]): number {
-    if (!items?.length) return 0;
-
-    let weightedTotal = 0;
-    let totalLitros = 0;
-
-    for (const a of items) {
-      const media = Number(a.mediaKmLitro ?? NaN);
-      const litros = Number(a.qtLitros ?? NaN);
-
-      if (!Number.isFinite(media) || media <= 0) continue;
-      if (!Number.isFinite(litros) || litros <= 0) continue;
-
-      weightedTotal += media * litros;
-      totalLitros += litros;
-    }
-
-    if (!totalLitros) return 0;
-    return Math.round((weightedTotal / totalLitros) * 100) / 100;
+    return this.resumo?.consumoMedioPonderado ?? 0;
   }
 
   // =========================

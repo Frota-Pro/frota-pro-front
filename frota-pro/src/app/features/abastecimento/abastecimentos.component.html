@@ -89,14 +89,21 @@
     </div>
   </div>
 
+  <div class="alert" *ngIf="erro">{{ erro }}</div>
+
   <!-- Lista -->
   <div class="list-block">
     <div class="block-header">
       <h3>Abastecimentos</h3>
-      <span class="count">{{ abastecimentosFiltrados.length || 0 }}</span>
+      <span class="count">{{ totalElements || 0 }}</span>
     </div>
 
-    <div class="list-header">
+    <div class="loading" *ngIf="carregando">
+      <div class="spinner"></div>
+      <span>Carregando abastecimentos...</span>
+    </div>
+
+    <div class="list-header" *ngIf="!carregando">
       <span>Data</span>
       <span>Caminhão</span>
       <span>Motorista</span>
@@ -107,8 +114,8 @@
       <span style="text-align:right;">Ações</span>
     </div>
 
-    <ul class="abaste-list">
-      <li class="abaste-item" *ngFor="let a of abastecimentosFiltrados; trackBy: trackById">
+    <ul class="abaste-list" *ngIf="!carregando">
+      <li class="abaste-item" *ngFor="let a of abastecimentos; trackBy: trackById">
 
         <div class="row" (click)="toggleExpand(a.id)">
           <span>{{ a.dtAbastecimento | date : 'dd/MM/yyyy HH:mm' }}</span>
@@ -166,7 +173,7 @@
 
       </li>
 
-      <li *ngIf="(abastecimentosFiltrados.length || 0) === 0">
+      <li *ngIf="(abastecimentos.length || 0) === 0">
         <div style="padding: 18px; text-align:center;">
           <span style="opacity:0.8; color: rgba(23,42,0.55);">
             Nenhum abastecimento encontrado.
@@ -174,6 +181,12 @@
         </div>
       </li>
     </ul>
+
+    <div class="pagination" *ngIf="!carregando && totalPages > 0">
+      <button class="btn-page" type="button" [disabled]="page <= 0" (click)="prevPage()">Anterior</button>
+      <span class="pageinfo">Página {{ page + 1 }} de {{ totalPages }} · {{ totalElements }} registro(s)</span>
+      <button class="btn-page" type="button" [disabled]="page + 1 >= totalPages" (click)="nextPage()">Próxima</button>
+    </div>
   </div>
 
   <!-- ✅ MODAL MELHORADO -->
@@ -203,9 +216,10 @@
           </div>
 
           <div class="ab-grid">
-            <div class="ab-field">
+            <div class="ab-field" *ngIf="isEditing">
               <label>Código</label>
-              <input type="text" [(ngModel)]="novo.codigo" name="codigo" required />
+              <input type="text" [ngModel]="novo.codigo" name="codigo" disabled />
+              <small class="ab-hint">Gerado pelo sistema, não pode ser alterado.</small>
             </div>
 
             <div class="ab-field">
