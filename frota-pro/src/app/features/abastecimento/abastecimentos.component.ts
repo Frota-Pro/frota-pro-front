@@ -258,6 +258,18 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     return this.formasPagamento.find((x) => x.value === value)?.label ?? value;
   }
 
+  /** Classe de cor do pill de combustível, agrupada por categoria (só estética). */
+  getCombustivelClass(value?: string | null): string {
+    const v = String(value || '').toUpperCase();
+    if (v.startsWith('DIESEL')) return 'pill-diesel';
+    if (v.startsWith('GASOLINA')) return 'pill-gasolina';
+    if (v.startsWith('ETANOL')) return 'pill-etanol';
+    if (v === 'GNV') return 'pill-gnv';
+    if (v === 'ELETRICO' || v === 'HIBRIDO') return 'pill-eletrico';
+    if (v === 'ARLA32') return 'pill-arla';
+    return 'pill-fuel';
+  }
+
   private normalizeLegacyCombustivel(value?: string | null): CombustivelValue {
     const v = String(value || '').trim().toUpperCase();
 
@@ -517,6 +529,17 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   private toIsoLocal(d: Date): string {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  get temFiltrosAtivos(): boolean {
+    return !!(
+      this.searchTerm ||
+      this.filtroTipo ||
+      this.filtroCaminhao ||
+      this.filtroMotorista ||
+      this.filtroDataInicio ||
+      this.filtroDataFim
+    );
   }
 
   limparFiltros(): void {

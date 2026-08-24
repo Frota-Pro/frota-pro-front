@@ -3,7 +3,10 @@
   <!-- Cabeçalho -->
   <div class="page-head">
     <div class="titles">
-      <h2 class="page-title">Abastecimentos</h2>
+      <div class="page-title-row">
+        <span class="page-icon">⛽</span>
+        <h2 class="page-title">Abastecimentos</h2>
+      </div>
       <p class="subtitle">Controle de combustível da frota</p>
     </div>
 
@@ -17,15 +20,15 @@
 
   <!-- Cards KPI -->
   <div class="cards-row">
-    <div class="card">
+    <div class="card card-fuel">
       <div class="card-icon">⛽</div>
       <div class="card-info">
         <div class="card-title">{{ (filtroDataInicio || filtroDataFim) ? 'Litros (período)' : 'Litros (mês)' }}</div>
-        <div class="card-value">{{ litersThisMonth | number : '1.0-3' }}</div>
+        <div class="card-value">{{ litersThisMonth | number : '1.0-3' }} L</div>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card card-money">
       <div class="card-icon">💵</div>
       <div class="card-info">
         <div class="card-title">Gasto total</div>
@@ -33,15 +36,15 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card card-price">
       <div class="card-icon">⚖️</div>
       <div class="card-info">
         <div class="card-title">Preço médio (R$/L)</div>
-        <div class="card-value">{{ avgPricePerLiter | number : '1.2-3' }}</div>
+        <div class="card-value">{{ avgPricePerLiter | currency : 'BRL' : 'symbol' : '1.2-3' }}</div>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card card-truck">
       <div class="card-icon">🚚</div>
       <div class="card-info">
         <div class="card-title">Consumo médio (km/L)</div>
@@ -51,69 +54,83 @@
   </div>
 
   <!-- Filtros -->
-  <div class="filters-row">
-    <input
-      type="text"
-      [(ngModel)]="searchTerm"
-      (ngModelChange)="scheduleBuscar()"
-      placeholder="Pesquisar geral..."
-    />
+  <div class="filters-card">
+    <div class="filters-head">
+      <span class="filters-title"><i class="fas fa-sliders-h"></i> Filtros</span>
+      <button
+        class="btn-clear-filters"
+        type="button"
+        *ngIf="temFiltrosAtivos"
+        (click)="limparFiltros()"
+      >
+        <i class="fas fa-eraser"></i> Limpar filtros
+      </button>
+    </div>
 
-    <select [(ngModel)]="filtroTipo" (ngModelChange)="scheduleBuscar()">
-      <option value="">Todos combustíveis</option>
-      <option *ngFor="let c of combustiveis" [value]="c.value">{{ c.label }}</option>
-    </select>
-
-    <div class="ab-autocomplete">
+    <div class="filters-row">
       <input
         type="text"
-        [(ngModel)]="filtroCaminhao"
-        (ngModelChange)="onInputFiltroCaminhao()"
-        (focus)="onFocusFiltroCaminhao()"
-        (blur)="onBlurSugestao()"
-        autocomplete="off"
-        placeholder="Filtrar por caminhão (placa/código)"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="scheduleBuscar()"
+        placeholder="Pesquisar geral..."
       />
-      <ul class="ab-suggest" *ngIf="showSugFiltroCaminhao && sugestoesFiltroCaminhao.length > 0">
-        <li *ngFor="let c of sugestoesFiltroCaminhao" (mousedown)="selectFiltroCaminhao(c)">
-          <strong>{{ c.placa || '-' }}</strong>
-          <span>{{ c.codigo }}</span>
-          <small>{{ c.descricao || '-' }}</small>
-        </li>
-      </ul>
-    </div>
 
-    <div class="ab-autocomplete">
-      <input
-        type="text"
-        [(ngModel)]="filtroMotorista"
-        (ngModelChange)="onInputFiltroMotorista()"
-        (focus)="onFocusFiltroMotorista()"
-        (blur)="onBlurSugestao()"
-        autocomplete="off"
-        placeholder="Filtrar por motorista"
-      />
-      <ul class="ab-suggest" *ngIf="showSugFiltroMotorista && sugestoesFiltroMotorista.length > 0">
-        <li *ngFor="let m of sugestoesFiltroMotorista" (mousedown)="selectFiltroMotorista(m)">
-          <strong>{{ m.nome || '-' }}</strong>
-          <span>{{ m.codigo }}</span>
-          <small>{{ m.cnh || m.email || '-' }}</small>
-        </li>
-      </ul>
-    </div>
+      <select [(ngModel)]="filtroTipo" (ngModelChange)="scheduleBuscar()">
+        <option value="">Todos combustíveis</option>
+        <option *ngFor="let c of combustiveis" [value]="c.value">{{ c.label }}</option>
+      </select>
 
-    <div class="date-inline">
-      <span>De</span>
-      <input type="date" [(ngModel)]="filtroDataInicio" (ngModelChange)="scheduleBuscar()" />
-    </div>
+      <div class="ab-autocomplete">
+        <input
+          type="text"
+          [(ngModel)]="filtroCaminhao"
+          (ngModelChange)="onInputFiltroCaminhao()"
+          (focus)="onFocusFiltroCaminhao()"
+          (blur)="onBlurSugestao()"
+          autocomplete="off"
+          placeholder="Filtrar por caminhão (placa/código)"
+        />
+        <ul class="ab-suggest" *ngIf="showSugFiltroCaminhao && sugestoesFiltroCaminhao.length > 0">
+          <li *ngFor="let c of sugestoesFiltroCaminhao" (mousedown)="selectFiltroCaminhao(c)">
+            <strong>{{ c.placa || '-' }}</strong>
+            <span>{{ c.codigo }}</span>
+            <small>{{ c.descricao || '-' }}</small>
+          </li>
+        </ul>
+      </div>
 
-    <div class="date-inline">
-      <span>Até</span>
-      <input type="date" [(ngModel)]="filtroDataFim" (ngModelChange)="scheduleBuscar()" />
+      <div class="ab-autocomplete">
+        <input
+          type="text"
+          [(ngModel)]="filtroMotorista"
+          (ngModelChange)="onInputFiltroMotorista()"
+          (focus)="onFocusFiltroMotorista()"
+          (blur)="onBlurSugestao()"
+          autocomplete="off"
+          placeholder="Filtrar por motorista"
+        />
+        <ul class="ab-suggest" *ngIf="showSugFiltroMotorista && sugestoesFiltroMotorista.length > 0">
+          <li *ngFor="let m of sugestoesFiltroMotorista" (mousedown)="selectFiltroMotorista(m)">
+            <strong>{{ m.nome || '-' }}</strong>
+            <span>{{ m.codigo }}</span>
+            <small>{{ m.cnh || m.email || '-' }}</small>
+          </li>
+        </ul>
+      </div>
+
+      <div class="date-inline">
+        <span>De</span>
+        <input type="date" [(ngModel)]="filtroDataInicio" (ngModelChange)="scheduleBuscar()" />
+      </div>
+
+      <div class="date-inline">
+        <span>Até</span>
+        <input type="date" [(ngModel)]="filtroDataFim" (ngModelChange)="scheduleBuscar()" />
+      </div>
     </div>
   </div>
 
-  <div class="alert" *ngIf="erro">{{ erro }}</div>
+  <div class="alert" *ngIf="erro"><i class="fas fa-triangle-exclamation"></i> {{ erro }}</div>
 
   <!-- Lista -->
   <div class="list-block">
@@ -149,7 +166,7 @@
           <span class="truncate">{{ a.motorista?.nome || '—' }}</span>
 
           <span>
-            <span class="pill pill-fuel">{{ getCombustivelLabel(a.tipoCombustivel) }}</span>
+            <span class="pill" [ngClass]="getCombustivelClass(a.tipoCombustivel)">{{ getCombustivelLabel(a.tipoCombustivel) }}</span>
           </span>
 
           <span class="num">{{ a.qtLitros || 0 | number : '1.0-3' }}</span>
@@ -197,12 +214,10 @@
 
       </li>
 
-      <li *ngIf="(abastecimentos.length || 0) === 0">
-        <div style="padding: 18px; text-align:center;">
-          <span style="opacity:0.8; color: rgba(23,42,0.55);">
-            Nenhum abastecimento encontrado.
-          </span>
-        </div>
+      <li *ngIf="(abastecimentos.length || 0) === 0" class="empty-state">
+        <div class="empty-icon">⛽</div>
+        <span class="empty-title">Nenhum abastecimento encontrado</span>
+        <span class="empty-desc">Ajuste os filtros ou cadastre um novo abastecimento.</span>
       </li>
     </ul>
 
