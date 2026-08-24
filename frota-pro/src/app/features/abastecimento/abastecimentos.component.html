@@ -64,19 +64,43 @@
       <option *ngFor="let c of combustiveis" [value]="c.value">{{ c.label }}</option>
     </select>
 
-    <input
-      type="text"
-      [(ngModel)]="filtroCaminhao"
-      (ngModelChange)="scheduleBuscar()"
-      placeholder="Filtrar por caminhão (placa/código)"
-    />
+    <div class="ab-autocomplete">
+      <input
+        type="text"
+        [(ngModel)]="filtroCaminhao"
+        (ngModelChange)="onInputFiltroCaminhao()"
+        (focus)="onFocusFiltroCaminhao()"
+        (blur)="onBlurSugestao()"
+        autocomplete="off"
+        placeholder="Filtrar por caminhão (placa/código)"
+      />
+      <ul class="ab-suggest" *ngIf="showSugFiltroCaminhao && sugestoesFiltroCaminhao.length > 0">
+        <li *ngFor="let c of sugestoesFiltroCaminhao" (mousedown)="selectFiltroCaminhao(c)">
+          <strong>{{ c.placa || '-' }}</strong>
+          <span>{{ c.codigo }}</span>
+          <small>{{ c.descricao || '-' }}</small>
+        </li>
+      </ul>
+    </div>
 
-    <input
-      type="text"
-      [(ngModel)]="filtroMotorista"
-      (ngModelChange)="scheduleBuscar()"
-      placeholder="Filtrar por motorista"
-    />
+    <div class="ab-autocomplete">
+      <input
+        type="text"
+        [(ngModel)]="filtroMotorista"
+        (ngModelChange)="onInputFiltroMotorista()"
+        (focus)="onFocusFiltroMotorista()"
+        (blur)="onBlurSugestao()"
+        autocomplete="off"
+        placeholder="Filtrar por motorista"
+      />
+      <ul class="ab-suggest" *ngIf="showSugFiltroMotorista && sugestoesFiltroMotorista.length > 0">
+        <li *ngFor="let m of sugestoesFiltroMotorista" (mousedown)="selectFiltroMotorista(m)">
+          <strong>{{ m.nome || '-' }}</strong>
+          <span>{{ m.codigo }}</span>
+          <small>{{ m.cnh || m.email || '-' }}</small>
+        </li>
+      </ul>
+    </div>
 
     <div class="date-inline">
       <span>De</span>

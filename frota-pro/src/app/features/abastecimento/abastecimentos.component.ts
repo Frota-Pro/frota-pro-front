@@ -176,6 +176,9 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   showSugPlaca = false;
   showSugCodigo = false;
   showSugMotorista = false;
+  // autocomplete dos filtros da listagem (caminhão/motorista)
+  showSugFiltroCaminhao = false;
+  showSugFiltroMotorista = false;
   readonly sugestoesMax = 8;
 
   // form (modal) -> exatamente como seu HTML espera
@@ -671,24 +674,15 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   }
 
   get sugestoesMotorista(): MotoristaResponse[] {
-    const q = (this.novo?.motorista?.nome || '').trim().toLowerCase();
-    if (!q) return [];
+    return this.buildSugestoesMotorista((this.novo?.motorista?.nome || '').trim());
+  }
 
-    return (this.motoristas || [])
-      .filter((m) => m.ativo !== false)
-      .filter((m) => {
-        const hay = [
-          m.codigo,
-          m.codigoExterno,
-          m.nome,
-          m.email,
-          m.cnh,
-        ]
-          .map((x) => String(x || '').toLowerCase())
-          .join(' | ');
-        return hay.includes(q);
-      })
-      .slice(0, this.sugestoesMax);
+  get sugestoesFiltroCaminhao(): CaminhaoResponse[] {
+    return this.buildSugestoesCaminhao((this.filtroCaminhao || '').trim());
+  }
+
+  get sugestoesFiltroMotorista(): MotoristaResponse[] {
+    return this.buildSugestoesMotorista((this.filtroMotorista || '').trim());
   }
 
   onFocusPlaca(): void {
@@ -722,6 +716,42 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     const hasQuery = (this.novo?.motorista?.nome || '').trim().length > 0;
     this.closeAllSugestoes();
     this.showSugMotorista = hasQuery;
+  }
+
+  onFocusFiltroCaminhao(): void {
+    this.closeAllSugestoes();
+    this.showSugFiltroCaminhao = true;
+  }
+
+  onInputFiltroCaminhao(): void {
+    const hasQuery = (this.filtroCaminhao || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugFiltroCaminhao = hasQuery;
+    this.scheduleBuscar();
+  }
+
+  onFocusFiltroMotorista(): void {
+    this.closeAllSugestoes();
+    this.showSugFiltroMotorista = true;
+  }
+
+  onInputFiltroMotorista(): void {
+    const hasQuery = (this.filtroMotorista || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugFiltroMotorista = hasQuery;
+    this.scheduleBuscar();
+  }
+
+  selectFiltroCaminhao(c: CaminhaoResponse): void {
+    this.filtroCaminhao = c.placa || c.codigo || '';
+    this.closeAllSugestoes();
+    this.buscar(0);
+  }
+
+  selectFiltroMotorista(m: MotoristaResponse): void {
+    this.filtroMotorista = m.nome || m.codigo || '';
+    this.closeAllSugestoes();
+    this.buscar(0);
   }
 
   onBlurSugestao(): void {
@@ -769,10 +799,33 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       .slice(0, this.sugestoesMax);
   }
 
+  private buildSugestoesMotorista(rawQuery: string): MotoristaResponse[] {
+    const q = (rawQuery || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.motoristas || [])
+      .filter((m) => m.ativo !== false)
+      .filter((m) => {
+        const hay = [
+          m.codigo,
+          m.codigoExterno,
+          m.nome,
+          m.email,
+          m.cnh,
+        ]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
   private closeAllSugestoes(): void {
     this.showSugPlaca = false;
     this.showSugCodigo = false;
     this.showSugMotorista = false;
+    this.showSugFiltroCaminhao = false;
+    this.showSugFiltroMotorista = false;
   }
 
   private resetAutoComplete(): void {
