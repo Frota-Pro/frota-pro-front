@@ -19,6 +19,8 @@ export interface AbastecimentoResponse {
   formaPagamento?: string | null;
 
   posto?: string | null;
+  postoAbastecimentoCodigo?: string | null;
+  postoAbastecimentoNome?: string | null;
   cidade?: string | null;
   uf?: string | null;
 
@@ -36,7 +38,8 @@ export interface AbastecimentoRequest {
   mediaKmLitro?: number | null;
   tipoCombustivel: string;
   formaPagamento: string;
-  posto?: string | null;
+  posto?: string | null;               // texto livre — alternativa a postoAbastecimento (informe um ou outro)
+  postoAbastecimento?: string | null;  // código do posto cadastrado — alternativa a posto
   cidade?: string | null;
   uf?: string | null;
   numNotaOuCupom?: string | null;

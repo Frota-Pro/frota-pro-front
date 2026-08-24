@@ -175,6 +175,12 @@
             routerLinkActive="active">
             Parâmetros do Sistema
           </li>
+          <li
+            *ngIf="(user$ | async)?.authorities?.includes('ROLE_ADMIN')"
+            routerLink="/dashboard/auditoria"
+            routerLinkActive="active">
+            Auditoria
+          </li>
           <!-- ❌ removido: Logs -->
         </ul>
       </li>
