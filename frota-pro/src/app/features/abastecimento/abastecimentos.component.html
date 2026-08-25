@@ -3,7 +3,10 @@
   <!-- Cabeçalho -->
   <div class="page-head">
     <div class="titles">
-      <h2 class="page-title">Abastecimentos</h2>
+      <div class="page-title-row">
+        <span class="page-icon">⛽</span>
+        <h2 class="page-title">Abastecimentos</h2>
+      </div>
       <p class="subtitle">Controle de combustível da frota</p>
     </div>
 
@@ -17,15 +20,15 @@
 
   <!-- Cards KPI -->
   <div class="cards-row">
-    <div class="card">
+    <div class="card card-fuel">
       <div class="card-icon">⛽</div>
       <div class="card-info">
         <div class="card-title">{{ (filtroDataInicio || filtroDataFim) ? 'Litros (período)' : 'Litros (mês)' }}</div>
-        <div class="card-value">{{ litersThisMonth | number : '1.0-3' }}</div>
+        <div class="card-value">{{ litersThisMonth | number : '1.0-3' }} L</div>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card card-money">
       <div class="card-icon">💵</div>
       <div class="card-info">
         <div class="card-title">Gasto total</div>
@@ -33,15 +36,15 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card card-price">
       <div class="card-icon">⚖️</div>
       <div class="card-info">
         <div class="card-title">Preço médio (R$/L)</div>
-        <div class="card-value">{{ avgPricePerLiter | number : '1.2-3' }}</div>
+        <div class="card-value">{{ avgPricePerLiter | currency : 'BRL' : 'symbol' : '1.2-3' }}</div>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card card-truck">
       <div class="card-icon">🚚</div>
       <div class="card-info">
         <div class="card-title">Consumo médio (km/L)</div>
@@ -51,52 +54,97 @@
   </div>
 
   <!-- Filtros -->
-  <div class="filters-row">
-    <input
-      type="text"
-      [(ngModel)]="searchTerm"
-      (ngModelChange)="scheduleBuscar()"
-      placeholder="Pesquisar geral..."
-    />
-
-    <select [(ngModel)]="filtroTipo" (ngModelChange)="scheduleBuscar()">
-      <option value="">Todos combustíveis</option>
-      <option *ngFor="let c of combustiveis" [value]="c.value">{{ c.label }}</option>
-    </select>
-
-    <input
-      type="text"
-      [(ngModel)]="filtroCaminhao"
-      (ngModelChange)="scheduleBuscar()"
-      placeholder="Filtrar por caminhão (placa/código)"
-    />
-
-    <input
-      type="text"
-      [(ngModel)]="filtroMotorista"
-      (ngModelChange)="scheduleBuscar()"
-      placeholder="Filtrar por motorista"
-    />
-
-    <div class="date-inline">
-      <span>De</span>
-      <input type="date" [(ngModel)]="filtroDataInicio" (ngModelChange)="scheduleBuscar()" />
+  <div class="filters-card">
+    <div class="filters-head">
+      <span class="filters-title"><i class="fas fa-sliders-h"></i> Filtros</span>
+      <button
+        class="btn-clear-filters"
+        type="button"
+        *ngIf="temFiltrosAtivos"
+        (click)="limparFiltros()"
+      >
+        <i class="fas fa-eraser"></i> Limpar filtros
+      </button>
     </div>
 
-    <div class="date-inline">
-      <span>Até</span>
-      <input type="date" [(ngModel)]="filtroDataFim" (ngModelChange)="scheduleBuscar()" />
+    <div class="filters-row">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="scheduleBuscar()"
+        placeholder="Pesquisar geral..."
+      />
+
+      <select [(ngModel)]="filtroTipo" (ngModelChange)="scheduleBuscar()">
+        <option value="">Todos combustíveis</option>
+        <option *ngFor="let c of combustiveis" [value]="c.value">{{ c.label }}</option>
+      </select>
+
+      <div class="ab-autocomplete">
+        <input
+          type="text"
+          [(ngModel)]="filtroCaminhao"
+          (ngModelChange)="onInputFiltroCaminhao()"
+          (focus)="onFocusFiltroCaminhao()"
+          (blur)="onBlurSugestao()"
+          autocomplete="off"
+          placeholder="Filtrar por caminhão (placa/código)"
+        />
+        <ul class="ab-suggest" *ngIf="showSugFiltroCaminhao && sugestoesFiltroCaminhao.length > 0">
+          <li *ngFor="let c of sugestoesFiltroCaminhao" (mousedown)="selectFiltroCaminhao(c)">
+            <strong>{{ c.placa || '-' }}</strong>
+            <span>{{ c.codigo }}</span>
+            <small>{{ c.descricao || '-' }}</small>
+          </li>
+        </ul>
+      </div>
+
+      <div class="ab-autocomplete">
+        <input
+          type="text"
+          [(ngModel)]="filtroMotorista"
+          (ngModelChange)="onInputFiltroMotorista()"
+          (focus)="onFocusFiltroMotorista()"
+          (blur)="onBlurSugestao()"
+          autocomplete="off"
+          placeholder="Filtrar por motorista"
+        />
+        <ul class="ab-suggest" *ngIf="showSugFiltroMotorista && sugestoesFiltroMotorista.length > 0">
+          <li *ngFor="let m of sugestoesFiltroMotorista" (mousedown)="selectFiltroMotorista(m)">
+            <strong>{{ m.nome || '-' }}</strong>
+            <span>{{ m.codigo }}</span>
+            <small>{{ m.cnh || m.email || '-' }}</small>
+          </li>
+        </ul>
+      </div>
+
+      <div class="date-inline">
+        <span>De</span>
+        <input type="date" [(ngModel)]="filtroDataInicio" (ngModelChange)="scheduleBuscar()" />
+      </div>
+
+      <div class="date-inline">
+        <span>Até</span>
+        <input type="date" [(ngModel)]="filtroDataFim" (ngModelChange)="scheduleBuscar()" />
+      </div>
     </div>
   </div>
+
+  <div class="alert" *ngIf="erro"><i class="fas fa-triangle-exclamation"></i> {{ erro }}</div>
 
   <!-- Lista -->
   <div class="list-block">
     <div class="block-header">
       <h3>Abastecimentos</h3>
-      <span class="count">{{ abastecimentosFiltrados.length || 0 }}</span>
+      <span class="count">{{ totalElements || 0 }}</span>
     </div>
 
-    <div class="list-header">
+    <div class="loading" *ngIf="carregando">
+      <div class="spinner"></div>
+      <span>Carregando abastecimentos...</span>
+    </div>
+
+    <div class="list-header" *ngIf="!carregando">
       <span>Data</span>
       <span>Caminhão</span>
       <span>Motorista</span>
@@ -107,8 +155,8 @@
       <span style="text-align:right;">Ações</span>
     </div>
 
-    <ul class="abaste-list">
-      <li class="abaste-item" *ngFor="let a of abastecimentosFiltrados; trackBy: trackById">
+    <ul class="abaste-list" *ngIf="!carregando">
+      <li class="abaste-item" *ngFor="let a of abastecimentos; trackBy: trackById">
 
         <div class="row" (click)="toggleExpand(a.id)">
           <span>{{ a.dtAbastecimento | date : 'dd/MM/yyyy HH:mm' }}</span>
@@ -118,7 +166,7 @@
           <span class="truncate">{{ a.motorista?.nome || '—' }}</span>
 
           <span>
-            <span class="pill pill-fuel">{{ getCombustivelLabel(a.tipoCombustivel) }}</span>
+            <span class="pill" [ngClass]="getCombustivelClass(a.tipoCombustivel)">{{ getCombustivelLabel(a.tipoCombustivel) }}</span>
           </span>
 
           <span class="num">{{ a.qtLitros || 0 | number : '1.0-3' }}</span>
@@ -166,14 +214,18 @@
 
       </li>
 
-      <li *ngIf="(abastecimentosFiltrados.length || 0) === 0">
-        <div style="padding: 18px; text-align:center;">
-          <span style="opacity:0.8; color: rgba(23,42,0.55);">
-            Nenhum abastecimento encontrado.
-          </span>
-        </div>
+      <li *ngIf="(abastecimentos.length || 0) === 0" class="empty-state">
+        <div class="empty-icon">⛽</div>
+        <span class="empty-title">Nenhum abastecimento encontrado</span>
+        <span class="empty-desc">Ajuste os filtros ou cadastre um novo abastecimento.</span>
       </li>
     </ul>
+
+    <div class="pagination" *ngIf="!carregando && totalPages > 0">
+      <button class="btn-page" type="button" [disabled]="page <= 0" (click)="prevPage()">Anterior</button>
+      <span class="pageinfo">Página {{ page + 1 }} de {{ totalPages }} · {{ totalElements }} registro(s)</span>
+      <button class="btn-page" type="button" [disabled]="page + 1 >= totalPages" (click)="nextPage()">Próxima</button>
+    </div>
   </div>
 
   <!-- ✅ MODAL MELHORADO -->
@@ -203,9 +255,10 @@
           </div>
 
           <div class="ab-grid">
-            <div class="ab-field">
+            <div class="ab-field" *ngIf="isEditing">
               <label>Código</label>
-              <input type="text" [(ngModel)]="novo.codigo" name="codigo" required />
+              <input type="text" [ngModel]="novo.codigo" name="codigo" disabled />
+              <small class="ab-hint">Gerado pelo sistema, não pode ser alterado.</small>
             </div>
 
             <div class="ab-field">
@@ -391,6 +444,34 @@
         </div>
 
       </form>
+    </div>
+  </div>
+
+  <!-- Confirmação de exclusão -->
+  <div class="ab-modal-overlay" *ngIf="showDeleteConfirm" (click)="cancelarExclusao()">
+    <div class="ab-confirm" (click)="$event.stopPropagation()">
+      <div class="ab-confirm__icon">
+        <i class="fas fa-triangle-exclamation"></i>
+      </div>
+
+      <h3 class="ab-confirm__title">Excluir abastecimento?</h3>
+
+      <p class="ab-confirm__desc" *ngIf="deleteAlvo as a">
+        Isso vai apagar o abastecimento de
+        <strong>{{ a.qtLitros || 0 | number : '1.0-3' }} L</strong>
+        do caminhão <strong>{{ a.caminhao.placa || a.caminhao.codigo || '—' }}</strong>
+        em <strong>{{ a.dtAbastecimento | date : 'dd/MM/yyyy HH:mm' }}</strong>.
+        Essa ação não pode ser desfeita.
+      </p>
+
+      <div class="ab-confirm__actions">
+        <button class="ab-btn ghost" type="button" (click)="cancelarExclusao()" [disabled]="deletando">
+          Cancelar
+        </button>
+        <button class="ab-btn danger" type="button" (click)="confirmarExclusao()" [disabled]="deletando">
+          {{ deletando ? 'Excluindo...' : 'Excluir' }}
+        </button>
+      </div>
     </div>
   </div>
 

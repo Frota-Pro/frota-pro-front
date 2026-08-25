@@ -144,8 +144,14 @@ export class CargaDetalheComponent implements OnInit {
   anexoObs = '';
   anexoFile: File | null = null;
 
-  // ===== Nova parada =====
+  // ===== Excluir parada (confirmação inline no modal de detalhes) =====
+  confirmandoExclusaoParada = false;
+  excluindoParada = false;
+
+  // ===== Nova parada / edição de parada =====
   showNovaParadaModal = false;
+  /** null = cadastrando parada nova; preenchido = editando essa parada existente. */
+  paradaEditandoId: string | null = null;
   paradaForm: ParadaForm = {
     tipoParada: 'OUTROS',
     dtInicio: '',
@@ -551,6 +557,7 @@ export class CargaDetalheComponent implements OnInit {
     this.anexosParada = [];
     this.anexoFile = null;
     this.anexoObs = '';
+    this.confirmandoExclusaoParada = false;
     this.loadingAnexos = true;
 
     this.paradaApi
@@ -570,6 +577,49 @@ export class CargaDetalheComponent implements OnInit {
     this.showParadaModal = false;
     this.paradaSelecionada = null;
     this.anexosParada = [];
+    this.confirmandoExclusaoParada = false;
+  }
+
+  /** Carga ainda em aberto (não finalizada) — mesma regra que o back aplica pra liberar edição/exclusão de parada. */
+  paradaEditavel(): boolean {
+    return !!this.carga && this.carga.statusCarga !== 'FINALIZADA';
+  }
+
+  /** Abre a Parada selecionada (no modal de detalhes) direto no formulário de edição. */
+  editarParadaAtual(): void {
+    if (!this.paradaSelecionada) return;
+    const parada = this.paradaSelecionada;
+    this.fecharParada();
+    this.abrirNovaParada(parada);
+  }
+
+  pedirExclusaoParada(): void {
+    this.confirmandoExclusaoParada = true;
+  }
+
+  cancelarExclusaoParada(): void {
+    this.confirmandoExclusaoParada = false;
+  }
+
+  confirmarExclusaoParada(): void {
+    if (!this.paradaSelecionada) return;
+    const id = this.paradaSelecionada.id;
+
+    this.excluindoParada = true;
+    this.paradaApi
+      .deletar(id)
+      .pipe(finalize(() => (this.excluindoParada = false)))
+      .subscribe({
+        next: () => {
+          this.toast('success', 'Parada excluída com sucesso.', 'Paradas');
+          this.fecharParada();
+          this.carregarParadas();
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', this.mensagemErro(err, 'Não foi possível excluir a parada.'), 'Paradas');
+        },
+      });
   }
 
   onFileSelected(ev: Event): void {
@@ -879,9 +929,77 @@ export class CargaDetalheComponent implements OnInit {
   // =========================
   // Nova Parada
   // =========================
-  abrirNovaParada(): void {
+  /**
+   * O GET de parada devolve tipoParada já traduzido pro rótulo (ex.: "Parada para
+   * Abastecimento"), não o código do enum que o <select> usa (ex.: "ABASTECIMENTO") —
+   * ver TipoParada.java (getDescricao()). Pra reabrir o form de edição com o combo
+   * certo selecionado, precisamos voltar do rótulo pro código.
+   */
+  private static readonly TIPO_PARADA_LABEL_TO_CODE: Record<string, string> = {
+    'Parada para Abastecimento': 'ABASTECIMENTO',
+    'Parada para Dormir': 'PERNOITE',
+    'Parada de Almoço/Janta': 'ALIMENTACAO',
+    'Outro tipo de parada': 'OUTROS',
+  };
+
+  private resolverTipoParadaCode(p: ParadaCargaResponse): string {
+    // presença de "abastecimento" é o sinal mais confiável (não depende do texto do rótulo)
+    if (p.abastecimento) return 'ABASTECIMENTO';
+    const label = p.tipoParada || '';
+    return CargaDetalheComponent.TIPO_PARADA_LABEL_TO_CODE[label] || 'OUTROS';
+  }
+
+  /** Sem argumento: abre em branco pra cadastrar. Com argumento: abre preenchido pra editar essa parada. */
+  abrirNovaParada(paradaExistente?: ParadaCargaResponse): void {
     this.showNovaParadaModal = true;
     this.carregarEixosCaminhao(this.carga?.codigoCaminhao);
+
+    if (paradaExistente) {
+      this.paradaEditandoId = paradaExistente.id;
+
+      const ab = paradaExistente.abastecimento;
+      const man = paradaExistente.manutencao;
+
+      this.paradaForm = {
+        tipoParada: this.resolverTipoParadaCode(paradaExistente),
+        dtInicio: this.toDateTimeLocalValue(paradaExistente.dtInicio),
+        dtFim: this.toDateTimeLocalValue(paradaExistente.dtFim),
+        cidade: paradaExistente.cidade || '',
+        local: paradaExistente.local || '',
+        kmOdometro: paradaExistente.kmOdometro ?? null,
+        observacao: paradaExistente.observacao || '',
+        valorDespesa: null,
+        descricaoDespesa: '',
+        itensTrocadosText: (man?.itensTrocados || []).join(', '),
+        abastecimento: {
+          qtLitros: ab?.qtLitros ?? null,
+          valorLitro: ab?.valorLitro ?? null,
+          valorTotal: ab?.valorTotal ?? null,
+          mediaKmLitro: ab?.mediaKmLitro ?? null,
+          tipoCombustivel: ab?.tipoCombustivel || '',
+          formaPagamento: ab?.formaPagamento || '',
+          posto: ab?.posto || ab?.postoAbastecimentoNome || '',
+          cidade: ab?.cidade || '',
+          uf: ab?.uf || '',
+          numNotaOuCupom: ab?.numNotaOuCupom || '',
+        },
+        manutencao: {
+          descricao: man?.descricao || '',
+          dataInicioManutencao: man?.dataInicioManutencao ? String(man.dataInicioManutencao).slice(0, 10) : '',
+          dataFimManutencao: man?.dataFimManutencao ? String(man.dataFimManutencao).slice(0, 10) : '',
+          tipoManutencao: man?.tipoManutencao || '',
+          itensTrocados: man?.itensTrocados ? [...man.itensTrocados] : [],
+          observacoes: man?.observacoes || '',
+          valor: man?.valor ?? null,
+          statusManutencao: man?.statusManutencao || '',
+          oficinaId: '',
+          trocasPneu: [],
+        },
+      };
+      return;
+    }
+
+    this.paradaEditandoId = null;
 
     const now = new Date();
     const isoLocal = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
@@ -948,6 +1066,13 @@ export class CargaDetalheComponent implements OnInit {
 
   fecharNovaParada(): void {
     this.showNovaParadaModal = false;
+    this.paradaEditandoId = null;
+  }
+
+  /** Back manda LocalDateTime como "yyyy-MM-ddTHH:mm:ss" (sem timezone) — corta pro formato do <input type="datetime-local">. */
+  private toDateTimeLocalValue(v?: string | null): string {
+    if (!v) return '';
+    return v.length >= 16 ? v.slice(0, 16) : v;
   }
 
   private parseDateTimeLocal(v?: string | null): Date | null {
@@ -1205,18 +1330,27 @@ export class CargaDetalheComponent implements OnInit {
 
     this.savingParada = true;
 
-    this.paradaApi
-      .criar(req)
+    const editando = !!this.paradaEditandoId;
+    const request$ = editando
+      ? this.paradaApi.atualizar(this.paradaEditandoId as string, req)
+      : this.paradaApi.criar(req);
+
+    request$
       .pipe(finalize(() => (this.savingParada = false)))
       .subscribe({
         next: () => {
           this.showNovaParadaModal = false;
-          this.toast('success', 'Parada cadastrada com sucesso.', 'Paradas');
+          this.paradaEditandoId = null;
+          this.toast('success', editando ? 'Parada atualizada com sucesso.' : 'Parada cadastrada com sucesso.', 'Paradas');
           this.carregarParadas();
         },
         error: (err) => {
           console.error(err);
-          this.toast('error', this.mensagemErro(err, 'Não foi possível cadastrar a parada.'), 'Paradas');
+          this.toast(
+            'error',
+            this.mensagemErro(err, editando ? 'Não foi possível atualizar a parada.' : 'Não foi possível cadastrar a parada.'),
+            'Paradas'
+          );
         },
       });
   }

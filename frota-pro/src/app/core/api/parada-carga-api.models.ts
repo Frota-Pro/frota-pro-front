@@ -1,3 +1,5 @@
+import { AbastecimentoResponse } from './abastecimento-api.models';
+
 export type TipoParada =
   | 'ABASTECIMENTO'
   | 'ALIMENTACAO'
@@ -40,6 +42,7 @@ export interface ParadaCargaResponse {
   observacao?: string | null;
   despesaParadas?: DespesaParadaResponse[];
   manutencao?: ManutencaoResponse | null;
+  abastecimento?: AbastecimentoResponse | null;
 }
 
 export interface ParadaCargaRequest {

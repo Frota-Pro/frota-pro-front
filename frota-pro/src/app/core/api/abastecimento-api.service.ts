@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
-import { AbastecimentoRequest, AbastecimentoResponse } from './abastecimento-api.models';
+import { AbastecimentoRequest, AbastecimentoResponse, AbastecimentoResumoFiltroResponse } from './abastecimento-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class AbastecimentoApiService extends BaseApiService {
@@ -43,6 +43,32 @@ export class AbastecimentoApiService extends BaseApiService {
     if (opts.sort) params = params.set('sort', opts.sort);
 
     return this.http.get<PageResponse<AbastecimentoResponse>>(`${this.apiUrl}/abastecimento/filtrar`, { params });
+  }
+
+  /**
+   * Totais (litros, gasto, preço médio, consumo médio) pros cards da tela —
+   * soma TODOS os registros que batem com o filtro, não só a página
+   * carregada. Mesmos parâmetros de `filtrar`, sem paginação.
+   */
+  resumoFiltrado(opts: {
+    q?: string | null;
+    caminhao?: string | null;
+    motorista?: string | null;
+    tipo?: string | null;
+    forma?: string | null;
+    inicio?: string | null; // ISO date-time
+    fim?: string | null;    // ISO date-time
+  } = {}) {
+    let params = new HttpParams();
+    if (opts.q) params = params.set('q', opts.q);
+    if (opts.caminhao) params = params.set('caminhao', opts.caminhao);
+    if (opts.motorista) params = params.set('motorista', opts.motorista);
+    if (opts.tipo) params = params.set('tipo', opts.tipo);
+    if (opts.forma) params = params.set('forma', opts.forma);
+    if (opts.inicio) params = params.set('inicio', opts.inicio);
+    if (opts.fim) params = params.set('fim', opts.fim);
+
+    return this.http.get<AbastecimentoResumoFiltroResponse>(`${this.apiUrl}/abastecimento/resumo-filtrado`, { params });
   }
 
   buscarPorCodigo(codigo: string) {

@@ -7,7 +7,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
 import { extrairMensagemErro } from '../../core/utils/api-error.util';
 
 import { AbastecimentoApiService } from '../../core/api/abastecimento-api.service';
-import { AbastecimentoRequest, AbastecimentoResponse } from '../../core/api/abastecimento-api.models';
+import { AbastecimentoRequest, AbastecimentoResponse, AbastecimentoResumoFiltroResponse } from '../../core/api/abastecimento-api.models';
 import { CaminhaoApiService } from '../../core/api/caminhao-api.service';
 import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
 import { MotoristaApiService } from '../../core/api/motorista-api.service';
@@ -163,6 +163,11 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
 
   abastecimentos: AbastecimentoVM[] = [];
 
+  /** Totais calculados no back sobre TODOS os registros do filtro, não só a página atual. */
+  resumo: AbastecimentoResumoFiltroResponse | null = null;
+  /** Só usado quando nenhum período é escolhido — litros do mês corrente (card "Litros (mês)"). */
+  resumoLitrosMes: number | null = null;
+
   // debounce para disparar buscar() quando filtros mudarem
   private filtroTimer: any = null;
   private autocompleteBlurTimer: any = null;
@@ -171,6 +176,9 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   showSugPlaca = false;
   showSugCodigo = false;
   showSugMotorista = false;
+  // autocomplete dos filtros da listagem (caminhão/motorista)
+  showSugFiltroCaminhao = false;
+  showSugFiltroMotorista = false;
   readonly sugestoesMax = 8;
 
   // form (modal) -> exatamente como seu HTML espera
@@ -248,6 +256,18 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   getPagamentoLabel(value?: string | null): string {
     if (!value) return '—';
     return this.formasPagamento.find((x) => x.value === value)?.label ?? value;
+  }
+
+  /** Classe de cor do pill de combustível, agrupada por categoria (só estética). */
+  getCombustivelClass(value?: string | null): string {
+    const v = String(value || '').toUpperCase();
+    if (v.startsWith('DIESEL')) return 'pill-diesel';
+    if (v.startsWith('GASOLINA')) return 'pill-gasolina';
+    if (v.startsWith('ETANOL')) return 'pill-etanol';
+    if (v === 'GNV') return 'pill-gnv';
+    if (v === 'ELETRICO' || v === 'HIBRIDO') return 'pill-eletrico';
+    if (v === 'ARLA32') return 'pill-arla';
+    return 'pill-fuel';
   }
 
   private normalizeLegacyCombustivel(value?: string | null): CombustivelValue {
@@ -437,24 +457,10 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     this.carregando = true;
     this.erro = null;
 
-    const q = this.searchTerm?.trim() ? this.searchTerm.trim() : null;
-    const motorista = this.filtroMotorista?.trim() ? this.filtroMotorista.trim() : null;
-
-    const inicio = this.filtroDataInicio ? `${this.filtroDataInicio}T00:00:00` : null;
-    const fim = this.filtroDataFim ? `${this.filtroDataFim}T23:59:59` : null;
+    const filtro = this.buildFiltroParams();
 
     this.abastecimentoApi
-      .filtrar({
-        q,
-        caminhao: this.filtroCaminhao?.trim() || null,
-        motorista,
-        tipo: this.filtroTipo || null,
-        inicio,
-        fim,
-        page: this.page,
-        size: this.size,
-        sort: 'dtAbastecimento,desc',
-      })
+      .filtrar({ ...filtro, page: this.page, size: this.size, sort: 'dtAbastecimento,desc' })
       .pipe(finalize(() => (this.carregando = false)))
       .subscribe({
         next: (res) => {
@@ -465,8 +471,75 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.erro = extrairMensagemErro(err, 'Falha ao carregar abastecimentos.');
           this.abastecimentos = [];
+          this.totalPages = 0;
+          this.totalElements = 0;
         },
       });
+
+    this.carregarResumo(filtro);
+  }
+
+  private buildFiltroParams(): {
+    q: string | null;
+    caminhao: string | null;
+    motorista: string | null;
+    tipo: string | null;
+    inicio: string | null;
+    fim: string | null;
+  } {
+    return {
+      q: this.searchTerm?.trim() ? this.searchTerm.trim() : null,
+      caminhao: this.filtroCaminhao?.trim() || null,
+      motorista: this.filtroMotorista?.trim() ? this.filtroMotorista.trim() : null,
+      tipo: this.filtroTipo || null,
+      inicio: this.filtroDataInicio ? `${this.filtroDataInicio}T00:00:00` : null,
+      fim: this.filtroDataFim ? `${this.filtroDataFim}T23:59:59` : null,
+    };
+  }
+
+  /**
+   * Totais dos cards — sempre buscados no back sobre TODO o filtro (todas as
+   * páginas). Quando nenhum período é escolhido, o card de litros mostra o
+   * mês corrente por padrão — busca isso à parte, com o mesmo filtro mas
+   * datas limitadas ao mês atual.
+   */
+  private carregarResumo(filtro: ReturnType<AbastecimentosComponent['buildFiltroParams']>): void {
+    this.abastecimentoApi.resumoFiltrado(filtro).subscribe({
+      next: (res) => (this.resumo = res),
+      error: () => (this.resumo = null),
+    });
+
+    if (filtro.inicio || filtro.fim) {
+      this.resumoLitrosMes = null;
+      return;
+    }
+
+    const agora = new Date();
+    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1, 0, 0, 0);
+    const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59);
+
+    this.abastecimentoApi
+      .resumoFiltrado({ ...filtro, inicio: this.toIsoLocal(inicioMes), fim: this.toIsoLocal(fimMes) })
+      .subscribe({
+        next: (res) => (this.resumoLitrosMes = res.totalLitros ?? 0),
+        error: () => (this.resumoLitrosMes = null),
+      });
+  }
+
+  private toIsoLocal(d: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  get temFiltrosAtivos(): boolean {
+    return !!(
+      this.searchTerm ||
+      this.filtroTipo ||
+      this.filtroCaminhao ||
+      this.filtroMotorista ||
+      this.filtroDataInicio ||
+      this.filtroDataFim
+    );
   }
 
   limparFiltros(): void {
@@ -519,130 +592,26 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   }
 
   // =========================
-  // FILTRO LOCAL (mantém HTML usando abastecimentosFiltrados)
+  // KPIs (calculados no back sobre TODO o filtro — ver carregarResumo)
   // =========================
-
-  get abastecimentosFiltrados(): AbastecimentoVM[] {
-    const term = (this.searchTerm || '').trim().toLowerCase();
-    const tipo = (this.filtroTipo || '').trim().toLowerCase();
-    const caminhao = (this.filtroCaminhao || '').trim().toLowerCase();
-    const motorista = (this.filtroMotorista || '').trim().toLowerCase();
-
-    const ini = this.filtroDataInicio ? new Date(`${this.filtroDataInicio}T00:00:00`) : null;
-    const fim = this.filtroDataFim ? new Date(`${this.filtroDataFim}T23:59:59`) : null;
-
-    return (this.abastecimentos || []).filter((a) => {
-      if (tipo && String(a.tipoCombustivel || '').toLowerCase() !== tipo) return false;
-
-      if (caminhao) {
-        const c1 = String(a.caminhao?.placa || '').toLowerCase();
-        const c2 = String(a.caminhao?.codigo || '').toLowerCase();
-        if (!c1.includes(caminhao) && !c2.includes(caminhao)) return false;
-      }
-
-      if (motorista) {
-        const m1 = String(a.motorista?.nome || '').toLowerCase();
-        const m2 = String(a.motorista?.codigo || '').toLowerCase();
-        if (!m1.includes(motorista) && !m2.includes(motorista)) return false;
-      }
-
-      if (ini || fim) {
-        const d = this.safeDate(a.dtAbastecimento);
-        if (!d) return false;
-        if (ini && d < ini) return false;
-        if (fim && d > fim) return false;
-      }
-
-      if (term) {
-        const hay = [
-          a.codigo,
-          a.tipoCombustivel,
-          a.formaPagamento,
-          a.posto,
-          a.postoAbastecimentoNome,
-          a.cidade,
-          a.uf,
-          a.numNotaOuCupom,
-          a.caminhao?.placa,
-          a.caminhao?.codigo,
-          a.motorista?.nome,
-          a.motorista?.codigo,
-        ]
-          .map((x) => String(x || '').toLowerCase())
-          .join(' | ');
-
-        if (!hay.includes(term)) return false;
-      }
-
-      return true;
-    });
-  }
-
-  private safeDate(iso: string | null | undefined): Date | null {
-    if (!iso) return null;
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  // =========================
-  // KPIs
-  // =========================
-
-  private get kpiBase(): AbastecimentoVM[] {
-    return this.abastecimentosFiltrados || [];
-  }
 
   get litersThisMonth(): number {
-    const base = this.kpiBase;
-
     if (this.filtroDataInicio || this.filtroDataFim) {
-      return base.reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
+      return this.resumo?.totalLitros ?? 0;
     }
-
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    return base
-      .filter((a) => {
-        const d = this.safeDate(a.dtAbastecimento);
-        return !!d && d.getFullYear() === y && d.getMonth() === m;
-      })
-      .reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
+    return this.resumoLitrosMes ?? 0;
   }
 
   get totalSpent(): number {
-    return this.kpiBase.reduce((acc, a) => acc + Number(a.valorTotal || 0), 0);
+    return this.resumo?.totalValor ?? 0;
   }
 
   get avgPricePerLiter(): number {
-    const litros = this.kpiBase.reduce((acc, a) => acc + Number(a.qtLitros || 0), 0);
-    if (!litros) return 0;
-    return this.totalSpent / litros;
+    return this.resumo?.precoMedioLitro ?? 0;
   }
 
   get avgConsumption(): number {
-    return this.calcAvgConsumption(this.kpiBase);
-  }
-
-  private calcAvgConsumption(items: AbastecimentoVM[]): number {
-    if (!items?.length) return 0;
-
-    let weightedTotal = 0;
-    let totalLitros = 0;
-
-    for (const a of items) {
-      const media = Number(a.mediaKmLitro ?? NaN);
-      const litros = Number(a.qtLitros ?? NaN);
-
-      if (!Number.isFinite(media) || media <= 0) continue;
-      if (!Number.isFinite(litros) || litros <= 0) continue;
-
-      weightedTotal += media * litros;
-      totalLitros += litros;
-    }
-
-    if (!totalLitros) return 0;
-    return Math.round((weightedTotal / totalLitros) * 100) / 100;
+    return this.resumo?.consumoMedioPonderado ?? 0;
   }
 
   // =========================
@@ -728,24 +697,15 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   }
 
   get sugestoesMotorista(): MotoristaResponse[] {
-    const q = (this.novo?.motorista?.nome || '').trim().toLowerCase();
-    if (!q) return [];
+    return this.buildSugestoesMotorista((this.novo?.motorista?.nome || '').trim());
+  }
 
-    return (this.motoristas || [])
-      .filter((m) => m.ativo !== false)
-      .filter((m) => {
-        const hay = [
-          m.codigo,
-          m.codigoExterno,
-          m.nome,
-          m.email,
-          m.cnh,
-        ]
-          .map((x) => String(x || '').toLowerCase())
-          .join(' | ');
-        return hay.includes(q);
-      })
-      .slice(0, this.sugestoesMax);
+  get sugestoesFiltroCaminhao(): CaminhaoResponse[] {
+    return this.buildSugestoesCaminhao((this.filtroCaminhao || '').trim());
+  }
+
+  get sugestoesFiltroMotorista(): MotoristaResponse[] {
+    return this.buildSugestoesMotorista((this.filtroMotorista || '').trim());
   }
 
   onFocusPlaca(): void {
@@ -779,6 +739,42 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     const hasQuery = (this.novo?.motorista?.nome || '').trim().length > 0;
     this.closeAllSugestoes();
     this.showSugMotorista = hasQuery;
+  }
+
+  onFocusFiltroCaminhao(): void {
+    this.closeAllSugestoes();
+    this.showSugFiltroCaminhao = true;
+  }
+
+  onInputFiltroCaminhao(): void {
+    const hasQuery = (this.filtroCaminhao || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugFiltroCaminhao = hasQuery;
+    this.scheduleBuscar();
+  }
+
+  onFocusFiltroMotorista(): void {
+    this.closeAllSugestoes();
+    this.showSugFiltroMotorista = true;
+  }
+
+  onInputFiltroMotorista(): void {
+    const hasQuery = (this.filtroMotorista || '').trim().length > 0;
+    this.closeAllSugestoes();
+    this.showSugFiltroMotorista = hasQuery;
+    this.scheduleBuscar();
+  }
+
+  selectFiltroCaminhao(c: CaminhaoResponse): void {
+    this.filtroCaminhao = c.placa || c.codigo || '';
+    this.closeAllSugestoes();
+    this.buscar(0);
+  }
+
+  selectFiltroMotorista(m: MotoristaResponse): void {
+    this.filtroMotorista = m.nome || m.codigo || '';
+    this.closeAllSugestoes();
+    this.buscar(0);
   }
 
   onBlurSugestao(): void {
@@ -826,10 +822,33 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       .slice(0, this.sugestoesMax);
   }
 
+  private buildSugestoesMotorista(rawQuery: string): MotoristaResponse[] {
+    const q = (rawQuery || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.motoristas || [])
+      .filter((m) => m.ativo !== false)
+      .filter((m) => {
+        const hay = [
+          m.codigo,
+          m.codigoExterno,
+          m.nome,
+          m.email,
+          m.cnh,
+        ]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
   private closeAllSugestoes(): void {
     this.showSugPlaca = false;
     this.showSugCodigo = false;
     this.showSugMotorista = false;
+    this.showSugFiltroCaminhao = false;
+    this.showSugFiltroMotorista = false;
   }
 
   private resetAutoComplete(): void {
@@ -895,6 +914,11 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       });
   }
 
+  // ===== Confirmação de exclusão (modal estilizado, em vez do confirm() nativo do navegador) =====
+  showDeleteConfirm = false;
+  deleteAlvo: AbastecimentoVM | null = null;
+  deletando = false;
+
   deleteAbastecimento(id: string) {
     const item = (this.abastecimentos || []).find((x) => x.id === id);
     if (!item?.codigo) {
@@ -902,14 +926,28 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!confirm('Tem certeza que deseja excluir este abastecimento?')) return;
+    this.deleteAlvo = item;
+    this.showDeleteConfirm = true;
+  }
 
-    this.carregando = true;
+  cancelarExclusao(): void {
+    if (this.deletando) return;
+    this.showDeleteConfirm = false;
+    this.deleteAlvo = null;
+  }
+
+  confirmarExclusao(): void {
+    const item = this.deleteAlvo;
+    if (!item?.codigo) return;
+
+    this.deletando = true;
     this.abastecimentoApi
       .deletar(item.codigo)
-      .pipe(finalize(() => (this.carregando = false)))
+      .pipe(finalize(() => (this.deletando = false)))
       .subscribe({
         next: () => {
+          this.showDeleteConfirm = false;
+          this.deleteAlvo = null;
           this.toast.success('Abastecimento excluído.');
           this.metaApi.invalidate();
           this.buscar(0);
