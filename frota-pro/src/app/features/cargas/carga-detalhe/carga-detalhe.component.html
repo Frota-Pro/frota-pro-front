@@ -514,10 +514,62 @@
           {{ paradaSelecionada.cidade || '—' }}
         </p>
       </div>
-      <button class="btn ghost" type="button" (click)="fecharParada()">✕</button>
+      <div class="modal-header-actions">
+        <button
+          class="btn"
+          type="button"
+          *ngIf="paradaEditavel()"
+          (click)="editarParadaAtual()"
+          title="Editar esta parada"
+        >
+          Editar
+        </button>
+        <button class="btn ghost" type="button" (click)="fecharParada()">✕</button>
+      </div>
     </div>
 
     <div class="modal-body" *ngIf="paradaSelecionada">
+
+      <!-- Abastecimento -->
+      <div class="block" *ngIf="paradaSelecionada.abastecimento as ab">
+        <div class="block-title">Abastecimento</div>
+        <div class="block-body">
+          <div class="info-grid two">
+            <div class="info-item">
+              <div class="info-label">Litros</div>
+              <div class="info-value">{{ ab.qtLitros ?? '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Valor/L</div>
+              <div class="info-value">{{ formatMoneyBRL(ab.valorLitro) }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Valor total</div>
+              <div class="info-value">{{ formatMoneyBRL(ab.valorTotal) }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Combustível</div>
+              <div class="info-value">{{ ab.tipoCombustivel || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Forma Pgto</div>
+              <div class="info-value">{{ ab.formaPagamento || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Média km/L</div>
+              <div class="info-value">{{ ab.mediaKmLitro ?? '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Posto</div>
+              <div class="info-value">{{ ab.postoAbastecimentoNome || ab.posto || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Nota/Cupom</div>
+              <div class="info-value">{{ ab.numNotaOuCupom || '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="modal-grid">
         <div class="mini-card">
@@ -691,8 +743,10 @@
 
     <div class="modal-header">
       <div>
-        <h3>Nova Parada</h3>
-        <p class="muted">Cadastre um evento durante a execução da carga.</p>
+        <h3>{{ paradaEditandoId ? 'Editar Parada' : 'Nova Parada' }}</h3>
+        <p class="muted">
+          {{ paradaEditandoId ? 'Altere os dados desta parada.' : 'Cadastre um evento durante a execução da carga.' }}
+        </p>
       </div>
       <button class="btn ghost" type="button" (click)="fecharNovaParada()">✕</button>
     </div>
@@ -1020,7 +1074,7 @@
     <div class="modal-footer sticky-footer">
       <button class="btn ghost" type="button" (click)="fecharNovaParada()">Cancelar</button>
       <button class="btn primary" type="button" (click)="salvarParada()" [disabled]="savingParada">
-        {{ savingParada ? 'Salvando...' : 'Salvar parada' }}
+        {{ savingParada ? 'Salvando...' : (paradaEditandoId ? 'Salvar alterações' : 'Salvar parada') }}
       </button>
     </div>
 

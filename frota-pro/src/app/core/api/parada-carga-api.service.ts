@@ -34,6 +34,13 @@ export class ParadaCargaApiService extends BaseApiService {
     return this.http.post<ParadaCargaResponse>(`${this.apiUrl}/parada-carga`, request);
   }
 
+  atualizar(id: string, request: ParadaCargaRequest) {
+    return this.http.put<ParadaCargaResponse>(
+      `${this.apiUrl}/parada-carga/${encodeURIComponent(id)}`,
+      request
+    );
+  }
+
   listarAnexos(paradaId: string) {
     return this.http.get<AnexoParadaResponse[]>(
       `${this.apiUrl}/parada-carga/${encodeURIComponent(paradaId)}/anexos`
