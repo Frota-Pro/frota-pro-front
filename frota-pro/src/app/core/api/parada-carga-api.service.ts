@@ -41,6 +41,10 @@ export class ParadaCargaApiService extends BaseApiService {
     );
   }
 
+  deletar(id: string) {
+    return this.http.delete<void>(`${this.apiUrl}/parada-carga/${encodeURIComponent(id)}`);
+  }
+
   listarAnexos(paradaId: string) {
     return this.http.get<AnexoParadaResponse[]>(
       `${this.apiUrl}/parada-carga/${encodeURIComponent(paradaId)}/anexos`

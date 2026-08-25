@@ -144,6 +144,10 @@ export class CargaDetalheComponent implements OnInit {
   anexoObs = '';
   anexoFile: File | null = null;
 
+  // ===== Excluir parada (confirmação inline no modal de detalhes) =====
+  confirmandoExclusaoParada = false;
+  excluindoParada = false;
+
   // ===== Nova parada / edição de parada =====
   showNovaParadaModal = false;
   /** null = cadastrando parada nova; preenchido = editando essa parada existente. */
@@ -553,6 +557,7 @@ export class CargaDetalheComponent implements OnInit {
     this.anexosParada = [];
     this.anexoFile = null;
     this.anexoObs = '';
+    this.confirmandoExclusaoParada = false;
     this.loadingAnexos = true;
 
     this.paradaApi
@@ -572,9 +577,10 @@ export class CargaDetalheComponent implements OnInit {
     this.showParadaModal = false;
     this.paradaSelecionada = null;
     this.anexosParada = [];
+    this.confirmandoExclusaoParada = false;
   }
 
-  /** Carga ainda em aberto (não finalizada) — mesma regra que o back aplica pra liberar edição de parada. */
+  /** Carga ainda em aberto (não finalizada) — mesma regra que o back aplica pra liberar edição/exclusão de parada. */
   paradaEditavel(): boolean {
     return !!this.carga && this.carga.statusCarga !== 'FINALIZADA';
   }
@@ -585,6 +591,35 @@ export class CargaDetalheComponent implements OnInit {
     const parada = this.paradaSelecionada;
     this.fecharParada();
     this.abrirNovaParada(parada);
+  }
+
+  pedirExclusaoParada(): void {
+    this.confirmandoExclusaoParada = true;
+  }
+
+  cancelarExclusaoParada(): void {
+    this.confirmandoExclusaoParada = false;
+  }
+
+  confirmarExclusaoParada(): void {
+    if (!this.paradaSelecionada) return;
+    const id = this.paradaSelecionada.id;
+
+    this.excluindoParada = true;
+    this.paradaApi
+      .deletar(id)
+      .pipe(finalize(() => (this.excluindoParada = false)))
+      .subscribe({
+        next: () => {
+          this.toast('success', 'Parada excluída com sucesso.', 'Paradas');
+          this.fecharParada();
+          this.carregarParadas();
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', this.mensagemErro(err, 'Não foi possível excluir a parada.'), 'Paradas');
+        },
+      });
   }
 
   onFileSelected(ev: Event): void {

@@ -518,13 +518,34 @@
         <button
           class="btn"
           type="button"
-          *ngIf="paradaEditavel()"
+          *ngIf="paradaEditavel() && !confirmandoExclusaoParada"
           (click)="editarParadaAtual()"
           title="Editar esta parada"
         >
           Editar
         </button>
+        <button
+          class="btn danger"
+          type="button"
+          *ngIf="paradaEditavel() && !confirmandoExclusaoParada"
+          (click)="pedirExclusaoParada()"
+          title="Excluir esta parada"
+        >
+          Excluir
+        </button>
         <button class="btn ghost" type="button" (click)="fecharParada()">✕</button>
+      </div>
+    </div>
+
+    <div class="confirm-banner" *ngIf="confirmandoExclusaoParada">
+      <span>Excluir esta parada definitivamente? Isso remove também o abastecimento/despesas ligados a ela.</span>
+      <div class="confirm-banner-actions">
+        <button class="btn ghost" type="button" (click)="cancelarExclusaoParada()" [disabled]="excluindoParada">
+          Cancelar
+        </button>
+        <button class="btn danger" type="button" (click)="confirmarExclusaoParada()" [disabled]="excluindoParada">
+          {{ excluindoParada ? 'Excluindo...' : 'Sim, excluir' }}
+        </button>
       </div>
     </div>
 
