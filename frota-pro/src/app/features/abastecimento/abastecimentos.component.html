@@ -447,4 +447,32 @@
     </div>
   </div>
 
+  <!-- Confirmação de exclusão -->
+  <div class="ab-modal-overlay" *ngIf="showDeleteConfirm" (click)="cancelarExclusao()">
+    <div class="ab-confirm" (click)="$event.stopPropagation()">
+      <div class="ab-confirm__icon">
+        <i class="fas fa-triangle-exclamation"></i>
+      </div>
+
+      <h3 class="ab-confirm__title">Excluir abastecimento?</h3>
+
+      <p class="ab-confirm__desc" *ngIf="deleteAlvo as a">
+        Isso vai apagar o abastecimento de
+        <strong>{{ a.qtLitros || 0 | number : '1.0-3' }} L</strong>
+        do caminhão <strong>{{ a.caminhao.placa || a.caminhao.codigo || '—' }}</strong>
+        em <strong>{{ a.dtAbastecimento | date : 'dd/MM/yyyy HH:mm' }}</strong>.
+        Essa ação não pode ser desfeita.
+      </p>
+
+      <div class="ab-confirm__actions">
+        <button class="ab-btn ghost" type="button" (click)="cancelarExclusao()" [disabled]="deletando">
+          Cancelar
+        </button>
+        <button class="ab-btn danger" type="button" (click)="confirmarExclusao()" [disabled]="deletando">
+          {{ deletando ? 'Excluindo...' : 'Excluir' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

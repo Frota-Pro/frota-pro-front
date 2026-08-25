@@ -925,6 +925,78 @@
 .ab-btn.primary:hover{ filter: brightness(.98); }
 .ab-btn.ghost:hover{ filter: brightness(.98); }
 
+.ab-btn.danger{
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(239,68,68,.18);
+}
+.ab-btn.danger:hover{ filter: brightness(.96); }
+.ab-btn.danger:disabled,
+.ab-btn:disabled{
+  opacity: .6;
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* ===== Confirmação de exclusão ===== */
+.ab-confirm{
+  width: min(420px, calc(100vw - 24px));
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(15,23,42,.10);
+  box-shadow: 0 18px 60px rgba(0,0,0,.22);
+  padding: 24px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ab-confirm__icon{
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(239, 68, 68, 0.16);
+  color: #ef4444;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.ab-confirm__title{
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.ab-confirm__desc{
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(15, 23, 42, 0.65);
+}
+
+.ab-confirm__desc strong{
+  color: #0f172a;
+}
+
+.ab-confirm__actions{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.ab-confirm__actions .ab-btn{
+  flex: 1;
+}
+
 .pagination {
   display: flex;
   justify-content: center;

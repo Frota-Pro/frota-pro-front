@@ -914,6 +914,11 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       });
   }
 
+  // ===== Confirmação de exclusão (modal estilizado, em vez do confirm() nativo do navegador) =====
+  showDeleteConfirm = false;
+  deleteAlvo: AbastecimentoVM | null = null;
+  deletando = false;
+
   deleteAbastecimento(id: string) {
     const item = (this.abastecimentos || []).find((x) => x.id === id);
     if (!item?.codigo) {
@@ -921,14 +926,28 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!confirm('Tem certeza que deseja excluir este abastecimento?')) return;
+    this.deleteAlvo = item;
+    this.showDeleteConfirm = true;
+  }
 
-    this.carregando = true;
+  cancelarExclusao(): void {
+    if (this.deletando) return;
+    this.showDeleteConfirm = false;
+    this.deleteAlvo = null;
+  }
+
+  confirmarExclusao(): void {
+    const item = this.deleteAlvo;
+    if (!item?.codigo) return;
+
+    this.deletando = true;
     this.abastecimentoApi
       .deletar(item.codigo)
-      .pipe(finalize(() => (this.carregando = false)))
+      .pipe(finalize(() => (this.deletando = false)))
       .subscribe({
         next: () => {
+          this.showDeleteConfirm = false;
+          this.deleteAlvo = null;
           this.toast.success('Abastecimento excluído.');
           this.metaApi.invalidate();
           this.buscar(0);
