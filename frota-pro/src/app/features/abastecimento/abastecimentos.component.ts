@@ -427,27 +427,26 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
    * autocomplete). Diferença grande (>2.000 km) pede confirmação extra —
    * não bloqueia, só evita que um dígito digitado errado passe direto sem
    * ninguém notar. Sem caminhão identificado ou sem histórico, não checa.
+   * Retorna os dados da divergência (pro modal estilizado) ou null se não
+   * precisa confirmar nada.
    */
-  private confirmarKmPlausivel(): boolean {
+  private calcularDivergenciaKm(): { referencia: number; digitado: number; diferenca: number } | null {
     const km = this.novo?.kmOdometro != null && this.novo?.kmOdometro !== '' ? Number(this.novo.kmOdometro) : null;
-    if (km == null || !Number.isFinite(km)) return true;
+    if (km == null || !Number.isFinite(km)) return null;
 
     const ident = String(this.novo?.caminhao?.codigo || this.novo?.caminhao?.placa || '').trim().toLowerCase();
-    if (!ident) return true;
+    if (!ident) return null;
 
     const caminhao = this.caminhoes.find(
       (c) => String(c.codigo || '').toLowerCase() === ident || String(c.placa || '').toLowerCase() === ident
     );
     const referencia = caminhao?.odometroUltimaCarga;
-    if (referencia == null) return true;
+    if (referencia == null) return null;
 
     const diferenca = Math.abs(km - referencia);
-    if (diferenca <= 2000) return true;
+    if (diferenca <= 2000) return null;
 
-    return confirm(
-      `O último km conhecido desse caminhão é ${referencia.toLocaleString('pt-BR')} km e você digitou ${km.toLocaleString('pt-BR')} km ` +
-        `(diferença de ${diferenca.toLocaleString('pt-BR')} km). Confere antes de continuar — confirmar mesmo assim?`
-    );
+    return { referencia, digitado: km, diferenca };
   }
 
   // =========================
@@ -689,6 +688,8 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
 
   closeAddModal() {
     this.showAddModal = false;
+    this.showKmConfirm = false;
+    this.kmDivergencia = null;
     this.resetAutoComplete();
   }
 
@@ -869,8 +870,32 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
 
   saveAbastecimento() {
     if (!this.validarCadastro()) return;
-    if (!this.confirmarKmPlausivel()) return;
 
+    const divergencia = this.calcularDivergenciaKm();
+    if (divergencia) {
+      this.kmDivergencia = divergencia;
+      this.showKmConfirm = true;
+      return;
+    }
+
+    this.enviarAbastecimento();
+  }
+
+  // ===== Confirmação de km divergente (modal estilizado, em vez do confirm() nativo) =====
+  showKmConfirm = false;
+  kmDivergencia: { referencia: number; digitado: number; diferenca: number } | null = null;
+
+  cancelarKmDivergente(): void {
+    this.showKmConfirm = false;
+    this.kmDivergencia = null;
+  }
+
+  confirmarKmDivergente(): void {
+    this.showKmConfirm = false;
+    this.enviarAbastecimento();
+  }
+
+  private enviarAbastecimento(): void {
     const caminhaoIdent = String(this.novo?.caminhao?.codigo || this.novo?.caminhao?.placa || '').trim();
 
     const motoristaIdent = String(this.novo?.motorista?.nome || '').trim();

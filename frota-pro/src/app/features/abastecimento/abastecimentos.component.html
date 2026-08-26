@@ -176,7 +176,7 @@
             <i
               *ngIf="a.precoAnomalo"
               class="fas fa-triangle-exclamation anomalo-icon"
-              [title]="'Preço/L ' + (a.precoAnomaloPercentual | number:'1.0-0') + '% acima da média recente desse posto (R$ ' + (a.precoMedioReferencia | number:'1.2-2') + '/L). Confira antes de aprovar.'"
+              [title]="'Preço/L ' + (a.precoAnomaloPercentual | number:'1.0-0') + '% acima da média recente desse posto (R$ ' + (a.precoMedioReferencia | number:'1.2-2') + '/L). Confira se não houve erro de digitação ou cobrança indevida.'"
             ></i>
           </span>
 
@@ -451,6 +451,28 @@
         </div>
 
       </form>
+    </div>
+  </div>
+
+  <!-- Confirmação de km divergente -->
+  <div class="ab-modal-overlay" *ngIf="showKmConfirm" (click)="cancelarKmDivergente()">
+    <div class="ab-confirm" (click)="$event.stopPropagation()">
+      <div class="ab-confirm__icon warn">
+        <i class="fas fa-triangle-exclamation"></i>
+      </div>
+
+      <h3 class="ab-confirm__title">Confira o km antes de continuar</h3>
+
+      <p class="ab-confirm__desc" *ngIf="kmDivergencia as d">
+        O último km conhecido desse caminhão é <strong>{{ d.referencia | number : '1.0-0' }} km</strong>,
+        mas você digitou <strong>{{ d.digitado | number : '1.0-0' }} km</strong> — uma diferença de
+        <strong>{{ d.diferenca | number : '1.0-0' }} km</strong>. Se não foi engano de digitação, pode confirmar.
+      </p>
+
+      <div class="ab-confirm__actions">
+        <button class="ab-btn ghost" type="button" (click)="cancelarKmDivergente()">Corrigir</button>
+        <button class="ab-btn primary" type="button" (click)="confirmarKmDivergente()">Confirmar mesmo assim</button>
+      </div>
     </div>
   </div>
 
