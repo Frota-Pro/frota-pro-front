@@ -12,6 +12,8 @@ export interface ParametroSistemaResponse {
   tempoMinimoEntregaPadraoMinutos: number;
 
   diasRetencaoAuditoria: number;
+
+  percentualLimiteAnomaliaAbastecimento: number;
 }
 
 export interface ParametroSistemaUpdateRequest {
@@ -28,4 +30,6 @@ export interface ParametroSistemaUpdateRequest {
   tempoMinimoEntregaPadraoMinutos: number;
 
   diasRetencaoAuditoria: number;
+
+  percentualLimiteAnomaliaAbastecimento: number;
 }
