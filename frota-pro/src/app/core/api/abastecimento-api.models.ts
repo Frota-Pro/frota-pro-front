@@ -25,6 +25,11 @@ export interface AbastecimentoResponse {
   uf?: string | null;
 
   numNotaOuCupom?: string | null;
+
+  /** Preço/L bem acima da média recente desse posto — possível fraude/erro. Ver DetectarAnomaliaAbastecimentoService (back). */
+  precoAnomalo?: boolean;
+  precoMedioReferencia?: number | null;
+  precoAnomaloPercentual?: number | null;
 }
 
 /** Totais agregados no back — ver AbastecimentoApiService.resumoFiltrado. */

@@ -351,6 +351,23 @@
   border-left-color: rgba(37, 99, 235, 0.45);
 }
 
+/* Preço/L fora do padrão pro posto — possível fraude/erro de cartão combustível */
+.row.row-anomalo {
+  background: rgba(239, 68, 68, 0.035);
+  border-left-color: rgba(239, 68, 68, 0.45);
+}
+
+.row.row-anomalo:hover {
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.anomalo-icon {
+  color: #ef4444;
+  margin-left: 6px;
+  font-size: 12px;
+  cursor: help;
+}
+
 /* Tipografia utilitária */
 .mono {
   font-variant-numeric: tabular-nums;

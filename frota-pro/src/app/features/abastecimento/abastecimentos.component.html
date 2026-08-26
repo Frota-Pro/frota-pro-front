@@ -158,7 +158,7 @@
     <ul class="abaste-list" *ngIf="!carregando">
       <li class="abaste-item" *ngFor="let a of abastecimentos; trackBy: trackById">
 
-        <div class="row" (click)="toggleExpand(a.id)">
+        <div class="row" [class.row-anomalo]="a.precoAnomalo" (click)="toggleExpand(a.id)">
           <span>{{ a.dtAbastecimento | date : 'dd/MM/yyyy HH:mm' }}</span>
 
           <span class="mono">{{ a.caminhao.placa || a.caminhao.codigo || '—' }}</span>
@@ -171,7 +171,14 @@
 
           <span class="num">{{ a.qtLitros || 0 | number : '1.0-3' }}</span>
 
-          <span class="num">{{ a.valorTotal || 0 | currency : 'BRL' }}</span>
+          <span class="num">
+            {{ a.valorTotal || 0 | currency : 'BRL' }}
+            <i
+              *ngIf="a.precoAnomalo"
+              class="fas fa-triangle-exclamation anomalo-icon"
+              [title]="'Preço/L ' + (a.precoAnomaloPercentual | number:'1.0-0') + '% acima da média recente desse posto (R$ ' + (a.precoMedioReferencia | number:'1.2-2') + '/L). Confira antes de aprovar.'"
+            ></i>
+          </span>
 
           <span class="truncate">{{ a.posto || a.postoAbastecimentoNome || '—' }}</span>
 

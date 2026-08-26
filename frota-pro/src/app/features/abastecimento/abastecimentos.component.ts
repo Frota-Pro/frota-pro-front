@@ -86,6 +86,10 @@ interface AbastecimentoVM {
   uf?: string | null;
 
   numNotaOuCupom?: string | null;
+
+  precoAnomalo?: boolean;
+  precoMedioReferencia?: number | null;
+  precoAnomaloPercentual?: number | null;
 }
 
 @Component({
@@ -588,6 +592,10 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       uf: a.uf ?? null,
 
       numNotaOuCupom: a.numNotaOuCupom ?? null,
+
+      precoAnomalo: a.precoAnomalo ?? false,
+      precoMedioReferencia: a.precoMedioReferencia ?? null,
+      precoAnomaloPercentual: a.precoAnomaloPercentual ?? null,
     };
   }
 
