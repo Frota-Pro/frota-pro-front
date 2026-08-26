@@ -17,9 +17,8 @@
            (ngModelChange)="scheduleBuscar()"
            placeholder="Buscar por código, descrição, caminhão, oficina, carga..." />
 
-    <div class="field-autocomplete" style="min-width:220px; flex:0;">
+    <div class="field-autocomplete filtro-caminhao-wrap">
       <input class="search"
-             style="width:100%;"
              [(ngModel)]="caminhaoFilter"
              (ngModelChange)="scheduleBuscar()"
              (focus)="onFocusFiltroCaminhao()"

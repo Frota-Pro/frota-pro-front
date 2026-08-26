@@ -15,6 +15,11 @@
   box-shadow: 0 1px 8px rgba(0,0,0,.06);
 }
 .search { height: 38px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 12px; min-width: 300px; flex: 1; }
+
+/* Filtro de caminhão do topo: caixa de largura fixa, não o min-width de 300px do .search geral
+   (senão o input vaza pra fora do wrapper e cobre o próximo campo da toolbar). */
+.filtro-caminhao-wrap { flex: 0 1 220px; min-width: 180px; }
+.filtro-caminhao-wrap .search { min-width: 0; width: 100%; flex: none; }
 .select { height: 38px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 10px; background: #fff; }
 .bulk { display: flex; gap: 8px; align-items: center; }
 
