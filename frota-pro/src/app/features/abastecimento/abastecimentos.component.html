@@ -173,11 +173,15 @@
 
           <span class="num">
             {{ a.valorTotal || 0 | currency : 'BRL' }}
-            <i
+            <button
               *ngIf="a.precoAnomalo"
-              class="fas fa-triangle-exclamation anomalo-icon"
-              [title]="'Preço/L ' + (a.precoAnomaloPercentual | number:'1.0-0') + '% acima da média recente desse posto (R$ ' + (a.precoMedioReferencia | number:'1.2-2') + '/L). Confira se não houve erro de digitação ou cobrança indevida.'"
-            ></i>
+              type="button"
+              class="anomalo-icon-btn"
+              title="Preço fora do padrão — clique para ver detalhes"
+              (click)="abrirAnomaliaInfo(a)"
+            >
+              <i class="fas fa-triangle-exclamation anomalo-icon"></i>
+            </button>
           </span>
 
           <span class="truncate">{{ a.posto || a.postoAbastecimentoNome || '—' }}</span>
@@ -451,6 +455,32 @@
         </div>
 
       </form>
+    </div>
+  </div>
+
+  <!-- Detalhe do alerta de preço fora do padrão -->
+  <div class="ab-modal-overlay" *ngIf="showAnomaliaInfo" (click)="fecharAnomaliaInfo()">
+    <div class="ab-confirm" (click)="$event.stopPropagation()">
+      <div class="ab-confirm__icon warn">
+        <i class="fas fa-triangle-exclamation"></i>
+      </div>
+
+      <h3 class="ab-confirm__title">Preço fora do padrão</h3>
+
+      <p class="ab-confirm__desc" *ngIf="anomaliaInfo as a">
+        Esse abastecimento do caminhão <strong>{{ a.caminhao.placa || a.caminhao.codigo || '—' }}</strong>
+        em <strong>{{ a.dtAbastecimento | date : 'dd/MM/yyyy HH:mm' }}</strong>
+        custou <strong>{{ a.valorLitro | currency : 'BRL' }}/L</strong> no posto
+        <strong>{{ a.postoAbastecimentoNome || a.posto || '—' }}</strong> —
+        <strong>{{ a.precoAnomaloPercentual | number : '1.0-0' }}%</strong> acima da média recente
+        de <strong>{{ a.precoMedioReferencia | currency : 'BRL' }}/L</strong> nesse posto.
+        <br /><br />
+        Confira se não houve erro de digitação ou cobrança indevida.
+      </p>
+
+      <div class="ab-confirm__actions">
+        <button class="ab-btn primary" type="button" (click)="fecharAnomaliaInfo()">Entendi</button>
+      </div>
     </div>
   </div>
 

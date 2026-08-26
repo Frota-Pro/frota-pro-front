@@ -881,6 +881,20 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     this.enviarAbastecimento();
   }
 
+  // ===== Detalhe do alerta de preço fora do padrão (clicável, em vez de só title/tooltip) =====
+  showAnomaliaInfo = false;
+  anomaliaInfo: AbastecimentoVM | null = null;
+
+  abrirAnomaliaInfo(a: AbastecimentoVM): void {
+    this.anomaliaInfo = a;
+    this.showAnomaliaInfo = true;
+  }
+
+  fecharAnomaliaInfo(): void {
+    this.showAnomaliaInfo = false;
+    this.anomaliaInfo = null;
+  }
+
   // ===== Confirmação de km divergente (modal estilizado, em vez do confirm() nativo) =====
   showKmConfirm = false;
   kmDivergencia: { referencia: number; digitado: number; diferenca: number } | null = null;

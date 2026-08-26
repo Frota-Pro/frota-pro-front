@@ -361,11 +361,23 @@
   background: rgba(239, 68, 68, 0.06);
 }
 
+.anomalo-icon-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-left: 6px;
+  cursor: pointer;
+  line-height: 1;
+  vertical-align: middle;
+}
+
 .anomalo-icon {
   color: #ef4444;
-  margin-left: 6px;
   font-size: 12px;
-  cursor: help;
+}
+
+.anomalo-icon-btn:hover .anomalo-icon {
+  color: #b91c1c;
 }
 
 /* Tipografia utilitária */
