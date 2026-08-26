@@ -67,8 +67,7 @@
         <th>Oficina</th>
         <th>Tipo</th>
         <th>Status</th>
-        <th>Início</th>
-        <th>Fim</th>
+        <th>Período</th>
         <th>Total</th>
         <th>Orçamento</th>
         <th>Carga/Parada</th>
@@ -80,21 +79,21 @@
       <tr *ngFor="let m of filtered" (dblclick)="abrirDetalhe(m)">
         <td class="mono">{{ m.codigo }}</td>
 
-        <td>
+        <td class="truncate" [title]="m.descricao">
           <div class="stack">
             <strong>{{ m.descricao }}</strong>
             <small class="muted" *ngIf="m.codigoCaminhao">Cód Caminhão: {{ m.codigoCaminhao }}</small>
           </div>
         </td>
 
-        <td>
+        <td class="truncate" [title]="m.caminhao">
           <div class="stack">
             <strong>{{ m.caminhao || '—' }}</strong>
             <small class="muted">{{ m.codigoCaminhao }}</small>
           </div>
         </td>
 
-        <td>
+        <td class="truncate" [title]="m.oficina">
           <div class="stack">
             <strong>{{ m.oficina || '—' }}</strong>
             <small class="muted" *ngIf="m.codigoOficina">{{ m.codigoOficina }}</small>
@@ -110,8 +109,12 @@
             </span>
         </td>
 
-        <td class="mono">{{ m._inicio || '—' }}</td>
-        <td class="mono">{{ m._fim || '—' }}</td>
+        <td class="mono">
+          <div class="stack">
+            <span>{{ m._inicio || '—' }}</span>
+            <small class="muted" *ngIf="m._fim">até {{ m._fim }}</small>
+          </div>
+        </td>
 
         <td class="mono">{{ formatMoneyBRL(m.valor) }}</td>
 
@@ -133,10 +136,16 @@
         </td>
 
         <td class="row-actions" (click)="$event.stopPropagation()">
-          <button class="btn small" type="button" (click)="abrirDetalhe(m)">Ver</button>
-          <button class="btn small" type="button" (click)="openEditar(m)">Editar</button>
           <button class="btn small primary" type="button" *ngIf="m.statusAprovacao === 'PENDENTE'" (click)="abrirAprovacao(m)">Aprovar/Rejeitar</button>
-          <button class="btn small danger" type="button" (click)="deletar(m)">Excluir</button>
+          <button class="icon-btn" type="button" title="Ver" (click)="abrirDetalhe(m)">
+            <i class="fas fa-eye"></i>
+          </button>
+          <button class="icon-btn edit" type="button" title="Editar" (click)="openEditar(m)">
+            <i class="fas fa-pen"></i>
+          </button>
+          <button class="icon-btn danger" type="button" title="Excluir" (click)="deletar(m)">
+            <i class="fas fa-trash"></i>
+          </button>
         </td>
       </tr>
       </tbody>
