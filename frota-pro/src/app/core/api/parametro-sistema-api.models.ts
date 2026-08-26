@@ -1,6 +1,6 @@
 export interface ParametroSistemaResponse {
   diasAntecedenciaVencimentoDocumento: number;
-  kmAntecedenciaTrocaPneu: number;
+  kmAntecedenciaManutencaoPreventiva: number;
   diasManutencaoEstagnada: number;
   diasAntecedenciaPrazoMulta: number;
 
@@ -16,7 +16,7 @@ export interface ParametroSistemaResponse {
 
 export interface ParametroSistemaUpdateRequest {
   diasAntecedenciaVencimentoDocumento: number;
-  kmAntecedenciaTrocaPneu: number;
+  kmAntecedenciaManutencaoPreventiva: number;
   diasManutencaoEstagnada: number;
   diasAntecedenciaPrazoMulta: number;
 

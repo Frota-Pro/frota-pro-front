@@ -15,6 +15,9 @@ export interface PlanoManutencaoPreventivaResponse {
 
   proximoKm?: number | null;
   proximaData?: string | null;
+
+  /** 'EM_DIA' | 'VENCENDO' | 'VENCIDO' */
+  situacao?: string | null;
 }
 
 export interface PlanoManutencaoPreventivaRequest {

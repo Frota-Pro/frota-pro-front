@@ -23,7 +23,7 @@ export class ParametrosSistemaComponent implements OnInit {
 
   form: ParametroSistemaUpdateRequest = {
     diasAntecedenciaVencimentoDocumento: 5,
-    kmAntecedenciaTrocaPneu: 500,
+    kmAntecedenciaManutencaoPreventiva: 500,
     diasManutencaoEstagnada: 7,
     diasAntecedenciaPrazoMulta: 5,
     validarMotivoAlteracaoPesoValorCarga: false,
@@ -53,7 +53,7 @@ export class ParametrosSistemaComponent implements OnInit {
         next: (res: ParametroSistemaResponse) => {
           this.form = {
             diasAntecedenciaVencimentoDocumento: res.diasAntecedenciaVencimentoDocumento,
-            kmAntecedenciaTrocaPneu: res.kmAntecedenciaTrocaPneu,
+            kmAntecedenciaManutencaoPreventiva: res.kmAntecedenciaManutencaoPreventiva,
             diasManutencaoEstagnada: res.diasManutencaoEstagnada,
             diasAntecedenciaPrazoMulta: res.diasAntecedenciaPrazoMulta,
             validarMotivoAlteracaoPesoValorCarga: res.validarMotivoAlteracaoPesoValorCarga,
