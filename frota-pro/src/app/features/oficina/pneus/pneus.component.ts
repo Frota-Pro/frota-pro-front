@@ -8,6 +8,8 @@ import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { PneuApiService } from '../../../core/api/pneu-api.service';
 import { PneuRequest, PneuResponse, PneuVidaUtilResponse } from '../../../core/api/pneu-api.models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
+import { CaminhaoResponse } from '../../../core/api/caminhao-api.models';
 
 type Alerta = 'TODOS' | 'OK' | 'PROXIMO_FIM' | 'VENCIDO';
 const PNEU_STATUS = ['ESTOQUE', 'EM_USO', 'EM_RECAPAGEM', 'DESCARTADO'] as const;
@@ -25,6 +27,13 @@ export class PneusComponent implements OnInit, OnDestroy {
   q = '';
   statusFilter = 'TODOS';
   alertaFilter: Alerta = 'TODOS';
+  caminhaoFilter = '';
+
+  // autocomplete do filtro de caminhão
+  caminhoes: CaminhaoResponse[] = [];
+  showSugFiltroCaminhao = false;
+  readonly sugestoesMax = 8;
+  private autocompleteBlurTimer: any = null;
 
   page = 0;
   size = 20;
@@ -36,6 +45,7 @@ export class PneusComponent implements OnInit, OnDestroy {
 
   rows: PneuResponse[] = [];
   private searchDebounceTimer?: number;
+  private caminhaoDebounceTimer?: number;
   private lastSearchApplied = '';
 
   // cache de vida útil por código (para exibir barra e alerta na lista)
@@ -57,9 +67,20 @@ export class PneusComponent implements OnInit, OnDestroy {
     dtCompra: null,
   };
 
-  constructor(private api: PneuApiService, private router: Router, private toast: ToastService) {}
+  // confirmação de exclusão (modal estilizado, em vez do confirm() nativo)
+  showDeleteConfirm = false;
+  deleteAlvo: PneuResponse | null = null;
+  deletando = false;
+
+  constructor(
+    private api: PneuApiService,
+    private router: Router,
+    private toast: ToastService,
+    private caminhaoApi: CaminhaoApiService,
+  ) {}
 
   ngOnInit(): void {
+    this.preloadCombos();
     this.carregarPagina();
   }
 
@@ -68,6 +89,21 @@ export class PneusComponent implements OnInit, OnDestroy {
       window.clearTimeout(this.searchDebounceTimer);
       this.searchDebounceTimer = undefined;
     }
+    if (this.caminhaoDebounceTimer) {
+      window.clearTimeout(this.caminhaoDebounceTimer);
+      this.caminhaoDebounceTimer = undefined;
+    }
+    if (this.autocompleteBlurTimer) {
+      clearTimeout(this.autocompleteBlurTimer);
+      this.autocompleteBlurTimer = null;
+    }
+  }
+
+  private preloadCombos(): void {
+    this.caminhaoApi.listar({ page: 0, size: 200, sort: 'codigo,asc', ativo: true }).subscribe({
+      next: (res) => (this.caminhoes = res.content || []),
+      error: () => (this.caminhoes = []),
+    });
   }
 
   carregarPagina(page?: number): void {
@@ -87,9 +123,10 @@ export class PneusComponent implements OnInit, OnDestroy {
 
     const status = (this.statusFilter && this.statusFilter !== 'TODOS') ? this.statusFilter : undefined;
     const q = (this.q || '').trim() || undefined;
+    const caminhao = (this.caminhaoFilter || '').trim() || undefined;
     this.lastSearchApplied = q || '';
 
-    this.api.listar({ q, status, page: this.page, size: this.size, sort: 'codigo,desc' })
+    this.api.listar({ q, status, caminhao, page: this.page, size: this.size, sort: 'codigo,desc' })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (res) => {
@@ -124,6 +161,42 @@ export class PneusComponent implements OnInit, OnDestroy {
     this.q = '';
     this.statusFilter = 'TODOS';
     this.alertaFilter = 'TODOS';
+    this.caminhaoFilter = '';
+    this.aplicarFiltros();
+  }
+
+  // ===== autocomplete do filtro de caminhão =====
+  get sugestoesFiltroCaminhao(): CaminhaoResponse[] {
+    const q = String(this.caminhaoFilter || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.caminhoes || [])
+      .filter((c) => {
+        const hay = [c.codigo, c.codigoExterno, c.placa, c.descricao]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  onFocusFiltroCaminhao(): void {
+    this.showSugFiltroCaminhao = true;
+  }
+
+  onCaminhaoFilterChange(): void {
+    if (this.caminhaoDebounceTimer) window.clearTimeout(this.caminhaoDebounceTimer);
+    this.caminhaoDebounceTimer = window.setTimeout(() => this.aplicarFiltros(), 350);
+  }
+
+  onBlurFiltroSugestao(): void {
+    if (this.autocompleteBlurTimer) clearTimeout(this.autocompleteBlurTimer);
+    this.autocompleteBlurTimer = setTimeout(() => (this.showSugFiltroCaminhao = false), 140);
+  }
+
+  selecionarFiltroCaminhao(c: CaminhaoResponse): void {
+    this.caminhaoFilter = c.codigo || c.codigoExterno || '';
+    this.showSugFiltroCaminhao = false;
     this.aplicarFiltros();
   }
 
@@ -274,16 +347,33 @@ export class PneusComponent implements OnInit, OnDestroy {
       this.toast.warn(`Código do pneu deve ter no máximo ${MAX_CODIGO} caracteres.`);
       return;
     }
-    if (!confirm(`Deseja excluir o pneu ${p.codigo}?`)) return;
+    this.deleteAlvo = p;
+    this.showDeleteConfirm = true;
+  }
 
-    this.loading = true;
+  cancelarExclusao(): void {
+    if (this.deletando) return;
+    this.showDeleteConfirm = false;
+    this.deleteAlvo = null;
+  }
+
+  confirmarExclusao(): void {
+    const p = this.deleteAlvo;
+    if (!p?.codigo) return;
+
+    this.deletando = true;
     this.errorMsg = null;
 
     this.api.deletar(p.codigo)
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalize(() => (this.deletando = false)))
       .subscribe({
-        next: () => this.carregarPagina(),
-        error: (err) => this.errorMsg = extrairMensagemErro(err, 'Erro ao excluir pneu.'),
+        next: () => {
+          this.showDeleteConfirm = false;
+          this.deleteAlvo = null;
+          this.toast.success('Pneu excluído.');
+          this.carregarPagina();
+        },
+        error: (err) => this.toast.error(extrairMensagemErro(err, 'Erro ao excluir pneu.')),
       });
   }
 

@@ -30,9 +30,9 @@
         </div>
 
         <div class="field">
-          <label>Km de antecedência para avisar de troca de pneu</label>
-          <input type="number" min="0" [(ngModel)]="form.kmAntecedenciaTrocaPneu" />
-          <span class="muted-sm">Quantos km antes do previsto no plano de manutenção preventiva o sistema já avisa.</span>
+          <label>Km de antecedência para avisar manutenção preventiva</label>
+          <input type="number" min="0" [(ngModel)]="form.kmAntecedenciaManutencaoPreventiva" />
+          <span class="muted-sm">Quantos km antes do previsto em qualquer plano de manutenção preventiva por km (troca de óleo, filtro, pneu etc.) o sistema já avisa.</span>
         </div>
 
         <div class="field">
@@ -52,6 +52,21 @@
           <label>Dias de antecedência para avisar de prazo de multa</label>
           <input type="number" min="0" [(ngModel)]="form.diasAntecedenciaPrazoMulta" />
           <span class="muted-sm">Vale tanto para o prazo de pagamento quanto para o prazo de recurso da multa.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Abastecimento</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Detecção de preço fora do padrão</h2>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Percentual acima da média para marcar como anômalo</label>
+          <input type="number" min="1" [(ngModel)]="form.percentualLimiteAnomaliaAbastecimento" />
+          <span class="muted-sm">Quando o preço/litro de um abastecimento fica esse tanto (%) acima da média recente (últimos 90 dias) do mesmo posto e combustível, o sistema marca como suspeito na tela de Abastecimentos e cria uma notificação.</span>
         </div>
       </div>
     </div>

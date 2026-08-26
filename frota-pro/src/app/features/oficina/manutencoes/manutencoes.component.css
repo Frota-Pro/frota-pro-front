@@ -15,6 +15,11 @@
   box-shadow: 0 1px 8px rgba(0,0,0,.06);
 }
 .search { height: 38px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 12px; min-width: 300px; flex: 1; }
+
+/* Filtro de caminhão do topo: caixa de largura fixa, não o min-width de 300px do .search geral
+   (senão o input vaza pra fora do wrapper e cobre o próximo campo da toolbar). */
+.filtro-caminhao-wrap { flex: 0 1 220px; min-width: 180px; }
+.filtro-caminhao-wrap .search { min-width: 0; width: 100%; flex: none; }
 .select { height: 38px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 10px; background: #fff; }
 .bulk { display: flex; gap: 8px; align-items: center; }
 
@@ -30,7 +35,7 @@
 .alert { color: #b91c1c; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.20); padding: 10px 12px; border-radius: 12px; }
 
 .table-wrap { background: #fff; border-radius: 16px; box-shadow: 0 1px 8px rgba(0,0,0,.06); overflow: auto; border: 1px solid #eef2f7; }
-.table { width: 100%; min-width: 1040px; border-collapse: collapse; }
+.table { width: 100%; table-layout: fixed; border-collapse: collapse; }
 .table thead th {
   text-align: left; font-size: 12px; color: #6b7280; background: #fafafa;
   padding: 12px 14px; border-bottom: 1px solid #eef2f7;
@@ -38,8 +43,37 @@
 .table tbody td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
 .table tbody tr:hover { background: #fcfcfc; cursor: pointer; }
 
+/* table-layout: fixed distribui a largura por essas porcentagens (somam 100%)
+   em vez de deixar a tabela crescer e precisar de scroll horizontal. */
+.table th:nth-child(1), .table td:nth-child(1) { width: 7%; }
+.table th:nth-child(2), .table td:nth-child(2) { width: 12%; }
+.table th:nth-child(3), .table td:nth-child(3) { width: 11%; }
+.table th:nth-child(4), .table td:nth-child(4) { width: 10%; }
+.table th:nth-child(5), .table td:nth-child(5) { width: 7%; }
+.table th:nth-child(6), .table td:nth-child(6) { width: 8%; }
+.table th:nth-child(7), .table td:nth-child(7) { width: 9%; }
+.table th:nth-child(8), .table td:nth-child(8) { width: 8%; }
+.table th:nth-child(9), .table td:nth-child(9) { width: 8%; }
+.table th:nth-child(10), .table td:nth-child(10) { width: 8%; }
+.table th:nth-child(11), .table td:nth-child(11) { width: 12%; }
+
+.truncate { overflow: hidden; }
+.truncate .stack strong, .truncate .stack small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+
 .col-actions { text-align: right; }
-.row-actions { text-align: right; display: flex; justify-content: flex-end; gap: 8px; }
+.row-actions { text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.icon-btn {
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.12); background: #fff; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all .15s ease; flex-shrink: 0;
+}
+.icon-btn:hover { transform: translateY(-1px); }
+.icon-btn.edit { color: #f59e0b; }
+.icon-btn.edit:hover { background: rgba(245, 158, 11, .10); border-color: rgba(245, 158, 11, .30); }
+.icon-btn.danger { color: #ef4444; }
+.icon-btn.danger:hover { background: rgba(239, 68, 68, .10); border-color: rgba(239, 68, 68, .30); }
 
 .mono { font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 .stack { display: flex; flex-direction: column; gap: 3px; }
@@ -77,6 +111,30 @@
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #fafafa; border-bottom: 1px solid #eef2f7; }
 .modal-header h2 { margin: 0; font-size: 16px; }
 .icon { width: 34px; height: 34px; border-radius: 12px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; }
+
+/* Confirmação de exclusão (modal estilizado, em vez do confirm() nativo) */
+.confirm-box {
+  position: fixed; z-index: 2001; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 24px));
+  background: #fff; border-radius: 16px;
+  border: 1px solid rgba(15,23,42,.10);
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  padding: 24px 22px 20px;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.confirm-box__icon {
+  width: 52px; height: 52px; border-radius: 999px;
+  background: rgba(239, 68, 68, 0.10); border: 1px solid rgba(239, 68, 68, 0.16);
+  color: #ef4444; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+}
+.confirm-box__title { margin: 0 0 8px; font-size: 16px; font-weight: 900; color: #0f172a; }
+.confirm-box__desc { margin: 0; font-size: 13px; line-height: 1.5; color: rgba(15, 23, 42, 0.65); }
+.confirm-box__desc strong { color: #0f172a; }
+.confirm-box__actions { display: flex; justify-content: center; gap: 10px; margin-top: 20px; width: 100%; }
+.confirm-box__actions .btn { flex: 1; }
 
 .modal-body {
   padding: 12px 14px;

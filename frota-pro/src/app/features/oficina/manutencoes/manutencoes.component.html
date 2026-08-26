@@ -17,11 +17,21 @@
            (ngModelChange)="scheduleBuscar()"
            placeholder="Buscar por código, descrição, caminhão, oficina, carga..." />
 
-    <input class="search"
-           style="min-width:220px; flex:0;"
-           [(ngModel)]="caminhaoFilter"
-           (ngModelChange)="scheduleBuscar()"
-           placeholder="Filtro caminhão (cód/placa)" />
+    <div class="field-autocomplete filtro-caminhao-wrap">
+      <input class="search"
+             [(ngModel)]="caminhaoFilter"
+             (ngModelChange)="scheduleBuscar()"
+             (focus)="onFocusFiltroCaminhao()"
+             (blur)="onBlurFiltroSugestao()"
+             placeholder="Filtro caminhão (cód/placa)" />
+      <ul class="field-suggest" *ngIf="showSugFiltroCaminhao && sugestoesFiltroCaminhao.length > 0">
+        <li *ngFor="let c of sugestoesFiltroCaminhao" (mousedown)="selecionarFiltroCaminhao(c)">
+          <strong>{{ c.codigo }}</strong>
+          <span>{{ c.placa || '-' }}</span>
+          <small>{{ c.descricao || '-' }}</small>
+        </li>
+      </ul>
+    </div>
 
     <select [(ngModel)]="statusFilter" class="select" (change)="applyLocalFilter()">
       <option [ngValue]="''">Status (todos)</option>
@@ -57,8 +67,7 @@
         <th>Oficina</th>
         <th>Tipo</th>
         <th>Status</th>
-        <th>Início</th>
-        <th>Fim</th>
+        <th>Período</th>
         <th>Total</th>
         <th>Orçamento</th>
         <th>Carga/Parada</th>
@@ -70,21 +79,21 @@
       <tr *ngFor="let m of filtered" (dblclick)="abrirDetalhe(m)">
         <td class="mono">{{ m.codigo }}</td>
 
-        <td>
+        <td class="truncate" [title]="m.descricao">
           <div class="stack">
             <strong>{{ m.descricao }}</strong>
             <small class="muted" *ngIf="m.codigoCaminhao">Cód Caminhão: {{ m.codigoCaminhao }}</small>
           </div>
         </td>
 
-        <td>
+        <td class="truncate" [title]="m.caminhao">
           <div class="stack">
             <strong>{{ m.caminhao || '—' }}</strong>
             <small class="muted">{{ m.codigoCaminhao }}</small>
           </div>
         </td>
 
-        <td>
+        <td class="truncate" [title]="m.oficina">
           <div class="stack">
             <strong>{{ m.oficina || '—' }}</strong>
             <small class="muted" *ngIf="m.codigoOficina">{{ m.codigoOficina }}</small>
@@ -100,8 +109,12 @@
             </span>
         </td>
 
-        <td class="mono">{{ m._inicio || '—' }}</td>
-        <td class="mono">{{ m._fim || '—' }}</td>
+        <td class="mono">
+          <div class="stack">
+            <span>{{ m._inicio || '—' }}</span>
+            <small class="muted" *ngIf="m._fim">até {{ m._fim }}</small>
+          </div>
+        </td>
 
         <td class="mono">{{ formatMoneyBRL(m.valor) }}</td>
 
@@ -123,10 +136,16 @@
         </td>
 
         <td class="row-actions" (click)="$event.stopPropagation()">
-          <button class="btn small" type="button" (click)="abrirDetalhe(m)">Ver</button>
-          <button class="btn small" type="button" (click)="openEditar(m)">Editar</button>
           <button class="btn small primary" type="button" *ngIf="m.statusAprovacao === 'PENDENTE'" (click)="abrirAprovacao(m)">Aprovar/Rejeitar</button>
-          <button class="btn small danger" type="button" (click)="deletar(m)">Excluir</button>
+          <button class="icon-btn" type="button" title="Ver" (click)="abrirDetalhe(m)">
+            <i class="fas fa-eye"></i>
+          </button>
+          <button class="icon-btn edit" type="button" title="Editar" (click)="openEditar(m)">
+            <i class="fas fa-pen"></i>
+          </button>
+          <button class="icon-btn danger" type="button" title="Excluir" (click)="deletar(m)">
+            <i class="fas fa-trash"></i>
+          </button>
         </td>
       </tr>
       </tbody>
@@ -321,6 +340,30 @@
       <button class="btn" type="button" (click)="closeModal()">Cancelar</button>
       <button class="btn primary" type="button" (click)="salvar()">
         {{ isEditing ? 'Salvar' : 'Criar' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- CONFIRMAÇÃO DE EXCLUSÃO -->
+  <div class="backdrop" *ngIf="showDeleteConfirm" (click)="cancelarExclusao()"></div>
+
+  <div class="confirm-box" *ngIf="showDeleteConfirm">
+    <div class="confirm-box__icon">
+      <i class="fas fa-triangle-exclamation"></i>
+    </div>
+
+    <h3 class="confirm-box__title">Excluir manutenção?</h3>
+
+    <p class="confirm-box__desc" *ngIf="deleteAlvo as m">
+      Isso vai apagar a manutenção <strong>{{ m.codigo }}</strong>
+      ({{ m.descricao || '—' }}) do caminhão <strong>{{ m.codigoCaminhao || '—' }}</strong>.
+      Essa ação não pode ser desfeita.
+    </p>
+
+    <div class="confirm-box__actions">
+      <button class="btn ghost" type="button" (click)="cancelarExclusao()" [disabled]="deletando">Cancelar</button>
+      <button class="btn danger" type="button" (click)="confirmarExclusao()" [disabled]="deletando">
+        {{ deletando ? 'Excluindo...' : 'Excluir' }}
       </button>
     </div>
   </div>

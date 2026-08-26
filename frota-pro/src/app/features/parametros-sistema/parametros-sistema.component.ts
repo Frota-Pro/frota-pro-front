@@ -23,7 +23,7 @@ export class ParametrosSistemaComponent implements OnInit {
 
   form: ParametroSistemaUpdateRequest = {
     diasAntecedenciaVencimentoDocumento: 5,
-    kmAntecedenciaTrocaPneu: 500,
+    kmAntecedenciaManutencaoPreventiva: 500,
     diasManutencaoEstagnada: 7,
     diasAntecedenciaPrazoMulta: 5,
     validarMotivoAlteracaoPesoValorCarga: false,
@@ -32,6 +32,7 @@ export class ParametrosSistemaComponent implements OnInit {
     validarTempoMinimoCarga: false,
     tempoMinimoEntregaPadraoMinutos: 30,
     diasRetencaoAuditoria: 180,
+    percentualLimiteAnomaliaAbastecimento: 25,
   };
 
   constructor(
@@ -53,7 +54,7 @@ export class ParametrosSistemaComponent implements OnInit {
         next: (res: ParametroSistemaResponse) => {
           this.form = {
             diasAntecedenciaVencimentoDocumento: res.diasAntecedenciaVencimentoDocumento,
-            kmAntecedenciaTrocaPneu: res.kmAntecedenciaTrocaPneu,
+            kmAntecedenciaManutencaoPreventiva: res.kmAntecedenciaManutencaoPreventiva,
             diasManutencaoEstagnada: res.diasManutencaoEstagnada,
             diasAntecedenciaPrazoMulta: res.diasAntecedenciaPrazoMulta,
             validarMotivoAlteracaoPesoValorCarga: res.validarMotivoAlteracaoPesoValorCarga,
@@ -62,6 +63,7 @@ export class ParametrosSistemaComponent implements OnInit {
             validarTempoMinimoCarga: res.validarTempoMinimoCarga,
             tempoMinimoEntregaPadraoMinutos: res.tempoMinimoEntregaPadraoMinutos,
             diasRetencaoAuditoria: res.diasRetencaoAuditoria,
+            percentualLimiteAnomaliaAbastecimento: res.percentualLimiteAnomaliaAbastecimento,
           };
         },
         error: (err) => (this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar os parâmetros.')),

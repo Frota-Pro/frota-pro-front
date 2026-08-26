@@ -137,6 +137,30 @@
 }
 .modal-header h2 { margin: 0; font-size: 16px; }
 
+/* Confirmação de exclusão (modal estilizado, em vez do confirm() nativo) */
+.confirm-box {
+  position: fixed; z-index: 2001; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 24px));
+  background: #fff; border-radius: 16px;
+  border: 1px solid rgba(15,23,42,.10);
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  padding: 24px 22px 20px;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.confirm-box__icon {
+  width: 52px; height: 52px; border-radius: 999px;
+  background: rgba(239, 68, 68, 0.10); border: 1px solid rgba(239, 68, 68, 0.16);
+  color: #ef4444; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+}
+.confirm-box__title { margin: 0 0 8px; font-size: 16px; font-weight: 900; color: #0f172a; }
+.confirm-box__desc { margin: 0; font-size: 13px; line-height: 1.5; color: rgba(15, 23, 42, 0.65); }
+.confirm-box__desc strong { color: #0f172a; }
+.confirm-box__actions { display: flex; justify-content: center; gap: 10px; margin-top: 20px; width: 100%; }
+.confirm-box__actions .btn { flex: 1; }
+
 .icon {
   width: 34px;
   height: 34px;

@@ -41,6 +41,11 @@ export class OficinasComponent implements OnInit, OnDestroy {
 
   form: OficinaRequest = { nome: '' };
 
+  // confirmação de exclusão (modal estilizado, em vez do confirm() nativo)
+  showDeleteConfirm = false;
+  deleteAlvo: OficinaResponse | null = null;
+  deletando = false;
+
   private filtroTimer: any = null;
 
   constructor(
@@ -157,16 +162,33 @@ export class OficinasComponent implements OnInit, OnDestroy {
       this.toast.warn(`Código da oficina deve ter no máximo ${MAX_CODIGO} caracteres.`);
       return;
     }
-    if (!confirm(`Deseja excluir a oficina ${o.codigo}?`)) return;
+    this.deleteAlvo = o;
+    this.showDeleteConfirm = true;
+  }
 
-    this.loading = true;
+  cancelarExclusao(): void {
+    if (this.deletando) return;
+    this.showDeleteConfirm = false;
+    this.deleteAlvo = null;
+  }
+
+  confirmarExclusao(): void {
+    const o = this.deleteAlvo;
+    if (!o?.codigo) return;
+
+    this.deletando = true;
     this.errorMsg = null;
 
     this.api.deletar(o.codigo)
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalize(() => (this.deletando = false)))
       .subscribe({
-        next: () => this.carregarPagina(),
-        error: (err) => this.errorMsg = extrairMensagemErro(err, 'Erro ao excluir oficina.'),
+        next: () => {
+          this.showDeleteConfirm = false;
+          this.deleteAlvo = null;
+          this.toast.success('Oficina excluída.');
+          this.carregarPagina();
+        },
+        error: (err) => this.toast.error(extrairMensagemErro(err, 'Erro ao excluir oficina.')),
       });
   }
 }

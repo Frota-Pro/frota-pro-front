@@ -50,6 +50,7 @@
         <th>Última execução</th>
         <th>Próximo vencimento</th>
         <th>Odômetro atual</th>
+        <th>Situação</th>
         <th>Status</th>
         <th class="col-actions">Ações</th>
       </tr>
@@ -89,6 +90,12 @@
         </td>
 
         <td class="mono">{{ formatKm(p.odometroAtualCaminhao) }}</td>
+
+        <td>
+          <span class="situacao" [ngClass]="'situacao-' + (p.situacao || 'EM_DIA').toLowerCase()">
+            {{ situacaoLabel(p.situacao) }}
+          </span>
+        </td>
 
         <td>
           <span class="status" [class.inactive]="!p.ativo">{{ p.ativo ? 'ATIVO' : 'INATIVO' }}</span>

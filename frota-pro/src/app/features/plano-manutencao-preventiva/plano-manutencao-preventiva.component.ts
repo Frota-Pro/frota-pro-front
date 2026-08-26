@@ -271,4 +271,12 @@ export class PlanoManutencaoPreventivaComponent implements OnInit, OnDestroy {
     if (v == null) return '—';
     return v.toLocaleString('pt-BR') + ' km';
   }
+
+  situacaoLabel(situacao?: string | null): string {
+    switch (situacao) {
+      case 'VENCIDO': return 'Vencido';
+      case 'VENCENDO': return 'Vencendo';
+      default: return 'Em dia';
+    }
+  }
 }

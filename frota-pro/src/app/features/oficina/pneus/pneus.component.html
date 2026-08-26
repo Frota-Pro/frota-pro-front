@@ -18,6 +18,22 @@
       <span class="kbd">Enter</span>
     </div>
 
+    <div class="field-autocomplete filtro-caminhao-wrap">
+      <input class="search"
+             [(ngModel)]="caminhaoFilter"
+             (ngModelChange)="onCaminhaoFilterChange()"
+             (focus)="onFocusFiltroCaminhao()"
+             (blur)="onBlurFiltroSugestao()"
+             placeholder="Filtro por caminhão (cód/placa)" />
+      <ul class="field-suggest" *ngIf="showSugFiltroCaminhao && sugestoesFiltroCaminhao.length > 0">
+        <li *ngFor="let c of sugestoesFiltroCaminhao" (mousedown)="selecionarFiltroCaminhao(c)">
+          <strong>{{ c.codigo }}</strong>
+          <span>{{ c.placa || '-' }}</span>
+          <small>{{ c.descricao || '-' }}</small>
+        </li>
+      </ul>
+    </div>
+
     <select class="select" [(ngModel)]="statusFilter" (change)="aplicarFiltros()">
       <option value="TODOS">Todos status</option>
       <option value="ESTOQUE">Estoque</option>
@@ -255,6 +271,29 @@
     <div class="modal-footer">
       <button class="btn" type="button" (click)="closeModal()">Cancelar</button>
       <button class="btn primary" type="button" (click)="salvar()">Salvar</button>
+    </div>
+  </div>
+
+  <!-- CONFIRMAÇÃO DE EXCLUSÃO -->
+  <div class="backdrop" *ngIf="showDeleteConfirm" (click)="cancelarExclusao()"></div>
+
+  <div class="confirm-box" *ngIf="showDeleteConfirm">
+    <div class="confirm-box__icon">
+      <i class="fas fa-triangle-exclamation"></i>
+    </div>
+
+    <h3 class="confirm-box__title">Excluir pneu?</h3>
+
+    <p class="confirm-box__desc" *ngIf="deleteAlvo as p">
+      Isso vai apagar o pneu <strong>{{ p.codigo }}</strong>
+      ({{ p.marca || '—' }} {{ p.modelo || '' }}). Essa ação não pode ser desfeita.
+    </p>
+
+    <div class="confirm-box__actions">
+      <button class="btn ghost" type="button" (click)="cancelarExclusao()" [disabled]="deletando">Cancelar</button>
+      <button class="btn danger" type="button" (click)="confirmarExclusao()" [disabled]="deletando">
+        {{ deletando ? 'Excluindo...' : 'Excluir' }}
+      </button>
     </div>
   </div>
 

@@ -17,10 +17,11 @@ export class PneuApiService extends BaseApiService {
 
   constructor(http: HttpClient) { super(http); }
 
-  listar(opts: { q?: string; status?: string; page?: number; size?: number; sort?: string } = {}) {
+  listar(opts: { q?: string; status?: string; caminhao?: string; page?: number; size?: number; sort?: string } = {}) {
     let params = new HttpParams();
     if (opts.q) params = params.set('q', opts.q);
     if (opts.status) params = params.set('status', opts.status);
+    if (opts.caminhao) params = params.set('caminhao', opts.caminhao);
     if (opts.page != null) params = params.set('page', String(opts.page));
     if (opts.size != null) params = params.set('size', String(opts.size));
     if (opts.sort) params = params.set('sort', opts.sort);
