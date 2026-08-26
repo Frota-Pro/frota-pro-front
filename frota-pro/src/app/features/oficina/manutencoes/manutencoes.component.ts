@@ -89,6 +89,14 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
   showSugManPlano = false;
   readonly sugestoesMax = 8;
 
+  // autocomplete do filtro caminhão (topo da tela)
+  showSugFiltroCaminhao = false;
+
+  // confirmação de exclusão (modal estilizado, em vez do confirm() nativo)
+  showDeleteConfirm = false;
+  deleteAlvo: ManutencaoVM | null = null;
+  deletando = false;
+
   constructor(
     private api: ManutencaoApiService,
     private caminhaoApi: CaminhaoApiService,
@@ -418,18 +426,34 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
       this.toast.warn(`Código da manutenção deve ter no máximo ${MAX_CODIGO} caracteres.`);
       return;
     }
-    const ok = confirm(`Deseja excluir a manutenção ${m.codigo}?`);
-    if (!ok) return;
+    this.deleteAlvo = m;
+    this.showDeleteConfirm = true;
+  }
 
-    this.loading = true;
+  cancelarExclusao(): void {
+    if (this.deletando) return;
+    this.showDeleteConfirm = false;
+    this.deleteAlvo = null;
+  }
+
+  confirmarExclusao(): void {
+    const m = this.deleteAlvo;
+    if (!m?.codigo) return;
+
+    this.deletando = true;
     this.errorMsg = null;
 
     this.api.deletar(m.codigo)
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalize(() => (this.deletando = false)))
       .subscribe({
-        next: () => this.carregarPagina(),
+        next: () => {
+          this.showDeleteConfirm = false;
+          this.deleteAlvo = null;
+          this.toast.success('Manutenção excluída.');
+          this.carregarPagina();
+        },
         error: (err) => {
-          this.errorMsg = extrairMensagemErro(err, 'Erro ao excluir manutenção.');
+          this.toast.error(extrairMensagemErro(err, 'Erro ao excluir manutenção.'));
         },
       });
   }
@@ -471,6 +495,37 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     const n = Number(v || 0);
     if (!Number.isFinite(n)) return 'R$ 0,00';
     return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  // ===== autocomplete do filtro caminhão (topo da tela) =====
+  get sugestoesFiltroCaminhao(): CaminhaoResponse[] {
+    const q = String(this.caminhaoFilter || '').trim().toLowerCase();
+    if (!q) return [];
+
+    return (this.caminhoes || [])
+      .filter((c) => {
+        const hay = [c.codigo, c.codigoExterno, c.placa, c.descricao]
+          .map((x) => String(x || '').toLowerCase())
+          .join(' | ');
+        return hay.includes(q);
+      })
+      .slice(0, this.sugestoesMax);
+  }
+
+  onFocusFiltroCaminhao(): void {
+    this.showSugFiltroCaminhao = true;
+  }
+
+  onBlurFiltroSugestao(): void {
+    if (this.autocompleteBlurTimer) clearTimeout(this.autocompleteBlurTimer);
+    this.autocompleteBlurTimer = setTimeout(() => (this.showSugFiltroCaminhao = false), 140);
+  }
+
+  selecionarFiltroCaminhao(c: CaminhaoResponse): void {
+    this.caminhaoFilter = c.codigo || c.codigoExterno || '';
+    this.showSugFiltroCaminhao = false;
+    this.page = 0;
+    this.carregarPagina();
   }
 
   // ===== autocomplete =====
@@ -637,6 +692,7 @@ export class ManutencoesComponent implements OnInit, OnDestroy {
     this.showSugManOficina = false;
     this.showSugManParada = false;
     this.showSugManPlano = false;
+    this.showSugFiltroCaminhao = false;
   }
 
   private resetAutoComplete(): void {

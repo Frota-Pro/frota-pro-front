@@ -57,6 +57,11 @@ export class PneusComponent implements OnInit, OnDestroy {
     dtCompra: null,
   };
 
+  // confirmação de exclusão (modal estilizado, em vez do confirm() nativo)
+  showDeleteConfirm = false;
+  deleteAlvo: PneuResponse | null = null;
+  deletando = false;
+
   constructor(private api: PneuApiService, private router: Router, private toast: ToastService) {}
 
   ngOnInit(): void {
@@ -274,16 +279,33 @@ export class PneusComponent implements OnInit, OnDestroy {
       this.toast.warn(`Código do pneu deve ter no máximo ${MAX_CODIGO} caracteres.`);
       return;
     }
-    if (!confirm(`Deseja excluir o pneu ${p.codigo}?`)) return;
+    this.deleteAlvo = p;
+    this.showDeleteConfirm = true;
+  }
 
-    this.loading = true;
+  cancelarExclusao(): void {
+    if (this.deletando) return;
+    this.showDeleteConfirm = false;
+    this.deleteAlvo = null;
+  }
+
+  confirmarExclusao(): void {
+    const p = this.deleteAlvo;
+    if (!p?.codigo) return;
+
+    this.deletando = true;
     this.errorMsg = null;
 
     this.api.deletar(p.codigo)
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalize(() => (this.deletando = false)))
       .subscribe({
-        next: () => this.carregarPagina(),
-        error: (err) => this.errorMsg = extrairMensagemErro(err, 'Erro ao excluir pneu.'),
+        next: () => {
+          this.showDeleteConfirm = false;
+          this.deleteAlvo = null;
+          this.toast.success('Pneu excluído.');
+          this.carregarPagina();
+        },
+        error: (err) => this.toast.error(extrairMensagemErro(err, 'Erro ao excluir pneu.')),
       });
   }
 

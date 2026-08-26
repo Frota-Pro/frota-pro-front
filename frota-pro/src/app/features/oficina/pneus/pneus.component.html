@@ -258,4 +258,27 @@
     </div>
   </div>
 
+  <!-- CONFIRMAÇÃO DE EXCLUSÃO -->
+  <div class="backdrop" *ngIf="showDeleteConfirm" (click)="cancelarExclusao()"></div>
+
+  <div class="confirm-box" *ngIf="showDeleteConfirm">
+    <div class="confirm-box__icon">
+      <i class="fas fa-triangle-exclamation"></i>
+    </div>
+
+    <h3 class="confirm-box__title">Excluir pneu?</h3>
+
+    <p class="confirm-box__desc" *ngIf="deleteAlvo as p">
+      Isso vai apagar o pneu <strong>{{ p.codigo }}</strong>
+      ({{ p.marca || '—' }} {{ p.modelo || '' }}). Essa ação não pode ser desfeita.
+    </p>
+
+    <div class="confirm-box__actions">
+      <button class="btn ghost" type="button" (click)="cancelarExclusao()" [disabled]="deletando">Cancelar</button>
+      <button class="btn danger" type="button" (click)="confirmarExclusao()" [disabled]="deletando">
+        {{ deletando ? 'Excluindo...' : 'Excluir' }}
+      </button>
+    </div>
+  </div>
+
 </div>
