@@ -18,6 +18,22 @@
       <span class="kbd">Enter</span>
     </div>
 
+    <div class="field-autocomplete filtro-caminhao-wrap">
+      <input class="search"
+             [(ngModel)]="caminhaoFilter"
+             (ngModelChange)="onCaminhaoFilterChange()"
+             (focus)="onFocusFiltroCaminhao()"
+             (blur)="onBlurFiltroSugestao()"
+             placeholder="Filtro por caminhão (cód/placa)" />
+      <ul class="field-suggest" *ngIf="showSugFiltroCaminhao && sugestoesFiltroCaminhao.length > 0">
+        <li *ngFor="let c of sugestoesFiltroCaminhao" (mousedown)="selecionarFiltroCaminhao(c)">
+          <strong>{{ c.codigo }}</strong>
+          <span>{{ c.placa || '-' }}</span>
+          <small>{{ c.descricao || '-' }}</small>
+        </li>
+      </ul>
+    </div>
+
     <select class="select" [(ngModel)]="statusFilter" (change)="aplicarFiltros()">
       <option value="TODOS">Todos status</option>
       <option value="ESTOQUE">Estoque</option>
