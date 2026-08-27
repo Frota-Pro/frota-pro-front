@@ -32,8 +32,20 @@ export class UsuariosComponent implements OnInit {
   filtro = '';
   filtroAtivo: boolean | undefined = undefined;
 
-  // 🔥 Criar usuário para motorista
+  // modal de criar/editar usuário
+  showModal = false;
+  salvando = false;
+
+  // modal de criar usuário para motorista
+  showMotoristaModal = false;
+  criandoMotorista = false;
   matriculaMotorista = '';
+
+  // modal de resetar senha (troca o prompt() nativo)
+  showResetSenhaModal = false;
+  resetSenhaAlvo?: UsuarioResponse;
+  resetSenhaValor = '';
+  resetandoSenha = false;
 
   form: UsuarioCreateRequest = {
     login: '',
@@ -84,7 +96,27 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
+  abrirNovo() {
+    this.cancelar();
+    this.showModal = true;
+  }
+
   salvar() {
+    if (!this.form.login?.trim()) {
+      this.toast.warn('Informe o login.');
+      return;
+    }
+    if (!this.form.nome?.trim()) {
+      this.toast.warn('Informe o nome.');
+      return;
+    }
+    if (!this.modoEdicao && (!this.form.senha || this.form.senha.length < 6)) {
+      this.toast.warn('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
+    this.salvando = true;
+
     if (this.modoEdicao && this.usuarioSelecionado) {
       const update: UsuarioUpdateRequest = {
         login: this.form.login,
@@ -96,20 +128,30 @@ export class UsuariosComponent implements OnInit {
       this.usuarioService.atualizar(this.usuarioSelecionado.id, update)
         .subscribe({
           next: () => {
-            this.cancelar();
+            this.toast.success('Usuário atualizado com sucesso.');
+            this.salvando = false;
+            this.fecharModal();
             this.carregar();
           },
-          error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível salvar o usuário.')),
+          error: (err) => {
+            this.salvando = false;
+            this.toast.error(extrairMensagemErro(err, 'Não foi possível salvar o usuário.'));
+          },
         });
 
     } else {
       this.usuarioService.criar(this.form)
         .subscribe({
           next: () => {
-            this.cancelar();
+            this.toast.success('Usuário cadastrado com sucesso.');
+            this.salvando = false;
+            this.fecharModal();
             this.carregar();
           },
-          error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível criar o usuário.')),
+          error: (err) => {
+            this.salvando = false;
+            this.toast.error(extrairMensagemErro(err, 'Não foi possível criar o usuário.'));
+          },
         });
     }
   }
@@ -125,6 +167,14 @@ export class UsuariosComponent implements OnInit {
       acessos: [...(usuario.acessos ?? [])],
       ativo: usuario.ativo
     };
+
+    this.showModal = true;
+  }
+
+  fecharModal() {
+    if (this.salvando) return;
+    this.showModal = false;
+    this.cancelar();
   }
 
   cancelar() {
@@ -143,19 +193,47 @@ export class UsuariosComponent implements OnInit {
   alternarAtivo(usuario: UsuarioResponse) {
     this.usuarioService.atualizarAtivo(usuario.id, !usuario.ativo)
       .subscribe({
-        next: () => this.carregar(),
+        next: () => {
+          this.toast.success(usuario.ativo ? 'Usuário inativado.' : 'Usuário ativado.');
+          this.carregar();
+        },
         error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível alterar o status do usuário.')),
       });
   }
 
-  resetarSenha(usuario: UsuarioResponse) {
-    const novaSenha = prompt('Digite a nova senha:');
-    if (!novaSenha) return;
+  // ===== Resetar senha (modal estilizado, em vez do prompt() nativo) =====
+  abrirResetSenha(usuario: UsuarioResponse) {
+    this.resetSenhaAlvo = usuario;
+    this.resetSenhaValor = '';
+    this.showResetSenhaModal = true;
+  }
 
-    this.usuarioService.atualizarSenha(usuario.id, { novaSenha })
+  fecharResetSenha() {
+    if (this.resetandoSenha) return;
+    this.showResetSenhaModal = false;
+    this.resetSenhaAlvo = undefined;
+    this.resetSenhaValor = '';
+  }
+
+  confirmarResetSenha() {
+    if (!this.resetSenhaAlvo) return;
+    if (!this.resetSenhaValor || this.resetSenhaValor.length < 6) {
+      this.toast.warn('A nova senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
+    this.resetandoSenha = true;
+    this.usuarioService.atualizarSenha(this.resetSenhaAlvo.id, { novaSenha: this.resetSenhaValor })
       .subscribe({
-        next: () => this.toast.success('Senha atualizada com sucesso'),
-        error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível atualizar a senha.')),
+        next: () => {
+          this.toast.success('Senha atualizada com sucesso.');
+          this.resetandoSenha = false;
+          this.fecharResetSenha();
+        },
+        error: (err) => {
+          this.resetandoSenha = false;
+          this.toast.error(extrairMensagemErro(err, 'Não foi possível atualizar a senha.'));
+        },
       });
   }
 
@@ -170,6 +248,16 @@ export class UsuariosComponent implements OnInit {
   }
 
   // ✅ Criar usuário para motorista
+  abrirMotoristaModal() {
+    this.matriculaMotorista = '';
+    this.showMotoristaModal = true;
+  }
+
+  fecharMotoristaModal() {
+    if (this.criandoMotorista) return;
+    this.showMotoristaModal = false;
+  }
+
   criarUsuarioParaMotorista() {
     const items = this.parseMatriculas(this.matriculaMotorista);
     if (!items.length) {
@@ -182,17 +270,32 @@ export class UsuariosComponent implements OnInit {
       return;
     }
 
+    this.criandoMotorista = true;
     this.usuarioService.criarUsuarioMotorista(items).subscribe({
       next: (msgs) => {
         this.toast.success((msgs ?? []).join(' • ') || 'Processado.');
-        this.matriculaMotorista = '';
+        this.criandoMotorista = false;
+        this.fecharMotoristaModal();
         this.carregar();
       },
       error: (err) => {
         console.error('[Usuarios] erro criarUsuarioMotorista', err);
+        this.criandoMotorista = false;
         this.toast.error(extrairMensagemErro(err, 'Erro ao criar usuário para o motorista.'));
       }
     });
+  }
+
+  roleLabel(role: string): string {
+    const labels: Record<string, string> = {
+      ROLE_ADMIN: 'Admin',
+      ROLE_GERENTE_LOGISTICA: 'Gerente Logística',
+      ROLE_OPERADOR_LOGISTICA: 'Operador Logística',
+      ROLE_MOTORISTA: 'Motorista',
+      ROLE_MECANICO: 'Mecânico',
+      ROLE_CONSULTA: 'Consulta',
+    };
+    return labels[role] || role;
   }
 
   private parseMatriculas(raw: string): string[] {
