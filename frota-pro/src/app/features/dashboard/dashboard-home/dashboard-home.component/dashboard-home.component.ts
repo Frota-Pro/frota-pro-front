@@ -473,6 +473,14 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(Number.isFinite(n) ? n : 0)}%`;
   }
 
+  /** Cor do badge de "% fora da meta" — quanto mais caminhões fora, mais grave. */
+  severidadeCategoria(percentualForaMeta: number | null | undefined): 'success' | 'warning' | 'danger' {
+    const n = Number(percentualForaMeta ?? 0);
+    if (n <= 0) return 'success';
+    if (n < 50) return 'warning';
+    return 'danger';
+  }
+
   private parseUnreadCount(value: unknown): number {
     if (typeof value === 'number') return Math.max(0, value);
     if (value && typeof value === 'object') {

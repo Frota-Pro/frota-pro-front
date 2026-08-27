@@ -278,20 +278,26 @@
           <div class="meta-dashboard-grid">
             <div class="meta-dashboard-list">
               <h3>Categorias com pior desempenho</h3>
+              <p class="list-sub">% de caminhões da categoria que não bateram a meta deles</p>
               <div class="empty compact" *ngIf="metasDashboard.categoriasPiorDesempenho.length === 0">
                 Nenhuma categoria para exibir.
               </div>
               <div class="meta-rank-row" *ngFor="let c of metasDashboard.categoriasPiorDesempenho">
                 <div>
                   <strong>{{ c.categoriaDescricao || c.categoriaCodigo || 'Categoria' }}</strong>
-                  <span class="muted-line" *ngIf="c.categoriaCodigo">{{ c.categoriaCodigo }}</span>
+                  <span class="muted-line">{{ c.totalForaMeta }} de {{ c.totalResultados }} caminhões fora da meta</span>
                 </div>
-                <span class="badge warning">{{ formatPercent(c.percentualForaMeta) }}</span>
+                <span class="badge" [class.success]="severidadeCategoria(c.percentualForaMeta) === 'success'"
+                      [class.warning]="severidadeCategoria(c.percentualForaMeta) === 'warning'"
+                      [class.danger]="severidadeCategoria(c.percentualForaMeta) === 'danger'">
+                  {{ formatPercent(c.percentualForaMeta) }} fora
+                </span>
               </div>
             </div>
 
             <div class="meta-dashboard-list">
               <h3>Top caminhões dentro da meta</h3>
+              <p class="list-sub">% da meta já batida (acima de 100% = superou o alvo)</p>
               <div class="empty compact" *ngIf="metasDashboard.topCaminhoesDentroMeta.length === 0">
                 Nenhum caminhão para exibir.
               </div>
@@ -300,7 +306,7 @@
                   <strong>{{ c.caminhaoDescricao || c.caminhaoCodigo || 'Caminhão' }}</strong>
                   <span class="muted-line">{{ c.caminhaoCodigo || '—' }} · {{ c.tipoMeta || 'Meta' }}</span>
                 </div>
-                <span class="badge success">{{ formatPercent(c.percentual) }}</span>
+                <span class="badge success">{{ formatPercent(c.percentual) }} da meta</span>
               </div>
             </div>
           </div>
