@@ -293,6 +293,12 @@
   border: 1px solid rgba(16, 185, 129, 0.22);
 }
 
+.badge.danger {
+  background: rgba(239, 68, 68, 0.14);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
 .meta-kpi-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -337,9 +343,15 @@
 }
 
 .meta-dashboard-list h3 {
-  margin: 0 0 10px;
+  margin: 0 0 2px;
   font-size: 13px;
   color: #0f172a;
+}
+
+.list-sub {
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  color: rgba(15, 23, 42, 0.5);
 }
 
 .meta-rank-row {
