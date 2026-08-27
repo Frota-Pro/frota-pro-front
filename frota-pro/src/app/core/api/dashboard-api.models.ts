@@ -27,9 +27,9 @@ export interface DashboardResumoResponse {
 export interface DashboardMetaCategoriaDesempenho {
   categoriaCodigo?: string | null;
   categoriaDescricao?: string | null;
-  percentual?: number | null;
-  metaAtingida?: boolean | null;
-  caminhoesForaMeta?: number | null;
+  totalResultados?: number | null;
+  totalForaMeta?: number | null;
+  percentualForaMeta?: number | null;
 }
 
 export interface DashboardMetaCaminhaoDesempenho {
