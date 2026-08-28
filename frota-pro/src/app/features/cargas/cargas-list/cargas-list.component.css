@@ -197,6 +197,23 @@
   background: #fafafa;
 }
 
+.table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.table th.sortable:hover {
+  color: #1e5eff;
+}
+
+.sort-icon {
+  font-size: 9px;
+  color: #1e5eff;
+  margin-left: 2px;
+}
+
 .col-actions { width: 140px; }
 .row-actions { display: flex; justify-content: flex-end; gap: 8px; }
 

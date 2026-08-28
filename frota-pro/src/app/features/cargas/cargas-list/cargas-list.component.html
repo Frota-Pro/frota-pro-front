@@ -54,12 +54,24 @@
     <table class="table" *ngIf="rows.length > 0; else emptyTpl">
       <thead>
       <tr>
-        <th>Número</th>
-        <th>Motorista</th>
-        <th>Caminhão</th>
-        <th>Saída</th>
-        <th>Valor</th>
-        <th>Status</th>
+        <th class="sortable" (click)="sortBy('numero')">
+          Número <span class="sort-icon" *ngIf="sortField === 'numero'">{{ sortDir === 'asc' ? '▲' : '▼' }}</span>
+        </th>
+        <th class="sortable" (click)="sortBy('motorista')">
+          Motorista <span class="sort-icon" *ngIf="sortField === 'motorista'">{{ sortDir === 'asc' ? '▲' : '▼' }}</span>
+        </th>
+        <th class="sortable" (click)="sortBy('caminhao')">
+          Caminhão <span class="sort-icon" *ngIf="sortField === 'caminhao'">{{ sortDir === 'asc' ? '▲' : '▼' }}</span>
+        </th>
+        <th class="sortable" (click)="sortBy('saida')">
+          Saída <span class="sort-icon" *ngIf="sortField === 'saida'">{{ sortDir === 'asc' ? '▲' : '▼' }}</span>
+        </th>
+        <th class="sortable" (click)="sortBy('valor')">
+          Valor <span class="sort-icon" *ngIf="sortField === 'valor'">{{ sortDir === 'asc' ? '▲' : '▼' }}</span>
+        </th>
+        <th class="sortable" (click)="sortBy('status')">
+          Status <span class="sort-icon" *ngIf="sortField === 'status'">{{ sortDir === 'asc' ? '▲' : '▼' }}</span>
+        </th>
         <th class="col-actions">Ações</th>
       </tr>
       </thead>
