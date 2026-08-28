@@ -275,6 +275,15 @@
   display: grid;
   gap: 6px;
 }
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #111827;
+  cursor: pointer;
+}
+.checkbox-row input { height: auto; width: auto; }
 .autocomplete {
   position: relative;
 }

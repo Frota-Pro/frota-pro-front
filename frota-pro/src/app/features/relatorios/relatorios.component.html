@@ -237,7 +237,14 @@
           </div>
         </div>
 
-        <div class="field" *ngIf="selectedDef?.needsMotorista && form.tipo !== 'ABASTECIMENTOS'">
+        <div class="field" *ngIf="form.tipo === 'META_MENSAL_MOTORISTA'">
+          <label class="checkbox-row">
+            <input type="checkbox" [(ngModel)]="form.todosMotoristas" (ngModelChange)="form.codigoMotorista = ''" />
+            Gerar para todos os motoristas ativos (um PDF só, um motorista por página)
+          </label>
+        </div>
+
+        <div class="field" *ngIf="selectedDef?.needsMotorista && form.tipo !== 'ABASTECIMENTOS' && !(form.tipo === 'META_MENSAL_MOTORISTA' && form.todosMotoristas)">
           <label>Motorista</label>
           <div class="autocomplete">
             <input

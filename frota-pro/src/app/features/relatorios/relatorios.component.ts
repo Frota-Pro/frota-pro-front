@@ -211,6 +211,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     codigoPneu: '',
     codigoMotorista: '',
     numeroCarga: '',
+    todosMotoristas: false,
   };
 
   loading = false;
@@ -292,7 +293,12 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
       this.form.codigoCaminhao = '';
       this.form.codigoMotorista = '';
       this.form.numeroCarga = '';
+      this.form.todosMotoristas = false;
       return;
+    }
+
+    if (def.key !== 'META_MENSAL_MOTORISTA') {
+      this.form.todosMotoristas = false;
     }
 
     // se não é por período, zera datas
@@ -352,7 +358,9 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     }
 
     // ✅ Abastecimentos: caminhão/motorista são opcionais, então não valida aqui
-    if (def.key !== 'ABASTECIMENTOS') {
+    // ✅ Meta Mensal do Motorista com "todos": não precisa escolher um motorista específico
+    const pulaValidacaoMotorista = def.key === 'META_MENSAL_MOTORISTA' && this.form.todosMotoristas;
+    if (def.key !== 'ABASTECIMENTOS' && !pulaValidacaoMotorista) {
       if (def.needsCaminhao && !this.form.codigoCaminhao) return 'Selecione um caminhão.';
       if (def.needsMotorista && !this.form.codigoMotorista) return 'Selecione um motorista.';
     }
@@ -465,7 +473,9 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
         break;
 
       case 'META_MENSAL_MOTORISTA':
-        req$ = this.api.metaMensalMotorista(this.form.codigoMotorista, this.form.inicio, this.form.fim);
+        req$ = this.form.todosMotoristas
+          ? this.api.metaMensalTodosMotoristas(this.form.inicio, this.form.fim)
+          : this.api.metaMensalMotorista(this.form.codigoMotorista, this.form.inicio, this.form.fim);
         break;
 
       default:
