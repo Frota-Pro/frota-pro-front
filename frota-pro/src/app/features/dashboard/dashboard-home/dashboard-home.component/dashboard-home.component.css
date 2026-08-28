@@ -652,9 +652,47 @@
 
 .overview-card {
   border: 1px solid rgba(15, 23, 42, 0.08);
+  border-left: 4px solid rgba(15, 23, 42, 0.16);
   border-radius: 12px;
   padding: 14px;
   background: rgba(15, 23, 42, 0.015);
+}
+
+.overview-card.nivel-ok { border-left-color: #10b981; }
+.overview-card.nivel-atencao { border-left-color: #f59e0b; }
+.overview-card.nivel-critico { border-left-color: #ef4444; }
+
+.nivel-pill {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 750;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.nivel-critico .nivel-pill { background: rgba(239, 68, 68, 0.14); color: #b91c1c; }
+.nivel-atencao .nivel-pill { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+
+.ok-icon {
+  color: #10b981;
+  font-size: 11px;
+  margin-right: 5px;
+}
+
+.pct {
+  font-size: 10.5px;
+  font-weight: 650;
+  color: rgba(15, 23, 42, 0.45);
+}
+
+.status-bars-sub {
+  font-weight: 400;
+  font-size: 11.5px;
+  color: rgba(15, 23, 42, 0.5);
 }
 
 .overview-card h3 {
@@ -736,7 +774,7 @@
 
 .status-bar-row {
   display: grid;
-  grid-template-columns: 110px 1fr 34px;
+  grid-template-columns: 110px 1fr 76px;
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
@@ -778,5 +816,5 @@
 
 @media (max-width: 640px) {
   .overview-grid { grid-template-columns: 1fr; }
-  .status-bar-row { grid-template-columns: 90px 1fr 30px; }
+  .status-bar-row { grid-template-columns: 90px 1fr 64px; }
 }
