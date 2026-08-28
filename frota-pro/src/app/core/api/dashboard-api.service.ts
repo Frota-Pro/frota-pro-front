@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
-import { DashboardMetasResponse, DashboardResumoResponse, SaudeSistemaResponse } from './dashboard-api.models';
+import { DashboardMetasResponse, DashboardResumoResponse, DashboardVisaoGeralResponse, SaudeSistemaResponse } from './dashboard-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardApiService extends BaseApiService {
@@ -15,6 +15,10 @@ export class DashboardApiService extends BaseApiService {
 
   getMetas() {
     return this.http.get<DashboardMetasResponse>(`${this.apiUrl}/dashboard/metas`);
+  }
+
+  getVisaoGeral() {
+    return this.http.get<DashboardVisaoGeralResponse>(`${this.apiUrl}/dashboard/visao-geral`);
   }
 
   getSaudeSistema(inicio?: string | null, fim?: string | null) {
