@@ -314,20 +314,132 @@
       </div>
     </section>
 
-    <!-- Placeholder -->
+    <!-- Visão geral operacional -->
     <section class="below">
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h2 class="panel-title">Indicadores de Performance</h2>
-            <p class="panel-subtitle">Visão geral do desempenho operacional</p>
+            <h2 class="panel-title">Visão Geral</h2>
+            <p class="panel-subtitle">Alertas, frota, manutenção e multas de relance</p>
           </div>
+          <button class="link-btn" type="button" (click)="carregarVisaoGeral()">
+            Atualizar <i class="fas fa-rotate"></i>
+          </button>
         </div>
 
-        <div class="empty">
-          <div class="empty-title">Em breve</div>
-          <div class="empty-sub">Aqui entraremos com gráficos e análises (refatorado em componentes).</div>
+        <div class="empty" *ngIf="visaoGeralLoading">
+          <div class="empty-title">Carregando</div>
+          <div class="empty-sub">Buscando indicadores operacionais.</div>
         </div>
+
+        <div class="empty" *ngIf="!visaoGeralLoading && visaoGeralError">
+          <div class="empty-title">{{ visaoGeralError }}</div>
+        </div>
+
+        <ng-container *ngIf="!visaoGeralLoading && !visaoGeralError && visaoGeral">
+          <div class="overview-grid">
+
+            <!-- Alertas -->
+            <div class="overview-card">
+              <h3><i class="fas fa-triangle-exclamation"></i> Alertas de vencimento</h3>
+              <div class="overview-row">
+                <span>CNH de motorista vencendo/vencida</span>
+                <strong [class.danger-text]="visaoGeral.alertas.cnhVencendo > 0">{{ visaoGeral.alertas.cnhVencendo }}</strong>
+              </div>
+              <div class="overview-row">
+                <span>Documento de caminhão vencendo/vencido</span>
+                <strong [class.danger-text]="visaoGeral.alertas.documentosCaminhaoVencendo > 0">{{ visaoGeral.alertas.documentosCaminhaoVencendo }}</strong>
+              </div>
+              <div class="overview-row">
+                <span>Manutenções paradas há muito tempo</span>
+                <strong [class.danger-text]="visaoGeral.manutencoes.atrasadas > 0">{{ visaoGeral.manutencoes.atrasadas }}</strong>
+              </div>
+            </div>
+
+            <!-- Pneus -->
+            <div class="overview-card">
+              <h3><i class="fas fa-circle-notch"></i> Vida útil dos pneus</h3>
+              <div class="overview-row">
+                <span>Vencidos (100% da meta de km)</span>
+                <strong [class.danger-text]="visaoGeral.pneus.vencidos > 0">{{ visaoGeral.pneus.vencidos }}</strong>
+              </div>
+              <div class="overview-row">
+                <span>Próximos do fim (85%+)</span>
+                <strong [class.warning-text]="visaoGeral.pneus.proximoFim > 0">{{ visaoGeral.pneus.proximoFim }}</strong>
+              </div>
+              <div class="overview-row">
+                <span>Dentro do esperado</span>
+                <strong>{{ visaoGeral.pneus.ok }}</strong>
+              </div>
+            </div>
+
+            <!-- Status da frota -->
+            <div class="overview-card">
+              <h3><i class="fas fa-truck"></i> Status da frota agora</h3>
+              <div class="overview-row">
+                <span>Disponíveis</span>
+                <strong class="success-text">{{ visaoGeral.frota.disponiveis }}</strong>
+              </div>
+              <div class="overview-row">
+                <span>Em rota</span>
+                <strong>{{ visaoGeral.frota.emRota }}</strong>
+              </div>
+              <div class="overview-row">
+                <span>Em manutenção</span>
+                <strong [class.warning-text]="visaoGeral.frota.emManutencao > 0">{{ visaoGeral.frota.emManutencao }}</strong>
+              </div>
+              <div class="overview-row muted-row">
+                <span>Total de caminhões ativos</span>
+                <strong>{{ visaoGeral.frota.totalAtivos }}</strong>
+              </div>
+            </div>
+
+            <!-- Manutenções e multas -->
+            <div class="overview-card">
+              <h3><i class="fas fa-wrench"></i> Manutenções e multas</h3>
+              <div class="overview-row">
+                <span>OS abertas</span>
+                <strong>{{ visaoGeral.manutencoes.abertas }}</strong>
+              </div>
+              <div class="overview-row">
+                <span>Multas pendentes</span>
+                <strong [class.danger-text]="visaoGeral.multas.pendentes > 0">{{ visaoGeral.multas.pendentes }}</strong>
+              </div>
+              <div class="overview-row" *ngIf="visaoGeral.multas.pendentes > 0">
+                <span>Valor total em aberto</span>
+                <strong>{{ formatMoneyBRL(visaoGeral.multas.valorTotal) }}</strong>
+              </div>
+              <div class="overview-row muted-row" *ngIf="visaoGeral.multas.prazoMaisProximo">
+                <span>Prazo mais próximo</span>
+                <strong>{{ formatDateBr(visaoGeral.multas.prazoMaisProximo) }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Consumo médio -->
+          <div class="overview-highlight">
+            <i class="fas fa-gas-pump"></i>
+            <div>
+              <strong>{{ visaoGeral.consumoMedioKmLMes | number:'1.2-2':'pt-BR' }} km/L</strong>
+              <span>Consumo médio da frota neste mês (km rodado ÷ litros abastecidos)</span>
+            </div>
+          </div>
+
+          <!-- Cargas por status -->
+          <div class="status-bars">
+            <h3>Cargas por status</h3>
+            <div class="status-bar-row" *ngFor="let c of visaoGeral.cargasPorStatus">
+              <span class="status-bar-label">{{ c.statusLabel }}</span>
+              <div class="status-bar-track">
+                <div class="status-bar-fill" [class.status-em-rota]="c.status === 'EM_ROTA'"
+                     [class.status-sincronizada]="c.status === 'SINCRONIZADA'"
+                     [class.status-finalizada]="c.status === 'FINALIZADA'"
+                     [style.width.%]="(c.total / maiorCargaPorStatus) * 100"></div>
+              </div>
+              <span class="status-bar-value">{{ c.total }}</span>
+            </div>
+          </div>
+        </ng-container>
       </div>
     </section>
   </ng-container>

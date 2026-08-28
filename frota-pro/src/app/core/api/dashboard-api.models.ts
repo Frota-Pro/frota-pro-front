@@ -42,6 +42,51 @@ export interface DashboardMetaCaminhaoDesempenho {
   metaAtingida?: boolean | null;
 }
 
+export interface DashboardAlertasResumo {
+  cnhVencendo: number;
+  documentosCaminhaoVencendo: number;
+}
+
+export interface DashboardPneusResumo {
+  vencidos: number;
+  proximoFim: number;
+  ok: number;
+}
+
+export interface DashboardFrotaResumo {
+  disponiveis: number;
+  emRota: number;
+  emManutencao: number;
+  totalAtivos: number;
+}
+
+export interface DashboardManutencoesResumo {
+  abertas: number;
+  atrasadas: number;
+}
+
+export interface DashboardMultasResumo {
+  pendentes: number;
+  valorTotal: number | null;
+  prazoMaisProximo: string | null;
+}
+
+export interface DashboardCargaStatusResumo {
+  status: string;
+  statusLabel: string;
+  total: number;
+}
+
+export interface DashboardVisaoGeralResponse {
+  alertas: DashboardAlertasResumo;
+  pneus: DashboardPneusResumo;
+  frota: DashboardFrotaResumo;
+  consumoMedioKmLMes: number | null;
+  manutencoes: DashboardManutencoesResumo;
+  multas: DashboardMultasResumo;
+  cargasPorStatus: DashboardCargaStatusResumo[];
+}
+
 export interface DashboardMetasResponse {
   metasAtivas: number;
   metasVencendo: number;
