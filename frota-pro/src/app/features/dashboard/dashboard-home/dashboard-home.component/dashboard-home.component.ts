@@ -163,28 +163,50 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
 
   /**
    * Ordena os 4 cards da Visão Geral pela gravidade do que mostram — quem tem
-   * mais itens em alerta (vermelho conta mais que amarelo) sobe pro topo.
-   * Usado com [style.order] no grid, então nada precisa mudar de posição no
-   * template — só a ordem visual muda conforme os números mudam.
+   * mais itens em alerta (vermelho conta mais que amarelo) sobe pro topo, e
+   * cada card ganha um nível (ok/atenção/crítico) pra pintar uma faixinha
+   * colorida na lateral. Usado com [style.order] no grid, então nada precisa
+   * mudar de posição no template — só a ordem e a cor mudam conforme os
+   * números mudam.
    */
-  get overviewOrder(): Record<'alertas' | 'pneus' | 'frota' | 'manutencoesMultas', number> {
-    const padrao = { alertas: 0, pneus: 1, frota: 2, manutencoesMultas: 3 };
+  get overviewMeta(): Record<'alertas' | 'pneus' | 'frota' | 'manutencoesMultas', { order: number; nivel: 'ok' | 'atencao' | 'critico' }> {
+    type Chave = 'alertas' | 'pneus' | 'frota' | 'manutencoesMultas';
+    const padrao: Record<Chave, { order: number; nivel: 'ok' | 'atencao' | 'critico' }> = {
+      alertas: { order: 0, nivel: 'ok' },
+      pneus: { order: 1, nivel: 'ok' },
+      frota: { order: 2, nivel: 'ok' },
+      manutencoesMultas: { order: 3, nivel: 'ok' },
+    };
     if (!this.visaoGeral) return padrao;
 
     const v = this.visaoGeral;
-    const severidade = {
+    const severidade: Record<Chave, number> = {
       alertas: v.alertas.cnhVencendo * 3 + v.alertas.documentosCaminhaoVencendo * 3 + v.manutencoes.atrasadas * 3,
       pneus: v.pneus.vencidos * 3 + v.pneus.proximoFim * 1,
       frota: v.frota.emManutencao * 1,
       manutencoesMultas: v.multas.pendentes * 3,
     };
 
-    const ordenado = (Object.keys(severidade) as Array<keyof typeof severidade>)
-      .sort((a, b) => severidade[b] - severidade[a]);
+    const ordenado = (Object.keys(severidade) as Chave[]).sort((a, b) => severidade[b] - severidade[a]);
 
-    const resultado = {} as Record<'alertas' | 'pneus' | 'frota' | 'manutencoesMultas', number>;
-    ordenado.forEach((chave, indice) => (resultado[chave] = indice));
+    const resultado = {} as Record<Chave, { order: number; nivel: 'ok' | 'atencao' | 'critico' }>;
+    ordenado.forEach((chave, indice) => {
+      const score = severidade[chave];
+      const nivel = score === 0 ? 'ok' : score <= 5 ? 'atencao' : 'critico';
+      resultado[chave] = { order: indice, nivel };
+    });
     return resultado;
+  }
+
+  /** % de um valor sobre um total, formatado — usado nas linhas de "Status da frota" e nas barras de cargas por status. */
+  formatPercentOf(valor: number, total: number): string {
+    if (!total) return '0%';
+    return `${Math.round((valor / total) * 100)}%`;
+  }
+
+  get totalCargasPorStatus(): number {
+    if (!this.visaoGeral?.cargasPorStatus?.length) return 0;
+    return this.visaoGeral.cargasPorStatus.reduce((soma, c) => soma + c.total, 0);
   }
 
   formatDateBr(value: string | null | undefined): string {

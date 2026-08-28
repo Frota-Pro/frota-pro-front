@@ -340,53 +340,74 @@
           <div class="overview-grid">
 
             <!-- Alertas -->
-            <div class="overview-card" [style.order]="overviewOrder.alertas">
-              <h3><i class="fas fa-triangle-exclamation"></i> Alertas de vencimento</h3>
+            <div class="overview-card" [class]="'nivel-' + overviewMeta.alertas.nivel" [style.order]="overviewMeta.alertas.order">
+              <h3>
+                <i class="fas fa-triangle-exclamation"></i> Alertas de vencimento
+                <span class="nivel-pill">{{ overviewMeta.alertas.nivel === 'ok' ? 'Tudo em dia' : overviewMeta.alertas.nivel === 'atencao' ? 'Atenção' : 'Crítico' }}</span>
+              </h3>
               <div class="overview-row">
                 <span>CNH de motorista vencendo/vencida</span>
-                <strong [class.danger-text]="visaoGeral.alertas.cnhVencendo > 0">{{ visaoGeral.alertas.cnhVencendo }}</strong>
+                <strong [class.danger-text]="visaoGeral.alertas.cnhVencendo > 0">
+                  <i class="fas fa-circle-check ok-icon" *ngIf="visaoGeral.alertas.cnhVencendo === 0"></i>{{ visaoGeral.alertas.cnhVencendo }}
+                </strong>
               </div>
               <div class="overview-row">
                 <span>Documento de caminhão vencendo/vencido</span>
-                <strong [class.danger-text]="visaoGeral.alertas.documentosCaminhaoVencendo > 0">{{ visaoGeral.alertas.documentosCaminhaoVencendo }}</strong>
+                <strong [class.danger-text]="visaoGeral.alertas.documentosCaminhaoVencendo > 0">
+                  <i class="fas fa-circle-check ok-icon" *ngIf="visaoGeral.alertas.documentosCaminhaoVencendo === 0"></i>{{ visaoGeral.alertas.documentosCaminhaoVencendo }}
+                </strong>
               </div>
               <div class="overview-row">
                 <span>Manutenções paradas há muito tempo</span>
-                <strong [class.danger-text]="visaoGeral.manutencoes.atrasadas > 0">{{ visaoGeral.manutencoes.atrasadas }}</strong>
+                <strong [class.danger-text]="visaoGeral.manutencoes.atrasadas > 0">
+                  <i class="fas fa-circle-check ok-icon" *ngIf="visaoGeral.manutencoes.atrasadas === 0"></i>{{ visaoGeral.manutencoes.atrasadas }}
+                </strong>
               </div>
             </div>
 
             <!-- Pneus -->
-            <div class="overview-card" [style.order]="overviewOrder.pneus">
-              <h3><i class="fas fa-circle-notch"></i> Vida útil dos pneus</h3>
+            <div class="overview-card" [class]="'nivel-' + overviewMeta.pneus.nivel" [style.order]="overviewMeta.pneus.order">
+              <h3>
+                <i class="fas fa-circle-notch"></i> Vida útil dos pneus
+                <span class="nivel-pill">{{ overviewMeta.pneus.nivel === 'ok' ? 'Tudo em dia' : overviewMeta.pneus.nivel === 'atencao' ? 'Atenção' : 'Crítico' }}</span>
+              </h3>
               <div class="overview-row">
                 <span>Vencidos (100% da meta de km)</span>
-                <strong [class.danger-text]="visaoGeral.pneus.vencidos > 0">{{ visaoGeral.pneus.vencidos }}</strong>
+                <strong [class.danger-text]="visaoGeral.pneus.vencidos > 0">
+                  <i class="fas fa-circle-check ok-icon" *ngIf="visaoGeral.pneus.vencidos === 0"></i>{{ visaoGeral.pneus.vencidos }}
+                </strong>
               </div>
               <div class="overview-row">
                 <span>Próximos do fim (85%+)</span>
-                <strong [class.warning-text]="visaoGeral.pneus.proximoFim > 0">{{ visaoGeral.pneus.proximoFim }}</strong>
+                <strong [class.warning-text]="visaoGeral.pneus.proximoFim > 0">
+                  <i class="fas fa-circle-check ok-icon" *ngIf="visaoGeral.pneus.proximoFim === 0"></i>{{ visaoGeral.pneus.proximoFim }}
+                </strong>
               </div>
-              <div class="overview-row">
+              <div class="overview-row muted-row">
                 <span>Dentro do esperado</span>
                 <strong>{{ visaoGeral.pneus.ok }}</strong>
               </div>
             </div>
 
             <!-- Status da frota -->
-            <div class="overview-card" [style.order]="overviewOrder.frota">
-              <h3><i class="fas fa-truck"></i> Status da frota agora</h3>
+            <div class="overview-card" [class]="'nivel-' + overviewMeta.frota.nivel" [style.order]="overviewMeta.frota.order">
+              <h3>
+                <i class="fas fa-truck"></i> Status da frota agora
+                <span class="nivel-pill">{{ overviewMeta.frota.nivel === 'ok' ? 'Tudo em dia' : overviewMeta.frota.nivel === 'atencao' ? 'Atenção' : 'Crítico' }}</span>
+              </h3>
               <div class="overview-row">
                 <span>Disponíveis</span>
-                <strong class="success-text">{{ visaoGeral.frota.disponiveis }}</strong>
+                <strong class="success-text">{{ visaoGeral.frota.disponiveis }} <small class="pct">({{ formatPercentOf(visaoGeral.frota.disponiveis, visaoGeral.frota.totalAtivos) }})</small></strong>
               </div>
               <div class="overview-row">
                 <span>Em rota</span>
-                <strong>{{ visaoGeral.frota.emRota }}</strong>
+                <strong>{{ visaoGeral.frota.emRota }} <small class="pct">({{ formatPercentOf(visaoGeral.frota.emRota, visaoGeral.frota.totalAtivos) }})</small></strong>
               </div>
               <div class="overview-row">
                 <span>Em manutenção</span>
-                <strong [class.warning-text]="visaoGeral.frota.emManutencao > 0">{{ visaoGeral.frota.emManutencao }}</strong>
+                <strong [class.warning-text]="visaoGeral.frota.emManutencao > 0">
+                  <i class="fas fa-circle-check ok-icon" *ngIf="visaoGeral.frota.emManutencao === 0"></i>{{ visaoGeral.frota.emManutencao }}
+                </strong>
               </div>
               <div class="overview-row muted-row">
                 <span>Total de caminhões ativos</span>
@@ -395,15 +416,20 @@
             </div>
 
             <!-- Manutenções e multas -->
-            <div class="overview-card" [style.order]="overviewOrder.manutencoesMultas">
-              <h3><i class="fas fa-wrench"></i> Manutenções e multas</h3>
+            <div class="overview-card" [class]="'nivel-' + overviewMeta.manutencoesMultas.nivel" [style.order]="overviewMeta.manutencoesMultas.order">
+              <h3>
+                <i class="fas fa-wrench"></i> Manutenções e multas
+                <span class="nivel-pill">{{ overviewMeta.manutencoesMultas.nivel === 'ok' ? 'Tudo em dia' : overviewMeta.manutencoesMultas.nivel === 'atencao' ? 'Atenção' : 'Crítico' }}</span>
+              </h3>
               <div class="overview-row">
                 <span>OS abertas</span>
                 <strong>{{ visaoGeral.manutencoes.abertas }}</strong>
               </div>
               <div class="overview-row">
                 <span>Multas pendentes</span>
-                <strong [class.danger-text]="visaoGeral.multas.pendentes > 0">{{ visaoGeral.multas.pendentes }}</strong>
+                <strong [class.danger-text]="visaoGeral.multas.pendentes > 0">
+                  <i class="fas fa-circle-check ok-icon" *ngIf="visaoGeral.multas.pendentes === 0"></i>{{ visaoGeral.multas.pendentes }}
+                </strong>
               </div>
               <div class="overview-row" *ngIf="visaoGeral.multas.pendentes > 0">
                 <span>Valor total em aberto</span>
@@ -427,7 +453,7 @@
 
           <!-- Cargas por status -->
           <div class="status-bars">
-            <h3>Cargas por status</h3>
+            <h3>Cargas por status <span class="status-bars-sub">— criadas este mês ({{ totalCargasPorStatus }} no total)</span></h3>
             <div class="status-bar-row" *ngFor="let c of visaoGeral.cargasPorStatus">
               <span class="status-bar-label">{{ c.statusLabel }}</span>
               <div class="status-bar-track">
@@ -436,7 +462,7 @@
                      [class.status-finalizada]="c.status === 'FINALIZADA'"
                      [style.width.%]="(c.total / maiorCargaPorStatus) * 100"></div>
               </div>
-              <span class="status-bar-value">{{ c.total }}</span>
+              <span class="status-bar-value">{{ c.total }} <small class="pct">({{ formatPercentOf(c.total, totalCargasPorStatus) }})</small></span>
             </div>
           </div>
         </ng-container>
