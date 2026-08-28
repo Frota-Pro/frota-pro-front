@@ -81,6 +81,17 @@ export class RelatorioPdfApiService extends BaseApiService {
     });
   }
 
+  /** Mesmo relatório, um por página, pra todo mundo de uma vez — um PDF só pra imprimir. */
+  metaMensalTodosMotoristas(inicio: string, fim: string) {
+    const params = new HttpParams().set('inicio', inicio).set('fim', fim);
+
+    return this.http.get(`${this.apiUrl}/relatorios/pdf/motorista/meta-mensal/todos`, {
+      params,
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
   // (quando você ativar no back)
   vidaUtilPneu(codigoCaminhao?: string, codigoPneu?: string) {
     let params = new HttpParams();
