@@ -161,6 +161,32 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     return Math.max(...this.visaoGeral.cargasPorStatus.map((c) => c.total), 1);
   }
 
+  /**
+   * Ordena os 4 cards da Visão Geral pela gravidade do que mostram — quem tem
+   * mais itens em alerta (vermelho conta mais que amarelo) sobe pro topo.
+   * Usado com [style.order] no grid, então nada precisa mudar de posição no
+   * template — só a ordem visual muda conforme os números mudam.
+   */
+  get overviewOrder(): Record<'alertas' | 'pneus' | 'frota' | 'manutencoesMultas', number> {
+    const padrao = { alertas: 0, pneus: 1, frota: 2, manutencoesMultas: 3 };
+    if (!this.visaoGeral) return padrao;
+
+    const v = this.visaoGeral;
+    const severidade = {
+      alertas: v.alertas.cnhVencendo * 3 + v.alertas.documentosCaminhaoVencendo * 3 + v.manutencoes.atrasadas * 3,
+      pneus: v.pneus.vencidos * 3 + v.pneus.proximoFim * 1,
+      frota: v.frota.emManutencao * 1,
+      manutencoesMultas: v.multas.pendentes * 3,
+    };
+
+    const ordenado = (Object.keys(severidade) as Array<keyof typeof severidade>)
+      .sort((a, b) => severidade[b] - severidade[a]);
+
+    const resultado = {} as Record<'alertas' | 'pneus' | 'frota' | 'manutencoesMultas', number>;
+    ordenado.forEach((chave, indice) => (resultado[chave] = indice));
+    return resultado;
+  }
+
   formatDateBr(value: string | null | undefined): string {
     if (!value) return '—';
     const [y, m, d] = value.slice(0, 10).split('-');

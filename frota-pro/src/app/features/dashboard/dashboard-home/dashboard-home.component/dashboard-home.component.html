@@ -340,7 +340,7 @@
           <div class="overview-grid">
 
             <!-- Alertas -->
-            <div class="overview-card">
+            <div class="overview-card" [style.order]="overviewOrder.alertas">
               <h3><i class="fas fa-triangle-exclamation"></i> Alertas de vencimento</h3>
               <div class="overview-row">
                 <span>CNH de motorista vencendo/vencida</span>
@@ -357,7 +357,7 @@
             </div>
 
             <!-- Pneus -->
-            <div class="overview-card">
+            <div class="overview-card" [style.order]="overviewOrder.pneus">
               <h3><i class="fas fa-circle-notch"></i> Vida útil dos pneus</h3>
               <div class="overview-row">
                 <span>Vencidos (100% da meta de km)</span>
@@ -374,7 +374,7 @@
             </div>
 
             <!-- Status da frota -->
-            <div class="overview-card">
+            <div class="overview-card" [style.order]="overviewOrder.frota">
               <h3><i class="fas fa-truck"></i> Status da frota agora</h3>
               <div class="overview-row">
                 <span>Disponíveis</span>
@@ -395,7 +395,7 @@
             </div>
 
             <!-- Manutenções e multas -->
-            <div class="overview-card">
+            <div class="overview-card" [style.order]="overviewOrder.manutencoesMultas">
               <h3><i class="fas fa-wrench"></i> Manutenções e multas</h3>
               <div class="overview-row">
                 <span>OS abertas</span>
