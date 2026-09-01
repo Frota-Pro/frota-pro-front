@@ -43,6 +43,10 @@ export class CargasListComponent implements OnInit, OnDestroy {
   inicio: string | null = null; // yyyy-MM-dd
   fim: string | null = null; // yyyy-MM-dd
 
+  // Ordenação por coluna (clique no cabeçalho da tabela)
+  sortField: 'numero' | 'motorista' | 'caminhao' | 'saida' | 'valor' | 'status' = 'saida';
+  sortDir: 'asc' | 'desc' = 'desc';
+
   rows: CargaMinResponse[] = [];
 
   // ===== Toasts =====
@@ -163,7 +167,7 @@ export class CargasListComponent implements OnInit, OnDestroy {
         fim: this.fim || null,
         page: this.page,
         size: this.size,
-        sort: 'dtSaida,desc',
+        sort: `${this.sortField},${this.sortDir}`,
       })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
@@ -207,6 +211,17 @@ export class CargasListComponent implements OnInit, OnDestroy {
     this.periodoErro = null;
     this.page = 0;
     this.toast('success', 'Filtros limpos.', 'Cargas', 1500);
+    this.carregarPagina();
+  }
+
+  sortBy(field: 'numero' | 'motorista' | 'caminhao' | 'saida' | 'valor' | 'status'): void {
+    if (this.sortField === field) {
+      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDir = 'asc';
+    }
+    this.page = 0;
     this.carregarPagina();
   }
 
