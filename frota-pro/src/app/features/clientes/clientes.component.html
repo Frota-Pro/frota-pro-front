@@ -1,0 +1,82 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>Clientes</h1>
+      <p>
+        Cadastro alimentado automaticamente pelas notas fiscais (XML) importadas —
+        manual ou via WinThor. Não tem cadastro/edição manual aqui: o dado vem sempre da nota.
+      </p>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input class="search"
+           [(ngModel)]="q"
+           (ngModelChange)="onSearchChange()"
+           (keyup.enter)="carregarPagina()"
+           placeholder="Buscar por nome, CNPJ/CPF ou cidade..." />
+    <button class="btn" type="button" (click)="limparBusca()" *ngIf="q">Limpar</button>
+    <span class="muted total" *ngIf="!loading">{{ totalElements }} cliente(s)</span>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="table-wrap" *ngIf="!loading; else loadingTpl">
+    <table class="table" *ngIf="rows.length > 0; else emptyTpl">
+      <thead>
+      <tr>
+        <th>Nome</th>
+        <th>CNPJ/CPF</th>
+        <th>Endereço</th>
+        <th>Contato</th>
+        <th>Atualizado</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let c of rows">
+        <td>
+          <strong>{{ c.nome }}</strong>
+          <div class="muted small" *ngIf="c.codigoExterno">Código WinThor: {{ c.codigoExterno }}</div>
+        </td>
+        <td class="mono">{{ formatarDocumento(c.documento) }}</td>
+        <td>{{ enderecoCompleto(c) }}</td>
+        <td>
+          <div *ngIf="c.telefone">{{ c.telefone }}</div>
+          <div *ngIf="c.email" class="muted small">{{ c.email }}</div>
+          <span *ngIf="!c.telefone && !c.email" class="muted">—</span>
+        </td>
+        <td class="muted small">{{ formatDateTime(c.atualizadoEm) }}</td>
+      </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyTpl>
+      <div class="empty">
+        <div class="icon">🏢</div>
+        <h3>Nenhum cliente encontrado</h3>
+        <p *ngIf="q">Tente outro termo de busca.</p>
+        <p *ngIf="!q">
+          Clientes aparecem aqui automaticamente conforme notas fiscais (XML) vão sendo
+          importadas — pelo upload manual numa carga, ou abrindo documentos fiscais de
+          cargas sincronizadas com o WinThor.
+        </p>
+      </div>
+    </ng-template>
+
+    <div class="pagination" *ngIf="totalPages > 0">
+      <button class="btn ghost" (click)="prevPage()" [disabled]="page <= 0">◀</button>
+      <div class="pageinfo">Página {{ page + 1 }} de {{ totalPages }}</div>
+      <button class="btn ghost" (click)="nextPage()" [disabled]="page + 1 >= totalPages">▶</button>
+    </div>
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Carregando...</span>
+    </div>
+  </ng-template>
+</div>

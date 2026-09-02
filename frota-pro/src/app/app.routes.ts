@@ -91,6 +91,14 @@ export const routes: Routes = [
       // mantém o link antigo funcionando (bookmarks, etc.)
       { path: 'rotas', redirectTo: 'roteirizacao', pathMatch: 'full' },
 
+      // Clientes (cadastro alimentado pelas notas fiscais/XML)
+      {
+        path: 'clientes',
+        loadComponent: () =>
+          import('./features/clientes/clientes.component')
+            .then(m => m.ClientesComponent),
+      },
+
       // Cargas
       {
         path: 'cargas',
