@@ -73,6 +73,17 @@
                    [(ngModel)]="form.intervaloMin" placeholder="Opcional" />
           </label>
 
+          <label class="row">
+            <span>Reforço diário (mês até hoje)</span>
+            <input class="input" type="time"
+                   [(ngModel)]="form.horarioReforcoMensal" />
+          </label>
+          <p class="muted">
+            Além da sincronização acima (só o dia de hoje), todo dia nesse horário o sistema
+            também sincroniza do dia 1 do mês até hoje — pega devolução/transferência do WinThor
+            lançada depois que a carga já tinha sido sincronizada.
+          </p>
+
           <div class="sep"></div>
 
           <label class="row">

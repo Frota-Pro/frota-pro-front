@@ -40,6 +40,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
   form: IntegracaoWinthorConfigUpdateRequest = {
     ativo: true,
     intervaloMin: null,
+    horarioReforcoMensal: '20:00',
     syncCaminhoes: true,
     syncMotoristas: true,
     syncCargas: true,
@@ -109,6 +110,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
           this.form = {
             ativo: cfg.ativo,
             intervaloMin: cfg.intervaloMin ?? null,
+            horarioReforcoMensal: this.toHoraMinuto(cfg.horarioReforcoMensal),
             syncCaminhoes: cfg.syncCaminhoes,
             syncMotoristas: cfg.syncMotoristas,
             syncCargas: cfg.syncCargas,
@@ -170,6 +172,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
     const payload: IntegracaoWinthorConfigUpdateRequest = {
       ativo: !!this.form.ativo,
       intervaloMin: this.form.intervaloMin ?? null,
+      horarioReforcoMensal: this.form.horarioReforcoMensal || '20:00',
       syncCaminhoes: !!this.form.syncCaminhoes,
       syncMotoristas: !!this.form.syncMotoristas,
       syncCargas: !!this.form.syncCargas,
@@ -187,6 +190,7 @@ export class WinthorComponent implements OnInit, OnDestroy {
           this.form = {
             ativo: cfg.ativo,
             intervaloMin: cfg.intervaloMin ?? null,
+            horarioReforcoMensal: this.toHoraMinuto(cfg.horarioReforcoMensal),
             syncCaminhoes: cfg.syncCaminhoes,
             syncMotoristas: cfg.syncMotoristas,
             syncCargas: cfg.syncCargas,
@@ -497,6 +501,11 @@ export class WinthorComponent implements OnInit, OnDestroy {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return iso;
     return d.toLocaleDateString('pt-BR');
+  }
+
+  /** API manda "HH:mm:ss" (LocalTime) — o <input type="time"> quer "HH:mm". */
+  private toHoraMinuto(v?: string | null): string {
+    return (v || '20:00:00').slice(0, 5);
   }
 
   private todayISO(): string {
