@@ -7,10 +7,12 @@
 
     <div class="actions">
       <button class="btn ghost" type="button" (click)="bootstrap()" [disabled]="loading">
+        <i class="fas" [class.fa-rotate]="!loading" [class.fa-spinner]="loading" [class.fa-spin]="loading"></i>
         {{ loading ? 'Carregando...' : 'Recarregar' }}
       </button>
 
       <button class="btn primary" type="button" (click)="saveConfig()" [disabled]="saving || loading">
+        <i class="fas" [class.fa-floppy-disk]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>
         {{ saving ? 'Salvando...' : 'Salvar configurações' }}
       </button>
     </div>
@@ -28,9 +30,15 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab" [class.active]="tab==='overview'" (click)="setTab('overview')" type="button">Visão geral</button>
-    <button class="tab" [class.active]="tab==='jobs'" (click)="setTab('jobs')" type="button">Jobs</button>
-    <button class="tab" [class.active]="tab==='logs'" (click)="setTab('logs')" type="button">Logs</button>
+    <button class="tab" [class.active]="tab==='overview'" (click)="setTab('overview')" type="button">
+      <i class="fas fa-gauge-high"></i> Visão geral
+    </button>
+    <button class="tab" [class.active]="tab==='jobs'" (click)="setTab('jobs')" type="button">
+      <i class="fas fa-list-check"></i> Jobs
+    </button>
+    <button class="tab" [class.active]="tab==='logs'" (click)="setTab('logs')" type="button">
+      <i class="fas fa-terminal"></i> Logs
+    </button>
   </div>
 
   <!-- ========================= -->
@@ -42,10 +50,11 @@
       <div class="card">
         <div class="card-h">
           <div>
-            <h3>Configuração</h3>
+            <h3><i class="fas fa-sliders card-icon"></i> Configuração</h3>
             <p class="muted">Liga/desliga automação e escolhe o que sincronizar.</p>
           </div>
           <span class="badge" [class.on]="form.ativo" [class.off]="!form.ativo">
+            <span class="status-dot"></span>
             {{ form.ativo ? 'ATIVA' : 'DESATIVADA' }}
           </span>
         </div>
@@ -53,69 +62,97 @@
         <div class="form">
           <label class="row row-stack">
             <span>Empresa ID</span>
-            <input class="input" type="text"
-                   [ngModel]="empresaId"
-                   (ngModelChange)="updateEmpresaId($event)"
-                   placeholder="Informe o identificador da empresa" />
+            <div class="input-wrap">
+              <i class="fas fa-building input-icon"></i>
+              <input class="input has-icon" type="text"
+                     [ngModel]="empresaId"
+                     (ngModelChange)="updateEmpresaId($event)"
+                     placeholder="Informe o identificador da empresa" />
+            </div>
           </label>
 
-          <label class="row">
-            <span>Sincronização automática</span>
-            <label class="switch">
-              <input type="checkbox" [(ngModel)]="form.ativo" />
-              <span class="slider"></span>
+          <div class="section">
+            <div class="section-title"><i class="fas fa-clock-rotate-left"></i> Automação</div>
+
+            <label class="row">
+              <span>Sincronização automática</span>
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="form.ativo" />
+                <span class="slider"></span>
+              </label>
             </label>
-          </label>
 
-          <label class="row">
-            <span>Intervalo (min)</span>
-            <input class="input" type="number" min="1" step="1"
-                   [(ngModel)]="form.intervaloMin" placeholder="Opcional" />
-          </label>
-
-          <div class="sep"></div>
-
-          <label class="row">
-            <span>Sincronizar Caminhões</span>
-            <label class="switch">
-              <input type="checkbox" [(ngModel)]="form.syncCaminhoes" />
-              <span class="slider"></span>
+            <label class="row">
+              <span>Intervalo (min)</span>
+              <input class="input" type="number" min="1" step="1"
+                     [(ngModel)]="form.intervaloMin" placeholder="Opcional" />
             </label>
-          </label>
 
-          <label class="row">
-            <span>Sincronizar Motoristas</span>
-            <label class="switch">
-              <input type="checkbox" [(ngModel)]="form.syncMotoristas" />
-              <span class="slider"></span>
+            <label class="row">
+              <span>Reforço diário (mês até hoje)</span>
+              <input class="input" type="time"
+                     [(ngModel)]="form.horarioReforcoMensal" />
             </label>
-          </label>
 
-          <label class="row">
-            <span>Sincronizar Cargas</span>
-            <label class="switch">
-              <input type="checkbox" [(ngModel)]="form.syncCargas" />
-              <span class="slider"></span>
+            <div class="info-note">
+              <i class="fas fa-circle-info"></i>
+              <span>
+                Além da sincronização acima (só o dia de hoje), todo dia nesse horário o sistema
+                também sincroniza do dia 1 do mês até hoje — pega devolução/transferência do WinThor
+                lançada depois que a carga já tinha sido sincronizada.
+              </span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title"><i class="fas fa-list-check"></i> O que sincronizar</div>
+
+            <label class="row">
+              <span><i class="fas fa-truck row-icon"></i> Caminhões</span>
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="form.syncCaminhoes" />
+                <span class="slider"></span>
+              </label>
             </label>
-          </label>
 
-          <label class="row row-stack">
-            <span>Códigos de Caminhões</span>
-            <input class="input" type="text"
-                   [(ngModel)]="codigosCaminhoesInput"
-                   placeholder="Ex.: 101, 102, 103" />
-          </label>
+            <label class="row">
+              <span><i class="fas fa-id-card row-icon"></i> Motoristas</span>
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="form.syncMotoristas" />
+                <span class="slider"></span>
+              </label>
+            </label>
 
-          <label class="row row-stack">
-            <span>Códigos de Motoristas</span>
-            <input class="input" type="text"
-                   [(ngModel)]="codigosMotoristasInput"
-                   placeholder="Ex.: 201, 202, 203" />
-          </label>
+            <label class="row">
+              <span><i class="fas fa-box row-icon"></i> Cargas</span>
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="form.syncCargas" />
+                <span class="slider"></span>
+              </label>
+            </label>
+          </div>
 
-          <p class="muted">
-            Para sincronizar todos, deixe os campos vazios. Para filtrar, preencha os códigos e salve.
-          </p>
+          <div class="section">
+            <div class="section-title"><i class="fas fa-filter"></i> Filtros (opcional)</div>
+
+            <label class="row row-stack">
+              <span>Códigos de Caminhões</span>
+              <input class="input" type="text"
+                     [(ngModel)]="codigosCaminhoesInput"
+                     placeholder="Ex.: 101, 102, 103" />
+            </label>
+
+            <label class="row row-stack">
+              <span>Códigos de Motoristas</span>
+              <input class="input" type="text"
+                     [(ngModel)]="codigosMotoristasInput"
+                     placeholder="Ex.: 201, 202, 203" />
+            </label>
+
+            <p class="muted small">
+              Para sincronizar todos, deixe os campos vazios. Para filtrar, preencha os códigos e salve.
+            </p>
+          </div>
 
           <div class="meta">
             <div class="meta-line">
@@ -134,48 +171,55 @@
       <div class="card">
         <div class="card-h">
           <div>
-            <h3>Status & Conectividade</h3>
+            <h3><i class="fas fa-satellite-dish card-icon"></i> Status & Conectividade</h3>
             <p class="muted">API → Integradora → Oracle (via actuator health).</p>
           </div>
           <button class="btn small" type="button" (click)="refreshStatus()" [disabled]="statusLoading">
+            <i class="fas" [class.fa-rotate]="!statusLoading" [class.fa-spinner]="statusLoading" [class.fa-spin]="statusLoading"></i>
             {{ statusLoading ? 'Verificando...' : 'Atualizar status' }}
           </button>
         </div>
 
-        <div class="status-grid">
-          <div class="status-item">
-            <div class="label muted">API</div>
-            <div class="value">
-              <span class="pill ok">UP</span>
-            </div>
+        <div class="pipeline">
+          <div class="pipeline-node">
+            <div class="pipeline-icon ok"><i class="fas fa-server"></i></div>
+            <div class="pipeline-label">API</div>
+            <span class="pill ok">UP</span>
           </div>
 
-          <div class="status-item">
-            <div class="label muted">Integradora</div>
-            <div class="value">
-              <span class="{{ pillClass(status?.integradoraOk) }}">{{ status?.integradoraStatus || 'UNKNOWN' }}</span>
-            </div>
+          <div class="pipeline-arrow" [class.err]="status && !status.integradoraOk">
+            <i class="fas fa-arrow-right"></i>
           </div>
 
-          <div class="status-item">
-            <div class="label muted">Oracle</div>
-            <div class="value">
-              <span class="{{ pillClass(status?.oracleOk) }}">{{ status?.oracleStatus || 'UNKNOWN' }}</span>
+          <div class="pipeline-node">
+            <div class="pipeline-icon" [class.ok]="status?.integradoraOk" [class.err]="status && !status.integradoraOk">
+              <i class="fas fa-diagram-project"></i>
             </div>
+            <div class="pipeline-label">Integradora</div>
+            <span class="{{ pillClass(status?.integradoraOk) }}">{{ status?.integradoraStatus || 'UNKNOWN' }}</span>
           </div>
 
-          <div class="status-item">
-            <div class="label muted">Latência</div>
-            <div class="value">
-              <span class="mono">{{ status?.latenciaMs != null ? (status?.latenciaMs + 'ms') : '-' }}</span>
-            </div>
+          <div class="pipeline-arrow" [class.err]="status && !status.oracleOk">
+            <i class="fas fa-arrow-right"></i>
           </div>
 
-          <div class="status-item">
-            <div class="label muted">Verificado</div>
-            <div class="value">
-              <span>{{ formatDateTime(status?.verificadoEm || null) }}</span>
+          <div class="pipeline-node">
+            <div class="pipeline-icon" [class.ok]="status?.oracleOk" [class.err]="status && !status.oracleOk">
+              <i class="fas fa-database"></i>
             </div>
+            <div class="pipeline-label">Oracle</div>
+            <span class="{{ pillClass(status?.oracleOk) }}">{{ status?.oracleStatus || 'UNKNOWN' }}</span>
+          </div>
+        </div>
+
+        <div class="status-meta">
+          <div class="meta-line">
+            <span class="muted"><i class="fas fa-gauge-high row-icon"></i> Latência</span>
+            <span class="mono">{{ status?.latenciaMs != null ? (status?.latenciaMs + 'ms') : '-' }}</span>
+          </div>
+          <div class="meta-line">
+            <span class="muted"><i class="fas fa-rotate row-icon"></i> Verificado</span>
+            <span>{{ formatDateTime(status?.verificadoEm || null) }}</span>
           </div>
         </div>
 
@@ -191,24 +235,28 @@
     <div class="card">
       <div class="card-h">
         <div>
-          <h3>Sincronização manual</h3>
+          <h3><i class="fas fa-arrows-rotate card-icon"></i> Sincronização manual</h3>
           <p class="muted">Dispara sincronização sob demanda e acompanha nos Jobs.</p>
         </div>
         <button class="btn ghost small" type="button" (click)="refreshJobs()" [disabled]="jobsLoading">
+          <i class="fas" [class.fa-rotate]="!jobsLoading" [class.fa-spinner]="jobsLoading" [class.fa-spin]="jobsLoading"></i>
           {{ jobsLoading ? 'Atualizando...' : 'Atualizar jobs' }}
         </button>
       </div>
 
       <div class="manual-grid">
         <div class="manual-box">
+          <div class="box-icon blue"><i class="fas fa-id-card"></i></div>
           <h4>Motoristas</h4>
           <p class="muted">Usa os códigos salvos na configuração (quando existirem).</p>
-          <button class="btn primary" type="button" (click)="syncMotoristas()" [disabled]="refreshing">
+          <button class="btn primary block" type="button" (click)="syncMotoristas()" [disabled]="refreshing">
+            <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
             {{ refreshing ? 'Enviando...' : 'Sincronizar motoristas' }}
           </button>
         </div>
 
         <div class="manual-box">
+          <div class="box-icon amber"><i class="fas fa-truck"></i></div>
           <h4>Caminhões</h4>
           <p class="muted">Usa os códigos salvos e permite filial opcional.</p>
 
@@ -216,12 +264,14 @@
             <input class="input" type="number" min="1" step="1"
                    [(ngModel)]="codFilial" placeholder="Cod. Filial (opcional)" />
             <button class="btn primary" type="button" (click)="syncCaminhoes()" [disabled]="refreshing">
+              <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
               {{ refreshing ? 'Enviando...' : 'Sincronizar caminhões' }}
             </button>
           </div>
         </div>
 
         <div class="manual-box">
+          <div class="box-icon purple"><i class="fas fa-box"></i></div>
           <h4>Cargas</h4>
           <p class="muted">Sincroniza por período, usando os códigos salvos.</p>
 
@@ -229,6 +279,7 @@
             <input class="input" type="date" [(ngModel)]="dataInicialCargas" />
             <input class="input" type="date" [(ngModel)]="dataFinalCargas" />
             <button class="btn primary" type="button" (click)="syncCargas()" [disabled]="refreshing">
+              <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
               {{ refreshing ? 'Enviando...' : 'Sincronizar cargas' }}
             </button>
           </div>
@@ -262,6 +313,7 @@
 
       <div class="right">
         <button class="btn ghost" type="button" (click)="refreshJobs()" [disabled]="jobsLoading">
+          <i class="fas" [class.fa-rotate]="!jobsLoading" [class.fa-spinner]="jobsLoading" [class.fa-spin]="jobsLoading"></i>
           {{ jobsLoading ? 'Atualizando...' : 'Atualizar' }}
         </button>
       </div>
@@ -272,7 +324,7 @@
       <div class="card">
         <div class="card-h">
           <div>
-            <h3>Pendentes / Processando</h3>
+            <h3><i class="fas fa-hourglass-half card-icon"></i> Pendentes / Processando</h3>
             <p class="muted">Fila ativa (Kafka + integradora).</p>
           </div>
           <span class="counter">{{ jobsPendente.length }}</span>
@@ -299,7 +351,7 @@
             </tr>
 
             <tr *ngIf="!jobsLoading && jobsPendente.length===0">
-              <td colspan="5" class="muted center">Sem pendências.</td>
+              <td colspan="5" class="muted center"><i class="fas fa-circle-check empty-row-icon"></i> Sem pendências.</td>
             </tr>
             </tbody>
           </table>
@@ -310,7 +362,7 @@
       <div class="card">
         <div class="card-h">
           <div>
-            <h3>Erros</h3>
+            <h3><i class="fas fa-triangle-exclamation card-icon"></i> Erros</h3>
             <p class="muted">Falhas de cargas podem ser reprocessadas.</p>
           </div>
           <span class="counter err">{{ jobsErro.length }}</span>
@@ -335,13 +387,13 @@
               <td class="truncate" [title]="r.mensagemErro || ''">{{ r.mensagemErro || '-' }}</td>
               <td class="right">
                 <button *ngIf="r.tipo === 'CARGAS'" class="btn small danger" type="button" (click)="retryJob(r)">
-                  Reprocessar
+                  <i class="fas fa-arrow-rotate-right"></i> Reprocessar
                 </button>
               </td>
             </tr>
 
             <tr *ngIf="!jobsLoading && jobsErro.length===0">
-              <td colspan="5" class="muted center">Nenhum erro.</td>
+              <td colspan="5" class="muted center"><i class="fas fa-circle-check empty-row-icon"></i> Nenhum erro.</td>
             </tr>
             </tbody>
           </table>
@@ -352,7 +404,7 @@
       <div class="card">
         <div class="card-h">
           <div>
-            <h3>Concluídos</h3>
+            <h3><i class="fas fa-circle-check card-icon"></i> Concluídos</h3>
             <p class="muted">Sincronizações finalizadas.</p>
           </div>
           <span class="counter ok">{{ jobsConcluido.length }}</span>
@@ -379,7 +431,7 @@
             </tr>
 
             <tr *ngIf="!jobsLoading && jobsConcluido.length===0">
-              <td colspan="5" class="muted center">Nenhum concluído.</td>
+              <td colspan="5" class="muted center"><i class="fas fa-inbox empty-row-icon"></i> Nenhum concluído.</td>
             </tr>
             </tbody>
           </table>
@@ -389,7 +441,8 @@
 
     <div class="note">
       <span class="muted">
-        A ação “Reprocessar” está disponível somente para jobs de carga com erro.
+        <i class="fas fa-circle-info row-icon"></i>
+        A ação "Reprocessar" está disponível somente para jobs de carga com erro.
       </span>
     </div>
   </ng-container>
@@ -423,15 +476,17 @@
 
       <div class="right">
         <button class="btn ghost" type="button" (click)="toggleAutoRefreshLogs()">
+          <i class="fas" [class.fa-toggle-on]="autoRefreshLogs" [class.fa-toggle-off]="!autoRefreshLogs"></i>
           {{ autoRefreshLogs ? 'Auto: ON' : 'Auto: OFF' }}
         </button>
 
         <button class="btn ghost" type="button" (click)="copyLogs()"
                 [disabled]="(filteredLogLines?.length||0)===0">
-          Copiar
+          <i class="fas fa-copy"></i> Copiar
         </button>
 
         <button class="btn primary" type="button" (click)="refreshLogs()" [disabled]="logsLoading">
+          <i class="fas" [class.fa-rotate]="!logsLoading" [class.fa-spinner]="logsLoading" [class.fa-spin]="logsLoading"></i>
           {{ logsLoading ? 'Atualizando...' : 'Atualizar' }}
         </button>
       </div>
@@ -440,7 +495,7 @@
     <div class="card">
       <div class="card-h">
         <div>
-          <h3>Logs — {{ logSource }}</h3>
+          <h3><i class="fas fa-terminal card-icon"></i> Logs — {{ logSource }}</h3>
           <p class="muted">
             Atualizado em: {{ formatDateTime(rawLogs?.fetchedAt || null) }}
             <span class="dot">•</span>
@@ -455,6 +510,7 @@
         <pre class="log-pre" *ngIf="(filteredLogLines?.length||0) > 0">{{ filteredLogLines.join('\n') }}</pre>
 
         <div class="empty" *ngIf="(filteredLogLines?.length||0) === 0">
+          <i class="fas fa-file-circle-question empty-icon-big"></i>
           <div class="empty-title">Sem logs para mostrar</div>
           <div class="muted">
             Troque a fonte, aumente o número de linhas ou limpe o filtro de busca.

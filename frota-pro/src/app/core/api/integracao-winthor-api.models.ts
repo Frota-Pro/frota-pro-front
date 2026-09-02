@@ -5,6 +5,8 @@ export interface IntegracaoWinthorConfigResponse {
   empresaId: string;
   ativo: boolean;
   intervaloMin: number | null;
+  /** Horário (HH:mm:ss) do reforço diário — sincroniza do dia 1 do mês até hoje, além do ciclo normal. */
+  horarioReforcoMensal: string | null;
   syncCaminhoes: boolean;
   syncMotoristas: boolean;
   syncCargas: boolean;
@@ -17,6 +19,7 @@ export interface IntegracaoWinthorConfigResponse {
 export interface IntegracaoWinthorConfigUpdateRequest {
   ativo?: boolean;
   intervaloMin?: number | null;
+  horarioReforcoMensal?: string | null;
   syncCaminhoes?: boolean;
   syncMotoristas?: boolean;
   syncCargas?: boolean;
