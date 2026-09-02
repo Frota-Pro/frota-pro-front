@@ -4,6 +4,18 @@ export interface ClienteCargaResponse {
   notas: string[];
 }
 
+/**
+ * Vincula uma nota fiscal (cliente + número) ao XML que a originou, quando
+ * cadastrada na mão via upload em vez de sincronizada do WinThor.
+ */
+export interface NotaFiscalArquivoResponse {
+  cliente: string;
+  nota: string;
+  arquivoId: string;
+  nomeArquivo?: string | null;
+  urlDownload: string;
+}
+
 export type StatusTransferenciaCarga = 'SEM_TRANSFERENCIA' | 'PENDENTE_SYNC' | 'CONCLUIDA';
 
 export interface CargaMinResponse {
@@ -54,6 +66,9 @@ export interface CargaResponse {
   diasAtraso?: number | null;
 
   clientes?: ClienteCargaResponse[];
+
+  /** Notas desta carga com o XML da NFe anexado (cadastradas na mão via upload). */
+  notasComArquivo?: NotaFiscalArquivoResponse[];
 
   statusCarga: string;
   transferenciaPendente?: boolean;

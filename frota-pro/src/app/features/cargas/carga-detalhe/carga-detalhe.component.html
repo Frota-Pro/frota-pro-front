@@ -320,6 +320,54 @@
           </div>
         </div>
 
+        <!-- Card: Cadastro manual de notas fiscais (upload de XML) -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Notas Fiscais — Cadastro Manual (XML)</h2>
+          </div>
+
+          <div class="card-body">
+            <p class="muted" style="margin: 0 0 12px;">
+              Pra quem não usa a integração WinThor (ou quer reforçar uma carga já sincronizada):
+              suba o(s) XML(s) da NFe já emitida em outro sistema — o sistema lê cliente, cidade,
+              número da nota, peso e valor sozinho. Não emite nem assina nota nenhuma.
+            </p>
+
+            <input type="file" accept=".xml" multiple (change)="onArquivosNotaXmlSelecionados($event)" />
+
+            <div class="notas" style="margin-top:10px" *ngIf="arquivosNotaXmlSelecionados.length > 0">
+              <span class="nota mono" *ngFor="let a of arquivosNotaXmlSelecionados">
+                {{ a.name }}
+                <button type="button" (click)="removerArquivoNotaXml(a)" title="Remover" style="margin-left:6px; cursor:pointer; border:none; background:none;">✕</button>
+              </span>
+            </div>
+
+            <div style="margin-top:12px;">
+              <button class="btn primary" type="button"
+                      [disabled]="arquivosNotaXmlSelecionados.length === 0 || enviandoNotasXml"
+                      (click)="enviarNotasXml()">
+                {{ enviandoNotasXml ? 'Importando...' : 'Importar notas fiscais' }}
+              </button>
+            </div>
+
+            <ng-container *ngIf="(carga?.notasComArquivo?.length || 0) > 0">
+              <h3 style="margin: 18px 0 8px; font-size: 13px;">XMLs já cadastrados nesta carga</h3>
+              <div class="clientes">
+                <div class="cliente" *ngFor="let n of carga?.notasComArquivo">
+                  <div class="cliente-head">
+                    <strong>{{ n.cliente }}</strong>
+                    <span class="pill">Nota {{ n.nota }}</span>
+                  </div>
+                  <button type="button" class="cliente-hint muted" style="border:none; background:none; cursor:pointer; text-decoration:underline; padding:0;"
+                          (click)="baixarArquivoNotaManual(n)">
+                    ⬇ Baixar {{ n.nomeArquivo || 'XML' }}
+                  </button>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
         <!-- Card: Paradas -->
         <div class="card">
           <div class="card-header">

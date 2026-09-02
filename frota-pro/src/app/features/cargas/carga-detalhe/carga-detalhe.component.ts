@@ -21,6 +21,7 @@ import { formatKgFromTon, parseNumberLike } from '../../../shared/utils/weight';
 import {
   CargaResponse,
   ClienteCargaResponse,
+  NotaFiscalArquivoResponse,
   numeroCargaSecundario,
   numeroCargaSecundarioLabel,
 } from '../../../core/api/carga-api.models';
@@ -106,6 +107,10 @@ export class CargaDetalheComponent implements OnInit {
 
   // ===== Clientes e Notas (agrupado por cidade) =====
   cidadeSelecionada: string | null = null;
+
+  // ===== Cadastro manual de notas fiscais (upload de XML) =====
+  arquivosNotaXmlSelecionados: File[] = [];
+  enviandoNotasXml = false;
 
   // ===== Toasts =====
   toasts: ToastItem[] = [];
@@ -701,6 +706,58 @@ export class CargaDetalheComponent implements OnInit {
         this.toast('error', this.mensagemErro(err, 'Não foi possível baixar o arquivo.'), 'Arquivo');
       },
     });
+  }
+
+  // =========================
+  // Cadastro manual de notas fiscais (upload de XML da NFe)
+  // =========================
+  onArquivosNotaXmlSelecionados(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const arquivos = input.files ? Array.from(input.files) : [];
+    this.arquivosNotaXmlSelecionados = arquivos.filter((a) => a.name.toLowerCase().endsWith('.xml'));
+
+    if (this.arquivosNotaXmlSelecionados.length < arquivos.length) {
+      this.toast('warning', 'Só arquivos .xml são aceitos — os demais foram ignorados.', 'Notas fiscais');
+    }
+  }
+
+  removerArquivoNotaXml(arquivo: File): void {
+    this.arquivosNotaXmlSelecionados = this.arquivosNotaXmlSelecionados.filter((a) => a !== arquivo);
+  }
+
+  baixarArquivoNotaManual(nota: NotaFiscalArquivoResponse): void {
+    this.arquivoApi.downloadBlob(nota.arquivoId).subscribe({
+      next: (blob) => this.baixarBlob(blob, nota.nomeArquivo || `NF_${nota.nota}.xml`),
+      error: (err) => {
+        console.error(err);
+        this.toast('error', this.mensagemErro(err, 'Não foi possível baixar o XML.'), 'Notas fiscais');
+      },
+    });
+  }
+
+  enviarNotasXml(): void {
+    if (!this.carga || this.arquivosNotaXmlSelecionados.length === 0) {
+      this.toast('warning', 'Selecione ao menos um arquivo XML de NFe.', 'Notas fiscais');
+      return;
+    }
+
+    this.enviandoNotasXml = true;
+
+    this.cargaApi
+      .importarNotasXml(this.carga.numeroCarga, this.arquivosNotaXmlSelecionados)
+      .pipe(finalize(() => (this.enviandoNotasXml = false)))
+      .subscribe({
+        next: () => {
+          const qtd = this.arquivosNotaXmlSelecionados.length;
+          this.arquivosNotaXmlSelecionados = [];
+          this.toast('success', `${qtd} nota(s) fiscal(is) importada(s) com sucesso.`, 'Notas fiscais');
+          this.carregar();
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', this.mensagemErro(err, 'Não foi possível importar as notas fiscais.'), 'Notas fiscais');
+        },
+      });
   }
 
   // =========================

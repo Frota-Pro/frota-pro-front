@@ -4,6 +4,7 @@ import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
 import {
   CargaMinResponse,
+  CargaRequest,
   CargaResponse,
   RelatorioCargasSumidasWinThorResponse,
   TransferirMotoristaCargaRequest
@@ -108,5 +109,26 @@ export class CargaApiService extends BaseApiService {
     if (opts.sort) params = params.set('sort', opts.sort);
 
     return this.http.get<PageResponse<CargaResponse>>(`${this.apiUrl}/carga/motorista`, { params });
+  }
+
+  /** POST {{host}}/carga — cadastro manual de carga (independente de integração). */
+  criar(request: CargaRequest) {
+    return this.http.post<CargaResponse>(`${this.apiUrl}/carga`, request);
+  }
+
+  /**
+   * POST {{host}}/carga/{numeroCarga}/notas/xml (multipart) — lê o(s) XML(s)
+   * de NFe já emitidos em outro sistema e cadastra cliente/cidade/nota/peso/
+   * valor na carga. Não emite nem assina nota nenhuma, só lê o que o XML
+   * já traz pronto.
+   */
+  importarNotasXml(numeroCarga: string, arquivos: File[]) {
+    const formData = new FormData();
+    arquivos.forEach((arquivo) => formData.append('arquivos', arquivo, arquivo.name));
+
+    return this.http.post<CargaResponse>(
+      `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/notas/xml`,
+      formData
+    );
   }
 }
