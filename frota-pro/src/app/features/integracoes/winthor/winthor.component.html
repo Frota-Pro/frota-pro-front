@@ -7,10 +7,12 @@
 
     <div class="actions">
       <button class="btn ghost" type="button" (click)="bootstrap()" [disabled]="loading">
+        <i class="fas" [class.fa-rotate]="!loading" [class.fa-spinner]="loading" [class.fa-spin]="loading"></i>
         {{ loading ? 'Carregando...' : 'Recarregar' }}
       </button>
 
       <button class="btn primary" type="button" (click)="saveConfig()" [disabled]="saving || loading">
+        <i class="fas" [class.fa-floppy-disk]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>
         {{ saving ? 'Salvando...' : 'Salvar configurações' }}
       </button>
     </div>
@@ -28,9 +30,15 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab" [class.active]="tab==='overview'" (click)="setTab('overview')" type="button">Visão geral</button>
-    <button class="tab" [class.active]="tab==='jobs'" (click)="setTab('jobs')" type="button">Jobs</button>
-    <button class="tab" [class.active]="tab==='logs'" (click)="setTab('logs')" type="button">Logs</button>
+    <button class="tab" [class.active]="tab==='overview'" (click)="setTab('overview')" type="button">
+      <i class="fas fa-gauge-high"></i> Visão geral
+    </button>
+    <button class="tab" [class.active]="tab==='jobs'" (click)="setTab('jobs')" type="button">
+      <i class="fas fa-list-check"></i> Jobs
+    </button>
+    <button class="tab" [class.active]="tab==='logs'" (click)="setTab('logs')" type="button">
+      <i class="fas fa-terminal"></i> Logs
+    </button>
   </div>
 
   <!-- ========================= -->
@@ -46,6 +54,7 @@
             <p class="muted">Liga/desliga automação e escolhe o que sincronizar.</p>
           </div>
           <span class="badge" [class.on]="form.ativo" [class.off]="!form.ativo">
+            <span class="status-dot"></span>
             {{ form.ativo ? 'ATIVA' : 'DESATIVADA' }}
           </span>
         </div>
@@ -53,10 +62,13 @@
         <div class="form">
           <label class="row row-stack">
             <span>Empresa ID</span>
-            <input class="input" type="text"
-                   [ngModel]="empresaId"
-                   (ngModelChange)="updateEmpresaId($event)"
-                   placeholder="Informe o identificador da empresa" />
+            <div class="input-wrap">
+              <i class="fas fa-building input-icon"></i>
+              <input class="input has-icon" type="text"
+                     [ngModel]="empresaId"
+                     (ngModelChange)="updateEmpresaId($event)"
+                     placeholder="Informe o identificador da empresa" />
+            </div>
           </label>
 
           <div class="section">
@@ -163,6 +175,7 @@
             <p class="muted">API → Integradora → Oracle (via actuator health).</p>
           </div>
           <button class="btn small" type="button" (click)="refreshStatus()" [disabled]="statusLoading">
+            <i class="fas" [class.fa-rotate]="!statusLoading" [class.fa-spinner]="statusLoading" [class.fa-spin]="statusLoading"></i>
             {{ statusLoading ? 'Verificando...' : 'Atualizar status' }}
           </button>
         </div>
@@ -226,40 +239,47 @@
           <p class="muted">Dispara sincronização sob demanda e acompanha nos Jobs.</p>
         </div>
         <button class="btn ghost small" type="button" (click)="refreshJobs()" [disabled]="jobsLoading">
+          <i class="fas" [class.fa-rotate]="!jobsLoading" [class.fa-spinner]="jobsLoading" [class.fa-spin]="jobsLoading"></i>
           {{ jobsLoading ? 'Atualizando...' : 'Atualizar jobs' }}
         </button>
       </div>
 
       <div class="manual-grid">
         <div class="manual-box">
-          <h4><i class="fas fa-id-card row-icon"></i> Motoristas</h4>
+          <div class="box-icon blue"><i class="fas fa-id-card"></i></div>
+          <h4>Motoristas</h4>
           <p class="muted">Usa os códigos salvos na configuração (quando existirem).</p>
-          <button class="btn primary" type="button" (click)="syncMotoristas()" [disabled]="refreshing">
+          <button class="btn primary block" type="button" (click)="syncMotoristas()" [disabled]="refreshing">
+            <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
             {{ refreshing ? 'Enviando...' : 'Sincronizar motoristas' }}
           </button>
         </div>
 
         <div class="manual-box">
-          <h4><i class="fas fa-truck row-icon"></i> Caminhões</h4>
+          <div class="box-icon amber"><i class="fas fa-truck"></i></div>
+          <h4>Caminhões</h4>
           <p class="muted">Usa os códigos salvos e permite filial opcional.</p>
 
           <div class="inline">
             <input class="input" type="number" min="1" step="1"
                    [(ngModel)]="codFilial" placeholder="Cod. Filial (opcional)" />
             <button class="btn primary" type="button" (click)="syncCaminhoes()" [disabled]="refreshing">
+              <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
               {{ refreshing ? 'Enviando...' : 'Sincronizar caminhões' }}
             </button>
           </div>
         </div>
 
         <div class="manual-box">
-          <h4><i class="fas fa-box row-icon"></i> Cargas</h4>
+          <div class="box-icon purple"><i class="fas fa-box"></i></div>
+          <h4>Cargas</h4>
           <p class="muted">Sincroniza por período, usando os códigos salvos.</p>
 
           <div class="inline">
             <input class="input" type="date" [(ngModel)]="dataInicialCargas" />
             <input class="input" type="date" [(ngModel)]="dataFinalCargas" />
             <button class="btn primary" type="button" (click)="syncCargas()" [disabled]="refreshing">
+              <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
               {{ refreshing ? 'Enviando...' : 'Sincronizar cargas' }}
             </button>
           </div>
@@ -293,6 +313,7 @@
 
       <div class="right">
         <button class="btn ghost" type="button" (click)="refreshJobs()" [disabled]="jobsLoading">
+          <i class="fas" [class.fa-rotate]="!jobsLoading" [class.fa-spinner]="jobsLoading" [class.fa-spin]="jobsLoading"></i>
           {{ jobsLoading ? 'Atualizando...' : 'Atualizar' }}
         </button>
       </div>
@@ -330,7 +351,7 @@
             </tr>
 
             <tr *ngIf="!jobsLoading && jobsPendente.length===0">
-              <td colspan="5" class="muted center">Sem pendências.</td>
+              <td colspan="5" class="muted center"><i class="fas fa-circle-check empty-row-icon"></i> Sem pendências.</td>
             </tr>
             </tbody>
           </table>
@@ -366,13 +387,13 @@
               <td class="truncate" [title]="r.mensagemErro || ''">{{ r.mensagemErro || '-' }}</td>
               <td class="right">
                 <button *ngIf="r.tipo === 'CARGAS'" class="btn small danger" type="button" (click)="retryJob(r)">
-                  Reprocessar
+                  <i class="fas fa-arrow-rotate-right"></i> Reprocessar
                 </button>
               </td>
             </tr>
 
             <tr *ngIf="!jobsLoading && jobsErro.length===0">
-              <td colspan="5" class="muted center">Nenhum erro.</td>
+              <td colspan="5" class="muted center"><i class="fas fa-circle-check empty-row-icon"></i> Nenhum erro.</td>
             </tr>
             </tbody>
           </table>
@@ -410,7 +431,7 @@
             </tr>
 
             <tr *ngIf="!jobsLoading && jobsConcluido.length===0">
-              <td colspan="5" class="muted center">Nenhum concluído.</td>
+              <td colspan="5" class="muted center"><i class="fas fa-inbox empty-row-icon"></i> Nenhum concluído.</td>
             </tr>
             </tbody>
           </table>
@@ -420,7 +441,8 @@
 
     <div class="note">
       <span class="muted">
-        A ação “Reprocessar” está disponível somente para jobs de carga com erro.
+        <i class="fas fa-circle-info row-icon"></i>
+        A ação "Reprocessar" está disponível somente para jobs de carga com erro.
       </span>
     </div>
   </ng-container>
@@ -454,15 +476,17 @@
 
       <div class="right">
         <button class="btn ghost" type="button" (click)="toggleAutoRefreshLogs()">
+          <i class="fas" [class.fa-toggle-on]="autoRefreshLogs" [class.fa-toggle-off]="!autoRefreshLogs"></i>
           {{ autoRefreshLogs ? 'Auto: ON' : 'Auto: OFF' }}
         </button>
 
         <button class="btn ghost" type="button" (click)="copyLogs()"
                 [disabled]="(filteredLogLines?.length||0)===0">
-          Copiar
+          <i class="fas fa-copy"></i> Copiar
         </button>
 
         <button class="btn primary" type="button" (click)="refreshLogs()" [disabled]="logsLoading">
+          <i class="fas" [class.fa-rotate]="!logsLoading" [class.fa-spinner]="logsLoading" [class.fa-spin]="logsLoading"></i>
           {{ logsLoading ? 'Atualizando...' : 'Atualizar' }}
         </button>
       </div>
@@ -486,6 +510,7 @@
         <pre class="log-pre" *ngIf="(filteredLogLines?.length||0) > 0">{{ filteredLogLines.join('\n') }}</pre>
 
         <div class="empty" *ngIf="(filteredLogLines?.length||0) === 0">
+          <i class="fas fa-file-circle-question empty-icon-big"></i>
           <div class="empty-title">Sem logs para mostrar</div>
           <div class="muted">
             Troque a fonte, aumente o número de linhas ou limpe o filtro de busca.
