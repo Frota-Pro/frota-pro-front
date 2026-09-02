@@ -6,6 +6,7 @@ import {
   CargaMinResponse,
   CargaRequest,
   CargaResponse,
+  ImportarNotaFiscalResponse,
   RelatorioCargasSumidasWinThorResponse,
   TransferirMotoristaCargaRequest
 } from './carga-api.models';
@@ -126,7 +127,7 @@ export class CargaApiService extends BaseApiService {
     const formData = new FormData();
     arquivos.forEach((arquivo) => formData.append('arquivos', arquivo, arquivo.name));
 
-    return this.http.post<CargaResponse>(
+    return this.http.post<ImportarNotaFiscalResponse>(
       `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/notas/xml`,
       formData
     );

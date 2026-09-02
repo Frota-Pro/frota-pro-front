@@ -149,6 +149,14 @@ export interface CargaRequest {
   codigosAjudantes?: string[] | null;
 }
 
+/** Resultado de um upload de XML(s) de NFe — separa o que foi importado do que já existia. */
+export interface ImportarNotaFiscalResponse {
+  carga: CargaResponse;
+  notasNovas: number;
+  /** "Cliente — nota X", uma por nota que já existia e foi ignorada. */
+  notasJaExistentes: string[];
+}
+
 export interface TransferirMotoristaCargaRequest {
   codigoMotorista: string;
 }

@@ -747,10 +747,22 @@ export class CargaDetalheComponent implements OnInit {
       .importarNotasXml(this.carga.numeroCarga, this.arquivosNotaXmlSelecionados)
       .pipe(finalize(() => (this.enviandoNotasXml = false)))
       .subscribe({
-        next: () => {
-          const qtd = this.arquivosNotaXmlSelecionados.length;
+        next: (resultado) => {
           this.arquivosNotaXmlSelecionados = [];
-          this.toast('success', `${qtd} nota(s) fiscal(is) importada(s) com sucesso.`, 'Notas fiscais');
+
+          const { notasNovas, notasJaExistentes } = resultado;
+          if (notasJaExistentes.length === 0) {
+            this.toast('success', `${notasNovas} nota(s) fiscal(is) importada(s) com sucesso.`, 'Notas fiscais');
+          } else {
+            const lista = notasJaExistentes.join('; ');
+            this.toast(
+              'warning',
+              `${notasNovas} nota(s) nova(s) importada(s). ${notasJaExistentes.length} já existia(m) e foi(ram) ignorada(s): ${lista}.`,
+              'Notas fiscais',
+              7000
+            );
+          }
+
           this.carregar();
         },
         error: (err) => {
