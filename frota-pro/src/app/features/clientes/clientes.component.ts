@@ -5,7 +5,15 @@ import { finalize } from 'rxjs/operators';
 
 import { extrairMensagemErro } from '../../core/utils/api-error.util';
 import { ClienteApiService } from '../../core/api/cliente-api.service';
-import { ClienteResponse } from '../../core/api/cliente-api.models';
+import { ClienteRequest, ClienteResponse } from '../../core/api/cliente-api.models';
+
+type ToastType = 'success' | 'error' | 'info';
+
+interface ToastItem {
+  id: number;
+  type: ToastType;
+  message: string;
+}
 
 @Component({
   selector: 'app-clientes',
@@ -26,7 +34,18 @@ export class ClientesComponent implements OnInit {
 
   rows: ClienteResponse[] = [];
 
+  // ===== Toasts =====
+  toasts: ToastItem[] = [];
+  private toastSeq = 0;
+
   private searchDebounceTimer?: number;
+
+  // ===== Modal criar/editar =====
+  showModal = false;
+  modoEdicao = false;
+  salvando = false;
+  clienteEmEdicaoId: string | null = null;
+  form: ClienteRequest = this.formVazio();
 
   constructor(private api: ClienteApiService) {}
 
@@ -84,6 +103,96 @@ export class ClientesComponent implements OnInit {
     this.carregarPagina();
   }
 
+  // =========================
+  // Modal criar/editar
+  // =========================
+  abrirNovo(): void {
+    this.modoEdicao = false;
+    this.clienteEmEdicaoId = null;
+    this.form = this.formVazio();
+    this.showModal = true;
+  }
+
+  abrirEdicao(c: ClienteResponse): void {
+    this.modoEdicao = true;
+    this.clienteEmEdicaoId = c.id;
+    this.form = {
+      documento: c.documento,
+      nome: c.nome,
+      logradouro: c.logradouro,
+      numero: c.numero,
+      complemento: c.complemento,
+      bairro: c.bairro,
+      cidade: c.cidade,
+      uf: c.uf,
+      cep: c.cep,
+      telefone: c.telefone,
+      email: c.email,
+    };
+    this.showModal = true;
+  }
+
+  fecharModal(): void {
+    this.showModal = false;
+  }
+
+  salvar(): void {
+    if (!this.form.documento?.trim() || !this.form.nome?.trim()) {
+      this.toast('error', 'CNPJ/CPF e Nome são obrigatórios.');
+      return;
+    }
+
+    this.salvando = true;
+
+    const request$ = this.modoEdicao && this.clienteEmEdicaoId
+      ? this.api.atualizar(this.clienteEmEdicaoId, this.form)
+      : this.api.criar(this.form);
+
+    request$.pipe(finalize(() => (this.salvando = false))).subscribe({
+      next: () => {
+        this.toast('success', this.modoEdicao ? 'Cliente atualizado com sucesso.' : 'Cliente cadastrado com sucesso.');
+        this.showModal = false;
+        this.carregarPagina();
+      },
+      error: (err) => {
+        console.error(err);
+        this.toast('error', extrairMensagemErro(err, 'Não foi possível salvar o cliente.'));
+      },
+    });
+  }
+
+  private formVazio(): ClienteRequest {
+    return {
+      documento: '',
+      nome: '',
+      logradouro: '',
+      numero: '',
+      complemento: '',
+      bairro: '',
+      cidade: '',
+      uf: '',
+      cep: '',
+      telefone: '',
+      email: '',
+    };
+  }
+
+  // =========================
+  // Toasts
+  // =========================
+  toast(type: ToastType, message: string, ms = 4000): void {
+    const id = ++this.toastSeq;
+    this.toasts.push({ id, type, message });
+    window.setTimeout(() => this.dismissToast(id), ms);
+  }
+
+  dismissToast(id: number): void {
+    this.toasts = this.toasts.filter((t) => t.id !== id);
+  }
+
+  // =========================
+  // Formatação
+  // =========================
   enderecoCompleto(c: ClienteResponse): string {
     const partes = [
       c.logradouro,

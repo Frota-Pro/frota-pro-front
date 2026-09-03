@@ -15,3 +15,17 @@ export interface ClienteResponse {
   codigoExterno?: string | null;
   atualizadoEm?: string | null;
 }
+
+export interface ClienteRequest {
+  documento: string;
+  nome: string;
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  cep?: string | null;
+  telefone?: string | null;
+  email?: string | null;
+}

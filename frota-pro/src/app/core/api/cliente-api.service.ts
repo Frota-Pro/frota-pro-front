@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
-import { ClienteResponse } from './cliente-api.models';
+import { ClienteRequest, ClienteResponse } from './cliente-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class ClienteApiService extends BaseApiService {
@@ -23,5 +23,13 @@ export class ClienteApiService extends BaseApiService {
 
   buscarPorId(id: string) {
     return this.http.get<ClienteResponse>(`${this.apiUrl}/cliente/${encodeURIComponent(id)}`);
+  }
+
+  criar(request: ClienteRequest) {
+    return this.http.post<ClienteResponse>(`${this.apiUrl}/cliente`, request);
+  }
+
+  atualizar(id: string, request: ClienteRequest) {
+    return this.http.put<ClienteResponse>(`${this.apiUrl}/cliente/${encodeURIComponent(id)}`, request);
   }
 }

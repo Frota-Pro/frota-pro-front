@@ -1,14 +1,27 @@
 <div class="page">
+  <!-- Toasts -->
+  <div class="toast-wrap" aria-live="polite" aria-atomic="true">
+    <div class="toast"
+         *ngFor="let t of toasts"
+         [class.success]="t.type === 'success'"
+         [class.error]="t.type === 'error'"
+         [class.info]="t.type === 'info'">
+      <span>{{ t.message }}</span>
+      <button class="toast-x" type="button" (click)="dismissToast(t.id)">✕</button>
+    </div>
+  </div>
+
   <div class="header">
     <div>
       <h1>Clientes</h1>
       <p>
-        Cadastro alimentado automaticamente pelas notas fiscais (XML) importadas —
-        manual ou via WinThor. Não tem cadastro/edição manual aqui: o dado vem sempre da nota.
+        Alimentado automaticamente pelas notas fiscais (XML) importadas — manual ou via WinThor.
+        Também dá pra cadastrar ou editar na mão, sem depender de nenhuma nota.
       </p>
     </div>
     <div class="actions">
       <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
+      <button class="btn primary" type="button" (click)="abrirNovo()">+ Novo Cliente</button>
     </div>
   </div>
 
@@ -33,6 +46,7 @@
         <th>Endereço</th>
         <th>Contato</th>
         <th>Atualizado</th>
+        <th class="col-actions">Ações</th>
       </tr>
       </thead>
       <tbody>
@@ -49,6 +63,9 @@
           <span *ngIf="!c.telefone && !c.email" class="muted">—</span>
         </td>
         <td class="muted small">{{ formatDateTime(c.atualizadoEm) }}</td>
+        <td class="row-actions">
+          <button class="btn small" type="button" (click)="abrirEdicao(c)">Editar</button>
+        </td>
       </tr>
       </tbody>
     </table>
@@ -60,8 +77,7 @@
         <p *ngIf="q">Tente outro termo de busca.</p>
         <p *ngIf="!q">
           Clientes aparecem aqui automaticamente conforme notas fiscais (XML) vão sendo
-          importadas — pelo upload manual numa carga, ou abrindo documentos fiscais de
-          cargas sincronizadas com o WinThor.
+          importadas, ou cadastre um na mão pelo botão "+ Novo Cliente".
         </p>
       </div>
     </ng-template>
@@ -79,4 +95,82 @@
       <span>Carregando...</span>
     </div>
   </ng-template>
+
+  <!-- Modal criar/editar -->
+  <div class="backdrop" *ngIf="showModal" (click)="fecharModal()"></div>
+
+  <div class="modal" *ngIf="showModal">
+    <div class="modal-header">
+      <h2>{{ modoEdicao ? 'Editar cliente' : 'Novo cliente' }}</h2>
+      <button class="icon" type="button" (click)="fecharModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="row">
+        <div class="col">
+          <label>CNPJ/CPF *</label>
+          <input [(ngModel)]="form.documento" placeholder="Só números ou formatado" />
+        </div>
+        <div class="col">
+          <label>Nome *</label>
+          <input [(ngModel)]="form.nome" placeholder="Razão social / nome" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col" style="flex: 2">
+          <label>Logradouro</label>
+          <input [(ngModel)]="form.logradouro" placeholder="Rua, avenida..." />
+        </div>
+        <div class="col">
+          <label>Número</label>
+          <input [(ngModel)]="form.numero" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>Complemento</label>
+          <input [(ngModel)]="form.complemento" />
+        </div>
+        <div class="col">
+          <label>Bairro</label>
+          <input [(ngModel)]="form.bairro" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col" style="flex: 2">
+          <label>Cidade</label>
+          <input [(ngModel)]="form.cidade" />
+        </div>
+        <div class="col">
+          <label>UF</label>
+          <input [(ngModel)]="form.uf" maxlength="2" placeholder="PE" />
+        </div>
+        <div class="col">
+          <label>CEP</label>
+          <input [(ngModel)]="form.cep" placeholder="00000-000" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>Telefone</label>
+          <input [(ngModel)]="form.telefone" />
+        </div>
+        <div class="col">
+          <label>E-mail</label>
+          <input [(ngModel)]="form.email" type="email" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="fecharModal()">Cancelar</button>
+      <button class="btn primary" type="button" [disabled]="salvando" (click)="salvar()">
+        {{ salvando ? 'Salvando...' : (modoEdicao ? 'Salvar' : 'Cadastrar') }}
+      </button>
+    </div>
+  </div>
 </div>
