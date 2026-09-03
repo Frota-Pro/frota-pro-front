@@ -108,8 +108,11 @@
     <div class="modal-body">
       <div class="row">
         <div class="col">
-          <label>CNPJ/CPF *</label>
-          <input [(ngModel)]="form.documento" placeholder="Só números ou formatado" />
+          <label>
+            CNPJ/CPF *
+            <span class="hint" *ngIf="buscandoCnpj">buscando dados...</span>
+          </label>
+          <input [(ngModel)]="form.documento" (blur)="buscarCnpj()" placeholder="Só números ou formatado" />
         </div>
         <div class="col">
           <label>Nome *</label>

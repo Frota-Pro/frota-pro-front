@@ -29,3 +29,16 @@ export interface ClienteRequest {
   telefone?: string | null;
   email?: string | null;
 }
+
+/** Dados públicos de um CNPJ (Receita Federal via BrasilAPI), pra pré-preencher o cadastro. */
+export interface ConsultaCnpjResponse {
+  nome?: string | null;
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  cep?: string | null;
+  telefone?: string | null;
+}

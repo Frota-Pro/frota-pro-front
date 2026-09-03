@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
-import { ClienteRequest, ClienteResponse } from './cliente-api.models';
+import { ClienteRequest, ClienteResponse, ConsultaCnpjResponse } from './cliente-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class ClienteApiService extends BaseApiService {
@@ -31,5 +31,12 @@ export class ClienteApiService extends BaseApiService {
 
   atualizar(id: string, request: ClienteRequest) {
     return this.http.put<ClienteResponse>(`${this.apiUrl}/cliente/${encodeURIComponent(id)}`, request);
+  }
+
+  /** GET {{host}}/cliente/consulta-cnpj/{cnpj} — só consulta pública (Receita Federal), não salva nada. */
+  consultarCnpj(cnpj: string) {
+    return this.http.get<ConsultaCnpjResponse>(
+      `${this.apiUrl}/cliente/consulta-cnpj/${encodeURIComponent(cnpj)}`
+    );
   }
 }

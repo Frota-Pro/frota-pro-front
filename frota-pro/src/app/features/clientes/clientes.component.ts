@@ -44,6 +44,7 @@ export class ClientesComponent implements OnInit {
   showModal = false;
   modoEdicao = false;
   salvando = false;
+  buscandoCnpj = false;
   clienteEmEdicaoId: string | null = null;
   form: ClienteRequest = this.formVazio();
 
@@ -134,6 +135,43 @@ export class ClientesComponent implements OnInit {
 
   fecharModal(): void {
     this.showModal = false;
+  }
+
+  /**
+   * Disparado ao sair do campo CNPJ/CPF — se forem 14 dígitos (CNPJ),
+   * consulta a Receita Federal (BrasilAPI) e pré-preenche o resto do
+   * formulário. CPF (11 dígitos) não tem consulta pública, então não
+   * tenta. Nunca trava o cadastro: se a consulta falhar, só avisa e o
+   * usuário continua preenchendo na mão.
+   */
+  buscarCnpj(): void {
+    const digitos = (this.form.documento || '').replace(/\D/g, '');
+    if (digitos.length !== 14) {
+      return;
+    }
+
+    this.buscandoCnpj = true;
+    this.api
+      .consultarCnpj(digitos)
+      .pipe(finalize(() => (this.buscandoCnpj = false)))
+      .subscribe({
+        next: (dados) => {
+          this.form.nome = dados.nome || this.form.nome;
+          this.form.logradouro = dados.logradouro || this.form.logradouro;
+          this.form.numero = dados.numero || this.form.numero;
+          this.form.complemento = dados.complemento || this.form.complemento;
+          this.form.bairro = dados.bairro || this.form.bairro;
+          this.form.cidade = dados.cidade || this.form.cidade;
+          this.form.uf = dados.uf || this.form.uf;
+          this.form.cep = dados.cep || this.form.cep;
+          this.form.telefone = dados.telefone || this.form.telefone;
+          this.toast('success', 'Dados preenchidos a partir do CNPJ.');
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('info', extrairMensagemErro(err, 'Não foi possível buscar os dados desse CNPJ — preencha na mão.'));
+        },
+      });
   }
 
   salvar(): void {
