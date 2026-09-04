@@ -463,6 +463,13 @@ export class WinthorComponent implements OnInit, OnDestroy {
     return 'chip';
   }
 
+  /** "Reforço mensal" ganha destaque próprio — é o job que a maioria confunde com o automático normal. */
+  origemClass(origem?: string | null): string {
+    if (origem === 'Reforço mensal') return 'chip info';
+    if (origem === 'Manual' || origem === 'Reprocessado') return 'chip warn';
+    return 'chip';
+  }
+
   jobStatusLabel(status?: StatusSincronizacao | null): string {
     switch (status) {
       case 'PENDENTE':
