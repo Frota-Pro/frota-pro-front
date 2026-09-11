@@ -91,12 +91,26 @@ export const routes: Routes = [
       // mantém o link antigo funcionando (bookmarks, etc.)
       { path: 'rotas', redirectTo: 'roteirizacao', pathMatch: 'full' },
 
+      // Clientes (cadastro alimentado pelas notas fiscais/XML)
+      {
+        path: 'clientes',
+        loadComponent: () =>
+          import('./features/clientes/clientes.component')
+            .then(m => m.ClientesComponent),
+      },
+
       // Cargas
       {
         path: 'cargas',
         loadComponent: () =>
           import('./features/cargas/cargas-list/cargas-list.component')
             .then(m => m.CargasListComponent),
+      },
+      {
+        path: 'cargas/nova',
+        loadComponent: () =>
+          import('./features/cargas/carga-nova/carga-nova.component')
+            .then(m => m.CargaNovaComponent),
       },
       {
         path: 'cargas/:numeroCarga',

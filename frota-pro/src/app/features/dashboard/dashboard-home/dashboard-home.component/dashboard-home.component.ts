@@ -255,7 +255,7 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
 
   // --- Ações rápidas ---
   novaCarga() {
-    this.router.navigate(['/dashboard/cargas']);
+    this.router.navigate(['/dashboard/cargas/nova']);
   }
   novoAbastecimento() {
     this.router.navigate(['/dashboard/abastecimentos']);

@@ -34,6 +34,8 @@ export interface IntegracaoWinthorJobResponse {
   dataReferencia?: string | null;
   totalRegistros?: number | null;
   mensagemErro?: string | null;
+  /** "Automático", "Reforço mensal", "Manual" ou "Reprocessado" — só pra jobs de CARGAS. */
+  origem?: string | null;
   criadoEm?: string | null;
   atualizadoEm?: string | null;
 }

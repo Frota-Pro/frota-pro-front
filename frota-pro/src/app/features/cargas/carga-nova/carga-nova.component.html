@@ -1,0 +1,106 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>Nova Carga</h1>
+      <p>Cadastro manual — sem depender da sincronização com o WinThor.</p>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" type="button" (click)="cancelar()">Cancelar</button>
+      <button class="btn primary" type="button" (click)="salvar()" [disabled]="saving">
+        {{ saving ? 'Salvando...' : 'Salvar carga' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="alert" [class.err]="toast?.type==='error'" [class.ok]="toast?.type==='success'" *ngIf="toast">
+    {{ toast?.text }}
+  </div>
+
+  <div class="card">
+    <h3>Dados principais</h3>
+
+    <div class="grid">
+      <label class="field">
+        <span>Data de saída *</span>
+        <input class="input" type="date" [(ngModel)]="form.dtSaida" />
+      </label>
+
+      <label class="field">
+        <span>Data prevista de chegada *</span>
+        <input class="input" type="date" [(ngModel)]="form.dtPrevista" />
+      </label>
+
+      <label class="field">
+        <span>Data de chegada (opcional)</span>
+        <input class="input" type="date" [(ngModel)]="form.dtChegada" />
+      </label>
+    </div>
+
+    <div class="grid">
+      <label class="field autocomplete-field">
+        <span>Motorista *</span>
+        <div class="autocomplete">
+          <input class="input" type="text"
+                 placeholder="Nome, código ou CNH"
+                 [(ngModel)]="buscaMotorista"
+                 (ngModelChange)="onInputMotorista()"
+                 (focus)="onFocusMotorista()"
+                 (blur)="onBlurSugestao()"
+                 autocomplete="off" />
+          <ul class="suggest" *ngIf="showSugMotorista && sugestoesMotorista.length > 0">
+            <li *ngFor="let m of sugestoesMotorista" (mousedown)="selecionarMotorista(m)">
+              <strong>{{ m.codigo }}</strong>
+              <span>{{ m.nome }}</span>
+            </li>
+          </ul>
+        </div>
+        <small class="hint" *ngIf="form.codigoMotorista">Selecionado: {{ form.codigoMotorista }}</small>
+      </label>
+
+      <label class="field autocomplete-field">
+        <span>Caminhão *</span>
+        <div class="autocomplete">
+          <input class="input" type="text"
+                 placeholder="Placa, código ou descrição"
+                 [(ngModel)]="buscaCaminhao"
+                 (ngModelChange)="onInputCaminhao()"
+                 (focus)="onFocusCaminhao()"
+                 (blur)="onBlurSugestao()"
+                 autocomplete="off" />
+          <ul class="suggest" *ngIf="showSugCaminhao && sugestoesCaminhao.length > 0">
+            <li *ngFor="let c of sugestoesCaminhao" (mousedown)="selecionarCaminhao(c)">
+              <strong>{{ c.codigo }}</strong>
+              <span>{{ c.placa }}</span>
+              <small>{{ c.descricao }}</small>
+            </li>
+          </ul>
+        </div>
+        <small class="hint" *ngIf="form.codigoCaminhao">Selecionado: {{ form.codigoCaminhao }}</small>
+      </label>
+
+      <label class="field">
+        <span>Rota *</span>
+        <select class="input" [(ngModel)]="form.codigoRota">
+          <option value="" disabled>Selecione...</option>
+          <option *ngFor="let r of rotas" [value]="r.codigo">{{ r.codigo }} — {{ r.cidadeInicio }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="grid">
+      <label class="field">
+        <span>Km inicial (opcional)</span>
+        <input class="input" type="number" min="0" [(ngModel)]="form.kmInicial" />
+      </label>
+      <label class="field">
+        <span>Km final (opcional)</span>
+        <input class="input" type="number" min="0" [(ngModel)]="form.kmFinal" />
+      </label>
+    </div>
+
+    <p class="muted">
+      Peso e valor da carga não precisam ser preenchidos aqui — depois de criar,
+      suba o XML das notas fiscais na tela da carga e o sistema calcula sozinho.
+    </p>
+  </div>
+</div>
