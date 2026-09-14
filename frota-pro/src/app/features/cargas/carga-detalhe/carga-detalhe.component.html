@@ -986,7 +986,21 @@
           </label>
 
           <label class="f">
-            <span class="f-label">Posto</span>
+            <span class="f-label">Posto <span class="req">*</span></span>
+            <select
+              class="control"
+              [ngModel]="postoSelecionado"
+              (ngModelChange)="onSelecionarPostoCadastrado($event)"
+              name="postoSelecionado"
+            >
+              <option [ngValue]="null" disabled>Selecione...</option>
+              <option *ngFor="let p of postos" [ngValue]="p.codigo">{{ p.nome }}</option>
+              <option [ngValue]="kOutroPosto">Outro (digitar manualmente)</option>
+            </select>
+          </label>
+
+          <label class="f" *ngIf="usandoOutroPosto">
+            <span class="f-label">Nome do posto <span class="req">*</span></span>
             <input class="control" [(ngModel)]="paradaForm.abastecimento.posto" placeholder="Ex.: Posto X" />
           </label>
 
