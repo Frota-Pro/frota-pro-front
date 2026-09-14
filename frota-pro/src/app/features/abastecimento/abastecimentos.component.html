@@ -512,6 +512,24 @@
     </div>
   </div>
 
+  <!-- Confirmação de avisos do servidor (preço/valor fora do padrão, odômetro repetido) -->
+  <div class="ab-modal-overlay" *ngIf="showAvisosConfirm" (click)="cancelarAvisos()">
+    <div class="ab-confirm" (click)="$event.stopPropagation()">
+      <div class="ab-confirm__icon warn">
+        <i class="fas fa-triangle-exclamation"></i>
+      </div>
+
+      <h3 class="ab-confirm__title">Confira antes de continuar</h3>
+
+      <p class="ab-confirm__desc" *ngFor="let aviso of avisosPendentes">{{ aviso }}</p>
+
+      <div class="ab-confirm__actions">
+        <button class="ab-btn ghost" type="button" (click)="cancelarAvisos()">Corrigir</button>
+        <button class="ab-btn primary" type="button" (click)="confirmarAvisosPendentes()">Confirmar mesmo assim</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Confirmação de exclusão -->
   <div class="ab-modal-overlay" *ngIf="showDeleteConfirm" (click)="cancelarExclusao()">
     <div class="ab-confirm" (click)="$event.stopPropagation()">

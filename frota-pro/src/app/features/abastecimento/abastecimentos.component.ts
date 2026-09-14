@@ -922,7 +922,22 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     this.enviarAbastecimento();
   }
 
-  private enviarAbastecimento(): void {
+  // ===== Confirmação de avisos do servidor (preço/valor fora do padrão, odômetro repetido) =====
+  showAvisosConfirm = false;
+  avisosPendentes: string[] = [];
+
+  cancelarAvisos(): void {
+    this.showAvisosConfirm = false;
+    this.avisosPendentes = [];
+  }
+
+  confirmarAvisosPendentes(): void {
+    this.showAvisosConfirm = false;
+    this.avisosPendentes = [];
+    this.enviarAbastecimento(true);
+  }
+
+  private enviarAbastecimento(confirmarAvisos = false): void {
     const caminhaoIdent = String(this.novo?.caminhao?.codigo || this.novo?.caminhao?.placa || '').trim();
 
     const motoristaIdent = String(this.novo?.motorista?.nome || '').trim();
@@ -950,6 +965,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       cidade: this.novo.cidade || null,
       uf: (this.novo.uf || null) ? String(this.novo.uf).trim().toUpperCase() : null,
       numNotaOuCupom: this.novo.numNotaOuCupom || null,
+      confirmarAvisos,
     };
 
     this.carregando = true;
@@ -969,6 +985,12 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
           this.buscar(0);
         },
         error: (err) => {
+          const avisos: string[] | undefined = err?.error?.avisos;
+          if (err?.status === 409 && Array.isArray(avisos) && avisos.length > 0) {
+            this.avisosPendentes = avisos;
+            this.showAvisosConfirm = true;
+            return;
+          }
           this.toast.error(extrairMensagemErro(err, 'Falha ao salvar abastecimento.'));
         },
       });

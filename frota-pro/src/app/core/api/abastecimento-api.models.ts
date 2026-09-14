@@ -57,4 +57,14 @@ export interface AbastecimentoRequest {
   cidade?: string | null;
   uf?: string | null;
   numNotaOuCupom?: string | null;
+  /** true quando o usuário já viu os avisos (preço/valor fora do padrão, odômetro repetido) e confirmou mesmo assim. */
+  confirmarAvisos?: boolean;
+}
+
+/** Corpo do 409 quando o back recusa por algo fora do padrão — ver AbastecimentoRequerConfirmacaoException. */
+export interface AbastecimentoAvisoResponse {
+  timestamp: string;
+  status: number;
+  avisos: string[];
+  path: string;
 }

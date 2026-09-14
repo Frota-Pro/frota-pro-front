@@ -119,6 +119,13 @@ export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
+      // 409 de AbastecimentoRequerConfirmacaoException já tem um diálogo próprio
+      // (lista os avisos e deixa confirmar) — o toast genérico só duplicaria.
+      const avisos = (error.error as { avisos?: unknown } | null)?.avisos;
+      if (error.status === 409 && Array.isArray(avisos)) {
+        return throwError(() => error);
+      }
+
       // 401 é tratado no authErrorInterceptor (logout + redirect)
       if (error.status !== 401) {
         return from(resolveErrorMessage(error)).pipe(
