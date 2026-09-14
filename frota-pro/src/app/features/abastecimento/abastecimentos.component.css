@@ -316,6 +316,23 @@
   z-index: 2;
 }
 
+.list-header .sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.list-header .sortable:hover {
+  color: #1e5eff;
+}
+
+.sort-icon {
+  font-size: 9px;
+  color: #1e5eff;
+  margin-left: 2px;
+}
+
 .abaste-list {
   margin: 10px 0 0;
   padding: 0;

@@ -145,12 +145,18 @@
     </div>
 
     <div class="list-header" *ngIf="!carregando">
-      <span>Data</span>
+      <span class="sortable" (click)="sortBy('data')">
+        Data <span class="sort-icon" *ngIf="sortField === 'data'">{{ sortDir === 'asc' ? '▲' : '▼' }}</span>
+      </span>
       <span>Caminhão</span>
       <span>Motorista</span>
       <span>Combustível</span>
-      <span>Litros</span>
-      <span>Valor</span>
+      <span class="sortable" (click)="sortBy('litros')">
+        Litros <span class="sort-icon" *ngIf="sortField === 'litros'">{{ sortDir === 'asc' ? '▲' : '▼' }}</span>
+      </span>
+      <span class="sortable" (click)="sortBy('valor')">
+        Valor <span class="sort-icon" *ngIf="sortField === 'valor'">{{ sortDir === 'asc' ? '▲' : '▼' }}</span>
+      </span>
       <span>Posto</span>
       <span style="text-align:right;">Ações</span>
     </div>
