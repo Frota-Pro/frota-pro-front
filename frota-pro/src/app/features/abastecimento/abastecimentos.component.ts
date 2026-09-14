@@ -165,6 +165,9 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
   totalPages = 0;
   totalElements = 0;
 
+  sortField: 'data' | 'litros' | 'valor' = 'data';
+  sortDir: 'asc' | 'desc' = 'desc';
+
   abastecimentos: AbastecimentoVM[] = [];
 
   /** Totais calculados no back sobre TODOS os registros do filtro, não só a página atual. */
@@ -463,7 +466,7 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
     const filtro = this.buildFiltroParams();
 
     this.abastecimentoApi
-      .filtrar({ ...filtro, page: this.page, size: this.size, sort: 'dtAbastecimento,desc' })
+      .filtrar({ ...filtro, page: this.page, size: this.size, sort: `${this.sortField},${this.sortDir}` })
       .pipe(finalize(() => (this.carregando = false)))
       .subscribe({
         next: (res) => {
@@ -480,6 +483,16 @@ export class AbastecimentosComponent implements OnInit, OnDestroy {
       });
 
     this.carregarResumo(filtro);
+  }
+
+  sortBy(field: 'data' | 'litros' | 'valor'): void {
+    if (this.sortField === field) {
+      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDir = 'asc';
+    }
+    this.buscar(0);
   }
 
   private buildFiltroParams(): {
