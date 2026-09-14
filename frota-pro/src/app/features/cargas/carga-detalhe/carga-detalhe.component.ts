@@ -16,6 +16,8 @@ import { NotaFiscalApiService } from '../../../core/api/nota-fiscal-api.service'
 import { NotaFiscalResumoResponse } from '../../../core/api/nota-fiscal-api.models';
 import { DevolucaoTransferenciaApiService } from '../../../core/api/devolucao-transferencia-api.service';
 import { DevolucaoResponse, ResumoDescontoCargaResponse, TransferenciaResponse } from '../../../core/api/devolucao-transferencia-api.models';
+import { PostoAbastecimentoApiService } from '../../../core/api/posto-abastecimento-api.service';
+import { PostoAbastecimentoResponse } from '../../../core/api/posto-abastecimento-api.models';
 import { formatKgFromTon, parseNumberLike } from '../../../shared/utils/weight';
 
 import {
@@ -47,7 +49,10 @@ type AbastecimentoForm = {
   mediaKmLitro: number | null;
   tipoCombustivel: string;
   formaPagamento: string;
+  /** Texto livre — usado só quando NÃO for um posto cadastrado (ver postoAbastecimento). */
   posto: string;
+  /** Código de um posto cadastrado, selecionado no dropdown — alternativa a "posto". */
+  postoAbastecimento: string;
   cidade: string;
   uf: string;
   numNotaOuCupom: string;
@@ -157,6 +162,14 @@ export class CargaDetalheComponent implements OnInit {
   showNovaParadaModal = false;
   /** null = cadastrando parada nova; preenchido = editando essa parada existente. */
   paradaEditandoId: string | null = null;
+
+  // ===== Posto cadastrado (abastecimento da parada) =====
+  postos: PostoAbastecimentoResponse[] = [];
+  postosLoading = false;
+  /** Sentinela pra representar "outro posto, digitar manualmente" no seletor — não é um código de posto de verdade. */
+  readonly kOutroPosto = '__outro__';
+  /** null = nada escolhido ainda; kOutroPosto = digitar manualmente; senão, código do posto cadastrado. */
+  postoSelecionado: string | null = null;
   paradaForm: ParadaForm = {
     tipoParada: 'OUTROS',
     dtInicio: '',
@@ -176,6 +189,7 @@ export class CargaDetalheComponent implements OnInit {
       tipoCombustivel: '',
       formaPagamento: '',
       posto: '',
+      postoAbastecimento: '',
       cidade: '',
       uf: '',
       numNotaOuCupom: '',
@@ -275,7 +289,8 @@ export class CargaDetalheComponent implements OnInit {
     private arquivoApi: ArquivoApiService,
     private eixoApi: EixoApiService,
     private notaFiscalApi: NotaFiscalApiService,
-    private devolucaoTransferenciaApi: DevolucaoTransferenciaApiService
+    private devolucaoTransferenciaApi: DevolucaoTransferenciaApiService,
+    private postoApi: PostoAbastecimentoApiService
   ) {}
 
   // =========================
@@ -307,6 +322,40 @@ export class CargaDetalheComponent implements OnInit {
       return;
     }
     this.carregar();
+    this.carregarPostos();
+  }
+
+  private carregarPostos(): void {
+    this.postosLoading = true;
+    this.postoApi
+      .listarAtivos()
+      .pipe(finalize(() => (this.postosLoading = false)))
+      .subscribe({
+        next: (postos) => (this.postos = postos || []),
+        error: () => (this.postos = []),
+      });
+  }
+
+  get usandoOutroPosto(): boolean {
+    return this.postoSelecionado === this.kOutroPosto;
+  }
+
+  /**
+   * Ao escolher um posto cadastrado, preenche cidade/UF automaticamente (o
+   * campo "Posto" livre fica reservado pra quando for "Outro" — o back
+   * exige exatamente um dos dois, nunca os dois nem nenhum).
+   */
+  onSelecionarPostoCadastrado(codigo: string | null): void {
+    this.postoSelecionado = codigo;
+
+    if (codigo && codigo !== this.kOutroPosto) {
+      const posto = this.postos.find((p) => p.codigo === codigo);
+      this.paradaForm.abastecimento.posto = '';
+      this.paradaForm.abastecimento.cidade = posto?.cidade || this.paradaForm.abastecimento.cidade;
+      this.paradaForm.abastecimento.uf = posto?.uf || this.paradaForm.abastecimento.uf;
+    } else if (codigo === this.kOutroPosto) {
+      this.paradaForm.abastecimento.posto = '';
+    }
   }
 
   carregar(): void {
@@ -1047,7 +1096,8 @@ export class CargaDetalheComponent implements OnInit {
           mediaKmLitro: ab?.mediaKmLitro ?? null,
           tipoCombustivel: ab?.tipoCombustivel || '',
           formaPagamento: ab?.formaPagamento || '',
-          posto: ab?.posto || ab?.postoAbastecimentoNome || '',
+          posto: ab?.postoAbastecimentoCodigo ? '' : ab?.posto || ab?.postoAbastecimentoNome || '',
+          postoAbastecimento: ab?.postoAbastecimentoCodigo || '',
           cidade: ab?.cidade || '',
           uf: ab?.uf || '',
           numNotaOuCupom: ab?.numNotaOuCupom || '',
@@ -1065,6 +1115,7 @@ export class CargaDetalheComponent implements OnInit {
           trocasPneu: [],
         },
       };
+      this.postoSelecionado = ab?.postoAbastecimentoCodigo || (ab ? this.kOutroPosto : null);
       return;
     }
 
@@ -1094,6 +1145,7 @@ export class CargaDetalheComponent implements OnInit {
         tipoCombustivel: '',
         formaPagamento: '',
         posto: '',
+        postoAbastecimento: '',
         cidade: '',
         uf: '',
         numNotaOuCupom: '',
@@ -1111,6 +1163,7 @@ export class CargaDetalheComponent implements OnInit {
         trocasPneu: [],
       },
     };
+    this.postoSelecionado = this.postos.length === 0 ? this.kOutroPosto : null;
   }
 
   private carregarEixosCaminhao(codigoCaminhao?: string | null): void {
@@ -1233,6 +1286,8 @@ export class CargaDetalheComponent implements OnInit {
       if (!a.formaPagamento) erros.push('Forma de pagamento é obrigatória.');
       const mediaKmLitro = this.toNullableNumber(a.mediaKmLitro);
       if (mediaKmLitro !== null && mediaKmLitro <= 0) erros.push('Média km/L deve ser maior que zero.');
+      if (this.postoSelecionado === null) erros.push('Selecione o posto.');
+      if (this.usandoOutroPosto && !a.posto?.trim()) erros.push('Informe o nome do posto.');
       if (a.posto && a.posto.length > 120) erros.push('Posto deve ter no máximo 120 caracteres.');
       if (a.cidade && a.cidade.length > 120) erros.push('Cidade deve ter no máximo 120 caracteres.');
       if (a.uf && !/^[A-Za-z]{2}$/.test(a.uf)) erros.push('UF inválida (ex: PB).');
@@ -1375,7 +1430,8 @@ export class CargaDetalheComponent implements OnInit {
           mediaKmLitro: this.toNullableNumber(this.paradaForm.abastecimento.mediaKmLitro),
           tipoCombustivel: this.paradaForm.abastecimento.tipoCombustivel || null,
           formaPagamento: this.paradaForm.abastecimento.formaPagamento || null,
-          posto: this.paradaForm.abastecimento.posto?.trim() || null,
+          posto: this.usandoOutroPosto ? this.paradaForm.abastecimento.posto?.trim() || null : null,
+          postoAbastecimento: this.usandoOutroPosto ? null : this.postoSelecionado,
           cidade: this.paradaForm.abastecimento.cidade?.trim() || null,
           uf: this.paradaForm.abastecimento.uf?.trim() || null,
           numNotaOuCupom: this.paradaForm.abastecimento.numNotaOuCupom?.trim() || null,
