@@ -189,6 +189,7 @@
         <thead>
         <tr>
           <th>Cliente</th>
+          <th>Endereço</th>
           <th>Cargas</th>
           <th>Última carga</th>
         </tr>
@@ -196,6 +197,7 @@
         <tbody>
         <tr *ngFor="let c of clientes">
           <td>{{ c.cliente }}</td>
+          <td>{{ formatEndereco(c) }}</td>
           <td>{{ c.quantidadeCargas }}</td>
           <td>{{ formatDateBr(c.ultimaCargaEm) }}</td>
         </tr>

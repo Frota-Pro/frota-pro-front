@@ -247,4 +247,16 @@ export class RotasListComponent implements OnInit, OnDestroy {
     }
     return v;
   }
+
+  /**
+   * Endereço vem do cadastro de Cliente vinculado — pode ainda não existir
+   * pra clientes cuja carga foi sincronizada antes dessa ligação existir,
+   * ou sem documento cadastrado no WinThor.
+   */
+  formatEndereco(c: ClienteHistoricoRotaResponse): string {
+    if (!c.logradouro) return '—';
+    const partes = [c.logradouro, c.numero].filter(Boolean).join(', ');
+    const bairroUf = [c.bairro, c.uf].filter(Boolean).join(' - ');
+    return [partes, bairroUf].filter(Boolean).join(' — ');
+  }
 }
