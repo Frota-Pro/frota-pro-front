@@ -66,13 +66,34 @@
 .mini-table td{ padding:10px 12px; border-bottom:1px solid #f1f5f9; font-size:13px; }
 
 /* Linhas de carga em caminhão que não é do titular deste motorista — só a tonelada conta. */
-.mini-table tr.linha-sem-km td{ background:rgba(245,158,11,.08); }
+.mini-table tr.linha-sem-km td{ background:#FEF3C7; border-left:4px solid #D97706; }
+.mini-table tr.linha-sem-km td:first-child{ border-left:4px solid #D97706; }
 /* Linhas de carga do caminhão deste motorista dirigida por outro — só km/km-por-litro contam. */
-.mini-table tr.linha-sem-tonelada td{ background:rgba(59,130,246,.08); }
+.mini-table tr.linha-sem-tonelada td{ background:#DBEAFE; border-left:4px solid #2563EB; }
+.mini-table tr.linha-sem-tonelada td:first-child{ border-left:4px solid #2563EB; }
+
 .mini-table tr.linha-obs td{
   padding:4px 12px 10px; border-bottom:1px solid #f1f5f9;
-  font-size:11px; font-style:italic; color:#6b7280;
+  font-size:12px; font-weight:700;
 }
+.mini-table tr.linha-obs.linha-sem-km td{ color:#92400E; }
+.mini-table tr.linha-obs.linha-sem-tonelada td{ color:#1E40AF; }
+
+.badge-linha{
+  display:inline-block; margin-left:8px; padding:2px 8px; border-radius:999px;
+  font-size:10px; font-weight:800; letter-spacing:.02em; vertical-align:middle;
+}
+.badge-linha.linha-sem-km{ background:#D97706; color:#fff; }
+.badge-linha.linha-sem-tonelada{ background:#2563EB; color:#fff; }
+
+.legenda-caminhao-emprestado{
+  display:flex; flex-wrap:wrap; gap:16px; margin:4px 0 12px;
+  font-size:12px; color:#374151;
+}
+.legenda-item{ display:flex; align-items:center; gap:6px; }
+.legenda-dot{ width:12px; height:12px; border-radius:4px; flex:0 0 auto; }
+.legenda-dot.sem-km{ background:#D97706; }
+.legenda-dot.sem-tonelada{ background:#2563EB; }
 .tag{ display:inline-flex; padding:6px 10px; border-radius:999px; border:1px solid #eef2f7; background:#fff; font-size:12px; }
 .tag.status-meta.success{ background:rgba(16,185,129,.14); border-color:rgba(16,185,129,.20); color:#059669; }
 .tag.status-meta.danger{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.20); color:#b91c1c; }

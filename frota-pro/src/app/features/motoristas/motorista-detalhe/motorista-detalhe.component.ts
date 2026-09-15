@@ -462,6 +462,24 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Selo curto exibido junto da data — mesmo motivo de classeLinhaRelatorio, versão resumida pra caber na coluna. */
+  badgeLinhaRelatorio(l: RelatorioMetaMensalMotoristaLinha): string | null {
+    switch (l.tipoLinha) {
+      case 'CAMINHAO_DE_OUTRO_TITULAR':
+      case 'CAMINHAO_SEM_TITULAR':
+        return 'SÓ TONELADA';
+      case 'MOTORISTA_TERCEIRO_NO_MEU_CAMINHAO':
+        return 'SÓ KM/L';
+      default:
+        return null;
+    }
+  }
+
+  /** Mostra a legenda de cores só quando o relatório realmente tem alguma linha fora do padrão. */
+  temLinhaEspecial(linhas: RelatorioMetaMensalMotoristaLinha[] | null | undefined): boolean {
+    return (linhas || []).some((l) => l.tipoLinha && l.tipoLinha !== 'PROPRIA');
+  }
+
   // KPI auxiliar: dias para vencer CNH (baseado em string dd/MM/yyyy)
   diasParaVencerCNH(): number | null {
     const s = this.motorista?.validadeCnh;

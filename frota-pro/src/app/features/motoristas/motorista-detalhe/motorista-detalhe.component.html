@@ -183,6 +183,17 @@
           <div class="kpi-sub">Peso</div>
         </div>
 
+        <div class="legenda-caminhao-emprestado" *ngIf="temLinhaEspecial(r.linhas)">
+          <span class="legenda-item">
+            <span class="legenda-dot sem-km"></span>
+            Carga em caminhão de <strong>outro titular</strong> — só tonelada conta
+          </span>
+          <span class="legenda-item">
+            <span class="legenda-dot sem-tonelada"></span>
+            Seu caminhão, dirigido por <strong>outro motorista</strong> — só km/km-L conta
+          </span>
+        </div>
+
         <div class="meta-table-wrap" *ngIf="(r.linhas || []).length > 0">
           <table class="mini-table">
             <thead>
@@ -199,7 +210,10 @@
             <tbody>
             <ng-container *ngFor="let l of (r.linhas || [])">
               <tr [class]="classeLinhaRelatorio(l.tipoLinha)">
-                <td>{{ l.data || '—' }}</td>
+                <td>
+                  {{ l.data || '—' }}
+                  <span class="badge-linha" *ngIf="badgeLinhaRelatorio(l) as badge" [class]="classeLinhaRelatorio(l.tipoLinha)">{{ badge }}</span>
+                </td>
                 <td>{{ l.cidade || '—' }}</td>
                 <td>{{ formatKgFromTon(l.tonelagem, 0) }}</td>
                 <td>{{ formatNumber(l.kmRodado, 0) }}</td>
@@ -208,7 +222,7 @@
                 <td>{{ formatBRL(l.valorAbastecimento || 0) }}</td>
               </tr>
               <tr *ngIf="observacaoLinhaRelatorio(l) as obs" [class]="classeLinhaRelatorio(l.tipoLinha)" class="linha-obs">
-                <td colspan="7">{{ obs }}</td>
+                <td colspan="7">⚠ {{ obs }}</td>
               </tr>
             </ng-container>
             </tbody>
