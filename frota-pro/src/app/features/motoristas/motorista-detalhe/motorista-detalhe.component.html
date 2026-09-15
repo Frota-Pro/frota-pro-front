@@ -197,15 +197,20 @@
             </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let l of (r.linhas || [])">
-              <td>{{ l.data || '—' }}</td>
-              <td>{{ l.cidade || '—' }}</td>
-              <td>{{ formatKgFromTon(l.tonelagem, 0) }}</td>
-              <td>{{ formatNumber(l.kmRodado, 0) }}</td>
-              <td>{{ formatNumber(l.litros, 2) }}</td>
-              <td>{{ formatNumber(l.mediaKmLitro, 2) }}</td>
-              <td>{{ formatBRL(l.valorAbastecimento || 0) }}</td>
-            </tr>
+            <ng-container *ngFor="let l of (r.linhas || [])">
+              <tr [class]="classeLinhaRelatorio(l.tipoLinha)">
+                <td>{{ l.data || '—' }}</td>
+                <td>{{ l.cidade || '—' }}</td>
+                <td>{{ formatKgFromTon(l.tonelagem, 0) }}</td>
+                <td>{{ formatNumber(l.kmRodado, 0) }}</td>
+                <td>{{ formatNumber(l.litros, 2) }}</td>
+                <td>{{ formatNumber(l.mediaKmLitro, 2) }}</td>
+                <td>{{ formatBRL(l.valorAbastecimento || 0) }}</td>
+              </tr>
+              <tr *ngIf="observacaoLinhaRelatorio(l) as obs" [class]="classeLinhaRelatorio(l.tipoLinha)" class="linha-obs">
+                <td colspan="7">{{ obs }}</td>
+              </tr>
+            </ng-container>
             </tbody>
           </table>
         </div>

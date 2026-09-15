@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 
 import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { MotoristaApiService } from '../../../core/api/motorista-api.service';
-import { MotoristaRequest, MotoristaResponse, RelatorioMetaMensalMotoristaResponse } from '../../../core/api/motorista-api.models';
+import { MotoristaRequest, MotoristaResponse, RelatorioMetaMensalMotoristaLinha, RelatorioMetaMensalMotoristaResponse } from '../../../core/api/motorista-api.models';
 import { MetaApiService } from '../../../core/api/meta-api.service';
 import { CargaApiService } from '../../../core/api/carga-api.service';
 import { CargaResponse } from '../../../core/api/carga-api.models';
@@ -431,6 +431,35 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
 
   formatKgFromTon(v: number | string | null | undefined, dec = 0): string {
     return formatKgFromTon(v, dec);
+  }
+
+  /**
+   * Cor da linha do relatório mensal conforme a relação entre quem dirigiu
+   * e o titular do caminhão — ver TipoLinhaRelatorioMotorista no back.
+   */
+  classeLinhaRelatorio(tipoLinha: RelatorioMetaMensalMotoristaLinha['tipoLinha']): string {
+    switch (tipoLinha) {
+      case 'CAMINHAO_DE_OUTRO_TITULAR':
+      case 'CAMINHAO_SEM_TITULAR':
+        return 'linha-sem-km';
+      case 'MOTORISTA_TERCEIRO_NO_MEU_CAMINHAO':
+        return 'linha-sem-tonelada';
+      default:
+        return '';
+    }
+  }
+
+  observacaoLinhaRelatorio(l: RelatorioMetaMensalMotoristaLinha): string | null {
+    switch (l.tipoLinha) {
+      case 'CAMINHAO_DE_OUTRO_TITULAR':
+        return 'Carga em caminhão de outro titular — só a tonelada conta pra este motorista; km rodado e km/L contam no relatório do titular do caminhão.';
+      case 'CAMINHAO_SEM_TITULAR':
+        return 'Caminhão sem titular cadastrado — só a tonelada conta; km rodado e km/L não são atribuídos a ninguém até o titular ser cadastrado.';
+      case 'MOTORISTA_TERCEIRO_NO_MEU_CAMINHAO':
+        return `Carga dirigida por ${l.motoristaQueDirigiu || 'outro motorista'} neste caminhão — só km rodado e km/L contam pra este motorista (é o titular); a tonelada conta no relatório de quem dirigiu.`;
+      default:
+        return null;
+    }
   }
 
   // KPI auxiliar: dias para vencer CNH (baseado em string dd/MM/yyyy)

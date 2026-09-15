@@ -64,6 +64,15 @@
   padding:10px 12px; border-bottom:1px solid #eef2f7;
 }
 .mini-table td{ padding:10px 12px; border-bottom:1px solid #f1f5f9; font-size:13px; }
+
+/* Linhas de carga em caminhão que não é do titular deste motorista — só a tonelada conta. */
+.mini-table tr.linha-sem-km td{ background:rgba(245,158,11,.08); }
+/* Linhas de carga do caminhão deste motorista dirigida por outro — só km/km-por-litro contam. */
+.mini-table tr.linha-sem-tonelada td{ background:rgba(59,130,246,.08); }
+.mini-table tr.linha-obs td{
+  padding:4px 12px 10px; border-bottom:1px solid #f1f5f9;
+  font-size:11px; font-style:italic; color:#6b7280;
+}
 .tag{ display:inline-flex; padding:6px 10px; border-radius:999px; border:1px solid #eef2f7; background:#fff; font-size:12px; }
 .tag.status-meta.success{ background:rgba(16,185,129,.14); border-color:rgba(16,185,129,.20); color:#059669; }
 .tag.status-meta.danger{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.20); color:#b91c1c; }
