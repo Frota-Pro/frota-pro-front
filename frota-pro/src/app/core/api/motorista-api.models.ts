@@ -16,6 +16,10 @@ export interface MotoristaResponse {
 
   status?: StatusMotorista | null;
   ativo: boolean;
+
+  emFerias: boolean;
+  feriasInicio?: string | null; // dd/MM/yyyy
+  feriasFimPrevisto?: string | null; // dd/MM/yyyy
 }
 
 export interface MotoristaRequest {
@@ -27,6 +31,12 @@ export interface MotoristaRequest {
   dataNascimento: string | null; // dd/MM/yyyy
   cnh: string;
   validadeCnh: string | null; // dd/MM/yyyy
+}
+
+export interface MotoristaFeriasRequest {
+  emFerias: boolean;
+  feriasInicio?: string | null; // dd/MM/yyyy
+  feriasFimPrevisto?: string | null; // dd/MM/yyyy
 }
 
 export type TipoPlataformaDispositivo = 'ANDROID' | 'IOS' | 'OUTRO' | string;

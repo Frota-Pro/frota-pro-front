@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs';
 import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
 import { CategoriaCaminhaoApiService } from '../../../core/api/categoria-caminhao-api.service';
-import { CaminhaoDetalheResponse, CaminhaoRequest } from '../../../core/api/caminhao-api.models';
+import { CaminhaoDetalheResponse, CaminhaoRequest, CaminhaoTitularRequest } from '../../../core/api/caminhao-api.models';
 import { CategoriaCaminhaoResponse } from '../../../core/api/categoria-caminhao-api.models';
 
 import { MotoristaApiService } from '../../../core/api/motorista-api.service';
@@ -78,6 +78,11 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
   categorias: CategoriaCaminhaoResponse[] = [];
   motoristas: MotoristaResponse[] = [];
   showEditModal = false;
+
+  // Transferir titular (sem passar pela edição completa)
+  showTitularModal = false;
+  salvandoTitular = false;
+  titularForm: CaminhaoTitularRequest = { motoristaTitular: null };
 
   // Eixos
   eixos: EixoCaminhaoResponse[] = [];
@@ -517,6 +522,36 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           alert(extrairMensagemErro(err, 'Não foi possível salvar as alterações.'));
+        },
+      });
+  }
+
+  // ------------------ TRANSFERIR TITULAR ------------------
+  abrirTransferirTitular(): void {
+    if (!this.data) return;
+
+    this.titularForm = { motoristaTitular: this.data.caminhao.motoristaTitularCodigo || null };
+    this.showTitularModal = true;
+  }
+
+  closeTitular(): void {
+    this.showTitularModal = false;
+  }
+
+  salvarTitular(): void {
+    this.salvandoTitular = true;
+
+    this.api
+      .transferirTitular(this.codigo, this.titularForm)
+      .pipe(finalize(() => (this.salvandoTitular = false)))
+      .subscribe({
+        next: () => {
+          this.showTitularModal = false;
+          this.carregarBase();
+        },
+        error: (err) => {
+          console.error(err);
+          alert(extrairMensagemErro(err, 'Não foi possível transferir o titular.'));
         },
       });
   }

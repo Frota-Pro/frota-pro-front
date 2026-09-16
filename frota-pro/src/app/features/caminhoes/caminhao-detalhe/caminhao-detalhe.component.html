@@ -11,6 +11,7 @@
 
     <div class="right">
       <button class="btn ghost" type="button" (click)="voltar()" aria-label="Voltar para lista de caminhões">← Voltar</button>
+      <button class="btn ghost" type="button" (click)="abrirTransferirTitular()" aria-label="Transferir titular do caminhão">Transferir titular</button>
       <button class="btn primary" type="button" (click)="editar()" aria-label="Editar caminhão">Editar</button>
     </div>
   </div>
@@ -588,6 +589,39 @@
       <button class="btn ghost" type="button" (click)="closeEdit()">Cancelar</button>
       <button class="btn primary" type="button" (click)="salvarEdicao()" [disabled]="loading">
         {{ loading ? 'Salvando...' : 'Salvar' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL TRANSFERIR TITULAR -->
+  <div class="modal-backdrop" *ngIf="showTitularModal" (click)="closeTitular()"></div>
+
+  <div class="modal" *ngIf="showTitularModal">
+    <div class="modal-header">
+      <h2>Transferir titular</h2>
+      <button class="icon-btn" type="button" (click)="closeTitular()" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="field">
+        <label>Novo motorista titular</label>
+        <select [(ngModel)]="titularForm.motoristaTitular">
+          <option [ngValue]="null">— Nenhum (remover titular) —</option>
+          <option *ngFor="let mot of motoristas" [ngValue]="mot.codigo">
+            {{ mot.nome }} ({{ mot.codigo }})
+          </option>
+        </select>
+      </div>
+
+      <small class="muted">
+        Só troca o titular — não mexe em nenhum outro dado do cadastro do caminhão.
+      </small>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" type="button" (click)="closeTitular()">Cancelar</button>
+      <button class="btn primary" type="button" (click)="salvarTitular()" [disabled]="salvandoTitular">
+        {{ salvandoTitular ? 'Salvando...' : 'Salvar' }}
       </button>
     </div>
   </div>

@@ -3,13 +3,14 @@
   <div class="topbar">
     <div class="left">
       <div class="title">
-        <h1>{{ m.nome }}</h1>
+        <h1>{{ m.nome }} <span class="badge-ferias" *ngIf="m.emFerias">DE FÉRIAS</span></h1>
         <p>Motorista {{ m.codigo }} • CNH: {{ m.cnh }}</p>
       </div>
     </div>
 
     <div class="right">
       <button class="btn ghost" type="button" (click)="voltar()">← Voltar</button>
+      <button class="btn ghost" type="button" (click)="abrirFerias()">{{ m.emFerias ? 'Editar férias' : 'Marcar férias' }}</button>
       <button class="btn primary" type="button" (click)="editar()">Editar</button>
     </div>
   </div>
@@ -43,6 +44,13 @@
       <div class="kpi-head"><span class="kpi-label">Código Externo</span></div>
       <div class="kpi-value mono">{{ m.codigoExterno || '—' }}</div>
       <div class="kpi-sub">Integração/ERP</div>
+    </div>
+
+    <div class="kpi" [class.kpi-ferias]="m.emFerias">
+      <div class="kpi-head"><span class="kpi-label">Férias</span></div>
+      <div class="kpi-value">{{ m.emFerias ? 'De férias' : 'Trabalhando' }}</div>
+      <div class="kpi-sub" *ngIf="m.emFerias">{{ m.feriasInicio || '—' }} até {{ m.feriasFimPrevisto || '—' }}</div>
+      <div class="kpi-sub" *ngIf="!m.emFerias">Sem férias registradas</div>
     </div>
   </div>
 
@@ -333,6 +341,39 @@
     <div class="modal-footer">
       <button class="btn ghost" (click)="closeEdit()">Cancelar</button>
       <button class="btn primary" (click)="salvarEdicao()">Salvar</button>
+    </div>
+  </div>
+
+  <!-- MODAL FÉRIAS -->
+  <div class="backdrop" *ngIf="showFeriasModal" (click)="closeFerias()"></div>
+  <div class="modal" *ngIf="showFeriasModal">
+    <div class="modal-header">
+      <h2>Férias do motorista</h2>
+      <button class="icon" (click)="closeFerias()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <label class="checkbox-label">
+        <input type="checkbox" [(ngModel)]="feriasForm.emFerias" />
+        Motorista está de férias
+      </label>
+
+      <ng-container *ngIf="feriasForm.emFerias">
+        <label>Início das férias (dd/MM/yyyy)</label>
+        <input [(ngModel)]="feriasForm.feriasInicio" placeholder="dd/MM/yyyy" />
+
+        <label>Previsão de retorno (dd/MM/yyyy)</label>
+        <input [(ngModel)]="feriasForm.feriasFimPrevisto" placeholder="dd/MM/yyyy" />
+      </ng-container>
+
+      <small class="muted" *ngIf="!feriasForm.emFerias">
+        Desmarcado, o motorista some da lista de quem está de férias.
+      </small>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" (click)="closeFerias()">Cancelar</button>
+      <button class="btn primary" (click)="salvarFerias()">Salvar</button>
     </div>
   </div>
 

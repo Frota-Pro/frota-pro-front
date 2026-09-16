@@ -4,6 +4,7 @@ import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
 import {
   MotoristaDispositivoAppResponse,
+  MotoristaFeriasRequest,
   MotoristaRequest,
   MotoristaResponse,
   RelatorioMetaMensalMotoristaResponse,
@@ -39,6 +40,13 @@ export class MotoristaApiService extends BaseApiService {
 
   deletar(codigo: string) {
     return this.http.delete<void>(`${this.apiUrl}/motorista/${encodeURIComponent(codigo)}`);
+  }
+
+  atualizarFerias(codigo: string, payload: MotoristaFeriasRequest) {
+    return this.http.patch<MotoristaResponse>(
+      `${this.apiUrl}/motorista/${encodeURIComponent(codigo)}/ferias`,
+      payload
+    );
   }
 
   listarDispositivosApp(opts: { page?: number; size?: number; sort?: string; q?: string | null } = {}) {

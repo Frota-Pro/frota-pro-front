@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 
 import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { MotoristaApiService } from '../../../core/api/motorista-api.service';
-import { MotoristaRequest, MotoristaResponse, RelatorioMetaMensalMotoristaLinha, RelatorioMetaMensalMotoristaResponse } from '../../../core/api/motorista-api.models';
+import { MotoristaFeriasRequest, MotoristaRequest, MotoristaResponse, RelatorioMetaMensalMotoristaLinha, RelatorioMetaMensalMotoristaResponse } from '../../../core/api/motorista-api.models';
 import { MetaApiService } from '../../../core/api/meta-api.service';
 import { CargaApiService } from '../../../core/api/carga-api.service';
 import { CargaResponse } from '../../../core/api/carga-api.models';
@@ -56,6 +56,14 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
     dataNascimento: null,
     cnh: '',
     validadeCnh: null,
+  };
+
+  // férias
+  showFeriasModal = false;
+  feriasForm: MotoristaFeriasRequest = {
+    emFerias: false,
+    feriasInicio: null,
+    feriasFimPrevisto: null,
   };
 
   // documentos
@@ -251,6 +259,46 @@ export class MotoristaDetalheComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           alert(extrairMensagemErro(err, 'Não foi possível salvar a edição.'));
+        }
+      });
+  }
+
+  // ---------------- FÉRIAS ----------------
+  abrirFerias(): void {
+    if (!this.motorista) return;
+
+    this.feriasForm = {
+      emFerias: this.motorista.emFerias || false,
+      feriasInicio: this.motorista.feriasInicio || null,
+      feriasFimPrevisto: this.motorista.feriasFimPrevisto || null,
+    };
+
+    this.showFeriasModal = true;
+  }
+
+  closeFerias(): void {
+    this.showFeriasModal = false;
+  }
+
+  salvarFerias(): void {
+    if (!this.motorista) return;
+
+    if (this.feriasForm.emFerias) {
+      if (!this.feriasForm.feriasInicio?.trim()) return alert('Informe a data de início das férias.');
+      if (!this.feriasForm.feriasFimPrevisto?.trim()) return alert('Informe a previsão de retorno.');
+    }
+
+    this.loading = true;
+    this.api.atualizarFerias(this.motorista.codigo, this.feriasForm)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (m) => {
+          this.motorista = m;
+          this.showFeriasModal = false;
+        },
+        error: (err) => {
+          console.error(err);
+          alert(extrairMensagemErro(err, 'Não foi possível atualizar as férias.'));
         }
       });
   }

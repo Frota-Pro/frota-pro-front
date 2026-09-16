@@ -64,6 +64,13 @@ export class RelatorioPdfApiService extends BaseApiService {
     });
   }
 
+  vinculoMotoristaCaminhao() {
+    return this.http.get(`${this.apiUrl}/relatorios/pdf/motoristas/vinculo-caminhao`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
   cargaCompleta(numeroCarga: string) {
     return this.http.get(`${this.apiUrl}/relatorios/pdf/carga/${encodeURIComponent(numeroCarga)}/completo`, {
       responseType: 'blob',
