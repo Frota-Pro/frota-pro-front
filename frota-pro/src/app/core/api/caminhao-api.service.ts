@@ -7,6 +7,7 @@ import {
   CaminhaoRequest,
   CaminhaoResponse,
   CaminhaoTitularRequest,
+  RecalcularTitularCaminhaoResponse,
   VincularCategoriaCaminhaoEmLoteRequest,
 } from './caminhao-api.models';
 
@@ -62,6 +63,15 @@ export class CaminhaoApiService extends BaseApiService {
     return this.http.patch<CaminhaoResponse>(
       `${this.apiUrl}/caminhao/${encodeURIComponent(codigo)}/titular`,
       payload
+    );
+  }
+
+  recalcularTitular(codigo: string, dataInicioYYYYMMDD: string) {
+    const params = new HttpParams().set('dataInicio', dataInicioYYYYMMDD);
+    return this.http.patch<RecalcularTitularCaminhaoResponse>(
+      `${this.apiUrl}/caminhao/${encodeURIComponent(codigo)}/recalcular-titular`,
+      {},
+      { params }
     );
   }
 }

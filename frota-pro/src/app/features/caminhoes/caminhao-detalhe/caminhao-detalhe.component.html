@@ -12,6 +12,7 @@
     <div class="right">
       <button class="btn ghost" type="button" (click)="voltar()" aria-label="Voltar para lista de caminhões">← Voltar</button>
       <button class="btn ghost" type="button" (click)="abrirTransferirTitular()" aria-label="Transferir titular do caminhão">Transferir titular</button>
+      <button class="btn ghost" type="button" (click)="abrirRecalcular()" aria-label="Recalcular titular">Recalcular titular</button>
       <button class="btn primary" type="button" (click)="editar()" aria-label="Editar caminhão">Editar</button>
     </div>
   </div>
@@ -622,6 +623,41 @@
       <button class="btn ghost" type="button" (click)="closeTitular()">Cancelar</button>
       <button class="btn primary" type="button" (click)="salvarTitular()" [disabled]="salvandoTitular">
         {{ salvandoTitular ? 'Salvando...' : 'Salvar' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL RECALCULAR TITULAR -->
+  <div class="modal-backdrop" *ngIf="showRecalcularModal" (click)="closeRecalcular()"></div>
+
+  <div class="modal" *ngIf="showRecalcularModal">
+    <div class="modal-header">
+      <h2>Recalcular titular</h2>
+      <button class="icon-btn" type="button" (click)="closeRecalcular()" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="muted">
+        Use isso quando o motorista titular só está sendo cadastrado agora, mas já dirigia este
+        caminhão antes — as cargas e abastecimentos a partir da data escolhida passam a contar
+        km rodado/km-por-litro para <strong>{{ d.caminhao.motoristaTitularNome }}</strong>.
+      </p>
+
+      <div class="field">
+        <label>Recalcular a partir de</label>
+        <input type="date" [(ngModel)]="recalcularDataInicio" />
+      </div>
+
+      <small class="muted">
+        Não mexe em cargas anteriores a essa data — use com cuidado se o titular realmente
+        trocou no meio do caminho (nesse caso, não recalcule).
+      </small>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" type="button" (click)="closeRecalcular()">Cancelar</button>
+      <button class="btn primary" type="button" (click)="salvarRecalcular()" [disabled]="recalculando">
+        {{ recalculando ? 'Recalculando...' : 'Recalcular' }}
       </button>
     </div>
   </div>
