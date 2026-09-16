@@ -26,7 +26,8 @@ type ReportKey =
   | 'META_MENSAL_MOTORISTA'
   | 'DESPESAS_CATEGORIAS'
   | 'VIDA_UTIL_PNEU'
-  | 'CARGAS_SUMIDAS_WINTHOR';
+  | 'CARGAS_SUMIDAS_WINTHOR'
+  | 'VINCULO_MOTORISTA_CAMINHAO';
 
 type TipoMeta = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA';
 
@@ -99,6 +100,14 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
       short: 'Detalhe mensal de um motorista específico',
       needsPeriodo: true,
       needsMotorista: true,
+      enabled: true,
+    },
+    {
+      key: 'VINCULO_MOTORISTA_CAMINHAO',
+      title: 'Vínculo Motorista x Caminhão',
+      category: 'Motoristas',
+      icon: '🔗',
+      short: 'Quem tem caminhão vinculado, quem não tem, e caminhões sem motorista',
       enabled: true,
     },
 
@@ -476,6 +485,10 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
         req$ = this.form.todosMotoristas
           ? this.api.metaMensalTodosMotoristas(this.form.inicio, this.form.fim)
           : this.api.metaMensalMotorista(this.form.codigoMotorista, this.form.inicio, this.form.fim);
+        break;
+
+      case 'VINCULO_MOTORISTA_CAMINHAO':
+        req$ = this.api.vinculoMotoristaCaminhao();
         break;
 
       default:

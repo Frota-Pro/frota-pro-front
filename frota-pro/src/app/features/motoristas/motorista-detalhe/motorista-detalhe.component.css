@@ -8,6 +8,12 @@
 .title h1{ margin:0; font-size:20px; }
 .title p{ margin:4px 0 0; color:#6b7280; font-size:13px; }
 
+.badge-ferias{
+  display:inline-block; margin-left:8px; padding:3px 10px; border-radius:999px;
+  font-size:11px; font-weight:800; letter-spacing:.02em; vertical-align:middle;
+  background:#0EA5E9; color:#fff;
+}
+
 .btn{
   height:38px; border-radius:12px; border:1px solid #e5e7eb;
   background:#fff; padding:0 12px; cursor:pointer; font-size:13px;
@@ -30,6 +36,11 @@
 .kpi-label{ color:#6b7280; font-size:12px; }
 .kpi-value{ font-size:22px; font-weight:800; margin-top:6px; }
 .kpi-sub{ color:#6b7280; font-size:12px; margin-top:4px; }
+.kpi.kpi-ferias{ border-color:rgba(14,165,233,.30); background:rgba(14,165,233,.06); }
+.kpi.kpi-ferias .kpi-value{ color:#0369A1; }
+
+.checkbox-label{ display:flex; align-items:center; gap:8px; font-size:13px; color:#111827; cursor:pointer; }
+.checkbox-label input{ width:auto; height:auto; }
 
 .grid-2{ display:grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr); gap:12px; }
 .card{
@@ -64,6 +75,36 @@
   padding:10px 12px; border-bottom:1px solid #eef2f7;
 }
 .mini-table td{ padding:10px 12px; border-bottom:1px solid #f1f5f9; font-size:13px; }
+
+/* Linhas de carga em caminhão que não é do titular deste motorista — só a tonelada conta. */
+.mini-table tr.linha-sem-km td{ background:#FEF3C7; border-left:4px solid #D97706; }
+.mini-table tr.linha-sem-km td:first-child{ border-left:4px solid #D97706; }
+/* Linhas de carga do caminhão deste motorista dirigida por outro — só km/km-por-litro contam. */
+.mini-table tr.linha-sem-tonelada td{ background:#DBEAFE; border-left:4px solid #2563EB; }
+.mini-table tr.linha-sem-tonelada td:first-child{ border-left:4px solid #2563EB; }
+
+.mini-table tr.linha-obs td{
+  padding:4px 12px 10px; border-bottom:1px solid #f1f5f9;
+  font-size:12px; font-weight:700;
+}
+.mini-table tr.linha-obs.linha-sem-km td{ color:#92400E; }
+.mini-table tr.linha-obs.linha-sem-tonelada td{ color:#1E40AF; }
+
+.badge-linha{
+  display:inline-block; margin-left:8px; padding:2px 8px; border-radius:999px;
+  font-size:10px; font-weight:800; letter-spacing:.02em; vertical-align:middle;
+}
+.badge-linha.linha-sem-km{ background:#D97706; color:#fff; }
+.badge-linha.linha-sem-tonelada{ background:#2563EB; color:#fff; }
+
+.legenda-caminhao-emprestado{
+  display:flex; flex-wrap:wrap; gap:16px; margin:4px 0 12px;
+  font-size:12px; color:#374151;
+}
+.legenda-item{ display:flex; align-items:center; gap:6px; }
+.legenda-dot{ width:12px; height:12px; border-radius:4px; flex:0 0 auto; }
+.legenda-dot.sem-km{ background:#D97706; }
+.legenda-dot.sem-tonelada{ background:#2563EB; }
 .tag{ display:inline-flex; padding:6px 10px; border-radius:999px; border:1px solid #eef2f7; background:#fff; font-size:12px; }
 .tag.status-meta.success{ background:rgba(16,185,129,.14); border-color:rgba(16,185,129,.20); color:#059669; }
 .tag.status-meta.danger{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.20); color:#b91c1c; }

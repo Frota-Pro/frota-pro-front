@@ -16,6 +16,10 @@ export interface MotoristaResponse {
 
   status?: StatusMotorista | null;
   ativo: boolean;
+
+  emFerias: boolean;
+  feriasInicio?: string | null; // dd/MM/yyyy
+  feriasFimPrevisto?: string | null; // dd/MM/yyyy
 }
 
 export interface MotoristaRequest {
@@ -27,6 +31,12 @@ export interface MotoristaRequest {
   dataNascimento: string | null; // dd/MM/yyyy
   cnh: string;
   validadeCnh: string | null; // dd/MM/yyyy
+}
+
+export interface MotoristaFeriasRequest {
+  emFerias: boolean;
+  feriasInicio?: string | null; // dd/MM/yyyy
+  feriasFimPrevisto?: string | null; // dd/MM/yyyy
 }
 
 export type TipoPlataformaDispositivo = 'ANDROID' | 'IOS' | 'OUTRO' | string;
@@ -43,6 +53,18 @@ export interface MotoristaDispositivoAppResponse {
   desatualizado: boolean;
 }
 
+/**
+ * PROPRIA (padrão) = motorista é titular do caminhão e foi ele quem dirigiu — conta tudo.
+ * CAMINHAO_DE_OUTRO_TITULAR = ele dirigiu, mas o caminhão tem outro titular — conta só tonelada.
+ * CAMINHAO_SEM_TITULAR = ele dirigiu um caminhão sem titular cadastrado — conta só tonelada.
+ * MOTORISTA_TERCEIRO_NO_MEU_CAMINHAO = outro motorista dirigiu o caminhão dele — conta só km/km-por-litro.
+ */
+export type TipoLinhaRelatorioMotorista =
+  | 'PROPRIA'
+  | 'CAMINHAO_DE_OUTRO_TITULAR'
+  | 'CAMINHAO_SEM_TITULAR'
+  | 'MOTORISTA_TERCEIRO_NO_MEU_CAMINHAO';
+
 export interface RelatorioMetaMensalMotoristaLinha {
   data?: string | null;
   lote?: string | null;
@@ -58,6 +80,10 @@ export interface RelatorioMetaMensalMotoristaLinha {
   valorAbastecimento?: number | null;
 
   mediaKmLitro?: number | null;
+
+  tipoLinha?: TipoLinhaRelatorioMotorista | null;
+  /** Só preenchido quando tipoLinha = MOTORISTA_TERCEIRO_NO_MEU_CAMINHAO. */
+  motoristaQueDirigiu?: string | null;
 }
 
 export interface RelatorioMetaMensalMotoristaResponse {

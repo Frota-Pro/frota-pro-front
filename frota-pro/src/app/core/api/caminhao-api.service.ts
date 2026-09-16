@@ -6,6 +6,7 @@ import {
   CaminhaoDetalheResponse,
   CaminhaoRequest,
   CaminhaoResponse,
+  CaminhaoTitularRequest,
   VincularCategoriaCaminhaoEmLoteRequest,
 } from './caminhao-api.models';
 
@@ -55,5 +56,12 @@ export class CaminhaoApiService extends BaseApiService {
 
   vincularCategoriaEmLote(payload: VincularCategoriaCaminhaoEmLoteRequest) {
     return this.http.put<void>(`${this.apiUrl}/caminhao/categoria`, payload);
+  }
+
+  transferirTitular(codigo: string, payload: CaminhaoTitularRequest) {
+    return this.http.patch<CaminhaoResponse>(
+      `${this.apiUrl}/caminhao/${encodeURIComponent(codigo)}/titular`,
+      payload
+    );
   }
 }

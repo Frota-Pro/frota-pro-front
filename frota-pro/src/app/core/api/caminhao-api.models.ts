@@ -74,3 +74,8 @@ export interface VincularCategoriaCaminhaoEmLoteRequest {
   categoriaCodigo: string;
   caminhoesCodigo: string[];
 }
+
+export interface CaminhaoTitularRequest {
+  /** Código do novo motorista titular; null remove o titular atual. */
+  motoristaTitular: string | null;
+}
