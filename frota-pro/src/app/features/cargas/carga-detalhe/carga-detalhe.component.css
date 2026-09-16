@@ -1016,3 +1016,21 @@
   .form-grid-3{ grid-template-columns: 1fr; }
   .span2{ grid-column: auto; }
 }
+
+
+.aviso-abastecimento-modal{
+  max-width: 520px;
+}
+
+.aviso-abastecimento-lista{
+  margin-bottom: 12px;
+}
+
+.aviso-abastecimento-lista p{
+  margin: 0 0 8px;
+  line-height: 1.45;
+}
+
+.aviso-abastecimento-lista p:last-child{
+  margin-bottom: 0;
+}

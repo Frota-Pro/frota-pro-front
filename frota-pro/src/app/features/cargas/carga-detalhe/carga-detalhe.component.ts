@@ -208,6 +208,9 @@ export class CargaDetalheComponent implements OnInit {
     },
   };
   savingParada = false;
+  avisosParadaPendentes: string[] = [];
+  private paradaRequestPendente: ParadaCargaRequest | null = null;
+  private paradaRequestPendenteEditando = false;
 
   // ===== Preview arquivo =====
   previewUrl: string | null = null;
@@ -1435,6 +1438,7 @@ export class CargaDetalheComponent implements OnInit {
           cidade: this.paradaForm.abastecimento.cidade?.trim() || null,
           uf: this.paradaForm.abastecimento.uf?.trim() || null,
           numNotaOuCupom: this.paradaForm.abastecimento.numNotaOuCupom?.trim() || null,
+          confirmarAvisos: false,
         }
         : undefined,
       manutencao: this.isManutencao()
@@ -1453,17 +1457,42 @@ export class CargaDetalheComponent implements OnInit {
         : undefined,
     };
 
+    const editando = !!this.paradaEditandoId;
+    this.enviarParada(req, editando);
+  }
+
+  cancelarAvisosParada(): void {
+    this.avisosParadaPendentes = [];
+    this.paradaRequestPendente = null;
+    this.paradaRequestPendenteEditando = false;
+  }
+
+  confirmarAvisosParada(): void {
+    if (!this.paradaRequestPendente) return;
+
+    const req = this.paradaRequestPendente;
+    if (req.abastecimento) {
+      req.abastecimento = { ...req.abastecimento, confirmarAvisos: true };
+    }
+
+    const editando = this.paradaRequestPendenteEditando;
+    this.cancelarAvisosParada();
+    this.enviarParada(req, editando);
+  }
+
+  private enviarParada(req: ParadaCargaRequest, editando: boolean): void {
     this.savingParada = true;
 
-    const editando = !!this.paradaEditandoId;
+    const paradaId = this.paradaEditandoId as string | null;
     const request$ = editando
-      ? this.paradaApi.atualizar(this.paradaEditandoId as string, req)
+      ? this.paradaApi.atualizar(paradaId as string, req)
       : this.paradaApi.criar(req);
 
     request$
       .pipe(finalize(() => (this.savingParada = false)))
       .subscribe({
         next: () => {
+          this.cancelarAvisosParada();
           this.showNovaParadaModal = false;
           this.paradaEditandoId = null;
           this.toast('success', editando ? 'Parada atualizada com sucesso.' : 'Parada cadastrada com sucesso.', 'Paradas');
@@ -1471,6 +1500,14 @@ export class CargaDetalheComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
+          const avisos: string[] | undefined = err?.error?.avisos;
+          if (err?.status === 409 && Array.isArray(avisos) && avisos.length > 0) {
+            this.avisosParadaPendentes = avisos;
+            this.paradaRequestPendente = { ...req, abastecimento: req.abastecimento ? { ...req.abastecimento } : undefined };
+            this.paradaRequestPendenteEditando = editando;
+            return;
+          }
+
           this.toast(
             'error',
             this.mensagemErro(err, editando ? 'Não foi possível atualizar a parada.' : 'Não foi possível cadastrar a parada.'),

@@ -1164,6 +1164,37 @@
   </div>
 </div>
 
+
+
+<!-- =============== MODAL: CONFIRMAR AVISOS DO ABASTECIMENTO =============== -->
+<div class="modal-backdrop" *ngIf="avisosParadaPendentes.length" (click)="cancelarAvisosParada()">
+  <div class="modal modal-sm aviso-abastecimento-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3>Conferir abastecimento</h3>
+        <p class="muted">O sistema encontrou possível divergência antes de salvar.</p>
+      </div>
+      <button class="btn ghost" type="button" (click)="cancelarAvisosParada()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="alert alert-warn aviso-abastecimento-lista">
+        <p *ngFor="let aviso of avisosParadaPendentes">{{ aviso }}</p>
+      </div>
+      <p class="muted">
+        Se os dados estiverem corretos, confirme para salvar mesmo assim.
+      </p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" type="button" (click)="cancelarAvisosParada()">Voltar e corrigir</button>
+      <button class="btn primary" type="button" (click)="confirmarAvisosParada()" [disabled]="savingParada">
+        {{ savingParada ? 'Salvando...' : 'Confirmar e salvar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- =============== MODAL: DOCUMENTOS FISCAIS DO CLIENTE =============== -->
 <div class="modal-backdrop" *ngIf="showNotasFiscaisModal" (click)="fecharNotasFiscais()">
   <div class="modal" (click)="$event.stopPropagation()">
