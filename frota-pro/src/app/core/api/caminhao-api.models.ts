@@ -79,3 +79,12 @@ export interface CaminhaoTitularRequest {
   /** Código do novo motorista titular; null remove o titular atual. */
   motoristaTitular: string | null;
 }
+
+export interface RecalcularTitularCaminhaoResponse {
+  codigoCaminhao: string;
+  motoristaTitularCodigo?: string | null;
+  motoristaTitularNome?: string | null;
+  dataInicio: string; // yyyy-MM-dd
+  cargasAtualizadas: number;
+  abastecimentosAtualizados: number;
+}

@@ -84,6 +84,11 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
   salvandoTitular = false;
   titularForm: CaminhaoTitularRequest = { motoristaTitular: null };
 
+  // Recalcular titular (correção manual — cadastro tardio, ver backend)
+  showRecalcularModal = false;
+  recalculando = false;
+  recalcularDataInicio = '';
+
   // Eixos
   eixos: EixoCaminhaoResponse[] = [];
   eixosLoading = false;
@@ -552,6 +557,47 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           alert(extrairMensagemErro(err, 'Não foi possível transferir o titular.'));
+        },
+      });
+  }
+
+  // ------------------ RECALCULAR TITULAR ------------------
+  abrirRecalcular(): void {
+    if (!this.data?.caminhao.motoristaTitularCodigo) {
+      alert('Cadastre um motorista titular antes de recalcular.');
+      return;
+    }
+    this.recalcularDataInicio = '';
+    this.showRecalcularModal = true;
+  }
+
+  closeRecalcular(): void {
+    this.showRecalcularModal = false;
+  }
+
+  salvarRecalcular(): void {
+    if (!this.recalcularDataInicio) {
+      alert('Informe a data a partir da qual recalcular.');
+      return;
+    }
+
+    this.recalculando = true;
+
+    this.api
+      .recalcularTitular(this.codigo, this.recalcularDataInicio)
+      .pipe(finalize(() => (this.recalculando = false)))
+      .subscribe({
+        next: (res) => {
+          this.showRecalcularModal = false;
+          alert(
+            `Recalculado: ${res.cargasAtualizadas} carga(s) e ${res.abastecimentosAtualizados} abastecimento(s) ` +
+              `agora contam para ${res.motoristaTitularNome}.`
+          );
+          this.carregarBase();
+        },
+        error: (err) => {
+          console.error(err);
+          alert(extrairMensagemErro(err, 'Não foi possível recalcular.'));
         },
       });
   }
