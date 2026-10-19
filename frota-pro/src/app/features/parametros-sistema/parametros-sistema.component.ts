@@ -22,6 +22,7 @@ export class ParametrosSistemaComponent implements OnInit {
   errorMsg: string | null = null;
 
   form: ParametroSistemaUpdateRequest = {
+    diasUteisFechamentoMeta: 0,
     diasAntecedenciaVencimentoDocumento: 5,
     kmAntecedenciaManutencaoPreventiva: 500,
     diasManutencaoEstagnada: 7,
@@ -53,6 +54,7 @@ export class ParametrosSistemaComponent implements OnInit {
       .subscribe({
         next: (res: ParametroSistemaResponse) => {
           this.form = {
+            diasUteisFechamentoMeta: res.diasUteisFechamentoMeta ?? 0,
             diasAntecedenciaVencimentoDocumento: res.diasAntecedenciaVencimentoDocumento,
             kmAntecedenciaManutencaoPreventiva: res.kmAntecedenciaManutencaoPreventiva,
             diasManutencaoEstagnada: res.diasManutencaoEstagnada,

@@ -16,6 +16,26 @@
 
   <ng-container *ngIf="!loading">
 
+    <div class="section-title">Metas</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Fechamento da meta mensal</h2>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Dias úteis para fechar a meta depois do fim do mês</label>
+          <input type="number" min="0" max="15" [(ngModel)]="form.diasUteisFechamentoMeta" />
+          <span class="muted-sm">
+            0 = desligado (a meta fecha no dia seguinte ao fim do mês, como sempre foi).
+            Com 5, por exemplo, a meta de setembro só fecha no 5º dia útil de outubro (segunda a sexta, sem contar feriados).
+            Enquanto isso o motorista que voltou de viagem depois da virada ainda fecha o mês dele, e ele mesmo pode
+            confirmar no app que a meta está ok — a partir daí as cargas que ele finalizar já contam no mês seguinte.
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="section-title">Avisos automáticos</div>
 
     <div class="card">

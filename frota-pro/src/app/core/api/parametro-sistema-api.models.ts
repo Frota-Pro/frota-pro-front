@@ -1,4 +1,5 @@
 export interface ParametroSistemaResponse {
+  diasUteisFechamentoMeta: number;
   diasAntecedenciaVencimentoDocumento: number;
   kmAntecedenciaManutencaoPreventiva: number;
   diasManutencaoEstagnada: number;
@@ -17,6 +18,7 @@ export interface ParametroSistemaResponse {
 }
 
 export interface ParametroSistemaUpdateRequest {
+  diasUteisFechamentoMeta: number;
   diasAntecedenciaVencimentoDocumento: number;
   kmAntecedenciaManutencaoPreventiva: number;
   diasManutencaoEstagnada: number;
