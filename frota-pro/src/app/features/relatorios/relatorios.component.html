@@ -192,6 +192,27 @@
           {{ verificandoAgora ? 'Verificando...' : '🔄 Verificar agora (sem esperar o job de 3h)' }}
         </button>
 
+        <!-- ✅ CARGAS NÃO SINCRONIZADAS: filtros todos opcionais -->
+        <div class="field" *ngIf="form.tipo === 'CARGAS_NAO_SINCRONIZADAS'">
+          <label>Saída — início (opcional)</label>
+          <input type="date" [(ngModel)]="form.inicio" />
+        </div>
+
+        <div class="field" *ngIf="form.tipo === 'CARGAS_NAO_SINCRONIZADAS'">
+          <label>Saída — fim (opcional)</label>
+          <input type="date" [(ngModel)]="form.fim" />
+        </div>
+
+        <div class="field" *ngIf="form.tipo === 'CARGAS_NAO_SINCRONIZADAS'">
+          <label>O que falta (opcional)</label>
+          <select [(ngModel)]="motivoNaoSincronizada">
+            <option value="">Todos</option>
+            <option value="MOTORISTA_NAO_CADASTRADO">Só o motorista</option>
+            <option value="CAMINHAO_NAO_CADASTRADO">Só o caminhão</option>
+            <option value="MOTORISTA_E_CAMINHAO_NAO_CADASTRADOS">Motorista e caminhão</option>
+          </select>
+        </div>
+
         <div class="field" *ngIf="form.tipo === 'ABASTECIMENTOS'">
           <label>Motorista (opcional)</label>
           <div class="autocomplete">
@@ -299,9 +320,9 @@
 
         <div class="mini-actions">
           <button class="btn" type="button" (click)="abrirNovaAba()"
-                  [disabled]="!pdfSafeUrl || form.tipo === 'VIDA_UTIL_PNEU' || form.tipo === 'CARGAS_SUMIDAS_WINTHOR'">Abrir em nova aba</button>
+                  [disabled]="!pdfSafeUrl || tipoComTabela">Abrir em nova aba</button>
           <button class="btn success" type="button"
-                  *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && form.tipo !== 'CARGAS_SUMIDAS_WINTHOR'"
+                  *ngIf="!tipoComTabela"
                   (click)="baixar()" [disabled]="!pdfSafeUrl">Download</button>
           <button class="btn success" type="button"
                   *ngIf="form.tipo === 'VIDA_UTIL_PNEU'"
@@ -311,6 +332,10 @@
                   *ngIf="form.tipo === 'CARGAS_SUMIDAS_WINTHOR'"
                   (click)="exportarCargasSumidasWinThorPdf()"
                   [disabled]="loading">Exportar PDF</button>
+          <button class="btn success" type="button"
+                  *ngIf="form.tipo === 'CARGAS_NAO_SINCRONIZADAS'"
+                  (click)="exportarCargasNaoSincronizadasPdf()"
+                  [disabled]="loading">Exportar PDF</button>
         </div>
       </div>
     </section>
@@ -318,8 +343,8 @@
     <!-- preview -->
     <section class="card preview-card">
       <div class="preview-head">
-        <h3>{{ (form.tipo === 'VIDA_UTIL_PNEU' || form.tipo === 'CARGAS_SUMIDAS_WINTHOR') ? 'Resultado' : 'Pré-visualização' }}</h3>
-        <span class="hint" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && form.tipo !== 'CARGAS_SUMIDAS_WINTHOR' && lastFilename">{{ lastFilename }}</span>
+        <h3>{{ (tipoComTabela) ? 'Resultado' : 'Pré-visualização' }}</h3>
+        <span class="hint" *ngIf="!tipoComTabela && lastFilename">{{ lastFilename }}</span>
       </div>
 
       <div class="table-wrap" *ngIf="form.tipo === 'VIDA_UTIL_PNEU'">
@@ -409,6 +434,62 @@
         </table>
       </div>
 
+      <div class="table-wrap" *ngIf="form.tipo === 'CARGAS_NAO_SINCRONIZADAS'">
+        <div class="empty" *ngIf="cargasNaoSincronizadasLoading"><span class="spinner"></span>Carregando relatório...</div>
+
+        <div class="report-meta" *ngIf="!cargasNaoSincronizadasLoading && cargasNaoSincronizadasResult">
+          <span><strong>Total:</strong> {{ cargasNaoSincronizadasResult.total ?? 0 }}</span>
+          <span><strong>Sem motorista:</strong> {{ cargasNaoSincronizadasResult.totalSemMotorista ?? 0 }}</span>
+          <span><strong>Sem caminhão:</strong> {{ cargasNaoSincronizadasResult.totalSemCaminhao ?? 0 }}</span>
+        </div>
+
+        <table class="table" *ngIf="!cargasNaoSincronizadasLoading && (cargasNaoSincronizadasResult?.linhas?.length || 0) > 0; else emptyCargasNaoSincronizadas">
+          <thead>
+          <tr>
+            <th>Carga (WinThor)</th>
+            <th>MDF-e</th>
+            <th>Saída</th>
+            <th>Motorista (WinThor)</th>
+            <th>Caminhão (WinThor)</th>
+            <th>Destino</th>
+            <th class="right">Peso (t)</th>
+            <th class="right">Valor</th>
+            <th>O que falta</th>
+            <th class="right">Tentativas</th>
+            <th>Última tentativa</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let l of cargasNaoSincronizadasResult?.linhas || []; trackBy: trackByCargaNaoSincronizada">
+            <td><strong>{{ formatText(l.numeroCargaExterno) }}</strong></td>
+            <td>{{ formatText(l.numMdfe?.toString()) }} <span class="hint">{{ l.situacaoMdfe ? ('sit. ' + l.situacaoMdfe) : '' }}</span></td>
+            <td>{{ l.dtSaida ? (l.dtSaida | date:'dd/MM/yyyy') : '-' }}</td>
+            <td>{{ formatText(l.codigoMotoristaExterno) }} <span class="hint">{{ formatText(l.nomeMotoristaExterno) }}</span></td>
+            <td>{{ formatText(l.codigoVeiculoExterno) }} <span class="hint">{{ formatText(l.placaVeiculoExterno) }}</span></td>
+            <td>{{ formatText(l.destino) }}</td>
+            <td class="right">{{ formatNumber(l.pesoCarga) }}</td>
+            <td class="right">{{ formatNumber(l.valorTotal) }}</td>
+            <td>{{ l.motivoDescricao }}</td>
+            <td class="right">{{ l.tentativas }}</td>
+            <td>{{ l.ultimaOcorrenciaEm ? (l.ultimaOcorrenciaEm | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #emptyCargasNaoSincronizadas>
+        <div class="empty" *ngIf="form.tipo === 'CARGAS_NAO_SINCRONIZADAS' && !cargasNaoSincronizadasLoading">
+          <ng-container *ngIf="cargasNaoSincronizadasResult; else geraCargasNaoSincronizadas">
+            <span class="empty-icon">👍</span>
+            Nenhuma carga descartada na sincronização com esses filtros.
+          </ng-container>
+          <ng-template #geraCargasNaoSincronizadas>
+            <span class="empty-icon">🚫</span>
+            Gere o relatório para visualizar os dados aqui.
+          </ng-template>
+        </div>
+      </ng-template>
+
       <ng-template #emptyCargasSumidas>
         <div class="empty" *ngIf="form.tipo === 'CARGAS_SUMIDAS_WINTHOR' && !cargasSumidasLoading">
           <ng-container *ngIf="cargasSumidasResult; else geraCargasSumidas">
@@ -422,12 +503,12 @@
         </div>
       </ng-template>
 
-      <div class="preview-wrap" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && form.tipo !== 'CARGAS_SUMIDAS_WINTHOR' && pdfSafeUrl; else empty">
+      <div class="preview-wrap" *ngIf="!tipoComTabela && pdfSafeUrl; else empty">
         <iframe class="pdf-frame" [src]="pdfSafeUrl"></iframe>
       </div>
 
       <ng-template #empty>
-        <div class="empty" *ngIf="form.tipo !== 'VIDA_UTIL_PNEU' && form.tipo !== 'CARGAS_SUMIDAS_WINTHOR'">
+        <div class="empty" *ngIf="!tipoComTabela">
           <ng-container *ngIf="loading; else emptyDefaultMsg"><span class="spinner"></span>Gerando PDF...</ng-container>
           <ng-template #emptyDefaultMsg>
             <span class="empty-icon">📄</span>

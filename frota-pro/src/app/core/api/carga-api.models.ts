@@ -129,6 +129,33 @@ export interface RelatorioCargasSumidasWinThorResponse {
   linhas: RelatorioCargaSumidaLinha[];
 }
 
+export interface RelatorioCargaNaoSincronizadaLinha {
+  numeroCargaExterno: string;
+  numMdfe?: number | null;
+  situacaoMdfe?: string | null;
+  motivo: string;
+  motivoDescricao: string;
+  codigoMotoristaExterno?: string | null;
+  nomeMotoristaExterno?: string | null;
+  codigoVeiculoExterno?: string | null;
+  placaVeiculoExterno?: string | null;
+  dtSaida?: string | null;
+  pesoCarga?: number | null;
+  valorTotal?: number | null;
+  destino?: string | null;
+  totalClientes?: number | null;
+  tentativas: number;
+  primeiraOcorrenciaEm?: string | null;
+  ultimaOcorrenciaEm?: string | null;
+}
+
+export interface RelatorioCargasNaoSincronizadasResponse {
+  total: number;
+  totalSemMotorista: number;
+  totalSemCaminhao: number;
+  linhas: RelatorioCargaNaoSincronizadaLinha[];
+}
+
 export interface CargaRequest {
   dtSaida?: string | null;
   dtPrevista?: string | null;

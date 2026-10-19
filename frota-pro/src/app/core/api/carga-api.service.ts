@@ -7,6 +7,7 @@ import {
   CargaRequest,
   CargaResponse,
   ImportarNotaFiscalResponse,
+  RelatorioCargasNaoSincronizadasResponse,
   RelatorioCargasSumidasWinThorResponse,
   TransferirMotoristaCargaRequest
 } from './carga-api.models';
@@ -61,6 +62,16 @@ export class CargaApiService extends BaseApiService {
     if (opts.caminhao) params = params.set('caminhao', opts.caminhao);
 
     return this.http.get<RelatorioCargasSumidasWinThorResponse>(`${this.apiUrl}/carga/relatorio-sumidas`, { params });
+  }
+
+  /** GET {{host}}/carga/relatorio-nao-sincronizadas — cargas que o sync do WinThor descartou (motorista/caminhão sem cadastro). */
+  relatorioNaoSincronizadas(opts: { inicio?: string | null; fim?: string | null; motivo?: string | null } = {}) {
+    let params = new HttpParams();
+    if (opts.inicio) params = params.set('inicio', opts.inicio);
+    if (opts.fim) params = params.set('fim', opts.fim);
+    if (opts.motivo) params = params.set('motivo', opts.motivo);
+
+    return this.http.get<RelatorioCargasNaoSincronizadasResponse>(`${this.apiUrl}/carga/relatorio-nao-sincronizadas`, { params });
   }
 
   /** GET {{host}}/carga/externo/{codigoExterno} */

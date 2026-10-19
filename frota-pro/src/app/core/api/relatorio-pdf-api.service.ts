@@ -154,6 +154,19 @@ export class RelatorioPdfApiService extends BaseApiService {
     });
   }
 
+  cargasNaoSincronizadas(opts: { inicio?: string | null; fim?: string | null; motivo?: string | null } = {}) {
+    let params = new HttpParams();
+    if (opts.inicio) params = params.set('inicio', opts.inicio);
+    if (opts.fim) params = params.set('fim', opts.fim);
+    if (opts.motivo) params = params.set('motivo', opts.motivo);
+
+    return this.http.get(`${this.apiUrl}/relatorios/pdf/carga/nao-sincronizadas`, {
+      params,
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
   desempenhoMetas(paramsInput: DesempenhoMetasParams) {
     let params = new HttpParams()
       .set('inicio', paramsInput.inicio)

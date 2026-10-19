@@ -13,7 +13,13 @@ import { CaminhaoResponse } from '../../core/api/caminhao-api.models';
 import { MotoristaApiService } from '../../core/api/motorista-api.service';
 import { MotoristaResponse } from '../../core/api/motorista-api.models';
 import { CargaApiService } from '../../core/api/carga-api.service';
-import { CargaMinResponse, RelatorioCargasSumidasWinThorResponse, RelatorioCargaSumidaLinha } from '../../core/api/carga-api.models';
+import {
+  CargaMinResponse,
+  RelatorioCargasSumidasWinThorResponse,
+  RelatorioCargaSumidaLinha,
+  RelatorioCargasNaoSincronizadasResponse,
+  RelatorioCargaNaoSincronizadaLinha,
+} from '../../core/api/carga-api.models';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 
 type ReportKey =
@@ -27,6 +33,7 @@ type ReportKey =
   | 'DESPESAS_CATEGORIAS'
   | 'VIDA_UTIL_PNEU'
   | 'CARGAS_SUMIDAS_WINTHOR'
+  | 'CARGAS_NAO_SINCRONIZADAS'
   | 'VINCULO_MOTORISTA_CAMINHAO';
 
 type TipoMeta = 'QUILOMETRAGEM' | 'CONSUMO_COMBUSTIVEL' | 'TONELADA' | 'CARGA_TRANSPORTADA';
@@ -161,6 +168,15 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
       note: 'Cargas que já foram sincronizadas, mas a verificação mais recente não encontrou mais nota fiscal vinculada no WinThor. Filtros abaixo são opcionais.',
       enabled: true,
     },
+    {
+      key: 'CARGAS_NAO_SINCRONIZADAS',
+      title: 'Cargas Não Sincronizadas',
+      category: 'Cargas',
+      icon: '🚫',
+      short: 'Cargas do WinThor que não entraram no sistema',
+      note: 'Cargas que existem no WinThor mas foram descartadas na sincronização porque o motorista ou o caminhão do MDF-e não está cadastrado no FrotaPRO. A carga sai desta lista sozinha quando sincronizar. Filtros abaixo são opcionais.',
+      enabled: true,
+    },
 
     // ===== Financeiro =====
     {
@@ -229,6 +245,9 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
   vidaUtilResult: PneuVidaUtilRelatorioResponse | null = null;
   cargasSumidasLoading = false;
   cargasSumidasResult: RelatorioCargasSumidasWinThorResponse | null = null;
+  cargasNaoSincronizadasLoading = false;
+  cargasNaoSincronizadasResult: RelatorioCargasNaoSincronizadasResponse | null = null;
+  motivoNaoSincronizada = '';
   verificandoAgora = false;
   caminhoes: CaminhaoResponse[] = [];
   motoristas: MotoristaResponse[] = [];
@@ -287,7 +306,14 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
 
   /** Se há algo pra limpar no painel de resultado (PDF, tabela de vida útil ou de cargas sumidas). */
   get podeLimpar(): boolean {
-    return !!this.pdfSafeUrl || !!this.vidaUtilResult || !!this.cargasSumidasResult;
+    return !!this.pdfSafeUrl || !!this.vidaUtilResult || !!this.cargasSumidasResult || !!this.cargasNaoSincronizadasResult;
+  }
+
+  /** Relatórios que mostram tabela na tela (e exportam o PDF por botão) em vez de pré-visualizar o PDF. */
+  get tipoComTabela(): boolean {
+    return this.form.tipo === 'VIDA_UTIL_PNEU'
+      || this.form.tipo === 'CARGAS_SUMIDAS_WINTHOR'
+      || this.form.tipo === 'CARGAS_NAO_SINCRONIZADAS';
   }
 
   /** ✅ limpa campos quando troca o tipo para evitar enviar filtro “sem querer” */
@@ -326,6 +352,10 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     }
     if (def.key !== 'CARGAS_SUMIDAS_WINTHOR') {
       this.cargasSumidasResult = null;
+    }
+    if (def.key !== 'CARGAS_NAO_SINCRONIZADAS') {
+      this.cargasNaoSincronizadasResult = null;
+      this.motivoNaoSincronizada = '';
     }
     if (!def.needsTipoMeta) {
       this.form.tipoMeta = '';
@@ -409,6 +439,29 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
           error: (e) => {
             this.cargasSumidasResult = null;
             this.errorMsg = extrairMensagemErro(e, 'Erro ao carregar relatório de cargas sumidas do WinThor.');
+          },
+        });
+      return;
+    }
+
+    if (def.key === 'CARGAS_NAO_SINCRONIZADAS') {
+      this.loading = false;
+      this.cargasNaoSincronizadasLoading = true;
+      this.pdfSafeUrl = null;
+      this.lastBlob = null;
+
+      this.cargaApi
+        .relatorioNaoSincronizadas({
+          inicio: this.form.inicio || undefined,
+          fim: this.form.fim || undefined,
+          motivo: this.motivoNaoSincronizada || undefined,
+        })
+        .pipe(finalize(() => (this.cargasNaoSincronizadasLoading = false)))
+        .subscribe({
+          next: (res) => (this.cargasNaoSincronizadasResult = res),
+          error: (e) => {
+            this.cargasNaoSincronizadasResult = null;
+            this.errorMsg = extrairMensagemErro(e, 'Erro ao carregar relatório de cargas não sincronizadas.');
           },
         });
       return;
@@ -545,6 +598,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     this.pdfSafeUrl = null;
     this.vidaUtilResult = null;
     this.cargasSumidasResult = null;
+    this.cargasNaoSincronizadasResult = null;
     this.revokeObjectUrl();
   }
 
@@ -602,6 +656,40 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
           this.errorMsg = extrairMensagemErro(e, 'Erro ao exportar PDF.');
         },
       });
+  }
+
+  exportarCargasNaoSincronizadasPdf() {
+    this.errorMsg = '';
+    this.loading = true;
+    this.api
+      .cargasNaoSincronizadas({
+        inicio: this.form.inicio || undefined,
+        fim: this.form.fim || undefined,
+        motivo: this.motivoNaoSincronizada || undefined,
+      })
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (res) => {
+          const blob = res.body;
+          if (!blob) {
+            this.errorMsg = 'PDF vazio retornado pela API.';
+            return;
+          }
+          const a = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          a.href = url;
+          a.download = this.extractFilename(res.headers.get('content-disposition'), 'cargas-nao-sincronizadas.pdf');
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        error: (e) => {
+          this.errorMsg = extrairMensagemErro(e, 'Erro ao exportar PDF.');
+        },
+      });
+  }
+
+  trackByCargaNaoSincronizada(_: number, row: RelatorioCargaNaoSincronizadaLinha): string {
+    return row.numeroCargaExterno;
   }
 
   /** Roda a reconciliação agora (sem esperar o job de 3h) e recarrega o relatório. */
