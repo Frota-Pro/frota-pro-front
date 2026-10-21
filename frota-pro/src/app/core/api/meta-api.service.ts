@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { BaseApiService } from './base-api.service';
+import { FechamentoMetaResumoResponse } from './fechamento-meta.models';
 import { PageResponse } from './page.models';
 import {
   DesempenhoCategoriaMetaResponse,
@@ -137,5 +138,11 @@ export class MetaApiService extends BaseApiService {
     params = params.set('fim', opts.fim);
 
     return this.http.get<MetaResponse[]>(`${this.apiUrl}/metas/historico`, { params });
+  }
+
+  /** Quem já finalizou (e quem não) a meta do mês, de todos os motoristas ativos. `mes` no formato yyyy-MM. */
+  resumoFechamento(mes: string) {
+    const params = new HttpParams().set('mes', mes);
+    return this.http.get<FechamentoMetaResumoResponse>(`${this.apiUrl}/metas/fechamento/resumo`, { params });
   }
 }

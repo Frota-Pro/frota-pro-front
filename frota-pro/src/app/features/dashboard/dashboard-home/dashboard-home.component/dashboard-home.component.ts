@@ -15,11 +15,12 @@ import { AuthUserService } from '../../../../core/auth/auth-user.service';
 import { formatKgFromTon } from '../../../../shared/utils/weight';
 import { NotificacaoApiService } from '../../../../core/api/notificacao-api.service';
 import { NotificacaoResponse, NotificacaoTipo } from '../../../../core/api/notificacao-api.models';
+import { FechamentoMetasCardComponent } from '../../fechamento-metas-card/fechamento-metas-card.component';
 
 @Component({
   selector: 'app-dashboard-home',
   standalone: true,
-  imports: [CommonModule, StatCardComponent, ActionButtonComponent],
+  imports: [CommonModule, StatCardComponent, ActionButtonComponent, FechamentoMetasCardComponent],
   templateUrl: './dashboard-home.component.html',
   styleUrls: ['./dashboard-home.component.css'],
 })

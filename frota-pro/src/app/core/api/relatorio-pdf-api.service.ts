@@ -89,8 +89,10 @@ export class RelatorioPdfApiService extends BaseApiService {
   }
 
   /** Mesmo relatório, um por página, pra todo mundo de uma vez — um PDF só pra imprimir. */
-  metaMensalTodosMotoristas(inicio: string, fim: string) {
-    const params = new HttpParams().set('inicio', inicio).set('fim', fim);
+  metaMensalTodosMotoristas(inicio: string, fim: string, somenteFinalizados = false) {
+    let params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    // Só quem já finalizou o mês (confirmou, ou o prazo venceu). Exige o período de um mês inteiro.
+    if (somenteFinalizados) params = params.set('somenteFinalizados', 'true');
 
     return this.http.get(`${this.apiUrl}/relatorios/pdf/motorista/meta-mensal/todos`, {
       params,

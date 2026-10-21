@@ -265,6 +265,16 @@
           </label>
         </div>
 
+        <div class="field" *ngIf="form.tipo === 'META_MENSAL_MOTORISTA' && form.todosMotoristas">
+          <label class="checkbox-row">
+            <input type="checkbox" [(ngModel)]="form.somenteFinalizados" />
+            Somente motoristas que já finalizaram a meta do mês (confirmaram, ou o prazo já venceu)
+          </label>
+          <small class="muted-sm" *ngIf="form.somenteFinalizados">
+            Use o período do mês inteiro (do dia 1 ao último dia). O relatório de cada motorista mostra quando a meta foi finalizada.
+          </small>
+        </div>
+
         <div class="field" *ngIf="selectedDef?.needsMotorista && form.tipo !== 'ABASTECIMENTOS' && !(form.tipo === 'META_MENSAL_MOTORISTA' && form.todosMotoristas)">
           <label>Motorista</label>
           <div class="autocomplete">

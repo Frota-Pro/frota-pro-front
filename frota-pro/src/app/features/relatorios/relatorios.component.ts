@@ -237,6 +237,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     codigoMotorista: '',
     numeroCarga: '',
     todosMotoristas: false,
+    somenteFinalizados: false,
   };
 
   loading = false;
@@ -329,11 +330,13 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
       this.form.codigoMotorista = '';
       this.form.numeroCarga = '';
       this.form.todosMotoristas = false;
+      this.form.somenteFinalizados = false;
       return;
     }
 
     if (def.key !== 'META_MENSAL_MOTORISTA') {
       this.form.todosMotoristas = false;
+      this.form.somenteFinalizados = false;
     }
 
     // se não é por período, zera datas
@@ -536,7 +539,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
 
       case 'META_MENSAL_MOTORISTA':
         req$ = this.form.todosMotoristas
-          ? this.api.metaMensalTodosMotoristas(this.form.inicio, this.form.fim)
+          ? this.api.metaMensalTodosMotoristas(this.form.inicio, this.form.fim, this.form.somenteFinalizados)
           : this.api.metaMensalMotorista(this.form.codigoMotorista, this.form.inicio, this.form.fim);
         break;
 
