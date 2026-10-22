@@ -94,6 +94,9 @@ export interface CargaResponse {
   /** true quando o motorista desta carga foi corrigido manualmente e o sync do WinThor não sobrescreve mais. */
   motoristaDefinidoManualmente?: boolean;
 
+  /** true quando o caminhão desta carga foi corrigido manualmente e o sync do WinThor não sobrescreve mais. */
+  caminhaoDefinidoManualmente?: boolean;
+
   /** Códigos de devolução (CODDEVOL) encontrados no último sync com o WinThor pra esta carga. */
   codigosDevolucaoEncontrados?: string[];
 
@@ -186,6 +189,10 @@ export interface ImportarNotaFiscalResponse {
 
 export interface TransferirMotoristaCargaRequest {
   codigoMotorista: string;
+}
+
+export interface TransferirCaminhaoCargaRequest {
+  codigoCaminhao: string;
 }
 
 /** Tipo mínimo que qualquer carga com número de exibição precisa ter. */

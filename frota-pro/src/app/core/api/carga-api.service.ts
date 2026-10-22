@@ -9,6 +9,7 @@ import {
   ImportarNotaFiscalResponse,
   RelatorioCargasNaoSincronizadasResponse,
   RelatorioCargasSumidasWinThorResponse,
+  TransferirCaminhaoCargaRequest,
   TransferirMotoristaCargaRequest
 } from './carga-api.models';
 
@@ -101,6 +102,14 @@ export class CargaApiService extends BaseApiService {
   transferirMotorista(numeroCarga: string, request: TransferirMotoristaCargaRequest) {
     return this.http.patch<CargaResponse>(
       `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/transferir-motorista`,
+      request
+    );
+  }
+
+  /** PATCH {{host}}/carga/{numeroCarga}/transferir-caminhao */
+  transferirCaminhao(numeroCarga: string, request: TransferirCaminhaoCargaRequest) {
+    return this.http.patch<CargaResponse>(
+      `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/transferir-caminhao`,
       request
     );
   }
