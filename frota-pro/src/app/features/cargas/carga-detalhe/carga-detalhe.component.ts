@@ -8,6 +8,8 @@ import { extrairMensagemErro } from '../../../core/utils/api-error.util';
 import { CargaApiService } from '../../../core/api/carga-api.service';
 import { MotoristaApiService } from '../../../core/api/motorista-api.service';
 import { MotoristaResponse } from '../../../core/api/motorista-api.models';
+import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
+import { CaminhaoResponse } from '../../../core/api/caminhao-api.models';
 import { ParadaCargaApiService } from '../../../core/api/parada-carga-api.service';
 import { ArquivoApiService } from '../../../core/api/arquivo-api.service';
 import { EixoApiService } from '../../../core/api/eixo-api.service';
@@ -144,6 +146,14 @@ export class CargaDetalheComponent implements OnInit {
   motoristasParaTransferenciaLoading = false;
   codigoMotoristaTransferencia = '';
   savingTransferirMotorista = false;
+
+  // ===== Transferir caminhão =====
+  // O MDF-e saiu no WinThor com o caminhão errado e não dá pra reemitir.
+  showTransferirCaminhaoModal = false;
+  caminhoesParaTransferencia: CaminhaoResponse[] = [];
+  caminhoesParaTransferenciaLoading = false;
+  codigoCaminhaoTransferencia = '';
+  savingTransferirCaminhao = false;
 
   // ===== Preview Parada =====
   showParadaModal = false;
@@ -288,6 +298,7 @@ export class CargaDetalheComponent implements OnInit {
     private router: Router,
     private cargaApi: CargaApiService,
     private motoristaApi: MotoristaApiService,
+    private caminhaoApi: CaminhaoApiService,
     private paradaApi: ParadaCargaApiService,
     private arquivoApi: ArquivoApiService,
     private eixoApi: EixoApiService,
@@ -601,6 +612,64 @@ export class CargaDetalheComponent implements OnInit {
         error: (err) => {
           console.error(err);
           this.toast('error', this.mensagemErro(err, 'Não foi possível transferir a carga para outro motorista.'), 'Transferir motorista');
+        },
+      });
+  }
+
+  // =========================
+  // Transferir caminhão
+  // =========================
+  // O MDF-e foi emitido com o caminhão errado e não dá pra reemitir: troca o
+  // caminhão da carga (levando junto abastecimentos e manutenções lançados nela)
+  // e trava contra o sync do WinThor.
+  abrirTransferirCaminhaoModal(): void {
+    this.codigoCaminhaoTransferencia = '';
+    this.showTransferirCaminhaoModal = true;
+
+    if (this.caminhoesParaTransferencia.length === 0) {
+      this.caminhoesParaTransferenciaLoading = true;
+      this.caminhaoApi
+        .listar({ page: 0, size: 1000, sort: 'placa,asc', ativo: true })
+        .pipe(finalize(() => (this.caminhoesParaTransferenciaLoading = false)))
+        .subscribe({
+          next: (res) => (this.caminhoesParaTransferencia = res.content || []),
+          error: (err) => {
+            console.error(err);
+            this.toast('error', this.mensagemErro(err, 'Não foi possível carregar a lista de caminhões.'), 'Transferir caminhão');
+          },
+        });
+    }
+  }
+
+  fecharTransferirCaminhaoModal(): void {
+    if (this.savingTransferirCaminhao) return;
+    this.showTransferirCaminhaoModal = false;
+    this.codigoCaminhaoTransferencia = '';
+  }
+
+  transferirCaminhao(): void {
+    if (!this.carga) return;
+
+    const codigoCaminhao = this.codigoCaminhaoTransferencia.trim();
+    if (!codigoCaminhao) {
+      return this.toast('warning', 'Selecione o caminhão que realmente fez a carga.', 'Transferir caminhão');
+    }
+
+    this.savingTransferirCaminhao = true;
+
+    this.cargaApi
+      .transferirCaminhao(this.carga.numeroCarga, { codigoCaminhao })
+      .pipe(finalize(() => (this.savingTransferirCaminhao = false)))
+      .subscribe({
+        next: () => {
+          this.showTransferirCaminhaoModal = false;
+          this.codigoCaminhaoTransferencia = '';
+          this.toast('success', 'Caminhão da carga atualizado.', 'Transferir caminhão');
+          this.carregar();
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', this.mensagemErro(err, 'Não foi possível transferir a carga para outro caminhão.'), 'Transferir caminhão');
         },
       });
   }

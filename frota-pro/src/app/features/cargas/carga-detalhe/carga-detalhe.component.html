@@ -35,6 +35,9 @@
       <button class="btn primary" type="button" (click)="abrirTransferirMotoristaModal()" [disabled]="loading">
         Transferir motorista
       </button>
+      <button class="btn primary" type="button" (click)="abrirTransferirCaminhaoModal()" [disabled]="loading">
+        Transferir caminhão
+      </button>
       <button class="btn" type="button" (click)="carregar()" [disabled]="loading">Atualizar</button>
     </div>
   </div>
@@ -141,7 +144,10 @@
 
               <div class="info-item">
                 <div class="info-label">Caminhão</div>
-                <div class="info-value">{{ carga.placaCaminhao || '—' }}</div>
+                <div class="info-value">
+                  {{ carga.placaCaminhao || '—' }}
+                  <span class="badge warn" *ngIf="carga.caminhaoDefinidoManualmente" title="Corrigido manualmente — o sync do WinThor não sobrescreve mais o caminhão desta carga.">Transferido</span>
+                </div>
                 <div class="info-sub muted">Código: {{ carga.codigoCaminhao || '—' }}</div>
               </div>
 
@@ -543,6 +549,51 @@
       <button class="btn ghost" type="button" (click)="fecharTransferirMotoristaModal()" [disabled]="savingTransferirMotorista">Cancelar</button>
       <button class="btn primary" type="button" (click)="transferirMotorista()" [disabled]="savingTransferirMotorista">
         {{ savingTransferirMotorista ? 'Transferindo...' : 'Transferir' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- =============== MODAL: TRANSFERIR CAMINHÃO =============== -->
+<div class="modal-backdrop" *ngIf="showTransferirCaminhaoModal" (click)="fecharTransferirCaminhaoModal()">
+  <div class="modal transfer-modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h3>Transferir caminhão</h3>
+        <p class="muted" *ngIf="carga">
+          Carga <span class="mono">{{ carga.numeroCargaExibicao }}</span> — hoje no caminhão
+          <strong>{{ carga.placaCaminhao || '—' }}</strong>
+        </p>
+      </div>
+      <button class="btn ghost" type="button" (click)="fecharTransferirCaminhaoModal()" [disabled]="savingTransferirCaminhao">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="muted help">
+        Use quando o MDF-e foi emitido no WinThor com o caminhão errado e não dá pra reemitir.
+        A carga passa para o caminhão escolhido, junto com os abastecimentos e manutenções lançados nela,
+        e as próximas sincronizações do WinThor não vão mais sobrescrever o caminhão desta carga.
+        Depois, confira o último KM dos dois caminhões e recalcule as metas.
+      </p>
+
+      <label class="f">
+        <span class="f-label">Caminhão que realmente fez a carga</span>
+        <select class="control"
+                [(ngModel)]="codigoCaminhaoTransferencia"
+                [disabled]="savingTransferirCaminhao || caminhoesParaTransferenciaLoading">
+          <option value="">Selecione...</option>
+          <option *ngFor="let c of caminhoesParaTransferencia" [value]="c.codigo">{{ c.placa }} — {{ c.codigo }}{{ c.descricao ? ' — ' + c.descricao : '' }}</option>
+        </select>
+        <span class="muted" *ngIf="caminhoesParaTransferenciaLoading">Carregando caminhões...</span>
+      </label>
+    </div>
+
+    <div class="modal-footer sticky-footer">
+      <button class="btn ghost" type="button" (click)="fecharTransferirCaminhaoModal()" [disabled]="savingTransferirCaminhao">Cancelar</button>
+      <button class="btn primary" type="button" (click)="transferirCaminhao()" [disabled]="savingTransferirCaminhao">
+        {{ savingTransferirCaminhao ? 'Transferindo...' : 'Transferir' }}
       </button>
     </div>
 
