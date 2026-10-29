@@ -16,9 +16,35 @@
 
   <ng-container *ngIf="!loading">
 
-    <div class="section-title">Metas</div>
+    <div class="toolbar">
+      <div class="busca">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <input type="search" [(ngModel)]="busca" placeholder="Buscar parâmetro (ex.: senha, multa, auditoria, meta...)" aria-label="Buscar parâmetro" />
+        <button class="limpar" type="button" *ngIf="buscando" (click)="busca = ''" aria-label="Limpar busca">✕</button>
+      </div>
+    </div>
 
-    <div class="card">
+    <div class="layout">
+
+      <nav class="abas" aria-label="Categorias de parâmetros">
+        <button *ngFor="let a of abas" type="button" class="aba"
+                [class.ativa]="!buscando && aba === a.id"
+                [class.zerada]="buscando && contagem(a.id) === 0"
+                (click)="irParaAba(a.id)">
+          <i class="fas" [ngClass]="a.icone" aria-hidden="true"></i>
+          <span class="rotulo">{{ a.rotulo }}</span>
+          <span class="n" *ngIf="buscando && contagem(a.id) > 0">{{ contagem(a.id) }}</span>
+        </button>
+      </nav>
+
+      <div class="conteudo">
+
+        <div class="vazio" *ngIf="buscando && totalResultados() === 0">
+          Nenhum parâmetro encontrado para "{{ busca }}".
+        </div>
+
+
+    <div class="card" *ngIf="vis('meta-fechamento')">
       <div class="card-header">
         <h2>Fechamento da meta mensal</h2>
       </div>
@@ -37,9 +63,8 @@
       </div>
     </div>
 
-    <div class="section-title">Avisos automáticos</div>
 
-    <div class="card">
+    <div class="card" *ngIf="vis('aviso-vencimentos')">
       <div class="card-header">
         <h2>Vencimentos e manutenção</h2>
       </div>
@@ -64,7 +89,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" *ngIf="vis('aviso-multas')">
       <div class="card-header">
         <h2>Multas</h2>
       </div>
@@ -77,9 +102,8 @@
       </div>
     </div>
 
-    <div class="section-title">Abastecimento</div>
 
-    <div class="card">
+    <div class="card" *ngIf="vis('aviso-abastecimento')">
       <div class="card-header">
         <h2>Detecção de preço fora do padrão</h2>
       </div>
@@ -92,9 +116,8 @@
       </div>
     </div>
 
-    <div class="section-title">Segurança de acesso</div>
 
-    <div class="card">
+    <div class="card" *ngIf="vis('seguranca-acesso')">
       <div class="card-header">
         <h2>Senha padrão e celular do motorista</h2>
       </div>
@@ -123,9 +146,8 @@
       </div>
     </div>
 
-    <div class="section-title">Sincronização de peso/valor da carga (WinThor)</div>
 
-    <div class="card">
+    <div class="card" *ngIf="vis('winthor-devolucao')">
       <div class="card-header">
         <h2>Devolução</h2>
       </div>
@@ -149,7 +171,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" *ngIf="vis('winthor-transferencia')">
       <div class="card-header">
         <h2>Transferência</h2>
       </div>
@@ -168,9 +190,8 @@
       </div>
     </div>
 
-    <div class="section-title">Tempo mínimo de entrega</div>
 
-    <div class="card">
+    <div class="card" *ngIf="vis('carga-tempo-minimo')">
       <div class="card-header">
         <h2>Carga finalizada rápido demais</h2>
       </div>
@@ -194,9 +215,8 @@
       </div>
     </div>
 
-    <div class="section-title">Auditoria</div>
 
-    <div class="card">
+    <div class="card" *ngIf="vis('auditoria-retencao')">
       <div class="card-header">
         <h2>Retenção da trilha de auditoria</h2>
       </div>
@@ -209,8 +229,13 @@
       </div>
     </div>
 
+      </div>
+    </div>
+
     <div class="actions-bar">
-      <button class="btn primary" type="button" (click)="salvar()" [disabled]="saving">
+      <span class="status" [class.alterado]="alterado">{{ alterado ? 'Há alterações não salvas' : 'Tudo salvo' }}</span>
+      <button class="btn" type="button" *ngIf="alterado" [disabled]="saving" (click)="descartar()">Descartar</button>
+      <button class="btn primary" type="button" (click)="salvar()" [disabled]="saving || !alterado">
         {{ saving ? 'Salvando...' : 'Salvar parâmetros' }}
       </button>
     </div>
