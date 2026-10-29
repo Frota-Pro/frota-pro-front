@@ -81,6 +81,7 @@ export interface CargaResponse {
   placaCaminhao?: string | null;
 
   codigoRota?: string | null;
+  nomeRota?: string | null;
 
   codigosAjudantes?: string[];
 
