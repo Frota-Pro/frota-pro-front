@@ -10,6 +10,7 @@ import {
   UsuarioUpdateRequest
 } from '../../core/api/usuario-api.models';
 import { ToastService } from '../../shared/ui/toast/toast.service';
+import { AuthUserService } from '../../core/auth/auth-user.service';
 
 const MAX_FILTRO = 150;
 const MAX_MATRICULA = 50;
@@ -55,7 +56,7 @@ export class UsuariosComponent implements OnInit {
     ativo: true
   };
 
-  rolesDisponiveis = [
+  private readonly todosOsPerfis = [
     'ROLE_ADMIN',
     'ROLE_GERENTE_LOGISTICA',
     'ROLE_OPERADOR_LOGISTICA',
@@ -64,10 +65,56 @@ export class UsuariosComponent implements OnInit {
     'ROLE_CONSULTA'
   ];
 
-  constructor(private usuarioService: UsuarioApiService, private toast: ToastService) {}
+  // Mesma regra da API (HierarquiaAcessoService): ninguém concede perfil acima do próprio
+  // nem mexe em usuário de perfil acima do seu. A API é quem garante; aqui só esconde o que daria erro.
+  private nivelDoUsuarioLogado = 0;
+
+  constructor(
+    private usuarioService: UsuarioApiService,
+    private toast: ToastService,
+    private authUser: AuthUserService,
+  ) {}
 
   ngOnInit(): void {
+    this.carregarNivelDoUsuarioLogado();
     this.carregar();
+  }
+
+  /** Perfis que o usuário logado pode conceder. */
+  get rolesDisponiveis(): string[] {
+    return this.todosOsPerfis.filter(r => this.nivelDoPerfil(r) <= this.nivelDoUsuarioLogado);
+  }
+
+  /** O usuário logado pode editar, resetar a senha ou inativar este usuário? */
+  podeGerenciar(u: UsuarioResponse): boolean {
+    return this.nivelDosPerfis(u.acessos ?? []) <= this.nivelDoUsuarioLogado;
+  }
+
+  private carregarNivelDoUsuarioLogado(): void {
+    const aplicar = (authorities: string[] | undefined) => {
+      this.nivelDoUsuarioLogado = this.nivelDosPerfis(authorities ?? []);
+    };
+    if (this.authUser.snapshot) {
+      aplicar(this.authUser.snapshot.authorities);
+      return;
+    }
+    this.authUser.loadMe().subscribe({ next: (u) => aplicar(u.authorities), error: () => aplicar([]) });
+  }
+
+  private nivelDosPerfis(perfis: string[]): number {
+    return perfis.reduce((maior, p) => Math.max(maior, this.nivelDoPerfil(p)), 0);
+  }
+
+  private nivelDoPerfil(perfil: string): number {
+    switch (perfil) {
+      case 'ROLE_ADMIN': return 4;
+      case 'ROLE_GERENTE_LOGISTICA': return 3;
+      case 'ROLE_OPERADOR_LOGISTICA': return 2;
+      case 'ROLE_MOTORISTA':
+      case 'ROLE_MECANICO':
+      case 'ROLE_CONSULTA': return 1;
+      default: return 4; // desconhecido: só ADMIN concede
+    }
   }
 
   carregar() {

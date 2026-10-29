@@ -58,7 +58,7 @@
           </div>
         </td>
 
-        <td class="row-actions">
+        <td class="row-actions" *ngIf="podeGerenciar(u); else semPermissao">
           <button class="icon-btn edit" type="button" title="Editar" (click)="editar(u)">
             <i class="fas fa-pen"></i>
           </button>
@@ -70,6 +70,9 @@
             <i class="fas" [class.fa-toggle-off]="u.ativo" [class.fa-toggle-on]="!u.ativo"></i>
           </button>
         </td>
+        <ng-template #semPermissao>
+          <td class="row-actions"><span class="muted" title="Perfil acima do seu">—</span></td>
+        </ng-template>
       </tr>
       </tbody>
     </table>
