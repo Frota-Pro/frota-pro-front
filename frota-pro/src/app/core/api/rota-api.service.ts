@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
-import { ClienteHistoricoRotaResponse, RotaRequest, RotaResponse, UnificarRotasResponse } from './rota-api.models';
+import { ClienteHistoricoRotaResponse, RotaRequest, RotaResponse } from './rota-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class RotaApiService extends BaseApiService {
@@ -33,13 +33,6 @@ export class RotaApiService extends BaseApiService {
 
   deletar(codigo: string) {
     return this.http.delete<void>(`${this.apiUrl}/rota/${encodeURIComponent(codigo)}`);
-  }
-
-  // simular=true só mostra o que seria feito; simular=false junta de verdade (ADMIN).
-  unificarRepetidas(simular: boolean) {
-    return this.http.post<UnificarRotasResponse>(`${this.apiUrl}/rota/unificar-repetidas`, null, {
-      params: new HttpParams().set('simular', String(simular)),
-    });
   }
 
   clientesHistorico(codigo: string) {

@@ -6,8 +6,6 @@ import { finalize } from 'rxjs/operators';
 import { extrairMensagemErro } from '../../core/utils/api-error.util';
 import { ParametroSistemaApiService } from '../../core/api/parametro-sistema-api.service';
 import { ParametroSistemaResponse, ParametroSistemaUpdateRequest } from '../../core/api/parametro-sistema-api.models';
-import { RotaApiService } from '../../core/api/rota-api.service';
-import { UnificarRotasResponse } from '../../core/api/rota-api.models';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 
 @Component({
@@ -31,7 +29,6 @@ export class ParametrosSistemaComponent implements OnInit {
     diasAntecedenciaPrazoMulta: 5,
     validarMotivoAlteracaoPesoValorCarga: false,
     codigosDevolucaoPermitidos: '',
-    sufixosRotaIgnorados: 'FRIOS',
     permitirAtualizacaoPorTransferencia: true,
     validarTempoMinimoCarga: false,
     tempoMinimoEntregaPadraoMinutos: 30,
@@ -41,7 +38,6 @@ export class ParametrosSistemaComponent implements OnInit {
 
   constructor(
     private api: ParametroSistemaApiService,
-    private rotaApi: RotaApiService,
     private toast: ToastService,
   ) {}
 
@@ -65,7 +61,6 @@ export class ParametrosSistemaComponent implements OnInit {
             diasAntecedenciaPrazoMulta: res.diasAntecedenciaPrazoMulta,
             validarMotivoAlteracaoPesoValorCarga: res.validarMotivoAlteracaoPesoValorCarga,
             codigosDevolucaoPermitidos: res.codigosDevolucaoPermitidos ?? '',
-            sufixosRotaIgnorados: res.sufixosRotaIgnorados ?? '',
             permitirAtualizacaoPorTransferencia: res.permitirAtualizacaoPorTransferencia,
             validarTempoMinimoCarga: res.validarTempoMinimoCarga,
             tempoMinimoEntregaPadraoMinutos: res.tempoMinimoEntregaPadraoMinutos,
@@ -74,40 +69,6 @@ export class ParametrosSistemaComponent implements OnInit {
           };
         },
         error: (err) => (this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar os parâmetros.')),
-      });
-  }
-
-  // Unificar rotas repetidas: o backend usa o valor SALVO de "sufixos ignorados". Primeiro simula,
-  // mostra o que vai acontecer e só junta de verdade quando o admin confirma.
-  unificando = false;
-  simulacaoRotas: UnificarRotasResponse | null = null;
-
-  simularUnificacaoRotas(): void {
-    this.unificando = true;
-    this.simulacaoRotas = null;
-
-    this.rotaApi.unificarRepetidas(true)
-      .pipe(finalize(() => (this.unificando = false)))
-      .subscribe({
-        next: (res) => {
-          this.simulacaoRotas = res;
-          if (res.grupos.length === 0) this.toast.success('Nenhuma rota repetida encontrada.');
-        },
-        error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível simular a unificação.')),
-      });
-  }
-
-  confirmarUnificacaoRotas(): void {
-    this.unificando = true;
-
-    this.rotaApi.unificarRepetidas(false)
-      .pipe(finalize(() => (this.unificando = false)))
-      .subscribe({
-        next: (res) => {
-          this.simulacaoRotas = null;
-          this.toast.success(`${res.rotasRemovidas} rota(s) unificada(s); ${res.cargasMovidas} carga(s) movida(s).`);
-        },
-        error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível unificar as rotas.')),
       });
   }
 

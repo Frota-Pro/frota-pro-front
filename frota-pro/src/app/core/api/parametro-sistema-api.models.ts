@@ -7,7 +7,6 @@ export interface ParametroSistemaResponse {
 
   validarMotivoAlteracaoPesoValorCarga: boolean;
   codigosDevolucaoPermitidos: string | null;
-  sufixosRotaIgnorados: string | null;
   permitirAtualizacaoPorTransferencia: boolean;
 
   validarTempoMinimoCarga: boolean;
@@ -27,7 +26,6 @@ export interface ParametroSistemaUpdateRequest {
 
   validarMotivoAlteracaoPesoValorCarga: boolean;
   codigosDevolucaoPermitidos: string | null;
-  sufixosRotaIgnorados: string | null;
   permitirAtualizacaoPorTransferencia: boolean;
 
   validarTempoMinimoCarga: boolean;
