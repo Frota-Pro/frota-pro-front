@@ -28,3 +28,23 @@ export interface ClienteHistoricoRotaResponse {
   uf: string | null;
   cep: string | null;
 }
+
+export interface UnificarRotasRepetida {
+  codigo: string;
+  nome: string;
+  quantidadeCargas: number;
+}
+
+export interface UnificarRotasGrupo {
+  codigoMantida: string;
+  nomeAtual: string;
+  nomeFinal: string;
+  repetidas: UnificarRotasRepetida[];
+}
+
+export interface UnificarRotasResponse {
+  simulacao: boolean;
+  rotasRemovidas: number;
+  cargasMovidas: number;
+  grupos: UnificarRotasGrupo[];
+}
