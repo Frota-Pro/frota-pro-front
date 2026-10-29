@@ -29,7 +29,7 @@
           </div>
 
           <div class="logo-upload">
-            <input type="file" accept="image/*" (change)="onLogoSelecionada($event)" />
+            <input type="file" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" (change)="onLogoSelecionada($event)" />
             <button class="btn primary" type="button" (click)="enviarLogo()" [disabled]="uploadingLogo">
               {{ uploadingLogo ? 'Enviando...' : 'Enviar logo' }}
             </button>
