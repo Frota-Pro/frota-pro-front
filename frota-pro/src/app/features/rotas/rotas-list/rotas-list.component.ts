@@ -178,6 +178,46 @@ export class RotasListComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Corrige uma rota criada errada (ex.: "DO DIA"): as cargas dela vão para a rota certa e ela é apagada.
+  mesclar(r: RotaResponse): void {
+    const resposta = window.prompt(
+      `Mesclar a rota ${r.codigo} ("${r.cidadeInicio}") em qual rota?` +
+      ' Digite o código da rota que FICA (ex.: ROT-000004). As cargas desta rota passam para ela e esta rota é apagada.'
+    );
+    const codigoDestino = resposta?.trim().toUpperCase();
+    if (!codigoDestino) return;
+
+    this.loading = true;
+    this.api
+      .buscarPorCodigo(codigoDestino)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (destino) => {
+          const ok = confirm(
+            `Passar as cargas de ${r.codigo} ("${r.cidadeInicio}") para ${destino.codigo} ("${destino.cidadeInicio}") ` +
+            `e apagar ${r.codigo}? Isso não pode ser desfeito.`
+          );
+          if (!ok) return;
+          this.executarMesclagem(r, destino.codigo);
+        },
+        error: () => this.toast('error', `Não encontrei a rota ${codigoDestino}.`),
+      });
+  }
+
+  private executarMesclagem(origem: RotaResponse, codigoDestino: string): void {
+    this.loading = true;
+    this.api
+      .mesclar(origem.codigo, codigoDestino)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (res) => {
+          this.carregarPagina();
+          this.toast('success', `${res.cargasMovidas} carga(s) movida(s) para ${res.codigoDestino} (${res.nomeDestino}).`);
+        },
+        error: (err) => this.toast('error', this.extractApiError(err) || 'Não foi possível mesclar as rotas.'),
+      });
+  }
+
   excluir(r: RotaResponse): void {
     if (!confirm(`Deseja excluir a rota ${r.codigo} (${r.cidadeInicio})?`)) return;
 

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
-import { ClienteHistoricoRotaResponse, RotaRequest, RotaResponse } from './rota-api.models';
+import { ClienteHistoricoRotaResponse, MesclarRotaResponse, RotaRequest, RotaResponse } from './rota-api.models';
 
 @Injectable({ providedIn: 'root' })
 export class RotaApiService extends BaseApiService {
@@ -33,6 +33,14 @@ export class RotaApiService extends BaseApiService {
 
   deletar(codigo: string) {
     return this.http.delete<void>(`${this.apiUrl}/rota/${encodeURIComponent(codigo)}`);
+  }
+
+  // Passa as cargas de `codigo` para `codigoDestino` e apaga `codigo`.
+  mesclar(codigo: string, codigoDestino: string) {
+    return this.http.post<MesclarRotaResponse>(
+      `${this.apiUrl}/rota/${encodeURIComponent(codigo)}/mesclar/${encodeURIComponent(codigoDestino)}`,
+      null
+    );
   }
 
   clientesHistorico(codigo: string) {
