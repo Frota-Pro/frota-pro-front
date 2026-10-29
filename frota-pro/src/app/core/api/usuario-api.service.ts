@@ -8,6 +8,7 @@ import {
   UsuarioCreateRequest,
   UsuarioUpdateRequest,
   UsuarioSenhaUpdateRequest,
+  UsuariosMotoristasCriadosResponse,
   UsuarioSenhaSelfRequest
 } from './usuario-api.models';
 
@@ -40,6 +41,11 @@ export class UsuarioApiService extends BaseApiService {
     return this.http.put<UsuarioResponse>(`${this.apiUrl}/usuario/${encodeURIComponent(id)}`, payload);
   }
 
+  /** Libera o motorista para entrar de outro celular (o próximo login grava o aparelho novo). */
+  desvincularDispositivo(id: string) {
+    return this.http.delete<UsuarioResponse>(`${this.apiUrl}/usuario/${encodeURIComponent(id)}/dispositivo`);
+  }
+
   atualizarAtivo(id: string, ativo: boolean) {
     return this.http.patch<UsuarioResponse>(
       `${this.apiUrl}/usuario/${encodeURIComponent(id)}/ativo`,
@@ -63,6 +69,6 @@ export class UsuarioApiService extends BaseApiService {
     const list = Array.isArray(matriculas) ? matriculas : [matriculas];
     const payload = list.filter(Boolean).join(',');
     const params = new HttpParams().set('matriculas', payload);
-    return this.http.post<string[]>(`${this.apiUrl}/usuario/motoristas`, null, { params });
+    return this.http.post<UsuariosMotoristasCriadosResponse>(`${this.apiUrl}/usuario/motoristas`, null, { params });
   }
 }

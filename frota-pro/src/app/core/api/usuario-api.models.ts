@@ -4,6 +4,10 @@ export interface UsuarioResponse {
   nome: string;
   ativo: boolean;
   acessos: string[];
+  // celular a que o motorista está vinculado (só o modelo; o identificador não sai da API)
+  dispositivoVinculado?: boolean;
+  dispositivoVinculadoNome?: string | null;
+  dispositivoVinculadoEm?: string | null;
   criadoEm: string;
   atualizadoEm: string;
 }
@@ -30,4 +34,16 @@ export interface UsuarioSenhaUpdateRequest {
 export interface UsuarioSenhaSelfRequest {
   senhaAtual: string;
   novaSenha: string;
+}
+
+export interface CredencialUsuarioCriado {
+  nome: string;
+  login: string;
+  senhaInicial: string;
+}
+
+// Resposta de POST /usuario/motoristas: as senhas iniciais só vêm aqui, uma vez.
+export interface UsuariosMotoristasCriadosResponse {
+  mensagens: string[];
+  credenciais: CredencialUsuarioCriado[];
 }

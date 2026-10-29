@@ -7,7 +7,8 @@ import { UsuarioApiService } from '../../core/api/usuario-api.service';
 import {
   UsuarioResponse,
   UsuarioCreateRequest,
-  UsuarioUpdateRequest
+  UsuarioUpdateRequest,
+  CredencialUsuarioCriado
 } from '../../core/api/usuario-api.models';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { AuthUserService } from '../../core/auth/auth-user.service';
@@ -42,10 +43,17 @@ export class UsuariosComponent implements OnInit {
   criandoMotorista = false;
   matriculaMotorista = '';
 
+  // senhas iniciais geradas pela API (aparecem uma única vez)
+  credenciaisCriadas: CredencialUsuarioCriado[] = [];
+  mensagensCriacao: string[] = [];
+  senhasAnotadas = false;
+
   // modal de resetar senha (troca o prompt() nativo)
   showResetSenhaModal = false;
   resetSenhaAlvo?: UsuarioResponse;
   resetSenhaValor = '';
+  resetSenhaVisivel = false;
+  resetSenhaSalva = false; // depois de salvar, a janela fica aberta mostrando a senha pra anotar
   resetandoSenha = false;
 
   form: UsuarioCreateRequest = {
@@ -248,8 +256,59 @@ export class UsuariosComponent implements OnInit {
       });
   }
 
+  /** Desvincula o celular do motorista: a pessoa poderá entrar de outro aparelho. */
+  desvincularCelular(usuario: UsuarioResponse) {
+    const celular = usuario.dispositivoVinculadoNome || 'o celular';
+    if (!confirm(`Desvincular ${celular} de ${usuario.nome}?\n\nO celular antigo perde o acesso e o próximo login, em qualquer celular, vira o novo vínculo.`)) {
+      return;
+    }
+    this.usuarioService.desvincularDispositivo(usuario.id).subscribe({
+      next: () => {
+        this.toast.success(`Celular desvinculado. ${usuario.nome} já pode entrar de outro aparelho.`);
+        this.carregar();
+      },
+      error: (err) => this.toast.error(extrairMensagemErro(err, 'Não foi possível desvincular o celular.')),
+    });
+  }
+
   // ===== Resetar senha (modal estilizado, em vez do prompt() nativo) =====
+  /** Fecha a janela das senhas geradas; só depois de marcar que anotou. */
+  fecharCredenciais() {
+    if (!this.senhasAnotadas) return;
+    this.credenciaisCriadas = [];
+    this.mensagensCriacao = [];
+  }
+
+  /** Copia "nome / login / senha" de todos, pra colar numa planilha ou mensagem. */
+  copiarCredenciais() {
+    const texto = this.credenciaisCriadas
+      .map(c => `${c.nome}\tlogin: ${c.login}\tsenha: ${c.senhaInicial}`)
+      .join('\n');
+    navigator.clipboard?.writeText(texto)
+      .then(() => this.toast.success('Copiado.'))
+      .catch(() => this.toast.warn('Não consegui copiar. Anote à mão.'));
+  }
+
+  imprimirCredenciais() {
+    window.print();
+  }
+
+  /** Senha aleatória de 10 caracteres, sem os que se confundem (0/O, 1/l/I). Gerada no navegador. */
+  gerarSenhaAleatoria(): string {
+    const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    const valores = new Uint32Array(10);
+    crypto.getRandomValues(valores);
+    return Array.from(valores, v => alfabeto[v % alfabeto.length]).join('');
+  }
+
+  gerarSenhaNoReset() {
+    this.resetSenhaValor = this.gerarSenhaAleatoria();
+    this.resetSenhaVisivel = true;
+  }
+
   abrirResetSenha(usuario: UsuarioResponse) {
+    this.resetSenhaVisivel = false;
+    this.resetSenhaSalva = false;
     this.resetSenhaAlvo = usuario;
     this.resetSenhaValor = '';
     this.showResetSenhaModal = true;
@@ -260,6 +319,8 @@ export class UsuariosComponent implements OnInit {
     this.showResetSenhaModal = false;
     this.resetSenhaAlvo = undefined;
     this.resetSenhaValor = '';
+    this.resetSenhaVisivel = false;
+    this.resetSenhaSalva = false;
   }
 
   confirmarResetSenha() {
@@ -275,7 +336,9 @@ export class UsuariosComponent implements OnInit {
         next: () => {
           this.toast.success('Senha atualizada com sucesso.');
           this.resetandoSenha = false;
-          this.fecharResetSenha();
+          // mostra a senha uma última vez para o administrador anotar e passar à pessoa
+          this.resetSenhaSalva = true;
+          this.resetSenhaVisivel = true;
         },
         error: (err) => {
           this.resetandoSenha = false;
@@ -319,10 +382,19 @@ export class UsuariosComponent implements OnInit {
 
     this.criandoMotorista = true;
     this.usuarioService.criarUsuarioMotorista(items).subscribe({
-      next: (msgs) => {
-        this.toast.success((msgs ?? []).join(' • ') || 'Processado.');
+      next: (res) => {
+        const mensagens = res?.mensagens ?? [];
+        this.credenciaisCriadas = res?.credenciais ?? [];
+        this.senhasAnotadas = false;
+        if (this.credenciaisCriadas.length) {
+          // as senhas só aparecem agora: fica numa janela própria até o administrador anotar
+          this.toast.success(`${this.credenciaisCriadas.length} usuário(s) criado(s). Anote as senhas.`);
+        } else {
+          this.toast.warn(mensagens.join(' • ') || 'Nenhum usuário foi criado.');
+        }
+        this.mensagensCriacao = mensagens.filter(m => !m.startsWith('✅'));
         this.criandoMotorista = false;
-        this.fecharMotoristaModal();
+        this.showMotoristaModal = false;
         this.carregar();
       },
       error: (err) => {

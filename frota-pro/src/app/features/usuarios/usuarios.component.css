@@ -129,3 +129,24 @@
   .search { min-width: 100%; }
   .row { flex-direction: column; }
 }
+
+/* senhas geradas */
+.modal.credenciais { width: min(640px, calc(100vw - 24px)); }
+.aviso {
+  background: rgba(245,158,11,.10); border: 1px solid rgba(245,158,11,.30);
+  color: #92400e; border-radius: 12px; padding: 10px 12px; font-size: 12px;
+}
+.cred-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cred-table th { text-align: left; font-size: 11px; color: #6b7280; padding: 6px 8px; border-bottom: 1px solid #eef2f7; }
+.cred-table td { padding: 8px; border-bottom: 1px solid #f3f4f6; }
+.cred-table .senha { font-size: 15px; font-weight: 700; letter-spacing: .04em; }
+.row-links { display: flex; gap: 8px; flex-wrap: wrap; }
+
+@media print {
+  .backdrop { display: none; }
+  .modal.credenciais { position: static; box-shadow: none; width: 100%; }
+  .modal.credenciais .modal-footer, .modal.credenciais .checkbox-row { display: none; }
+}
+
+.celular { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #1e3a8a;
+  background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.18); border-radius: 999px; padding: 2px 10px; }
