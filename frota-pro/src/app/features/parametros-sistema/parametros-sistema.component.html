@@ -92,56 +92,6 @@
       </div>
     </div>
 
-    <div class="section-title">Rotas (WinThor)</div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2>Rota a partir do destino da carga</h2>
-      </div>
-      <div class="card-body">
-        <div class="field">
-          <label>Palavras ignoradas no fim do destino</label>
-          <input type="text" [(ngModel)]="form.sufixosRotaIgnorados" placeholder="Ex.: FRIOS" />
-          <span class="muted-sm">
-            O destino da carga é digitado à mão no WinThor. Acento, maiúscula/minúscula e espaços repetidos já são ignorados
-            ("POÇO DANTAS" e "POCO DANTAS" são a mesma rota). Aqui você lista palavras que, no <strong>fim</strong> do destino,
-            também não contam: com "FRIOS", "SOUSA FRIOS" cai na rota "SOUSA". Separe várias por vírgula. Em branco = cada grafia vira uma rota.
-          </span>
-        </div>
-
-        <div class="field">
-          <label>Unificar rotas repetidas já cadastradas</label>
-          <span class="muted-sm">
-            Junta as rotas que, pela regra acima, são a mesma: fica a de menor código, as cargas das outras vão para ela, as cidades e os dias
-            são somados e as repetidas são apagadas. Usa o valor <strong>salvo</strong> acima (salve antes, se mudou). Primeiro mostra o que seria feito.
-          </span>
-          <div>
-            <button class="btn" type="button" (click)="simularUnificacaoRotas()" [disabled]="unificando">
-              {{ unificando ? 'Verificando...' : 'Simular unificação' }}
-            </button>
-          </div>
-
-          <div *ngIf="simulacaoRotas && simulacaoRotas.grupos.length > 0">
-            <p class="muted-sm">
-              <strong>{{ simulacaoRotas.rotasRemovidas }}</strong> rota(s) seriam apagadas e
-              <strong>{{ simulacaoRotas.cargasMovidas }}</strong> carga(s) movidas.
-            </p>
-            <ul class="muted-sm">
-              <li *ngFor="let g of simulacaoRotas.grupos">
-                <strong>{{ g.codigoMantida }}</strong> fica como "{{ g.nomeFinal }}"<span *ngIf="g.nomeFinal !== g.nomeAtual"> (hoje "{{ g.nomeAtual }}")</span><span *ngIf="g.repetidas.length > 0">;
-                  junta {{ g.repetidas.length }}:
-                  <span *ngFor="let r of g.repetidas; let last = last">{{ r.codigo }} "{{ r.nome }}" ({{ r.quantidadeCargas }} carga(s)){{ last ? '' : ', ' }}</span>
-                </span>
-              </li>
-            </ul>
-            <button class="btn primary" type="button" (click)="confirmarUnificacaoRotas()" [disabled]="unificando">
-              Confirmar unificação
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="section-title">Sincronização de peso/valor da carga (WinThor)</div>
 
     <div class="card">
