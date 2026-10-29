@@ -15,6 +15,9 @@ export interface ParametroSistemaResponse {
   diasRetencaoAuditoria: number;
 
   percentualLimiteAnomaliaAbastecimento: number;
+
+  bloquearSenhaPadrao: boolean;
+  vincularDispositivo: boolean;
 }
 
 export interface ParametroSistemaUpdateRequest {
@@ -34,4 +37,7 @@ export interface ParametroSistemaUpdateRequest {
   diasRetencaoAuditoria: number;
 
   percentualLimiteAnomaliaAbastecimento: number;
+
+  bloquearSenhaPadrao?: boolean;
+  vincularDispositivo?: boolean;
 }
