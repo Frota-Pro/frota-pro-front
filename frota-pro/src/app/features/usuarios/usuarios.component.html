@@ -38,6 +38,7 @@
         <th>Login</th>
         <th>Status</th>
         <th>Acessos</th>
+        <th>Celular</th>
         <th class="col-actions">Ações</th>
       </tr>
       </thead>
@@ -58,7 +59,17 @@
           </div>
         </td>
 
+        <td>
+          <span class="celular" *ngIf="u.dispositivoVinculado; else semCelular" [title]="'Vinculado em ' + (u.dispositivoVinculadoEm | date:'dd/MM/yyyy HH:mm')">
+            <i class="fas fa-mobile-alt"></i> {{ u.dispositivoVinculadoNome || 'Celular' }}
+          </span>
+          <ng-template #semCelular><span class="muted">—</span></ng-template>
+        </td>
+
         <td class="row-actions" *ngIf="podeGerenciar(u); else semPermissao">
+          <button class="icon-btn" type="button" title="Desvincular celular" *ngIf="u.dispositivoVinculado" (click)="desvincularCelular(u)">
+            <i class="fas fa-unlink"></i>
+          </button>
           <button class="icon-btn edit" type="button" title="Editar" (click)="editar(u)">
             <i class="fas fa-pen"></i>
           </button>
@@ -166,6 +177,46 @@
     </div>
   </div>
 
+  <!-- MODAL: senhas iniciais geradas (aparecem uma única vez) -->
+  <div class="backdrop" *ngIf="credenciaisCriadas.length"></div>
+
+  <div class="modal credenciais" *ngIf="credenciaisCriadas.length">
+    <div class="modal-header">
+      <h2>Anote as senhas dos novos usuários</h2>
+    </div>
+
+    <div class="modal-body">
+      <div class="aviso">
+        Estas senhas <strong>não aparecem de novo</strong>. Cada pessoa será obrigada a trocar a senha no primeiro acesso.
+        Passe a senha por um meio seguro (pessoalmente ou mensagem direta), nunca em grupo.
+      </div>
+
+      <table class="cred-table">
+        <thead><tr><th>Nome</th><th>Login</th><th>Senha inicial</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let c of credenciaisCriadas">
+            <td>{{ c.nome }}</td>
+            <td class="mono">{{ c.login }}</td>
+            <td class="mono senha">{{ c.senhaInicial }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="muted-sm" *ngFor="let m of mensagensCriacao">{{ m }}</div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" [(ngModel)]="senhasAnotadas" />
+        Anotei todas as senhas
+      </label>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" type="button" (click)="copiarCredenciais()">Copiar</button>
+      <button class="btn" type="button" (click)="imprimirCredenciais()">Imprimir</button>
+      <button class="btn primary" type="button" [disabled]="!senhasAnotadas" (click)="fecharCredenciais()">Fechar</button>
+    </div>
+  </div>
+
   <!-- MODAL: resetar senha -->
   <div class="backdrop" *ngIf="showResetSenhaModal" (click)="fecharResetSenha()"></div>
 
@@ -180,15 +231,29 @@
         Nova senha pra <strong>{{ u.nome }}</strong> (<span class="mono">{{ u.login }}</span>).
       </p>
       <label>Nova senha</label>
-      <input type="password" [(ngModel)]="resetSenhaValor" placeholder="mínimo 6 caracteres"
+      <input [type]="resetSenhaVisivel ? 'text' : 'password'" [(ngModel)]="resetSenhaValor"
+             placeholder="mínimo 6 caracteres" [readonly]="resetSenhaSalva"
              (keyup.enter)="confirmarResetSenha()" />
+      <div class="row-links" *ngIf="!resetSenhaSalva">
+        <button class="btn small" type="button" (click)="gerarSenhaNoReset()">Gerar senha aleatória</button>
+        <button class="btn small" type="button" (click)="resetSenhaVisivel = !resetSenhaVisivel">
+          {{ resetSenhaVisivel ? 'Ocultar' : 'Mostrar' }}
+        </button>
+      </div>
+      <span class="muted-sm" *ngIf="!resetSenhaSalva">A pessoa será obrigada a trocar a senha no primeiro acesso.</span>
+      <div class="aviso" *ngIf="resetSenhaSalva">
+        Senha salva. <strong>Anote agora</strong>: ela não aparece de novo. Passe para a pessoa por um meio seguro.
+      </div>
     </div>
 
-    <div class="modal-footer">
+    <div class="modal-footer" *ngIf="!resetSenhaSalva">
       <button class="btn" type="button" (click)="fecharResetSenha()">Cancelar</button>
       <button class="btn primary" type="button" [disabled]="resetandoSenha" (click)="confirmarResetSenha()">
         {{ resetandoSenha ? 'Salvando...' : 'Salvar' }}
       </button>
+    </div>
+    <div class="modal-footer" *ngIf="resetSenhaSalva">
+      <button class="btn primary" type="button" (click)="fecharResetSenha()">Anotei, fechar</button>
     </div>
   </div>
 
