@@ -28,3 +28,10 @@ export interface ClienteHistoricoRotaResponse {
   uf: string | null;
   cep: string | null;
 }
+
+export interface MesclarRotaResponse {
+  codigoRemovida: string;
+  codigoDestino: string;
+  nomeDestino: string;
+  cargasMovidas: number;
+}
