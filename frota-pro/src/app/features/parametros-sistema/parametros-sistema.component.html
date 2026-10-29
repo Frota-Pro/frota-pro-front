@@ -92,6 +92,37 @@
       </div>
     </div>
 
+    <div class="section-title">Segurança de acesso</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Senha padrão e celular do motorista</h2>
+      </div>
+      <div class="card-body">
+        <label class="row">
+          <span>
+            Bloquear login com a senha padrão
+            <span class="muted-sm block">Ligado, quem ainda usa a senha fixa antiga (<code>padrao123</code>) não consegue entrar e precisa pedir uma senha nova ao administrador (Usuários → Resetar senha). <strong>Antes de ligar, redefina as senhas dessas contas</strong>: quem ainda tiver a senha padrão fica sem acesso. Você só consegue ligar depois de trocar a sua própria senha.</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="form.bloquearSenhaPadrao" />
+            <span class="slider"></span>
+          </label>
+        </label>
+
+        <label class="row">
+          <span>
+            Vincular o motorista a um celular
+            <span class="muted-sm block">Ligado, o motorista só entra pelo celular em que fez o primeiro login. Em outro aparelho o login é recusado até o administrador desvincular o celular antigo (Usuários → ícone de desvincular). <strong>Só ligue depois de instalar o app 1.8.0 (ou maior) nos celulares</strong>: o app antigo não envia a identificação do aparelho e seria barrado. Todos precisam entrar de novo uma vez. Vale só para contas que são exclusivamente de motorista.</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="form.vincularDispositivo" />
+            <span class="slider"></span>
+          </label>
+        </label>
+      </div>
+    </div>
+
     <div class="section-title">Sincronização de peso/valor da carga (WinThor)</div>
 
     <div class="card">

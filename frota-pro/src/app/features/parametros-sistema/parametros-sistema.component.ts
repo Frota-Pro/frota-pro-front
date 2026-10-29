@@ -34,6 +34,8 @@ export class ParametrosSistemaComponent implements OnInit {
     tempoMinimoEntregaPadraoMinutos: 30,
     diasRetencaoAuditoria: 180,
     percentualLimiteAnomaliaAbastecimento: 25,
+    bloquearSenhaPadrao: false,
+    vincularDispositivo: false,
   };
 
   constructor(
@@ -66,6 +68,8 @@ export class ParametrosSistemaComponent implements OnInit {
             tempoMinimoEntregaPadraoMinutos: res.tempoMinimoEntregaPadraoMinutos,
             diasRetencaoAuditoria: res.diasRetencaoAuditoria,
             percentualLimiteAnomaliaAbastecimento: res.percentualLimiteAnomaliaAbastecimento,
+            bloquearSenhaPadrao: res.bloquearSenhaPadrao ?? false,
+            vincularDispositivo: res.vincularDispositivo ?? false,
           };
         },
         error: (err) => (this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar os parâmetros.')),
