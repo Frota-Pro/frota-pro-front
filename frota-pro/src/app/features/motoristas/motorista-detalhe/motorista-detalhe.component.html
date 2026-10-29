@@ -260,7 +260,7 @@
 
           <input [(ngModel)]="observacao" placeholder="Observação (opcional)" />
 
-          <input type="file" (change)="onFileSelected($event)" />
+          <input type="file" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,application/pdf,image/png,image/jpeg,image/gif,image/webp" (change)="onFileSelected($event)" />
 
           <button class="btn primary" type="button" (click)="uploadDocumento()" [disabled]="uploading">
             {{ uploading ? 'Enviando...' : 'Enviar' }}

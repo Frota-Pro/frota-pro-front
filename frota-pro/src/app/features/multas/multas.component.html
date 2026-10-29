@@ -309,7 +309,7 @@
 
           <label>
             <span class="muted-sm">Arquivo</span>
-            <input type="file" (change)="onAnexoSelecionado($event)" />
+            <input type="file" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,application/pdf,image/png,image/jpeg,image/gif,image/webp" (change)="onAnexoSelecionado($event)" />
           </label>
 
           <button class="btn primary" type="button" (click)="uploadAnexo()" [disabled]="uploadingAnexo">

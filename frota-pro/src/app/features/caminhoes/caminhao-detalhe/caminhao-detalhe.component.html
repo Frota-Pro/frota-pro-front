@@ -385,7 +385,7 @@
     <div class="doc-uploader">
       <div class="doc-left">
         <label class="doc-label">Arquivo *</label>
-        <input type="file" (change)="onFileSelected($event)" />
+        <input type="file" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,application/pdf,image/png,image/jpeg,image/gif,image/webp" (change)="onFileSelected($event)" />
         <small class="muted">Envie documentos do caminhão (PDF, imagem, etc.)</small>
       </div>
 

@@ -91,7 +91,7 @@
 
         <input class="input" [(ngModel)]="obsDoc" placeholder="Observação (opcional)" />
 
-        <input class="file" type="file" (change)="onFileChange($event)" />
+        <input class="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,application/pdf,image/png,image/jpeg,image/gif,image/webp" (change)="onFileChange($event)" />
         <button class="btn primary" type="button" (click)="uploadDoc()" [disabled]="docsLoading">Enviar</button>
       </div>
 
