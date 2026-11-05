@@ -52,53 +52,13 @@
 
   <ng-container *ngIf="!loading && carga">
 
-    <div class="transfer-alert sumida" *ngIf="carga.motoristaExterno">
-      <div class="transfer-alert-title">✋ Motorista de terceiro: lançar km e abastecimento à mão</div>
-      <div class="transfer-alert-text">
-        {{ carga.nomeMotorista }} não é da frota e não usa o app. O km inicial, o km final e o abastecimento desta
-        carga precisam ser lançados por quem administra.
-      </div>
-    </div>
-
-    <div class="transfer-alert sumida" *ngIf="carga.origemCarga === 'MANIFESTO_SEM_NOTA'">
-      <div class="transfer-alert-title">Manifesto sem nota: lançar km e abastecimento à mão</div>
-      <div class="transfer-alert-text">
-        Este manifesto não tem nenhuma nota fiscal: é uma viagem sem valor, só com o peso do manifesto. O km inicial, o km final
-        e o abastecimento precisam ser lançados por quem administra.
-      </div>
-    </div>
-
-    <div class="transfer-alert" *ngIf="carga.origemCarga === 'REENTREGA'">
-      <div class="transfer-alert-title">Carga de reentrega</div>
-      <div class="transfer-alert-text">
-        O pedido voltou<span *ngIf="carga.origemCargaNumero"> da carga {{ carga.origemCargaNumero }}</span> e ganhou esta carga própria,
-        por isso o peso é baixo. Se o motorista não se lembra desta viagem, a entrega pode ter sido feita junto de outra carga.
-      </div>
-    </div>
-
-    <div class="transfer-alert" *ngIf="carga.origemCarga === 'TRANSFERENCIA'">
-      <div class="transfer-alert-title">Carga criada por transferência de pedido</div>
-      <div class="transfer-alert-text">
-        O pedido veio de transferência<span *ngIf="carga.origemCargaNumero"> da carga {{ carga.origemCargaNumero }}</span>.
-      </div>
-    </div>
-
-    <div class="transfer-alert sumida" *ngIf="carga.transferidaPara">
-      <div class="transfer-alert-title">Carga transferida: ficou sem nota</div>
-      <div class="transfer-alert-text">
-        As notas desta carga foram para a(s) carga(s) {{ carga.transferidaPara }}. O valor e o peso dela foram tirados
-        dos totais para não contar duas vezes (os números antigos ficam guardados).
-      </div>
-    </div>
-
-    <div class="transfer-alert sumida" *ngIf="carga.naoEncontradaNoWinThor && !carga.transferidaPara">
-      <div class="transfer-alert-title">⚠ Carga sem nota fiscal no WinThor</div>
+    <div class="transfer-alert sumida" *ngIf="carga.naoEncontradaNoWinThor">
+      <div class="transfer-alert-title">⚠ Carga não encontrada no WinThor</div>
       <div class="transfer-alert-text">
         Essa carga foi sincronizada antes, mas a última verificação
         <span *ngIf="carga.dataVerificacaoWinThor">({{ carga.dataVerificacaoWinThor | date:'dd/MM/yyyy HH:mm' }})</span>
-        não encontrou nota fiscal vinculada ao carregamento {{ carga.numeroCargaExterno }}. O carregamento e o manifesto
-        podem continuar existindo lá: o mais comum é as notas terem sido movidas para outra carga (reentrega ou
-        transferência). Veja em "Conferência do mês" para onde elas foram antes de liberar o motorista.
+        não encontrou mais nota fiscal vinculada ao carregamento {{ carga.numeroCargaExterno }} no WinThor —
+        pode ter sido cancelada ou desvinculada lá. Confira antes de liberar o motorista pra essa viagem.
       </div>
     </div>
 

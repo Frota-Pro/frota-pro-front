@@ -7,7 +7,6 @@ import { Observable } from 'rxjs';
 import { AuthMeResponse } from '../../../core/auth/auth-user.model';
 import { AuthUserService } from '../../../core/auth/auth-user.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ConferenciaTransportadoApiService } from '../../../core/api/conferencia-transportado-api.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -29,15 +28,11 @@ export class Dashboard implements OnInit {
     public authUser: AuthUserService,
     private authService: AuthService,
     private router: Router,
-    private conferenciaApi: ConferenciaTransportadoApiService,
   ) {
     this.user$ = this.authUser.user$;
   }
 
   isClosed = false;
-
-  /** Cargas que precisam de lançamento manual de km e abastecimento (motorista de terceiro, manifesto sem nota). */
-  cargasLancamentoManual = 0;
 
   // ✅ Submenus do print
   submenuOficinaAberto = true;
@@ -80,12 +75,6 @@ export class Dashboard implements OnInit {
       error: () => {
         // se quiser tratar: token inválido, redirecionar login etc.
       },
-    });
-
-    // contador do menu Cargas; quem não tem permissão (ou se a API falhar) simplesmente não vê o número
-    this.conferenciaApi.quantidadeLancamentoManual().subscribe({
-      next: (r) => (this.cargasLancamentoManual = r?.quantidade ?? 0),
-      error: () => (this.cargasLancamentoManual = 0),
     });
 
     this.atualizarGrafico();
