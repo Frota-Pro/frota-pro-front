@@ -22,6 +22,9 @@ export interface CaminhaoResponse {
   categoriaCodigo?: string | null;
   categoriaDescricao?: string | null;
 
+  linhaId?: string | null;
+  linhaNome?: string | null;
+
   motoristaTitularCodigo?: string | null;
   motoristaTitularNome?: string | null;
 
@@ -48,6 +51,7 @@ export interface CaminhaoRequest {
   maxPeso?: number | null;
 
   categoria?: string | null; // CODIGO da categoria
+  linhaId?: string | null; // id da linha de transporte (Frios, Linha seca...)
   motoristaTitular?: string | null; // CODIGO do motorista titular
   dtLicenciamento?: string | null; // dd/MM/yyyy
 }
@@ -72,6 +76,11 @@ export interface CaminhaoDetalheResponse {
 
 export interface VincularCategoriaCaminhaoEmLoteRequest {
   categoriaCodigo: string;
+  caminhoesCodigo: string[];
+}
+
+export interface VincularLinhaCaminhaoEmLoteRequest {
+  linhaId: string;
   caminhoesCodigo: string[];
 }
 

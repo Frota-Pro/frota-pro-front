@@ -12,10 +12,11 @@
   <div class="header">
     <div>
       <h1>Caminhões</h1>
-      <p>Selecione caminhões, crie categorias e vincule em lote.</p>
+      <p>Selecione caminhões, crie categorias e linhas (Frios, Linha seca...) e vincule em lote.</p>
     </div>
 
     <div class="actions">
+      <button class="btn ghost" type="button" (click)="openLinhaModal()">+ Nova linha</button>
       <button class="btn ghost" type="button" (click)="openCategoriaModal()">+ Nova categoria</button>
       <button class="btn primary" type="button" (click)="openNovoCaminhao()">+ Novo caminhão</button>
     </div>
@@ -49,6 +50,18 @@
       </button>
     </div>
 
+    <div class="bulk">
+      <label class="sr-only" for="caminhoes-linha-lote">Selecionar linha para vínculo em lote</label>
+      <select [(ngModel)]="linhaSelecionada" class="select" id="caminhoes-linha-lote">
+        <option value="">Vincular linha...</option>
+        <option *ngFor="let l of linhas" [value]="l.id">{{ l.nome }}</option>
+      </select>
+
+      <button class="btn" type="button" (click)="aplicarLinha()" [attr.aria-label]="'Aplicar linha em ' + selected.size + ' caminhão(ões) selecionado(s)'">
+        Aplicar ({{ selected.size }})
+      </button>
+    </div>
+
     <button class="btn ghost" type="button" (click)="carregarPagina()">Atualizar</button>
   </div>
 
@@ -72,6 +85,7 @@
         <th>Descrição</th>
         <th>Marca/Modelo</th>
         <th>Categoria</th>
+        <th>Linha</th>
         <th>Última carga</th>
         <th>Status</th>
         <th class="col-actions">Ações</th>
@@ -113,6 +127,10 @@
 
         <td>
           <span class="tag">{{ c.categoriaDescricao || '—' }}</span>
+        </td>
+
+        <td>
+          <span class="tag">{{ c.linhaNome || '—' }}</span>
         </td>
 
         <td>
@@ -187,6 +205,27 @@
     </div>
   </div>
 
+  <!-- MODAL LINHA DE TRANSPORTE -->
+  <div class="backdrop" *ngIf="showLinhaModal" (click)="closeLinhaModal()"></div>
+  <div class="modal" *ngIf="showLinhaModal">
+    <div class="modal-header">
+      <h2>Nova linha</h2>
+      <button class="icon" (click)="closeLinhaModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <label>Nome da linha</label>
+      <input [(ngModel)]="linhaNome" maxlength="60" placeholder="Ex: Frios, Linha seca" (keyup.enter)="salvarLinha()" />
+
+      <small class="muted">Depois de criar, vincule aos caminhões marcando-os na lista e usando "Vincular linha...". O BI separa os números por essa linha.</small>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" (click)="closeLinhaModal()">Cancelar</button>
+      <button class="btn primary" (click)="salvarLinha()">Salvar</button>
+    </div>
+  </div>
+
   <!-- MODAL CAMINHÃO -->
   <div class="backdrop" *ngIf="showCaminhaoModal" (click)="closeCaminhaoModal()"></div>
   <div class="modal" *ngIf="showCaminhaoModal">
@@ -217,6 +256,12 @@
       <select [(ngModel)]="form.categoria">
         <option [ngValue]="null">—</option>
         <option *ngFor="let c of categorias" [ngValue]="c.codigo">{{ c.descricao }} ({{ c.codigo }})</option>
+      </select>
+
+      <label>Linha</label>
+      <select [(ngModel)]="form.linhaId">
+        <option [ngValue]="null">—</option>
+        <option *ngFor="let l of linhas" [ngValue]="l.id">{{ l.nome }}</option>
       </select>
 
       <label>Licenciamento (dd/MM/yyyy)</label>

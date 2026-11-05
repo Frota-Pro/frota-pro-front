@@ -13,6 +13,8 @@ import {
   VincularCategoriaCaminhaoEmLoteRequest,
 } from '../../../core/api/caminhao-api.models';
 import { CategoriaCaminhaoRequest, CategoriaCaminhaoResponse } from '../../../core/api/categoria-caminhao-api.models';
+import { LinhaTransporteApiService } from '../../../core/api/linha-transporte-api.service';
+import { LinhaTransporteResponse } from '../../../core/api/linha-transporte-api.models';
 
 type AtivoFiltro = 'TODOS' | 'ATIVOS' | 'INATIVOS';
 
@@ -45,10 +47,12 @@ export class CaminhoesListComponent implements OnInit, OnDestroy {
   // dados
   caminhoes: CaminhaoResponse[] = [];
   categorias: CategoriaCaminhaoResponse[] = [];
+  linhas: LinhaTransporteResponse[] = [];
 
   // seleção em massa
   selected = new Set<string>();
   categoriaSelecionada = '';
+  linhaSelecionada = '';
 
   // ui
   loading = false;
@@ -62,6 +66,10 @@ export class CaminhoesListComponent implements OnInit, OnDestroy {
   // modal criar categoria
   showCategoriaModal = false;
   catForm: CategoriaCaminhaoRequest = { codigo: '', descricao: '' };
+
+  // modal criar linha de transporte
+  showLinhaModal = false;
+  linhaNome = '';
 
   // modal criar/editar caminhao (simples)
   showCaminhaoModal = false;
@@ -79,7 +87,8 @@ export class CaminhoesListComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private api: CaminhaoApiService,
-    private categoriaApi: CategoriaCaminhaoApiService
+    private categoriaApi: CategoriaCaminhaoApiService,
+    private linhaApi: LinhaTransporteApiService
   ) {}
 
   private toast(type: ToastType, message: string, ttlMs = 4200): void {
@@ -108,6 +117,7 @@ export class CaminhoesListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.carregarCategorias();
+    this.carregarLinhas();
     this.carregarPagina();
   }
 
@@ -136,6 +146,13 @@ export class CaminhoesListComponent implements OnInit, OnDestroy {
     this.categoriaApi.listarTodas().subscribe({
       next: (p) => (this.categorias = (p.content || []).filter(c => c.ativo !== false)),
       error: () => (this.categorias = []),
+    });
+  }
+
+  carregarLinhas(): void {
+    this.linhaApi.listar().subscribe({
+      next: (l) => (this.linhas = (l || []).filter((x) => x.ativo !== false)),
+      error: () => (this.linhas = []),
     });
   }
 
@@ -227,6 +244,55 @@ export class CaminhoesListComponent implements OnInit, OnDestroy {
       });
   }
 
+  aplicarLinha(): void {
+    const codigos = Array.from(this.selected);
+    if (!this.linhaSelecionada) return this.toast('warning', 'Selecione uma linha.');
+    if (codigos.length === 0) return this.toast('warning', 'Selecione pelo menos 1 caminhão.');
+
+    this.loading = true;
+    this.api.vincularLinhaEmLote({ linhaId: this.linhaSelecionada, caminhoesCodigo: codigos })
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => {
+          this.linhaSelecionada = '';
+          this.carregarPagina();
+          this.toast('success', 'Linha vinculada com sucesso.');
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', this.extractApiError(err) || 'Não foi possível vincular a linha.');
+        }
+      });
+  }
+
+  // criar linha de transporte
+  openLinhaModal(): void {
+    this.linhaNome = '';
+    this.showLinhaModal = true;
+  }
+  closeLinhaModal(): void {
+    this.showLinhaModal = false;
+  }
+  salvarLinha(): void {
+    const nome = (this.linhaNome || '').trim();
+    if (nome.length < 2) return this.toast('warning', 'Informe o nome da linha (ex.: Frios).');
+
+    this.loading = true;
+    this.linhaApi.criar({ nome })
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => {
+          this.closeLinhaModal();
+          this.carregarLinhas();
+          this.toast('success', 'Linha criada com sucesso.');
+        },
+        error: (err) => {
+          console.error(err);
+          this.toast('error', this.extractApiError(err) || 'Não foi possível criar a linha.');
+        }
+      });
+  }
+
   // criar categoria
   openCategoriaModal(): void {
     this.catForm = { codigo: '', descricao: '' };
@@ -269,6 +335,7 @@ export class CaminhoesListComponent implements OnInit, OnDestroy {
       marca: '',
       placa: '',
       categoria: null,
+      linhaId: null,
       dtLicenciamento: null,
     };
     this.showCaminhaoModal = true;

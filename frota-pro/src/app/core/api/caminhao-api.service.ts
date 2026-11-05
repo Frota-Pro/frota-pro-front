@@ -9,6 +9,7 @@ import {
   CaminhaoTitularRequest,
   RecalcularTitularCaminhaoResponse,
   VincularCategoriaCaminhaoEmLoteRequest,
+  VincularLinhaCaminhaoEmLoteRequest,
 } from './caminhao-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -57,6 +58,10 @@ export class CaminhaoApiService extends BaseApiService {
 
   vincularCategoriaEmLote(payload: VincularCategoriaCaminhaoEmLoteRequest) {
     return this.http.put<void>(`${this.apiUrl}/caminhao/categoria`, payload);
+  }
+
+  vincularLinhaEmLote(payload: VincularLinhaCaminhaoEmLoteRequest) {
+    return this.http.put<void>(`${this.apiUrl}/caminhao/linha`, payload);
   }
 
   transferirTitular(codigo: string, payload: CaminhaoTitularRequest) {

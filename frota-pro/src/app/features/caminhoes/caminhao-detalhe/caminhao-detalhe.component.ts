@@ -11,6 +11,8 @@ import { CaminhaoApiService } from '../../../core/api/caminhao-api.service';
 import { CategoriaCaminhaoApiService } from '../../../core/api/categoria-caminhao-api.service';
 import { CaminhaoDetalheResponse, CaminhaoRequest, CaminhaoTitularRequest } from '../../../core/api/caminhao-api.models';
 import { CategoriaCaminhaoResponse } from '../../../core/api/categoria-caminhao-api.models';
+import { LinhaTransporteApiService } from '../../../core/api/linha-transporte-api.service';
+import { LinhaTransporteResponse } from '../../../core/api/linha-transporte-api.models';
 
 import { MotoristaApiService } from '../../../core/api/motorista-api.service';
 import { MotoristaResponse } from '../../../core/api/motorista-api.models';
@@ -76,6 +78,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
 
   // Categorias + Modal edição
   categorias: CategoriaCaminhaoResponse[] = [];
+  linhas: LinhaTransporteResponse[] = [];
   motoristas: MotoristaResponse[] = [];
   showEditModal = false;
 
@@ -103,6 +106,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
     marca: '',
     placa: '',
     categoria: null,
+    linhaId: null,
     motoristaTitular: null,
     dtLicenciamento: null,
     codigoExterno: null,
@@ -155,6 +159,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
     private router: Router,
     private api: CaminhaoApiService,
     private categoriaApi: CategoriaCaminhaoApiService,
+    private linhaApi: LinhaTransporteApiService,
     private cargaApi: CargaApiService,
     private abastecimentoApi: AbastecimentoApiService,
     private manutencaoApi: ManutencaoApiService,
@@ -175,6 +180,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
 
     this.initPeriodoMetas();
     this.carregarCategorias();
+    this.carregarLinhas();
     this.carregarMotoristas();
     this.carregarBase();
     this.carregarTab();
@@ -210,6 +216,13 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
           this.errorMsg = extrairMensagemErro(err, 'Não foi possível carregar o detalhamento do caminhão.');
         },
       });
+  }
+
+  carregarLinhas(): void {
+    this.linhaApi.listar().subscribe({
+      next: (l) => (this.linhas = (l || []).filter((x) => x.ativo !== false)),
+      error: () => (this.linhas = []),
+    });
   }
 
   carregarCategorias(): void {
@@ -497,6 +510,7 @@ export class CaminhaoDetalheComponent implements OnInit, OnDestroy {
       tara: c.tara ?? null,
       maxPeso: c.maxPeso ?? null,
       categoria: c.categoriaCodigo || null,
+      linhaId: c.linhaId || null,
       motoristaTitular: c.motoristaTitularCodigo || null,
       dtLicenciamento: c.dtLicenciamento || null,
     };
