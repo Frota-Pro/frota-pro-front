@@ -45,6 +45,10 @@ describe('ConferenciaTransportadoComponent', () => {
     fixture.detectChanges();
   }
 
+  function texto(): string {
+    return fixture.nativeElement.textContent as string;
+  }
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [ConferenciaTransportadoComponent],
@@ -57,21 +61,54 @@ describe('ConferenciaTransportadoComponent', () => {
 
   afterEach(() => http.verify());
 
-  it('carrega o mes escolhido ao abrir e mostra os totais e as duas pontes', () => {
+  // ------------------------------------------------------------------ resumo
+
+  it('abre mostrando so os tres numeros que importam e os pontos de atencao, sem detalhes na tela', () => {
     iniciar();
 
-    const texto = fixture.nativeElement.textContent as string;
-    expect(texto).toContain('Transportado no WinThor');
-    expect(texto).toContain('Transportado no FrotaPRO');
-    expect(texto).toContain('Venda sem carregamento');
-    expect(texto).toContain('Notas movidas');
-    expect(texto).toContain('As duas pontes fecham ao centavo');
+    expect(texto()).toContain('Transportado no WinThor');
+    expect(texto()).toContain('Transportado no FrotaPRO');
+    expect(texto()).toContain('Diferença');
+    expect(texto()).toContain('O que precisa de atenção');
+    expect(fixture.nativeElement.querySelector('.janela')).toBeNull();
+    // as pontes e as listas ficam dentro das janelas, nao na pagina
+    expect(fixture.nativeElement.querySelector('.fundo')).toBeNull();
   });
 
-  it('avisa quando as pontes nao fecham', () => {
+  it('uma linha diz que as contas fecham e quantos pontos pedem atencao', () => {
+    iniciar();
+
+    expect(fixture.nativeElement.querySelector('.status.aviso')?.textContent).toContain('fecham ao centavo');
+    expect(fixture.nativeElement.querySelector('.status.aviso')?.textContent).toContain('1 ponto pede atenção');
+  });
+
+  it('tudo conferido quando nao ha nada pedindo atencao', () => {
+    iniciar({ ...RESPOSTA, cargasComDiferenca: [], totais: { ...RESPOSTA.totais, diferenca: 0 } });
+
+    expect(fixture.nativeElement.querySelector('.status.ok')?.textContent).toContain('Tudo conferido');
+    expect(texto()).toContain('Nada para conferir neste mês');
+  });
+
+  it('avisa quando as contas nao fecham', () => {
     iniciar({ ...RESPOSTA, fechou: false });
 
     expect(fixture.nativeElement.querySelector('.status.falha')).toBeTruthy();
+  });
+
+  it('cartoes so aparecem com o que tem algo, os que pedem acao primeiro, e o resto vira uma linha de sem pendencia', () => {
+    iniciar({
+      ...RESPOSTA,
+      resumoMovimentos: { transferencias: 2, notas: 2, valor: 300 },
+      movimentosEntreCargas: [{ deCarga: 1, paraCarga: 2, motivo: 'X', notas: 2, valor: 300, primeira: null, ultima: null, numerosNotas: [] }],
+      lancamentoManual: [{ numCar: 9, codMotorista: '7', valor: 10, notas: 1, cargaNoFrotaPro: true, explicacao: 'x' }],
+    });
+
+    const titulos = comp.cartoes.map((c) => c.id);
+    expect(titulos).toEqual(['diferencas', 'manual', 'transferencias']);
+    expect(comp.qtdAtencao).toBe(2);
+    expect(texto()).toContain('Sem pendência em:');
+    expect(comp.semPendencia).toContain('Cargas pequenas');
+    expect(comp.semPendencia).not.toContain('Lançamento manual de km');
   });
 
   it('atualizar pede ao servidor para consultar o WinThor de novo', () => {
@@ -84,21 +121,81 @@ describe('ConferenciaTransportadoComponent', () => {
     req.flush(RESPOSTA);
   });
 
-  it('filtra as cargas por categoria e mostra as notas ao abrir uma carga', () => {
+  // ------------------------------------------------------------------ janelas de detalhe
+
+  it('clicar num numero abre a janela com as duas pontes', () => {
     iniciar();
-    expect(comp.cargasFiltradas.length).toBe(2);
 
-    comp.filtroCategoria = 'CARGA_SUMIDA_DO_WINTHOR';
-    expect(comp.cargasFiltradas.map((c) => c.numCar)).toEqual([700]);
+    (fixture.nativeElement.querySelector('.numero') as HTMLButtonElement).click();
+    fixture.detectChanges();
 
-    comp.filtroCategoria = '';
+    const janela = fixture.nativeElement.querySelector('.janela');
+    expect(janela).toBeTruthy();
+    expect(janela.textContent).toContain('Como chegamos nesses números');
+    expect(janela.textContent).toContain('Venda sem carregamento');
+    expect(janela.textContent).toContain('Notas movidas');
+  });
+
+  it('clicar num cartao abre as cargas com diferenca; clicar numa carga mostra as notas dela', () => {
+    iniciar();
+
+    (fixture.nativeElement.querySelector('.cartao') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(comp.painel).toBe('diferencas');
+    expect(fixture.nativeElement.querySelector('.janela')?.textContent).toContain('Cargas com diferença');
+
     comp.alternar(500);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.detalhe')?.textContent).toContain('Movida para outra carga');
   });
 
+  it('filtra as cargas por categoria dentro da janela', () => {
+    iniciar();
+    comp.abrir('diferencas');
+    expect(comp.cargasFiltradas.length).toBe(2);
+
+    comp.filtroCategoria = 'CARGA_SUMIDA_DO_WINTHOR';
+    expect(comp.cargasFiltradas.map((c) => c.numCar)).toEqual([700]);
+
+    comp.abrir('diferencas');
+    expect(comp.filtroCategoria).toBe('');
+  });
+
+  it('fecha a janela com o X, com Esc e clicando fora', () => {
+    iniciar();
+
+    comp.abrir('pontes');
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.fechar') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.janela')).toBeNull();
+
+    comp.abrir('pontes');
+    fixture.detectChanges();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.janela')).toBeNull();
+
+    comp.abrir('pontes');
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.fundo') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.janela')).toBeNull();
+  });
+
+  it('a janela tem papel de dialogo para leitor de tela', () => {
+    iniciar();
+    comp.abrir('pontes');
+    fixture.detectChanges();
+
+    const janela = fixture.nativeElement.querySelector('.janela') as HTMLElement;
+    expect(janela.getAttribute('role')).toBe('dialog');
+    expect(janela.getAttribute('aria-modal')).toBe('true');
+    expect(janela.getAttribute('aria-labelledby')).toBe('janela-titulo');
+  });
+
   it('mostra as transferencias entre cargas: sai de uma, entra na outra, com o historico da nota', () => {
-    const comTransferencia: ConferenciaTransportadoResponse = {
+    iniciar({
       ...RESPOSTA,
       resumoMovimentos: { transferencias: 1, notas: 1, valor: 300 },
       movimentosEntreCargas: [{
@@ -112,34 +209,43 @@ describe('ConferenciaTransportadoComponent', () => {
           historico: [{ deCarga: 500, paraCarga: 600, quando: '2026-10-10T14:00:00', motivo: 'TRANSF.' }],
         }],
       }],
-    };
-    iniciar(comTransferencia);
+    });
 
-    const secao = fixture.nativeElement.textContent as string;
-    expect(secao).toContain('Transferências entre cargas');
-    expect(secao).toContain('Sai de (diminui)');
-    expect(secao).toContain('Entra em (aumenta)');
+    comp.abrir('transferencias');
+    fixture.detectChanges();
+    expect(texto()).toContain('Sai de (diminui)');
+    expect(texto()).toContain('Entra em (aumenta)');
 
+    comp.abrir('diferencas');
     comp.alternar(500);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.detalhe')?.textContent).toContain('500 → 600 em 10/10 14:00');
   });
 
-  it('caminhao de terceiro tem rotulo proprio', () => {
-    expect(comp.motivo('CAMINHAO_FORA_DA_FROTA')).toContain('terceiro');
-    expect(comp.categoria('CARGA_DE_TERCEIRO')).toContain('terceiro');
-  });
-
-  it('mostra no topo as cargas que precisam de lancamento manual e as cargas pequenas com a origem', () => {
+  it('cargas pequenas mostram a origem e o que conferir', () => {
     iniciar({
       ...RESPOSTA,
       limitePequenaKg: 500,
-      lancamentoManual: [{ numCar: 421900, codMotorista: '777', valor: 800, notas: 1, cargaNoFrotaPro: true, explicacao: 'x' }],
       cargasPequenas: [{
         numCar: 417575, dataFaturamento: '2026-09-15', valor: 188.68, pesoKg: 26.392, status: 'SINCRONIZADA',
         motorista: 'FRANCISCO GOMES', placa: 'TOT9B66', motoristaExterno: false, origem: 'REENTREGA', origemDe: '417085',
         notas: 1, explicacao: 'Carga de reentrega: o pedido voltou da carga 417085',
       }],
+    });
+
+    expect(comp.cartoes.find((c) => c.id === 'pequenas')?.quantidade).toBe(1);
+    comp.abrir('pequenas');
+    fixture.detectChanges();
+    const janela = fixture.nativeElement.querySelector('.janela').textContent as string;
+    expect(janela).toContain('417575');
+    expect(janela).toContain('Reentrega');
+    expect(janela).toContain('417085');
+  });
+
+  it('lancamento manual, manifestos e devolucoes abrem suas janelas', () => {
+    iniciar({
+      ...RESPOSTA,
+      lancamentoManual: [{ numCar: 421900, codMotorista: '777', valor: 800, notas: 1, cargaNoFrotaPro: true, explicacao: 'x' }],
       manifestosSemNota: [{
         numMdfe: 9, codMotorista: 1, codVeiculo: '10', situacao: '100', data: '2026-10-03', pesoKg: 12000,
         caminhaoDaFrota: true, motoristaDaFrota: true, explicacao: 'viagem sem valor',
@@ -148,19 +254,30 @@ describe('ConferenciaTransportadoComponent', () => {
       devolucoes: [{ numNota: 1, numCar: 100, valorNota: 944.55, valorDevolvido: 100.5, pesoDevolvidoKg: 5 }],
     });
 
-    const texto = fixture.nativeElement.textContent as string;
-    expect(texto).toContain('Lançar km e abastecimento à mão');
-    expect(texto).toContain('417575');
-    expect(texto).toContain('Reentrega');
-    expect(texto).toContain('Manifestos sem nota');
-    expect(texto).toContain('não diminui');
+    comp.abrir('manual');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.janela').textContent).toContain('421900');
+
+    comp.abrir('manifestos');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.janela').textContent).toContain('viagem sem valor');
+
+    comp.abrir('devolucoes');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.janela').textContent).toContain('não diminui');
   });
+
+  // ------------------------------------------------------------------ tirar dos totais
 
   it('oferece tirar dos totais so quando ha carga que pode ser zerada e pede confirmacao', () => {
     const base = RESPOSTA.cargasComDiferenca[1];
     iniciar({ ...RESPOSTA, cargasComDiferenca: [{ ...base, podeSerZerada: true }] });
     expect(comp.zeraveis.length).toBe(1);
-    expect(fixture.nativeElement.textContent).toContain('ficaram sem nota');
+    expect(comp.cartoes.find((c) => c.id === 'zerar')?.quantidade).toBe(1);
+
+    comp.abrir('zerar');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.janela').textContent).toContain('contado duas vezes');
 
     spyOn(window, 'confirm').and.returnValue(false);
     comp.zerarTransferidas();
@@ -172,7 +289,18 @@ describe('ConferenciaTransportadoComponent', () => {
     expect(req.request.method).toBe('POST');
     req.flush([{ numCar: 700, valorAntes: 250, transferidaPara: '800' }]);
     http.expectOne((r) => r.method === 'GET' && r.url.includes('/conferencia/transportado')).flush(RESPOSTA);
+    fixture.detectChanges();
+
     expect(comp.mensagemZerar).toContain('1 carga');
+    expect(comp.painel).toBeNull();
+    expect(texto()).toContain('1 carga(s) tirada(s) dos totais');
+  });
+
+  // ------------------------------------------------------------------ rotulos, erros
+
+  it('caminhao de terceiro tem rotulo proprio', () => {
+    expect(comp.motivo('CAMINHAO_FORA_DA_FROTA')).toContain('terceiro');
+    expect(comp.categoria('CARGA_DE_TERCEIRO')).toContain('terceiro');
   });
 
   it('mes invalido nao chama a API', () => {

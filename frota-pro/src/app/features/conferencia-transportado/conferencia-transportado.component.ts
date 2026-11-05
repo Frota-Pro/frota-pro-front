@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
@@ -45,6 +45,42 @@ const ORIGENS: Record<string, string> = {
   COMUM: 'Sem origem registrada',
 };
 
+/** Cada janela de detalhe que o usuário pode abrir. */
+export type Painel =
+  | 'pontes'
+  | 'diferencas'
+  | 'zerar'
+  | 'manual'
+  | 'pequenas'
+  | 'transferencias'
+  | 'notasFora'
+  | 'manifestos'
+  | 'devolucoes';
+
+/** Um cartão do resumo: quantos itens, de quê, e o que fazer. */
+export interface CartaoResumo {
+  id: Painel;
+  titulo: string;
+  quantidade: number;
+  resumo: string;
+  /** atencao = alguém precisa agir; info = só para conhecer. */
+  nivel: 'atencao' | 'info';
+}
+
+const TITULOS_PAINEL: Record<Painel, string> = {
+  pontes: 'Como chegamos nesses números',
+  diferencas: 'Cargas com diferença',
+  zerar: 'Cargas que ficaram sem nota',
+  manual: 'Lançar km e abastecimento à mão',
+  pequenas: 'Cargas pequenas',
+  transferencias: 'Transferências entre cargas',
+  notasFora: 'Notas que não entram no transporte',
+  manifestos: 'Manifestos sem nota',
+  devolucoes: 'Devoluções',
+};
+
+const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
 @Component({
   selector: 'app-conferencia-transportado',
   standalone: true,
@@ -58,9 +94,11 @@ export class ConferenciaTransportadoComponent implements OnInit {
   loading = false;
   erro: string | null = null;
 
+  /** Janela de detalhe aberta; nulo = nenhuma. */
+  painel: Painel | null = null;
+
   filtroCategoria = '';
   expandidas = new Set<number>();
-  mostrarNotasFora = false;
 
   zerando = false;
   mensagemZerar: string | null = null;
@@ -90,10 +128,120 @@ export class ConferenciaTransportadoComponent implements OnInit {
         next: (d) => (this.dados = d),
         error: (err) => {
           this.dados = null;
+          this.painel = null;
           this.erro = extrairMensagemErro(err) || 'Não foi possível gerar a conferência.';
         },
       });
   }
+
+  // ------------------------------------------------------------------ janela de detalhe
+
+  abrir(painel: Painel): void {
+    this.painel = painel;
+    if (painel === 'diferencas') this.filtroCategoria = '';
+  }
+
+  @HostListener('document:keydown.escape')
+  fechar(): void {
+    this.painel = null;
+  }
+
+  get tituloPainel(): string {
+    return this.painel ? TITULOS_PAINEL[this.painel] : '';
+  }
+
+  // ------------------------------------------------------------------ resumo
+
+  /** Cartões com algo a mostrar, os que pedem ação primeiro. Quem está com zero não ocupa espaço. */
+  get cartoes(): CartaoResumo[] {
+    const d = this.dados;
+    if (!d) return [];
+    const somaZerar = this.zeraveis.reduce((s, c) => s + c.valorFrotaPro, 0);
+    const todos: CartaoResumo[] = [
+      {
+        id: 'diferencas',
+        titulo: 'Cargas com diferença',
+        quantidade: d.cargasComDiferenca.length,
+        resumo: `FrotaPRO − WinThor: ${BRL.format(d.totais.diferenca)}`,
+        nivel: 'atencao',
+      },
+      {
+        id: 'zerar',
+        titulo: 'Cargas sem nota, contando em dobro',
+        quantidade: this.zeraveis.length,
+        resumo: `${BRL.format(somaZerar)} para tirar dos totais`,
+        nivel: 'atencao',
+      },
+      {
+        id: 'manual',
+        titulo: 'Lançar km e abastecimento',
+        quantidade: d.lancamentoManual?.length ?? 0,
+        resumo: 'Motorista de terceiro: lançar à mão',
+        nivel: 'atencao',
+      },
+      {
+        id: 'pequenas',
+        titulo: 'Cargas pequenas',
+        quantidade: d.cargasPequenas?.length ?? 0,
+        resumo: `Menos de ${d.limitePequenaKg ?? 500} kg: confirmar a viagem`,
+        nivel: 'atencao',
+      },
+      {
+        id: 'transferencias',
+        titulo: 'Transferências entre cargas',
+        quantidade: this.movimentos.length,
+        resumo: d.resumoMovimentos ? `${BRL.format(d.resumoMovimentos.valor)} mudaram de carga` : 'Notas que mudaram de carga',
+        nivel: 'info',
+      },
+      {
+        id: 'devolucoes',
+        titulo: 'Devoluções',
+        quantidade: d.resumoDevolucoes?.notas ?? 0,
+        resumo: d.resumoDevolucoes ? `${BRL.format(d.resumoDevolucoes.valor)} devolvidos (só informa)` : '',
+        nivel: 'info',
+      },
+      {
+        id: 'notasFora',
+        titulo: 'Notas fora do transporte',
+        quantidade: d.notasForaTotal,
+        resumo: 'Sem carga, sem manifesto, terceiro ou cancelada',
+        nivel: 'info',
+      },
+      {
+        id: 'manifestos',
+        titulo: 'Manifestos sem nota',
+        quantidade: d.manifestosSemNota?.length ?? 0,
+        resumo: 'Viagem sem valor',
+        nivel: 'info',
+      },
+    ];
+    return todos
+      .filter((c) => c.quantidade > 0)
+      .sort((a, b) => Number(b.nivel === 'atencao') - Number(a.nivel === 'atencao'));
+  }
+
+  get qtdAtencao(): number {
+    return this.cartoes.filter((c) => c.nivel === 'atencao').length;
+  }
+
+  /** O que pede ação e está zerado: vira uma linha de "tudo certo" em vez de cartões vazios. */
+  get semPendencia(): string[] {
+    const d = this.dados;
+    if (!d) return [];
+    const itens: [string, number][] = [
+      ['Diferenças entre WinThor e FrotaPRO', d.cargasComDiferenca.length],
+      ['Cargas sem nota', this.zeraveis.length],
+      ['Lançamento manual de km', d.lancamentoManual?.length ?? 0],
+      ['Cargas pequenas', d.cargasPequenas?.length ?? 0],
+    ];
+    return itens.filter(([, q]) => q === 0).map(([nome]) => nome);
+  }
+
+  get movimentos(): ConferenciaMovimento[] {
+    return this.dados?.movimentosEntreCargas ?? [];
+  }
+
+  // ------------------------------------------------------------------ cargas com diferença
 
   get categorias(): { codigo: string; rotulo: string; qtd: number }[] {
     const contagem = new Map<string, number>();
@@ -106,9 +254,38 @@ export class ConferenciaTransportadoComponent implements OnInit {
     return this.filtroCategoria ? todas.filter((c) => c.categoria === this.filtroCategoria) : todas;
   }
 
+  categoria(codigo: string): string {
+    return CATEGORIAS[codigo] ?? codigo;
+  }
+
   origem(codigo: string): string {
     return ORIGENS[codigo] ?? codigo;
   }
+
+  motivo(codigo: string): string {
+    return MOTIVOS[codigo] ?? codigo;
+  }
+
+  alternar(numCar: number): void {
+    if (this.expandidas.has(numCar)) this.expandidas.delete(numCar);
+    else this.expandidas.add(numCar);
+  }
+
+  /** Carga de origem → destino de cada transferência da nota, com dia e hora, para a coluna "Transferências". */
+  historicoTexto(n: ConferenciaNotaDetalhe): string {
+    return (n.historico ?? [])
+      .map((h) => `${h.deCarga ?? '?'} → ${h.paraCarga ?? '?'}${h.quando ? ' em ' + this.dataHora(h.quando) : ''}`)
+      .join(' · ');
+  }
+
+  dataHora(iso: string): string {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    const p = (v: number) => String(v).padStart(2, '0');
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  // ------------------------------------------------------------------ cargas sem nota
 
   /** Cargas que ficaram sem nota e podem ser tiradas dos totais. */
   get zeraveis(): ConferenciaCargaDiferenca[] {
@@ -129,42 +306,14 @@ export class ConferenciaTransportadoComponent implements OnInit {
       .subscribe({
         next: (r) => {
           this.mensagemZerar = `${r.length} carga(s) tirada(s) dos totais.`;
+          this.painel = null;
           this.carregar(true);
         },
         error: (err) => (this.mensagemZerar = extrairMensagemErro(err) || 'Não foi possível tirar as cargas dos totais (só administrador).'),
       });
   }
 
-  categoria(codigo: string): string {
-    return CATEGORIAS[codigo] ?? codigo;
-  }
-
-  motivo(codigo: string): string {
-    return MOTIVOS[codigo] ?? codigo;
-  }
-
-  /** Carga de origem → destino de cada transferência da nota, com dia e hora, para a coluna "Histórico". */
-  historicoTexto(n: ConferenciaNotaDetalhe): string {
-    return (n.historico ?? [])
-      .map((h) => `${h.deCarga ?? '?'} → ${h.paraCarga ?? '?'}${h.quando ? ' em ' + this.dataHora(h.quando) : ''}`)
-      .join(' · ');
-  }
-
-  dataHora(iso: string): string {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    const p = (v: number) => String(v).padStart(2, '0');
-    return `${p(d.getDate())}/${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
-  }
-
-  get movimentos(): ConferenciaMovimento[] {
-    return this.dados?.movimentosEntreCargas ?? [];
-  }
-
-  alternar(numCar: number): void {
-    if (this.expandidas.has(numCar)) this.expandidas.delete(numCar);
-    else this.expandidas.add(numCar);
-  }
+  // ------------------------------------------------------------------ planilha e impressão
 
   /** Planilha para abrir no Excel (separador ponto e vírgula, números no formato brasileiro). */
   exportarCsv(): void {
