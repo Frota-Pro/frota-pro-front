@@ -15,6 +15,11 @@ export class ConferenciaTransportadoApiService extends BaseApiService {
     return this.http.get<ConferenciaTransportadoResponse>(`${this.apiUrl}/conferencia/transportado`, { params });
   }
 
+  /** Quantas cargas recentes precisam de lançamento manual de km e abastecimento (motorista de terceiro, manifesto sem nota). */
+  quantidadeLancamentoManual() {
+    return this.http.get<{ quantidade: number }>(`${this.apiUrl}/cargas/lancamento-manual/quantidade`);
+  }
+
   /** Só administrador: tira dos totais as cargas que ficaram sem nota porque as notas foram para outras cargas. */
   zerarTransferidas(mes: string) {
     const params = new HttpParams().set('mes', mes);

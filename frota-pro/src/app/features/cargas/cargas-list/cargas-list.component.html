@@ -107,6 +107,11 @@
                   title="Motorista de terceiro (não é da frota e não usa o app): km inicial/final e abastecimento precisam ser lançados à mão.">
               ✋ Motorista de terceiro: lançar km e abastecimento
             </span>
+            <span class="badge terceiro"
+                  *ngIf="c.origemCarga === 'MANIFESTO_SEM_NOTA'"
+                  title="Manifesto sem nenhuma nota: viagem sem valor, só com o peso do manifesto. Km e abastecimento são lançados à mão.">
+              Manifesto sem nota: lançar km
+            </span>
             <span class="badge reentrega"
                   *ngIf="c.origemCarga === 'REENTREGA'"
                   [title]="'Carga de reentrega: o pedido voltou' + (c.origemCargaNumero ? ' da carga ' + c.origemCargaNumero : '') + ' e ganhou carga própria. Por isso o peso é baixo.'">

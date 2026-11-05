@@ -51,6 +51,11 @@
       <a class="menu-item" routerLink="cargas" routerLinkActive="active">
         <i class="icon fas fa-cube"></i>
         <span *ngIf="!isClosed">Cargas</span>
+        <span class="menu-contador"
+              *ngIf="cargasLancamentoManual > 0"
+              [title]="cargasLancamentoManual + ' carga(s) com motorista de terceiro ou manifesto sem nota: lançar km e abastecimento à mão'">
+          ✋ {{ cargasLancamentoManual }}
+        </span>
       </a>
 
       <a class="menu-item" routerLink="abastecimentos" routerLinkActive="active">
