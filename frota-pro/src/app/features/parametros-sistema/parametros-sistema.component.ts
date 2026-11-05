@@ -45,7 +45,7 @@ export class ParametrosSistemaComponent implements OnInit {
 
   private readonly cartoes: Cartao[] = [
     { id: 'meta-fechamento', aba: 'metas', titulo: 'Fechamento da meta mensal',
-      busca: 'dias uteis fechar meta mes motorista confirmar competencia' },
+      busca: 'dias uteis fechar meta mes motorista confirmar competencia automatico automaticamente todas metas batidas' },
     { id: 'aviso-vencimentos', aba: 'avisos', titulo: 'Vencimentos e manutenção',
       busca: 'antecedencia vencimento documento cnh caminhao km manutencao preventiva parada estagnada aviso' },
     { id: 'aviso-multas', aba: 'avisos', titulo: 'Multas', busca: 'prazo pagamento recurso multa antecedencia aviso' },
@@ -124,6 +124,7 @@ export class ParametrosSistemaComponent implements OnInit {
     percentualLimiteAnomaliaAbastecimento: 25,
     bloquearSenhaPadrao: false,
     vincularDispositivo: false,
+    fecharMetaAutomaticamente: false,
   };
 
   constructor(
@@ -162,6 +163,7 @@ export class ParametrosSistemaComponent implements OnInit {
             percentualLimiteAnomaliaAbastecimento: res.percentualLimiteAnomaliaAbastecimento,
             bloquearSenhaPadrao: res.bloquearSenhaPadrao ?? false,
             vincularDispositivo: res.vincularDispositivo ?? false,
+            fecharMetaAutomaticamente: res.fecharMetaAutomaticamente ?? false,
           };
           this.original = JSON.stringify(this.form);
         },
