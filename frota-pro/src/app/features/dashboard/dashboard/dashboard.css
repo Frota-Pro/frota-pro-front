@@ -331,3 +331,14 @@
   box-sizing: border-box;
   word-wrap: break-word;
 }
+
+/* contador de cargas que precisam de lançamento manual, ao lado de "Cargas" */
+.menu-contador {
+  margin-left: auto;
+  background: #fecaca;
+  color: #991b1b;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}

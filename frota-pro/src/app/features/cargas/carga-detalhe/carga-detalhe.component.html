@@ -60,6 +60,14 @@
       </div>
     </div>
 
+    <div class="transfer-alert sumida" *ngIf="carga.origemCarga === 'MANIFESTO_SEM_NOTA'">
+      <div class="transfer-alert-title">Manifesto sem nota: lançar km e abastecimento à mão</div>
+      <div class="transfer-alert-text">
+        Este manifesto não tem nenhuma nota fiscal: é uma viagem sem valor, só com o peso do manifesto. O km inicial, o km final
+        e o abastecimento precisam ser lançados por quem administra.
+      </div>
+    </div>
+
     <div class="transfer-alert" *ngIf="carga.origemCarga === 'REENTREGA'">
       <div class="transfer-alert-title">Carga de reentrega</div>
       <div class="transfer-alert-text">
