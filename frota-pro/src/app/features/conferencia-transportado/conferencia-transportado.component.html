@@ -1,0 +1,261 @@
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>Conferência do valor transportado</h1>
+      <p>Cada centavo entre o que o WinThor transportou e o que o FrotaPRO mostra, explicado por nota e por carga.
+        Nota sem carregamento ou sem manifesto (MDF-e) não entra.</p>
+    </div>
+    <div class="actions no-print">
+      <label class="sr-only" for="conf-mes">Mês</label>
+      <input id="conf-mes" type="month" [(ngModel)]="mes" (change)="carregar(false)" />
+      <button class="btn" type="button" (click)="carregar(true)" [disabled]="loading">Atualizar do WinThor</button>
+      <button class="btn ghost" type="button" (click)="exportarCsv()" [disabled]="!dados">Exportar planilha</button>
+      <button class="btn ghost" type="button" (click)="imprimir()" [disabled]="!dados">Imprimir</button>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="erro">{{ erro }}</div>
+  <div class="loading" *ngIf="loading"><div class="spinner"></div><div>Consultando o WinThor e o FrotaPRO...</div></div>
+
+  <ng-container *ngIf="dados && !loading">
+
+    <div class="status" [class.ok]="dados.fechou" [class.falha]="!dados.fechou" role="status">
+      <i class="fas" [ngClass]="dados.fechou ? 'fa-circle-check' : 'fa-triangle-exclamation'" aria-hidden="true"></i>
+      <span *ngIf="dados.fechou">As duas pontes fecham ao centavo. Gerado em {{ dados.geradoEm | date:'dd/MM/yyyy HH:mm' }}.</span>
+      <span *ngIf="!dados.fechou">Atenção: as pontes não fecharam ao centavo. Avise o suporte antes de usar estes números.</span>
+    </div>
+
+    <div class="bloco aviso" *ngIf="(dados.lancamentoManual?.length ?? 0) > 0">
+      <h2>✋ Lançar km e abastecimento à mão <span class="contador">{{ dados.lancamentoManual!.length }}</span></h2>
+      <p class="muted">Cargas transportadas por motorista que <strong>não é da frota</strong> (caminhão da frota). Ele não usa o app: quem administra precisa lançar o km inicial, o km final e o abastecimento.</p>
+      <table class="lista">
+        <thead><tr><th>Carga</th><th>Motorista (WinThor)</th><th class="num">Valor</th><th>No FrotaPRO?</th></tr></thead>
+        <tbody>
+        <tr *ngFor="let l of dados.lancamentoManual">
+          <td class="mono">{{ l.numCar }}</td>
+          <td class="mono">{{ l.codMotorista }}</td>
+          <td class="num">{{ l.valor | currency:'BRL' }}</td>
+          <td>{{ l.cargaNoFrotaPro ? 'Sim' : 'NÃO: o sync descartou, cadastre o motorista' }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cards">
+      <div class="card kpi">
+        <span class="rotulo">Venda faturada (referência da 111)</span>
+        <strong>{{ dados.totais.vendaFaturada | currency:'BRL' }}</strong>
+        <small>{{ dados.totais.notasVendaFaturada | number }} notas · só para comparar</small>
+      </div>
+      <div class="card kpi destaque">
+        <span class="rotulo">Transportado no WinThor</span>
+        <strong>{{ dados.totais.transportadoWinThor | currency:'BRL' }}</strong>
+        <small>{{ dados.totais.cargasWinThor | number }} cargas</small>
+      </div>
+      <div class="card kpi destaque">
+        <span class="rotulo">Transportado no FrotaPRO</span>
+        <strong>{{ dados.totais.transportadoFrotaPro | currency:'BRL' }}</strong>
+        <small>{{ dados.totais.cargasFrotaPro | number }} cargas</small>
+      </div>
+      <div class="card kpi" [ngClass]="sinal(dados.totais.diferenca)">
+        <span class="rotulo">Diferença (FrotaPRO − WinThor)</span>
+        <strong>{{ dados.totais.diferenca | currency:'BRL' }}</strong>
+        <small *ngIf="dados.totais.diferenca === 0">Tudo bate.</small>
+        <small *ngIf="dados.totais.diferenca !== 0">Explicada na ponte 2 abaixo.</small>
+      </div>
+    </div>
+
+    <section class="bloco">
+      <h2>1. Da venda faturada ao transportado no WinThor</h2>
+      <p class="muted">Mostra por que a venda faturada (a da rotina 111) não é igual ao que viajou na frota.</p>
+      <table class="ponte">
+        <thead><tr><th>Item</th><th class="num">Notas</th><th class="num">Valor</th></tr></thead>
+        <tbody>
+        <tr class="inicio"><td>Venda faturada (referência)</td><td class="num">{{ dados.totais.notasVendaFaturada | number }}</td><td class="num">{{ dados.totais.vendaFaturada | currency:'BRL' }}</td></tr>
+        <tr *ngFor="let l of dados.ponteVendaParaTransportado">
+          <td><strong>{{ l.titulo }}</strong><div class="explica">{{ l.explicacao }}</div></td>
+          <td class="num">{{ l.quantidade | number }}</td>
+          <td class="num" [ngClass]="sinal(l.valor)">{{ l.valor | currency:'BRL' }}</td>
+        </tr>
+        <tr class="fim"><td>= Transportado no WinThor</td><td class="num">{{ dados.totais.cargasWinThor | number }} cargas</td><td class="num">{{ dados.totais.transportadoWinThor | currency:'BRL' }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="bloco">
+      <h2>2. Do transportado no WinThor ao FrotaPRO</h2>
+      <p class="muted">Cada linha é uma causa real, com as cargas e notas listadas mais abaixo. Nada é "ajuste".</p>
+      <table class="ponte">
+        <thead><tr><th>Item</th><th class="num">Qtd</th><th class="num">Valor</th></tr></thead>
+        <tbody>
+        <tr class="inicio"><td>Transportado no WinThor</td><td class="num">{{ dados.totais.cargasWinThor | number }} cargas</td><td class="num">{{ dados.totais.transportadoWinThor | currency:'BRL' }}</td></tr>
+        <tr *ngFor="let l of dados.ponteWinThorParaFrotaPro">
+          <td><strong>{{ l.titulo }}</strong><div class="explica">{{ l.explicacao }}</div></td>
+          <td class="num">{{ l.quantidade | number }}</td>
+          <td class="num" [ngClass]="sinal(l.valor)">{{ l.valor | currency:'BRL' }}</td>
+        </tr>
+        <tr *ngIf="dados.ponteWinThorParaFrotaPro.length === 0"><td colspan="3" class="vazio">Nenhuma diferença: o FrotaPRO bate com o WinThor.</td></tr>
+        <tr class="fim"><td>= Transportado no FrotaPRO</td><td class="num">{{ dados.totais.cargasFrotaPro | number }} cargas</td><td class="num">{{ dados.totais.transportadoFrotaPro | currency:'BRL' }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="bloco">
+      <h2>3. Cargas com diferença <span class="contador">{{ dados.cargasComDiferenca.length }}</span></h2>
+      <div class="bloco aviso no-print" *ngIf="zeraveis.length > 0">
+        <strong>{{ zeraveis.length }} carga(s) ficaram sem nota</strong>: todas as notas foram para outras cargas (o log do WinThor confirma) e ninguém iniciou a viagem.
+        O valor delas está contado duas vezes.
+        <button class="btn" type="button" (click)="zerarTransferidas()" [disabled]="zerando">Tirar dos totais (só administrador)</button>
+      </div>
+      <p class="muted" *ngIf="mensagemZerar">{{ mensagemZerar }}</p>
+      <div class="filtros no-print" *ngIf="categorias.length > 1">
+        <button type="button" class="chip" [class.ativo]="!filtroCategoria" (click)="filtroCategoria = ''">Todas</button>
+        <button type="button" class="chip" *ngFor="let c of categorias" [class.ativo]="filtroCategoria === c.codigo" (click)="filtroCategoria = c.codigo">
+          {{ c.rotulo }} ({{ c.qtd }})
+        </button>
+      </div>
+      <div class="vazio" *ngIf="cargasFiltradas.length === 0">Nenhuma carga com diferença.</div>
+      <table class="lista" *ngIf="cargasFiltradas.length > 0">
+        <thead><tr><th>Carga</th><th>O que aconteceu</th><th class="num">WinThor</th><th class="num">FrotaPRO</th><th class="num">Diferença</th></tr></thead>
+        <tbody>
+        <ng-container *ngFor="let c of cargasFiltradas">
+          <tr (click)="alternar(c.numCar)" class="clicavel" tabindex="0" (keydown.enter)="alternar(c.numCar)">
+            <td class="mono">{{ c.numCar }}<div class="explica">{{ c.statusFrotaPro || 'não existe' }}</div></td>
+            <td><span class="selo">{{ categoria(c.categoria) }}</span><div class="explica">{{ c.explicacao }}</div></td>
+            <td class="num">{{ c.valorWinThor | currency:'BRL' }}<div class="explica">{{ c.dataWinThor | date:'dd/MM' }}</div></td>
+            <td class="num">{{ c.valorFrotaPro | currency:'BRL' }}<div class="explica">{{ c.dataFrotaPro | date:'dd/MM' }}</div></td>
+            <td class="num" [ngClass]="sinal(c.diferenca)"><strong>{{ c.diferenca | currency:'BRL' }}</strong></td>
+          </tr>
+          <tr *ngIf="expandidas.has(c.numCar) && c.notas.length" class="detalhe">
+            <td colspan="5">
+              <table class="notas">
+                <thead><tr><th>Nota</th><th>Situação</th><th>Carga hoje</th><th>Transferências (log do WinThor)</th><th class="num">Valor</th></tr></thead>
+                <tbody>
+                <tr *ngFor="let n of c.notas">
+                  <td class="mono">{{ n.numNota }}</td>
+                  <td>{{ motivo(n.motivo) }}</td>
+                  <td class="mono">{{ n.paraCarga ?? '—' }}</td>
+                  <td class="mono">{{ historicoTexto(n) || '—' }}</td>
+                  <td class="num">{{ n.valor | currency:'BRL' }}</td>
+                </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </ng-container>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="bloco">
+      <h2>4. Transferências entre cargas <span class="contador">{{ movimentos.length }}</span></h2>
+      <p class="muted">Quando o WinThor passa uma nota de uma carga para outra, o valor <strong>diminui</strong> na carga de origem e
+        <strong>aumenta</strong> na de destino, sempre o mesmo valor. Vem do log do WinThor (inclui transferências feitas depois do fim do mês).</p>
+      <div class="vazio" *ngIf="movimentos.length === 0">Nenhuma transferência registrada neste mês.</div>
+      <ng-container *ngIf="movimentos.length > 0">
+        <p class="muted" *ngIf="dados.resumoMovimentos">
+          {{ dados.resumoMovimentos.transferencias | number }} transferências ·
+          <strong>{{ dados.resumoMovimentos.valor | currency:'BRL' }}</strong> saíram de uma carga e entraram em outra.
+        </p>
+        <table class="lista">
+          <thead><tr><th>Sai de (diminui)</th><th>Entra em (aumenta)</th><th>Motivo</th><th class="num">Notas</th><th class="num">Valor</th><th>Quando</th></tr></thead>
+          <tbody>
+          <tr *ngFor="let m of movimentos">
+            <td class="mono neg">{{ m.deCarga ?? '—' }}</td>
+            <td class="mono pos">{{ m.paraCarga ?? '—' }}</td>
+            <td>{{ m.motivo || '—' }}</td>
+            <td class="num">{{ m.notas | number }}</td>
+            <td class="num">{{ m.valor | currency:'BRL' }}</td>
+            <td>{{ m.primeira ? dataHora(m.primeira) : '—' }}<span *ngIf="m.ultima && m.ultima !== m.primeira"> a {{ dataHora(m.ultima) }}</span></td>
+          </tr>
+          </tbody>
+        </table>
+      </ng-container>
+    </section>
+
+    <section class="bloco">
+      <h2>5. Cargas pequenas <span class="contador">{{ dados.cargasPequenas?.length ?? 0 }}</span></h2>
+      <p class="muted">Cargas com menos de {{ dados.limitePequenaKg ?? 500 }} kg. Um caminhão não faz viagem para 100 kg: quase sempre é
+        <strong>reentrega</strong> (o pedido voltou e ganhou carga própria) ou sobra de transferência. O motorista não lembra porque a entrega foi feita em outra viagem.</p>
+      <div class="vazio" *ngIf="(dados.cargasPequenas?.length ?? 0) === 0">Nenhuma carga pequena neste mês.</div>
+      <table class="lista" *ngIf="(dados.cargasPequenas?.length ?? 0) > 0">
+        <thead><tr><th>Carga</th><th>O que é</th><th class="num">Peso</th><th class="num">Valor</th><th>Motorista / caminhão</th></tr></thead>
+        <tbody>
+        <tr *ngFor="let c of dados.cargasPequenas">
+          <td class="mono">{{ c.numCar }}<div class="explica">{{ c.status }} · {{ c.dataFaturamento | date:'dd/MM' }}</div></td>
+          <td><span class="selo">{{ origem(c.origem) }}</span><div class="explica">{{ c.explicacao }}</div></td>
+          <td class="num">{{ c.pesoKg | number:'1.0-1' }} kg</td>
+          <td class="num">{{ c.valor | currency:'BRL' }}</td>
+          <td>{{ c.motorista || '—' }}<span *ngIf="c.motoristaExterno"> (terceiro)</span><div class="explica">{{ c.placa || '' }}</div></td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="bloco">
+      <h2>6. Manifestos sem nota <span class="contador">{{ dados.manifestosSemNota?.length ?? 0 }}</span></h2>
+      <p class="muted">O caminhão saiu, mas o manifesto não tem nota: viagem <strong>sem valor</strong>, só com o peso do manifesto. Conta como viagem quando o caminhão é da frota.</p>
+      <div class="vazio" *ngIf="(dados.manifestosSemNota?.length ?? 0) === 0">Nenhum manifesto sem nota neste mês (ou a integradora não identificou a coluna de data do manifesto).</div>
+      <table class="lista" *ngIf="(dados.manifestosSemNota?.length ?? 0) > 0">
+        <thead><tr><th>Manifesto</th><th>Data</th><th>Motorista / caminhão</th><th class="num">Peso</th><th>O que é</th></tr></thead>
+        <tbody>
+        <tr *ngFor="let m of dados.manifestosSemNota">
+          <td class="mono">{{ m.numMdfe }}</td>
+          <td>{{ m.data | date:'dd/MM' }}</td>
+          <td class="mono">{{ m.codMotorista ?? '—' }} / {{ m.codVeiculo ?? '—' }}</td>
+          <td class="num">{{ m.pesoKg != null ? (m.pesoKg | number:'1.0-1') : '—' }}</td>
+          <td>{{ m.explicacao }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="bloco">
+      <h2>7. Devoluções <span class="contador">{{ dados.resumoDevolucoes?.notas ?? 0 }}</span></h2>
+      <p class="muted">O valor da nota <strong>não diminui</strong> com a devolução (o WinThor mantém o valor da nota). Aqui está quanto voltou, só para informar.</p>
+      <p class="muted" *ngIf="dados.resumoDevolucoes">
+        <strong>{{ dados.resumoDevolucoes.valor | currency:'BRL' }}</strong> e
+        <strong>{{ dados.resumoDevolucoes.pesoKg | number:'1.0-1' }} kg</strong> devolvidos em {{ dados.resumoDevolucoes.notas | number }} nota(s).
+      </p>
+      <table class="lista" *ngIf="(dados.devolucoes?.length ?? 0) > 0">
+        <thead><tr><th>Nota</th><th>Carga</th><th class="num">Valor da nota</th><th class="num">Devolvido</th><th class="num">Peso devolvido</th></tr></thead>
+        <tbody>
+        <tr *ngFor="let d of dados.devolucoes">
+          <td class="mono">{{ d.numNota }}</td>
+          <td class="mono">{{ d.numCar ?? '—' }}</td>
+          <td class="num">{{ d.valorNota != null ? (d.valorNota | currency:'BRL') : '—' }}</td>
+          <td class="num">{{ d.valorDevolvido | currency:'BRL' }}</td>
+          <td class="num">{{ d.pesoDevolvidoKg | number:'1.0-1' }} kg</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="bloco">
+      <h2>8. Notas do mês que não entram no transporte <span class="contador">{{ dados.notasForaTotal | number }}</span></h2>
+      <p class="muted">Não passam pela frota: sem carregamento, sem pedido, sem manifesto, sem motorista/veículo, de caminhão de terceiro, ou canceladas.</p>
+      <button type="button" class="btn ghost no-print" (click)="mostrarNotasFora = !mostrarNotasFora">
+        {{ mostrarNotasFora ? 'Esconder a lista' : 'Mostrar a lista' }}
+      </button>
+      <table class="lista" *ngIf="mostrarNotasFora">
+        <thead><tr><th>Nota</th><th>Data</th><th>Cliente</th><th>TV</th><th>Carga</th><th>Motivo</th><th class="num">Valor</th></tr></thead>
+        <tbody>
+        <tr *ngFor="let n of dados.notasForaDoTransporte">
+          <td class="mono">{{ n.numNota }}</td>
+          <td>{{ n.dtSaida | date:'dd/MM' }}</td>
+          <td>{{ n.codCli ?? '—' }}</td>
+          <td>{{ n.condVenda ?? '—' }}</td>
+          <td class="mono">{{ n.numCar ?? '—' }}</td>
+          <td>{{ motivo(n.motivo) }}</td>
+          <td class="num">{{ n.valor | currency:'BRL' }}</td>
+        </tr>
+        </tbody>
+      </table>
+      <p class="muted" *ngIf="mostrarNotasFora && dados.notasForaTotal > dados.notasForaDoTransporte.length">
+        Mostrando as {{ dados.notasForaDoTransporte.length }} de maior valor, de {{ dados.notasForaTotal | number }} notas.
+      </p>
+    </section>
+
+  </ng-container>
+</div>

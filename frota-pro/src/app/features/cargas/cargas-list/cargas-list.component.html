@@ -101,7 +101,27 @@
             {{ labelStatusTransferencia(c.statusTransferencia) }}
           </span>
 
-          <div class="flags-row" *ngIf="c.codigosDevolucaoEncontrados?.length || c.teveTransferencia || c.diminuicaoPesoValorBloqueada || c.naoEncontradaNoWinThor">
+          <div class="flags-row" *ngIf="c.codigosDevolucaoEncontrados?.length || c.teveTransferencia || c.diminuicaoPesoValorBloqueada || c.naoEncontradaNoWinThor || c.origemCarga || c.motoristaExterno || c.transferidaPara">
+            <span class="badge terceiro"
+                  *ngIf="c.motoristaExterno"
+                  title="Motorista de terceiro (não é da frota e não usa o app): km inicial/final e abastecimento precisam ser lançados à mão.">
+              ✋ Motorista de terceiro: lançar km e abastecimento
+            </span>
+            <span class="badge reentrega"
+                  *ngIf="c.origemCarga === 'REENTREGA'"
+                  [title]="'Carga de reentrega: o pedido voltou' + (c.origemCargaNumero ? ' da carga ' + c.origemCargaNumero : '') + ' e ganhou carga própria. Por isso o peso é baixo.'">
+              Reentrega{{ c.origemCargaNumero ? ' da ' + c.origemCargaNumero : '' }}
+            </span>
+            <span class="badge transferencia"
+                  *ngIf="c.origemCarga === 'TRANSFERENCIA'"
+                  title="Carga criada por transferência de pedido de outra carga">
+              Veio de transferência{{ c.origemCargaNumero ? ' da ' + c.origemCargaNumero : '' }}
+            </span>
+            <span class="badge sumida"
+                  *ngIf="c.transferidaPara"
+                  [title]="'Ficou sem nota: as notas foram para a(s) carga(s) ' + c.transferidaPara + '. Valor e peso foram tirados dos totais.'">
+              Transferida para {{ c.transferidaPara }}
+            </span>
             <span class="badge sumida"
                   *ngIf="c.naoEncontradaNoWinThor"
                   title="Sincronizada antes, mas não foi mais encontrada no WinThor — pode ter sido cancelada ou desvinculada lá. Verifique antes de iniciar a viagem.">
