@@ -43,20 +43,6 @@ export interface CargaMinResponse {
 
   /** true se a última verificação de reconciliação não encontrou mais essa carga no WinThor. */
   naoEncontradaNoWinThor?: boolean;
-
-  /** O WinThor diz hoje (soma das notas transportadas); difere do valor da carga quando o bloqueio segurou o maior. */
-  valorWinThor?: number | null;
-  pesoWinThor?: number | null;
-
-  /** "REENTREGA" ou "TRANSFERENCIA": como o carregamento nasceu (log do WinThor). Nulo = carga comum. */
-  origemCarga?: string | null;
-  origemCargaNumero?: string | null;
-
-  /** Carregamentos para onde foram as notas desta carga (ela ficou vazia e foi zerada dos totais). */
-  transferidaPara?: string | null;
-
-  /** Motorista de terceiro criado pelo sync: km inicial/final e abastecimento são lançados à mão. */
-  motoristaExterno?: boolean;
 }
 
 export interface CargaResponse {
@@ -124,20 +110,6 @@ export interface CargaResponse {
   naoEncontradaNoWinThor?: boolean;
 
   dataVerificacaoWinThor?: string | null;
-
-  /** O WinThor diz hoje (soma das notas transportadas); difere do valor da carga quando o bloqueio segurou o maior. */
-  valorWinThor?: number | null;
-  pesoWinThor?: number | null;
-
-  /** "REENTREGA" ou "TRANSFERENCIA": como o carregamento nasceu (log do WinThor). Nulo = carga comum. */
-  origemCarga?: string | null;
-  origemCargaNumero?: string | null;
-
-  /** Carregamentos para onde foram as notas desta carga (ela ficou vazia e foi zerada dos totais). */
-  transferidaPara?: string | null;
-
-  /** Motorista de terceiro criado pelo sync: km inicial/final e abastecimento são lançados à mão. */
-  motoristaExterno?: boolean;
 }
 
 export interface RelatorioCargaSumidaLinha {

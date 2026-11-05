@@ -140,14 +140,6 @@ export const routes: Routes = [
             .then((m) => m.RelatoriosComponent),
       },
 
-      // Conferência mensal do valor transportado (WinThor x FrotaPRO)
-      {
-        path: 'conferencia-transportado',
-        loadComponent: () =>
-          import('./features/conferencia-transportado/conferencia-transportado.component')
-            .then((m) => m.ConferenciaTransportadoComponent),
-      },
-
       // Abastecimentos
       {
         path: 'abastecimentos',
