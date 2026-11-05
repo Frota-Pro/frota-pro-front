@@ -60,6 +60,17 @@
             que ele iniciar já contam no mês seguinte.
           </span>
         </div>
+
+        <label class="row">
+          <span>
+            Fechar a meta sozinho quando o motorista bater todas
+            <span class="muted-sm block">Ligado, o mês fecha automaticamente para o motorista cujo caminhão já bateu <strong>todas</strong> as metas mensais cadastradas (tonelada, consumo km/L, quilometragem, cargas... quantas existirem), sem ele precisar confirmar no app. Se faltar bater qualquer uma, o mês continua aberto para ele finalizar; se ele finalizar uma carga e com isso bater a última que faltava, o mês fecha na hora. A conferência acontece na virada do mês (1h da manhã) e a cada carga finalizada dentro do prazo. As cargas que ele iniciar depois da virada contam no mês novo. Só vale com os dias úteis acima maiores que 0; quem o gerente reabrir não fecha sozinho de novo.</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="form.fecharMetaAutomaticamente" />
+            <span class="slider"></span>
+          </label>
+        </label>
       </div>
     </div>
 

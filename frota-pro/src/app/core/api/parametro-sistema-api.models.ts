@@ -18,6 +18,7 @@ export interface ParametroSistemaResponse {
 
   bloquearSenhaPadrao: boolean;
   vincularDispositivo: boolean;
+  fecharMetaAutomaticamente: boolean;
 }
 
 export interface ParametroSistemaUpdateRequest {
@@ -40,4 +41,5 @@ export interface ParametroSistemaUpdateRequest {
 
   bloquearSenhaPadrao?: boolean;
   vincularDispositivo?: boolean;
+  fecharMetaAutomaticamente?: boolean;
 }

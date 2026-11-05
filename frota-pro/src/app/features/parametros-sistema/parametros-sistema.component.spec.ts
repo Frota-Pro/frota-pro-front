@@ -20,6 +20,7 @@ const PARAMETROS = {
   percentualLimiteAnomaliaAbastecimento: 25,
   bloquearSenhaPadrao: false,
   vincularDispositivo: false,
+  fecharMetaAutomaticamente: false,
 };
 
 describe('ParametrosSistemaComponent - abas, busca e alteracoes', () => {
@@ -146,6 +147,32 @@ describe('ParametrosSistemaComponent - abas, busca e alteracoes', () => {
     fixture.detectChanges();
 
     expect(comp.alterado).toBeFalse();
+  });
+
+  it('o fechamento automatico da meta aparece na aba Metas e vai no salvar', () => {
+    iniciar();
+    const chave = fixture.nativeElement.querySelector('.card input[type="checkbox"]') as HTMLInputElement;
+    expect(fixture.nativeElement.querySelector('.card-body').textContent).toContain('Fechar a meta sozinho');
+    expect(chave.checked).toBeFalse();
+
+    chave.click();
+    fixture.detectChanges();
+    expect(comp.form.fecharMetaAutomaticamente).toBeTrue();
+    expect(comp.alterado).toBeTrue();
+
+    comp.salvar();
+    const put = http.expectOne((r) => r.method === 'PUT' && r.url.includes('parametro'));
+    expect(put.request.body.fecharMetaAutomaticamente).toBeTrue();
+    put.flush({ ...PARAMETROS, fecharMetaAutomaticamente: true });
+  });
+
+  it('a busca por "automatico" acha o fechamento da meta', () => {
+    iniciar();
+
+    comp.busca = 'automaticamente';
+    fixture.detectChanges();
+
+    expect(titulosVisiveis()).toEqual(['Fechamento da meta mensal']);
   });
 
   it('lembra a ultima aba aberta ao entrar de novo', () => {
