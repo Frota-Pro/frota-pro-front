@@ -132,6 +132,27 @@ export interface RelatorioCargasSumidasWinThorResponse {
   linhas: RelatorioCargaSumidaLinha[];
 }
 
+/** Carga já iniciada/finalizada que, no WinThor, está num carregamento genérico de reentrega (para conferir). */
+export interface RelatorioCargaReentregaConferirLinha {
+  numeroCarga: string;
+  numeroCargaExterno?: string | null;
+  statusCarga: string;
+  dtSaida?: string | null;
+  pesoCarga?: number | null;
+  valorTotal?: number | null;
+  kmInicial?: number | null;
+  kmFinal?: number | null;
+  codigoMotorista?: string | null;
+  nomeMotorista?: string | null;
+  codigoCaminhao?: string | null;
+  placaCaminhao?: string | null;
+}
+
+export interface RelatorioCargasReentregaConferirResponse {
+  total: number;
+  linhas: RelatorioCargaReentregaConferirLinha[];
+}
+
 export interface RelatorioCargaNaoSincronizadaLinha {
   numeroCargaExterno: string;
   numMdfe?: number | null;

@@ -9,6 +9,7 @@ import {
   CargaResponse,
   ImportarNotaFiscalResponse,
   RelatorioCargasNaoSincronizadasResponse,
+  RelatorioCargasReentregaConferirResponse,
   RelatorioCargasSumidasWinThorResponse,
   TransferirCaminhaoCargaRequest,
   TransferirMotoristaCargaRequest
@@ -64,6 +65,18 @@ export class CargaApiService extends BaseApiService {
     if (opts.caminhao) params = params.set('caminhao', opts.caminhao);
 
     return this.http.get<RelatorioCargasSumidasWinThorResponse>(`${this.apiUrl}/carga/relatorio-sumidas`, { params });
+  }
+
+  /**
+   * GET {{host}}/carga/relatorio-reentrega-conferir — cargas já iniciadas/finalizadas que, no WinThor, estão num
+   * carregamento genérico de reentrega. Só leitura.
+   */
+  relatorioReentregaConferir(opts: { inicio?: string | null; fim?: string | null } = {}) {
+    let params = new HttpParams();
+    if (opts.inicio) params = params.set('inicio', opts.inicio);
+    if (opts.fim) params = params.set('fim', opts.fim);
+
+    return this.http.get<RelatorioCargasReentregaConferirResponse>(`${this.apiUrl}/carga/relatorio-reentrega-conferir`, { params });
   }
 
   /** GET {{host}}/carga/relatorio-nao-sincronizadas — cargas que o sync do WinThor descartou (motorista/caminhão sem cadastro). */
