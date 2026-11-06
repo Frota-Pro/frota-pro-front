@@ -97,7 +97,9 @@ export class WinthorComponent implements OnInit, OnDestroy {
     { valor: 'API_SINCRONIZACAO', rotulo: 'API — sincronização' },
     { valor: 'API_INTEGRACAO', rotulo: 'API — integração' },
     { valor: 'API_ERROS', rotulo: 'API — só erros e avisos' },
-    { valor: 'INTEGRADORA', rotulo: 'Integradora' },
+    { valor: 'INTEGRADORA', rotulo: 'Integradora — completo' },
+    { valor: 'INTEGRADORA_SINCRONIZACAO', rotulo: 'Integradora — sincronização' },
+    { valor: 'INTEGRADORA_ERROS', rotulo: 'Integradora — só erros e avisos' },
   ];
   logsLoading = false;
   logSource: IntegracaoLogSource = 'API';
