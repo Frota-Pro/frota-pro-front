@@ -38,6 +38,46 @@ export interface IntegracaoWinthorJobResponse {
   origem?: string | null;
   criadoEm?: string | null;
   atualizadoEm?: string | null;
+  /** Só jobs de CARGAS, a partir do histórico de sincronização (nulos em jobs antigos). */
+  periodoInicial?: string | null;
+  periodoFinal?: string | null;
+  qtdNovas?: number | null;
+  qtdAtualizadas?: number | null;
+  qtdSemMudanca?: number | null;
+  qtdDescartadas?: number | null;
+  qtdDiminuicaoBloqueada?: number | null;
+}
+
+/**
+ * Uma linha do histórico de sincronização: o que uma rodada fez numa carga. Peso em TONELADAS, valor em R$.
+ * NOVA, ATUALIZADA, BLOQUEADA (diminuição retida pelo bloqueio) ou DESCARTADA (motorista/caminhão não cadastrado).
+ */
+export type TipoItemSincronizacao = 'NOVA' | 'ATUALIZADA' | 'BLOQUEADA' | 'DESCARTADA';
+
+export interface CargaSyncItemResponse {
+  id: string;
+  jobId: string;
+  numeroCargaExterno: string;
+  tipo: TipoItemSincronizacao;
+  motivo?: string | null;
+  pesoAntes?: number | null;
+  pesoDepois?: number | null;
+  valorAntes?: number | null;
+  valorDepois?: number | null;
+  /** O que a minuta do WinThor dizia naquela rodada. */
+  pesoWinthor?: number | null;
+  valorWinthor?: number | null;
+  statusAntes?: string | null;
+  statusDepois?: string | null;
+  motoristaAntes?: string | null;
+  motoristaDepois?: string | null;
+  caminhaoAntes?: string | null;
+  caminhaoDepois?: string | null;
+  dtFaturamentoAntes?: string | null;
+  dtFaturamentoDepois?: string | null;
+  notasAntes?: number | null;
+  notasDepois?: number | null;
+  criadoEm: string;
 }
 
 export interface IntegracaoWinthorStatusResponse {

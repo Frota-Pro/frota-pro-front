@@ -264,6 +264,71 @@
           </div>
         </div>
 
+        <!-- Card: Histórico de sincronização (o que o WinThor mudou nesta carga) -->
+        <div class="card" *ngIf="carga.numeroCargaExterno && !historicoSyncOculto">
+          <div class="card-header">
+            <h2>Histórico de sincronização</h2>
+          </div>
+
+          <div class="card-body">
+            <div class="loading-sm" *ngIf="loadingHistoricoSync">
+              <div class="spinner small"></div>
+              <span>Carregando histórico...</span>
+            </div>
+
+            <div class="muted" *ngIf="!loadingHistoricoSync && historicoSyncErro">{{ historicoSyncErro }}</div>
+
+            <div class="muted" *ngIf="!loadingHistoricoSync && !historicoSyncErro && historicoSync.length === 0">
+              Nenhuma mudança registrada ainda. O histórico começa a ser guardado a partir da próxima sincronização e
+              só registra quando algo muda (valor, peso, status, motorista, caminhão, data ou notas).
+            </div>
+
+            <div class="hist-sync" *ngIf="!loadingHistoricoSync && historicoSync.length > 0">
+              <div class="hist-sync-item" *ngFor="let h of historicoSync">
+                <div class="hist-sync-head">
+                  <span class="badge" [ngClass]="badgeHistorico(h.tipo)">{{ tipoHistoricoLabel(h.tipo) }}</span>
+                  <span class="muted">{{ h.criadoEm | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+
+                <div class="hist-sync-motivo" *ngIf="h.motivo">{{ h.motivo }}</div>
+
+                <div class="hist-sync-linha" *ngIf="h.tipo !== 'DESCARTADA' && h.valorDepois != null">
+                  <span class="muted">Valor</span>
+                  <ng-container *ngIf="h.tipo !== 'NOVA'">
+                    {{ formatMoneyHistorico(h.valorAntes) }} → <strong>{{ formatMoneyHistorico(h.valorDepois) }}</strong>
+                    <span class="delta-neg" *ngIf="deltaHistorico(h.valorAntes, h.valorDepois) < 0">
+                      ({{ formatDeltaMoneyHistorico(h.valorAntes, h.valorDepois) }})
+                    </span>
+                    <span class="delta-pos" *ngIf="deltaHistorico(h.valorAntes, h.valorDepois) > 0">
+                      ({{ formatDeltaMoneyHistorico(h.valorAntes, h.valorDepois) }})
+                    </span>
+                  </ng-container>
+                  <strong *ngIf="h.tipo === 'NOVA'">{{ formatMoneyHistorico(h.valorDepois) }}</strong>
+                </div>
+
+                <div class="hist-sync-linha" *ngIf="h.tipo !== 'DESCARTADA' && h.pesoDepois != null">
+                  <span class="muted">Peso</span>
+                  <ng-container *ngIf="h.tipo !== 'NOVA'">
+                    {{ formatKgHistorico(h.pesoAntes) }} → <strong>{{ formatKgHistorico(h.pesoDepois) }} kg</strong>
+                    <span class="delta-neg" *ngIf="deltaHistorico(h.pesoAntes, h.pesoDepois) < 0">
+                      ({{ formatDeltaKgHistorico(h.pesoAntes, h.pesoDepois) }})
+                    </span>
+                    <span class="delta-pos" *ngIf="deltaHistorico(h.pesoAntes, h.pesoDepois) > 0">
+                      ({{ formatDeltaKgHistorico(h.pesoAntes, h.pesoDepois) }})
+                    </span>
+                  </ng-container>
+                  <strong *ngIf="h.tipo === 'NOVA'">{{ formatKgHistorico(h.pesoDepois) }} kg</strong>
+                </div>
+
+                <div class="hist-sync-linha" *ngIf="h.tipo === 'BLOQUEADA'">
+                  <span class="muted">WinThor dizia</span>
+                  {{ formatMoneyHistorico(h.valorWinthor) }} e {{ formatKgHistorico(h.pesoWinthor) }} kg
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Card: Clientes e Notas -->
         <div class="card">
           <div class="card-header">

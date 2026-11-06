@@ -287,6 +287,20 @@
   color:#991b1b;
 }
 
+/* Histórico de sincronização (linha do tempo) */
+.hist-sync{ display:flex; flex-direction:column; gap:10px; }
+.hist-sync-item{
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#f9fafb;
+}
+.hist-sync-head{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.hist-sync-motivo{ font-size:13px; color:#374151; margin-bottom:4px; }
+.hist-sync-linha{ font-size:13px; display:flex; flex-wrap:wrap; gap:6px; align-items:baseline; }
+.delta-neg{ color:#991b1b; }
+.delta-pos{ color:#065f46; }
+
 /* Alerts / Loading */
 .alert{
   padding:10px 12px;

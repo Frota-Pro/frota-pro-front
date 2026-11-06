@@ -14,7 +14,18 @@ import {
   IntegracaoJobTipo,
   IntegracaoLogSource,
   IntegracaoWinthorLogsResponse,
+  CargaSyncItemResponse,
+  TipoItemSincronizacao,
 } from '../../../core/api/integracao-winthor-api.models';
+import {
+  deltaNum,
+  formatDeltaKg,
+  formatDeltaMoney,
+  formatKgDeTon,
+  formatMoney,
+  tipoItemClass,
+  tipoItemLabel,
+} from '../../../shared/utils/sincronizacao-historico';
 
 type TabKey = 'overview' | 'jobs' | 'logs';
 const WINTHOR_EMPRESA_ID_KEY = 'winthor_empresa_id';
@@ -69,6 +80,13 @@ export class WinthorComponent implements OnInit, OnDestroy {
   pageSize = 50;
   private jobsTimer?: ReturnType<typeof setInterval>;
   private jobsPollingWarmup = 0;
+
+  // Detalhe de uma rodada de sincronização (o que mudou em cada carga)
+  detalheJob: IntegracaoWinthorJobResponse | null = null;
+  detalheItens: CargaSyncItemResponse[] = [];
+  detalheLoading = false;
+  detalheErro: string | null = null;
+  detalheFiltro: 'TODOS' | TipoItemSincronizacao = 'TODOS';
 
   // Logs
   logsLoading = false;
@@ -366,6 +384,70 @@ export class WinthorComponent implements OnInit, OnDestroy {
         }
       });
   }
+
+  // =========================
+  // Detalhe da rodada: o que mudou em cada carga
+  // =========================
+  /** Só jobs de cargas que já passaram a gravar o histórico (os antigos não têm os totais). */
+  temHistorico(r: IntegracaoWinthorJobResponse): boolean {
+    return r.tipo === 'CARGAS' && r.qtdNovas != null;
+  }
+
+  /** Texto curto do botão: o que mais importa daquela rodada. */
+  resumoCurto(r: IntegracaoWinthorJobResponse): string {
+    const mexidas = (r.qtdNovas ?? 0) + (r.qtdAtualizadas ?? 0);
+    const extras = (r.qtdDescartadas ?? 0) + (r.qtdDiminuicaoBloqueada ?? 0);
+    if (mexidas === 0 && extras === 0) return 'Nada mudou';
+    const partes: string[] = [];
+    if ((r.qtdNovas ?? 0) > 0) partes.push(`${r.qtdNovas} nova(s)`);
+    if ((r.qtdAtualizadas ?? 0) > 0) partes.push(`${r.qtdAtualizadas} atualizada(s)`);
+    if (extras > 0 && partes.length === 0) partes.push(`${extras} ocorrência(s)`);
+    return partes.join(' · ');
+  }
+
+  resumoRodada(r: IntegracaoWinthorJobResponse): string {
+    return `${r.qtdNovas ?? 0} nova(s), ${r.qtdAtualizadas ?? 0} atualizada(s), ${r.qtdSemMudanca ?? 0} sem mudança, `
+      + `${r.qtdDescartadas ?? 0} descartada(s), ${r.qtdDiminuicaoBloqueada ?? 0} diminuição(ões) retida(s)`;
+  }
+
+  abrirDetalhe(r: IntegracaoWinthorJobResponse): void {
+    this.detalheJob = r;
+    this.detalheItens = [];
+    this.detalheErro = null;
+    this.detalheFiltro = 'TODOS';
+    this.detalheLoading = true;
+
+    this.api
+      .listJobItens(r.jobId)
+      .pipe(finalize(() => (this.detalheLoading = false)))
+      .subscribe({
+        next: (itens) => (this.detalheItens = itens || []),
+        error: (err) => {
+          this.detalheItens = [];
+          this.detalheErro = extrairMensagemErro(err, 'Não foi possível carregar o que mudou nesta sincronização.');
+        },
+      });
+  }
+
+  fecharDetalhe(): void {
+    this.detalheJob = null;
+    this.detalheItens = [];
+    this.detalheErro = null;
+  }
+
+  get itensDetalheFiltrados(): CargaSyncItemResponse[] {
+    return this.detalheFiltro === 'TODOS'
+      ? this.detalheItens
+      : this.detalheItens.filter((i) => i.tipo === this.detalheFiltro);
+  }
+
+  tipoItemLabel = tipoItemLabel;
+  tipoItemClass = tipoItemClass;
+  formatMoney = formatMoney;
+  formatKgFromTon = formatKgDeTon;
+  deltaNum = deltaNum;
+  formatDeltaMoney = formatDeltaMoney;
+  formatDeltaKg = formatDeltaKg;
 
   retryJob(row: IntegracaoWinthorJobResponse): void {
     if (!row?.jobId || row.tipo !== 'CARGAS' || row.status !== 'ERRO') return;

@@ -424,6 +424,7 @@
               <th>Data</th>
               <th class="right">Total</th>
               <th>Finalizado</th>
+              <th>O que mudou</th>
             </tr>
             </thead>
             <tbody>
@@ -434,10 +435,17 @@
               <td>{{ formatDate(r.dataReferencia || null) }}</td>
               <td class="right">{{ r.totalRegistros ?? '-' }}</td>
               <td>{{ formatDateTime(r.atualizadoEm || r.criadoEm || null) }}</td>
+              <td>
+                <button *ngIf="temHistorico(r)" class="btn small ghost" type="button" (click)="abrirDetalhe(r)"
+                        [title]="resumoRodada(r)">
+                  <i class="fas fa-magnifying-glass-chart"></i> {{ resumoCurto(r) }}
+                </button>
+                <span *ngIf="!temHistorico(r)" class="muted">-</span>
+              </td>
             </tr>
 
             <tr *ngIf="!jobsLoading && jobsConcluido.length===0">
-              <td colspan="6" class="muted center"><i class="fas fa-inbox empty-row-icon"></i> Nenhum concluído.</td>
+              <td colspan="7" class="muted center"><i class="fas fa-inbox empty-row-icon"></i> Nenhum concluído.</td>
             </tr>
             </tbody>
           </table>
@@ -525,4 +533,107 @@
       </div>
     </div>
   </ng-container>
+
+  <!-- ========================= -->
+  <!-- DETALHE DA RODADA: o que mudou em cada carga -->
+  <!-- ========================= -->
+  <div class="modal-backdrop" *ngIf="detalheJob" (click)="fecharDetalhe()">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-label="O que mudou nesta sincronização"
+         (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <h3><i class="fas fa-magnifying-glass-chart card-icon"></i> O que mudou nesta sincronização</h3>
+          <p class="muted">
+            {{ detalheJob.origem || 'Sincronização' }} ·
+            {{ formatDateTime(detalheJob.atualizadoEm || detalheJob.criadoEm || null) }}
+            <ng-container *ngIf="detalheJob.periodoInicial">
+              · período {{ formatDate(detalheJob.periodoInicial) }}
+              <ng-container *ngIf="detalheJob.periodoFinal && detalheJob.periodoFinal !== detalheJob.periodoInicial">
+                a {{ formatDate(detalheJob.periodoFinal) }}
+              </ng-container>
+            </ng-container>
+          </p>
+        </div>
+        <button class="btn small ghost" type="button" (click)="fecharDetalhe()" aria-label="Fechar">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="resumo-chips">
+        <span class="chip ok">{{ detalheJob.qtdNovas ?? 0 }} nova(s)</span>
+        <span class="chip info">{{ detalheJob.qtdAtualizadas ?? 0 }} atualizada(s)</span>
+        <span class="chip">{{ detalheJob.qtdSemMudanca ?? 0 }} sem mudança</span>
+        <span class="chip err">{{ detalheJob.qtdDescartadas ?? 0 }} descartada(s)</span>
+        <span class="chip warn">{{ detalheJob.qtdDiminuicaoBloqueada ?? 0 }} diminuição(ões) retida(s)</span>
+      </div>
+
+      <div class="toolbar">
+        <div class="left">
+          <span class="muted">Mostrar</span>
+          <select class="select" [(ngModel)]="detalheFiltro">
+            <option value="TODOS">Tudo que mudou</option>
+            <option value="NOVA">Novas</option>
+            <option value="ATUALIZADA">Atualizadas</option>
+            <option value="BLOQUEADA">Diminuição retida</option>
+            <option value="DESCARTADA">Descartadas</option>
+          </select>
+        </div>
+        <div class="right muted">{{ itensDetalheFiltrados.length }} carga(s)</div>
+      </div>
+
+      <div class="muted center" *ngIf="detalheLoading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+      <div class="muted center" *ngIf="detalheErro">{{ detalheErro }}</div>
+
+      <div class="table-wrap modal-table" *ngIf="!detalheLoading && !detalheErro">
+        <table class="table">
+          <thead>
+          <tr>
+            <th>Carga</th>
+            <th>O quê</th>
+            <th class="right">Valor</th>
+            <th class="right">Peso (kg)</th>
+            <th>Motivo</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let i of itensDetalheFiltrados">
+            <td class="mono">{{ i.numeroCargaExterno }}</td>
+            <td><span class="{{ tipoItemClass(i.tipo) }}">{{ tipoItemLabel(i.tipo) }}</span></td>
+            <td class="right">
+              <ng-container *ngIf="i.tipo === 'NOVA'">{{ formatMoney(i.valorDepois) }}</ng-container>
+              <ng-container *ngIf="i.tipo === 'ATUALIZADA' || i.tipo === 'BLOQUEADA'">
+                <span class="muted">{{ formatMoney(i.valorAntes) }}</span> → <strong>{{ formatMoney(i.valorDepois) }}</strong>
+                <div class="delta" [class.neg]="deltaNum(i.valorAntes, i.valorDepois) < 0" [class.pos]="deltaNum(i.valorAntes, i.valorDepois) > 0"
+                     *ngIf="deltaNum(i.valorAntes, i.valorDepois) !== 0">
+                  {{ formatDeltaMoney(i.valorAntes, i.valorDepois) }}
+                </div>
+                <div class="delta retido" *ngIf="i.tipo === 'BLOQUEADA'">WinThor: {{ formatMoney(i.valorWinthor) }}</div>
+              </ng-container>
+              <ng-container *ngIf="i.tipo === 'DESCARTADA'">{{ formatMoney(i.valorWinthor) }}</ng-container>
+            </td>
+            <td class="right">
+              <ng-container *ngIf="i.tipo === 'NOVA'">{{ formatKgFromTon(i.pesoDepois) }}</ng-container>
+              <ng-container *ngIf="i.tipo === 'ATUALIZADA' || i.tipo === 'BLOQUEADA'">
+                <span class="muted">{{ formatKgFromTon(i.pesoAntes) }}</span> → <strong>{{ formatKgFromTon(i.pesoDepois) }}</strong>
+                <div class="delta" [class.neg]="deltaNum(i.pesoAntes, i.pesoDepois) < 0" [class.pos]="deltaNum(i.pesoAntes, i.pesoDepois) > 0"
+                     *ngIf="deltaNum(i.pesoAntes, i.pesoDepois) !== 0">
+                  {{ formatDeltaKg(i.pesoAntes, i.pesoDepois) }}
+                </div>
+                <div class="delta retido" *ngIf="i.tipo === 'BLOQUEADA'">WinThor: {{ formatKgFromTon(i.pesoWinthor) }}</div>
+              </ng-container>
+              <ng-container *ngIf="i.tipo === 'DESCARTADA'">{{ formatKgFromTon(i.pesoWinthor) }}</ng-container>
+            </td>
+            <td class="motivo">{{ i.motivo || '-' }}</td>
+          </tr>
+          <tr *ngIf="itensDetalheFiltrados.length === 0">
+            <td colspan="5" class="muted center">
+              <i class="fas fa-inbox empty-row-icon"></i>
+              Nada para mostrar. Cargas relidas sem nenhuma mudança não entram no histórico.
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
