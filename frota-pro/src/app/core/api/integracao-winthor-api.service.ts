@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { IntegracaoWinthorLogsResponse, IntegracaoLogSource } from './integracao-winthor-api.models';
+import { IntegracaoWinthorLogsResponse, IntegracaoLogSource, CargaSyncItemResponse } from './integracao-winthor-api.models';
 
 
 import { BaseApiService } from './base-api.service';
@@ -44,6 +44,11 @@ export class IntegracaoWinthorApiService extends BaseApiService {
     params = params.set('size', String(opts.size ?? 50));
 
     return this.http.get<IntegracaoWinthorJobResponse[]>(`${this.apiUrl}${this.base}/jobs`, { params });
+  }
+
+  /** O que uma rodada de sincronização de cargas fez em cada carga (nova, atualizada, retida, descartada). */
+  listJobItens(jobId: string) {
+    return this.http.get<CargaSyncItemResponse[]>(`${this.apiUrl}${this.base}/jobs/CARGAS/${jobId}/itens`);
   }
 
   retryCargaJob(jobId: string) {

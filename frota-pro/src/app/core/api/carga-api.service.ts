@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseApiService } from './base-api.service';
 import { PageResponse } from './page.models';
+import { CargaSyncItemResponse } from './integracao-winthor-api.models';
 import {
   CargaMinResponse,
   CargaRequest,
@@ -133,6 +134,13 @@ export class CargaApiService extends BaseApiService {
   }
 
   /** POST {{host}}/carga — cadastro manual de carga (independente de integração). */
+  /** GET /carga/{numeroCarga}/historico-sincronizacao — o que as sincronizações com o WinThor mudaram nesta carga. */
+  historicoSincronizacao(numeroCarga: string) {
+    return this.http.get<CargaSyncItemResponse[]>(
+      `${this.apiUrl}/carga/${encodeURIComponent(numeroCarga)}/historico-sincronizacao`
+    );
+  }
+
   criar(request: CargaRequest) {
     return this.http.post<CargaResponse>(`${this.apiUrl}/carga`, request);
   }

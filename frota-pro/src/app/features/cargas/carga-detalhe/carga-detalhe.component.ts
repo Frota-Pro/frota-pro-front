@@ -21,6 +21,15 @@ import { DevolucaoResponse, ResumoDescontoCargaResponse, TransferenciaResponse }
 import { PostoAbastecimentoApiService } from '../../../core/api/posto-abastecimento-api.service';
 import { PostoAbastecimentoResponse } from '../../../core/api/posto-abastecimento-api.models';
 import { formatKgFromTon, parseNumberLike } from '../../../shared/utils/weight';
+import { CargaSyncItemResponse } from '../../../core/api/integracao-winthor-api.models';
+import {
+  deltaNum,
+  formatDeltaKg,
+  formatDeltaMoney,
+  formatKgDeTon,
+  formatMoney,
+  tipoItemLabel,
+} from '../../../shared/utils/sincronizacao-historico';
 
 import {
   CargaResponse,
@@ -254,6 +263,32 @@ export class CargaDetalheComponent implements OnInit {
   resumoDesconto: ResumoDescontoCargaResponse | null = null;
   loadingResumoDesconto = false;
 
+  // Histórico de sincronização (o que o WinThor mudou nesta carga)
+  historicoSync: CargaSyncItemResponse[] = [];
+  loadingHistoricoSync = false;
+  historicoSyncErro: string | null = null;
+  /** Perfil sem permissão para ver o histórico (403): o card some em vez de mostrar erro. */
+  historicoSyncOculto = false;
+
+  badgeHistorico(tipo?: string | null): string {
+    switch (tipo) {
+      case 'NOVA':
+        return 'ok';
+      case 'BLOQUEADA':
+        return 'warn';
+      case 'DESCARTADA':
+        return 'off';
+      default:
+        return '';
+    }
+  }
+  tipoHistoricoLabel = tipoItemLabel;
+  formatMoneyHistorico = formatMoney;
+  formatKgHistorico = formatKgDeTon;
+  deltaHistorico = deltaNum;
+  formatDeltaMoneyHistorico = formatDeltaMoney;
+  formatDeltaKgHistorico = formatDeltaKg;
+
   // ===== Regras =====
   readonly OBS_MIN = 5;
   readonly OBS_MAX = 800;
@@ -395,6 +430,7 @@ export class CargaDetalheComponent implements OnInit {
 
           this.carregarParadas();
           this.carregarResumoDesconto();
+          this.carregarHistoricoSync();
         },
         error: (err) => {
           console.error(err);
@@ -1082,6 +1118,32 @@ export class CargaDetalheComponent implements OnInit {
     this.showTransferenciaModal = false;
     this.transferencias = [];
     this.transferenciasErro = null;
+  }
+
+  // =========================
+  // Histórico de sincronização
+  // =========================
+  private carregarHistoricoSync(): void {
+    this.historicoSync = [];
+    this.historicoSyncErro = null;
+
+    if (!this.carga?.numeroCargaExterno) return;
+
+    this.loadingHistoricoSync = true;
+    this.cargaApi
+      .historicoSincronizacao(this.carga.numeroCarga)
+      .pipe(finalize(() => (this.loadingHistoricoSync = false)))
+      .subscribe({
+        next: (itens) => (this.historicoSync = itens || []),
+        error: (err) => {
+          this.historicoSync = [];
+          if (err?.status === 403) {
+            this.historicoSyncOculto = true;
+          } else {
+            this.historicoSyncErro = 'Não foi possível carregar o histórico de sincronização.';
+          }
+        },
+      });
   }
 
   // =========================
