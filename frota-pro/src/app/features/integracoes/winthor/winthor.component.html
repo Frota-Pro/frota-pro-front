@@ -1,8 +1,31 @@
 <div class="page">
-  <div class="header">
-    <div>
+
+  <!-- ========================= -->
+  <!-- CABEÇALHO: título, saúde da integração e ações, tudo numa faixa só -->
+  <!-- ========================= -->
+  <header class="top">
+    <div class="top-title">
       <h1>Integração WinThor</h1>
-      <p>Controle sincronizações manuais/automáticas, monitore jobs e valide conectividade com Integradora/Oracle.</p>
+      <div class="health" title="API → Integradora → Oracle (via actuator health)">
+        <span class="health-item">
+          <span class="dot-st ok"></span> API
+        </span>
+        <i class="fas fa-chevron-right health-sep"></i>
+        <span class="health-item">
+          <span class="dot-st" [class.ok]="status?.integradoraOk" [class.err]="status && !status.integradoraOk"></span>
+          Integradora <small>{{ status?.integradoraStatus || '...' }}</small>
+        </span>
+        <i class="fas fa-chevron-right health-sep"></i>
+        <span class="health-item">
+          <span class="dot-st" [class.ok]="status?.oracleOk" [class.err]="status && !status.oracleOk"></span>
+          Oracle <small>{{ status?.oracleStatus || '...' }}</small>
+        </span>
+        <span class="health-meta" *ngIf="status?.latenciaMs != null">{{ status?.latenciaMs }}ms</span>
+        <button class="icon-btn" type="button" (click)="refreshStatus()" [disabled]="statusLoading"
+                title="Verificar a conexão agora" aria-label="Verificar a conexão agora">
+          <i class="fas" [class.fa-rotate]="!statusLoading" [class.fa-spinner]="statusLoading" [class.fa-spin]="statusLoading"></i>
+        </button>
+      </div>
     </div>
 
     <div class="actions">
@@ -10,308 +33,254 @@
         <i class="fas" [class.fa-rotate]="!loading" [class.fa-spinner]="loading" [class.fa-spin]="loading"></i>
         {{ loading ? 'Carregando...' : 'Recarregar' }}
       </button>
-
       <button class="btn primary" type="button" (click)="saveConfig()" [disabled]="saving || loading">
         <i class="fas" [class.fa-floppy-disk]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>
         {{ saving ? 'Salvando...' : 'Salvar configurações' }}
       </button>
     </div>
-  </div>
+  </header>
 
-  <!-- Toast -->
+  <!-- Aviso (sucesso / erro / info) -->
   <div *ngIf="toast" class="toast"
        [class.ok]="toast.type==='success'"
        [class.err]="toast.type==='error'"
        [class.info]="toast.type==='info'">
     <span class="dot"></span>
     <span>{{ toast.text }}</span>
-    <button class="toast-x" type="button" (click)="toast=null">×</button>
+    <button class="toast-x" type="button" (click)="toast=null" aria-label="Fechar aviso">×</button>
   </div>
 
-  <!-- Tabs -->
-  <div class="tabs">
+  <!-- Abas -->
+  <nav class="tabs">
     <button class="tab" [class.active]="tab==='overview'" (click)="setTab('overview')" type="button">
       <i class="fas fa-gauge-high"></i> Visão geral
     </button>
     <button class="tab" [class.active]="tab==='jobs'" (click)="setTab('jobs')" type="button">
-      <i class="fas fa-list-check"></i> Jobs
+      <i class="fas fa-list-check"></i> Sincronizações
+      <span class="tab-count err" *ngIf="jobsErro.length > 0" title="Jobs com erro">{{ jobsErro.length }}</span>
+      <span class="tab-count warn" *ngIf="jobsPendente.length > 0" title="Em andamento">{{ jobsPendente.length }}</span>
     </button>
     <button class="tab" [class.active]="tab==='logs'" (click)="setTab('logs')" type="button">
       <i class="fas fa-terminal"></i> Logs
     </button>
-  </div>
+  </nav>
 
   <!-- ========================= -->
-  <!-- OVERVIEW -->
+  <!-- VISÃO GERAL -->
   <!-- ========================= -->
-  <ng-container *ngIf="tab==='overview'">
-    <div class="grid-2">
-      <!-- Config card -->
-      <div class="card">
+  <div class="overview" *ngIf="tab==='overview'">
+
+    <!-- Coluna 1: o que eu faço com mais frequência -->
+    <div class="col">
+
+      <section class="card">
         <div class="card-h">
-          <div>
-            <h3><i class="fas fa-sliders card-icon"></i> Configuração</h3>
-            <p class="muted">Liga/desliga automação e escolhe o que sincronizar.</p>
+          <h3><i class="fas fa-arrows-rotate card-icon"></i> Sincronizar agora</h3>
+          <span class="muted small">Usa os códigos salvos na configuração, quando existirem.</span>
+        </div>
+
+        <div class="sync-rows">
+          <div class="sync-row">
+            <div class="sync-ico purple"><i class="fas fa-box"></i></div>
+            <div class="sync-body">
+              <div class="sync-title">Cargas <small class="muted">por período de saída</small></div>
+              <div class="sync-controls">
+                <input class="input" type="date" [(ngModel)]="dataInicialCargas" aria-label="Data inicial" />
+                <span class="muted">até</span>
+                <input class="input" type="date" [(ngModel)]="dataFinalCargas" aria-label="Data final" />
+                <button class="btn primary" type="button" (click)="syncCargas()" [disabled]="refreshing">
+                  <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
+                  {{ refreshing ? 'Enviando...' : 'Sincronizar' }}
+                </button>
+              </div>
+            </div>
           </div>
+
+          <div class="sync-row">
+            <div class="sync-ico amber"><i class="fas fa-truck"></i></div>
+            <div class="sync-body">
+              <div class="sync-title">Caminhões <small class="muted">filial é opcional</small></div>
+              <div class="sync-controls">
+                <input class="input" type="number" min="1" step="1" [(ngModel)]="codFilial"
+                       placeholder="Cód. filial" aria-label="Código da filial" />
+                <button class="btn primary" type="button" (click)="syncCaminhoes()" [disabled]="refreshing">
+                  <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
+                  {{ refreshing ? 'Enviando...' : 'Sincronizar' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="sync-row">
+            <div class="sync-ico blue"><i class="fas fa-id-card"></i></div>
+            <div class="sync-body">
+              <div class="sync-title">Motoristas</div>
+              <div class="sync-controls">
+                <button class="btn primary" type="button" (click)="syncMotoristas()" [disabled]="refreshing">
+                  <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
+                  {{ refreshing ? 'Enviando...' : 'Sincronizar' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Última sincronização de cargas: leva direto ao "o que mudou" -->
+      <section class="card">
+        <div class="card-h">
+          <h3><i class="fas fa-clock-rotate-left card-icon"></i> Última sincronização de cargas</h3>
+          <button class="btn small ghost" type="button" (click)="setTab('jobs')">Ver todas <i class="fas fa-arrow-right"></i></button>
+        </div>
+
+        <div class="last-sync" *ngIf="ultimaSyncCargas as u; else semUltima">
+          <div class="last-sync-top">
+            <span class="{{ origemClass(u.origem) }}" *ngIf="u.origem">{{ u.origem }}</span>
+            <span>{{ formatDateTime(u.atualizadoEm || u.criadoEm || null) }}</span>
+            <span class="muted">· período {{ periodoJob(u) }}</span>
+          </div>
+
+          <div class="resumo-chips" *ngIf="temHistorico(u)">
+            <span class="chip ok">{{ u.qtdNovas ?? 0 }} nova(s)</span>
+            <span class="chip info">{{ u.qtdAtualizadas ?? 0 }} atualizada(s)</span>
+            <span class="chip">{{ u.qtdSemMudanca ?? 0 }} sem mudança</span>
+            <span class="chip warn" *ngIf="(u.qtdDiminuicaoBloqueada ?? 0) > 0">{{ u.qtdDiminuicaoBloqueada }} diminuição(ões) retida(s)</span>
+            <span class="chip err" *ngIf="(u.qtdDescartadas ?? 0) > 0">{{ u.qtdDescartadas }} descartada(s)</span>
+          </div>
+          <div class="muted small" *ngIf="!temHistorico(u)">
+            Esta rodada é anterior ao histórico. As próximas mostram aqui o que mudou.
+          </div>
+
+          <button class="btn primary" type="button" *ngIf="temHistorico(u)" (click)="abrirDetalhe(u)">
+            <i class="fas fa-magnifying-glass-chart"></i> Ver o que mudou
+          </button>
+        </div>
+
+        <ng-template #semUltima>
+          <div class="muted small pad">Nenhuma sincronização de cargas concluída ainda.</div>
+        </ng-template>
+      </section>
+    </div>
+
+    <!-- Coluna 2: configuração compacta -->
+    <div class="col">
+      <section class="card">
+        <div class="card-h">
+          <h3><i class="fas fa-sliders card-icon"></i> Configuração</h3>
           <span class="badge" [class.on]="form.ativo" [class.off]="!form.ativo">
             <span class="status-dot"></span>
-            {{ form.ativo ? 'ATIVA' : 'DESATIVADA' }}
+            {{ form.ativo ? 'AUTOMÁTICA LIGADA' : 'AUTOMÁTICA DESLIGADA' }}
           </span>
         </div>
 
         <div class="form">
-          <label class="row row-stack">
-            <span>Empresa ID</span>
-            <div class="input-wrap">
-              <i class="fas fa-building input-icon"></i>
-              <input class="input has-icon" type="text"
-                     [ngModel]="empresaId"
-                     (ngModelChange)="updateEmpresaId($event)"
-                     placeholder="Informe o identificador da empresa" />
-            </div>
-          </label>
-
-          <div class="section">
-            <div class="section-title"><i class="fas fa-clock-rotate-left"></i> Automação</div>
-
-            <label class="row">
+          <div class="field-line">
+            <label class="switch-label">
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="form.ativo" aria-label="Sincronização automática" />
+                <span class="slider"></span>
+              </label>
               <span>Sincronização automática</span>
-              <label class="switch">
-                <input type="checkbox" [(ngModel)]="form.ativo" />
-                <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="two">
+            <label class="field">
+              <span class="muted">A cada (minutos)</span>
+              <input class="input" type="number" min="1" step="1" [(ngModel)]="form.intervaloMin" placeholder="Ex.: 60" />
+            </label>
+            <label class="field">
+              <span class="muted">Reforço diário às</span>
+              <input class="input" type="time" [(ngModel)]="form.horarioReforcoMensal" />
+            </label>
+          </div>
+          <p class="muted small tight">
+            <i class="fas fa-circle-info row-icon"></i>
+            Além do sync de hoje, o reforço roda todo dia nesse horário do dia 1 até hoje, para pegar o que o WinThor lançou depois.
+          </p>
+
+          <div class="sep"></div>
+
+          <div class="section-title"><i class="fas fa-list-check"></i> O que sincronizar</div>
+          <div class="chips-toggle">
+            <label class="pick" [class.on]="form.syncCaminhoes">
+              <input type="checkbox" [(ngModel)]="form.syncCaminhoes" /> <i class="fas fa-truck"></i> Caminhões
+            </label>
+            <label class="pick" [class.on]="form.syncMotoristas">
+              <input type="checkbox" [(ngModel)]="form.syncMotoristas" /> <i class="fas fa-id-card"></i> Motoristas
+            </label>
+            <label class="pick" [class.on]="form.syncCargas">
+              <input type="checkbox" [(ngModel)]="form.syncCargas" /> <i class="fas fa-box"></i> Cargas
+            </label>
+          </div>
+
+          <details class="more" [open]="filtrosAtivos > 0">
+            <summary>
+              <i class="fas fa-filter"></i> Filtros por código
+              <span class="chip info" *ngIf="filtrosAtivos > 0">{{ filtrosAtivos }} ativo(s)</span>
+              <span class="muted small" *ngIf="filtrosAtivos === 0">— vazio sincroniza todos</span>
+            </summary>
+            <div class="two">
+              <label class="field">
+                <span class="muted">Códigos de caminhões</span>
+                <input class="input" type="text" [(ngModel)]="codigosCaminhoesInput" placeholder="Ex.: 101, 102" />
               </label>
-            </label>
-
-            <label class="row">
-              <span>Intervalo (min)</span>
-              <input class="input" type="number" min="1" step="1"
-                     [(ngModel)]="form.intervaloMin" placeholder="Opcional" />
-            </label>
-
-            <label class="row">
-              <span>Reforço diário (mês até hoje)</span>
-              <input class="input" type="time"
-                     [(ngModel)]="form.horarioReforcoMensal" />
-            </label>
-
-            <div class="info-note">
-              <i class="fas fa-circle-info"></i>
-              <span>
-                Além da sincronização acima (só o dia de hoje), todo dia nesse horário o sistema
-                também sincroniza do dia 1 do mês até hoje — pega devolução/transferência do WinThor
-                lançada depois que a carga já tinha sido sincronizada.
-              </span>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title"><i class="fas fa-list-check"></i> O que sincronizar</div>
-
-            <label class="row">
-              <span><i class="fas fa-truck row-icon"></i> Caminhões</span>
-              <label class="switch">
-                <input type="checkbox" [(ngModel)]="form.syncCaminhoes" />
-                <span class="slider"></span>
+              <label class="field">
+                <span class="muted">Códigos de motoristas</span>
+                <input class="input" type="text" [(ngModel)]="codigosMotoristasInput" placeholder="Ex.: 201, 202" />
               </label>
-            </label>
-
-            <label class="row">
-              <span><i class="fas fa-id-card row-icon"></i> Motoristas</span>
-              <label class="switch">
-                <input type="checkbox" [(ngModel)]="form.syncMotoristas" />
-                <span class="slider"></span>
-              </label>
-            </label>
-
-            <label class="row">
-              <span><i class="fas fa-box row-icon"></i> Cargas</span>
-              <label class="switch">
-                <input type="checkbox" [(ngModel)]="form.syncCargas" />
-                <span class="slider"></span>
-              </label>
-            </label>
-          </div>
-
-          <div class="section">
-            <div class="section-title"><i class="fas fa-filter"></i> Filtros (opcional)</div>
-
-            <label class="row row-stack">
-              <span>Códigos de Caminhões</span>
-              <input class="input" type="text"
-                     [(ngModel)]="codigosCaminhoesInput"
-                     placeholder="Ex.: 101, 102, 103" />
-            </label>
-
-            <label class="row row-stack">
-              <span>Códigos de Motoristas</span>
-              <input class="input" type="text"
-                     [(ngModel)]="codigosMotoristasInput"
-                     placeholder="Ex.: 201, 202, 203" />
-            </label>
-
-            <p class="muted small">
-              Para sincronizar todos, deixe os campos vazios. Para filtrar, preencha os códigos e salve.
-            </p>
-          </div>
-
-          <div class="meta">
-            <div class="meta-line">
-              <span class="muted">Empresa</span>
-              <span class="mono">{{ config?.empresaId || '-' }}</span>
             </div>
-            <div class="meta-line">
-              <span class="muted">Atualizado</span>
-              <span>{{ formatDateTime(config?.atualizadoEm || null) }}</span>
-            </div>
-          </div>
+            <p class="muted small tight">Preencha para filtrar e clique em "Salvar configurações".</p>
+          </details>
+
+          <details class="more">
+            <summary><i class="fas fa-building"></i> Empresa <span class="muted small">— {{ config?.atualizadoEm ? 'atualizado ' + formatDateTime(config?.atualizadoEm || null) : 'identificador da empresa' }}</span></summary>
+            <label class="field">
+              <span class="muted">Empresa ID</span>
+              <input class="input mono" type="text" [ngModel]="empresaId" (ngModelChange)="updateEmpresaId($event)"
+                     placeholder="Identificador da empresa" />
+            </label>
+          </details>
         </div>
-      </div>
-
-      <!-- Status card -->
-      <div class="card">
-        <div class="card-h">
-          <div>
-            <h3><i class="fas fa-satellite-dish card-icon"></i> Status & Conectividade</h3>
-            <p class="muted">API → Integradora → Oracle (via actuator health).</p>
-          </div>
-          <button class="btn small" type="button" (click)="refreshStatus()" [disabled]="statusLoading">
-            <i class="fas" [class.fa-rotate]="!statusLoading" [class.fa-spinner]="statusLoading" [class.fa-spin]="statusLoading"></i>
-            {{ statusLoading ? 'Verificando...' : 'Atualizar status' }}
-          </button>
-        </div>
-
-        <div class="pipeline">
-          <div class="pipeline-node">
-            <div class="pipeline-icon ok"><i class="fas fa-server"></i></div>
-            <div class="pipeline-label">API</div>
-            <span class="pill ok">UP</span>
-          </div>
-
-          <div class="pipeline-arrow" [class.err]="status && !status.integradoraOk">
-            <i class="fas fa-arrow-right"></i>
-          </div>
-
-          <div class="pipeline-node">
-            <div class="pipeline-icon" [class.ok]="status?.integradoraOk" [class.err]="status && !status.integradoraOk">
-              <i class="fas fa-diagram-project"></i>
-            </div>
-            <div class="pipeline-label">Integradora</div>
-            <span class="{{ pillClass(status?.integradoraOk) }}">{{ status?.integradoraStatus || 'UNKNOWN' }}</span>
-          </div>
-
-          <div class="pipeline-arrow" [class.err]="status && !status.oracleOk">
-            <i class="fas fa-arrow-right"></i>
-          </div>
-
-          <div class="pipeline-node">
-            <div class="pipeline-icon" [class.ok]="status?.oracleOk" [class.err]="status && !status.oracleOk">
-              <i class="fas fa-database"></i>
-            </div>
-            <div class="pipeline-label">Oracle</div>
-            <span class="{{ pillClass(status?.oracleOk) }}">{{ status?.oracleStatus || 'UNKNOWN' }}</span>
-          </div>
-        </div>
-
-        <div class="status-meta">
-          <div class="meta-line">
-            <span class="muted"><i class="fas fa-gauge-high row-icon"></i> Latência</span>
-            <span class="mono">{{ status?.latenciaMs != null ? (status?.latenciaMs + 'ms') : '-' }}</span>
-          </div>
-          <div class="meta-line">
-            <span class="muted"><i class="fas fa-rotate row-icon"></i> Verificado</span>
-            <span>{{ formatDateTime(status?.verificadoEm || null) }}</span>
-          </div>
-        </div>
-
-        <div class="hint">
-          <span class="muted">
-            Dica: se a integradora estiver DOWN, verifique a URL em <span class="mono">frotapro.integracao.integradora-base-url</span>.
-          </span>
-        </div>
-      </div>
+      </section>
     </div>
+  </div>
 
-    <!-- Manual sync -->
-    <div class="card">
-      <div class="card-h">
-        <div>
-          <h3><i class="fas fa-arrows-rotate card-icon"></i> Sincronização manual</h3>
-          <p class="muted">Dispara sincronização sob demanda e acompanha nos Jobs.</p>
-        </div>
-        <button class="btn ghost small" type="button" (click)="refreshJobs()" [disabled]="jobsLoading">
-          <i class="fas" [class.fa-rotate]="!jobsLoading" [class.fa-spinner]="jobsLoading" [class.fa-spin]="jobsLoading"></i>
-          {{ jobsLoading ? 'Atualizando...' : 'Atualizar jobs' }}
+  <!-- ========================= -->
+  <!-- SINCRONIZAÇÕES (jobs) -->
+  <!-- ========================= -->
+  <section class="panel" *ngIf="tab==='jobs'">
+    <div class="panel-bar">
+      <div class="seg" role="tablist" aria-label="Filtrar por situação">
+        <button type="button" class="seg-btn" [class.active]="jobsFiltro==='TODOS'" (click)="jobsFiltro='TODOS'">
+          Todas <span class="seg-n">{{ jobsPendente.length + jobsErro.length + jobsConcluido.length }}</span>
+        </button>
+        <button type="button" class="seg-btn" [class.active]="jobsFiltro==='ANDAMENTO'" (click)="jobsFiltro='ANDAMENTO'">
+          Em andamento <span class="seg-n warn" *ngIf="jobsPendente.length > 0">{{ jobsPendente.length }}</span>
+          <span class="seg-n" *ngIf="jobsPendente.length === 0">0</span>
+        </button>
+        <button type="button" class="seg-btn" [class.active]="jobsFiltro==='ERRO'" (click)="jobsFiltro='ERRO'">
+          Com erro <span class="seg-n err" *ngIf="jobsErro.length > 0">{{ jobsErro.length }}</span>
+          <span class="seg-n" *ngIf="jobsErro.length === 0">0</span>
+        </button>
+        <button type="button" class="seg-btn" [class.active]="jobsFiltro==='CONCLUIDO'" (click)="jobsFiltro='CONCLUIDO'">
+          Concluídas <span class="seg-n ok">{{ jobsConcluido.length }}</span>
         </button>
       </div>
 
-      <div class="manual-grid">
-        <div class="manual-box">
-          <div class="box-icon blue"><i class="fas fa-id-card"></i></div>
-          <h4>Motoristas</h4>
-          <p class="muted">Usa os códigos salvos na configuração (quando existirem).</p>
-          <button class="btn primary block" type="button" (click)="syncMotoristas()" [disabled]="refreshing">
-            <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
-            {{ refreshing ? 'Enviando...' : 'Sincronizar motoristas' }}
-          </button>
-        </div>
-
-        <div class="manual-box">
-          <div class="box-icon amber"><i class="fas fa-truck"></i></div>
-          <h4>Caminhões</h4>
-          <p class="muted">Usa os códigos salvos e permite filial opcional.</p>
-
-          <div class="inline">
-            <input class="input" type="number" min="1" step="1"
-                   [(ngModel)]="codFilial" placeholder="Cod. Filial (opcional)" />
-            <button class="btn primary" type="button" (click)="syncCaminhoes()" [disabled]="refreshing">
-              <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
-              {{ refreshing ? 'Enviando...' : 'Sincronizar caminhões' }}
-            </button>
-          </div>
-        </div>
-
-        <div class="manual-box">
-          <div class="box-icon purple"><i class="fas fa-box"></i></div>
-          <h4>Cargas</h4>
-          <p class="muted">Sincroniza por período, usando os códigos salvos.</p>
-
-          <div class="inline">
-            <input class="input" type="date" [(ngModel)]="dataInicialCargas" />
-            <input class="input" type="date" [(ngModel)]="dataFinalCargas" />
-            <button class="btn primary" type="button" (click)="syncCargas()" [disabled]="refreshing">
-              <i class="fas" [class.fa-paper-plane]="!refreshing" [class.fa-spinner]="refreshing" [class.fa-spin]="refreshing"></i>
-              {{ refreshing ? 'Enviando...' : 'Sincronizar cargas' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </ng-container>
-
-  <!-- ========================= -->
-  <!-- JOBS -->
-  <!-- ========================= -->
-  <ng-container *ngIf="tab==='jobs'">
-    <div class="toolbar">
-      <div class="left">
-        <span class="muted">Tipo</span>
-        <select class="select" [(ngModel)]="jobsTipo" (change)="refreshJobs()">
-          <option value="TODOS">Todos</option>
+      <div class="panel-tools">
+        <select class="select" [(ngModel)]="jobsTipo" (change)="refreshJobs()" aria-label="Tipo de job">
+          <option value="TODOS">Todos os tipos</option>
           <option value="CARGAS">Cargas</option>
           <option value="CAMINHOES">Caminhões</option>
           <option value="MOTORISTAS">Motoristas</option>
         </select>
-
-        <span class="muted">Limite</span>
-        <select class="select" [(ngModel)]="pageSize" (change)="refreshJobs()">
+        <select class="select" [(ngModel)]="pageSize" (change)="refreshJobs()" aria-label="Quantidade">
           <option [ngValue]="25">25</option>
           <option [ngValue]="50">50</option>
           <option [ngValue]="100">100</option>
           <option [ngValue]="200">200</option>
         </select>
-      </div>
-
-      <div class="right">
         <button class="btn ghost" type="button" (click)="refreshJobs()" [disabled]="jobsLoading">
           <i class="fas" [class.fa-rotate]="!jobsLoading" [class.fa-spinner]="jobsLoading" [class.fa-spin]="jobsLoading"></i>
           {{ jobsLoading ? 'Atualizando...' : 'Atualizar' }}
@@ -319,186 +288,89 @@
       </div>
     </div>
 
-    <div class="grid-3">
-      <!-- PENDENTES -->
-      <div class="card">
-        <div class="card-h">
-          <div>
-            <h3><i class="fas fa-hourglass-half card-icon"></i> Pendentes / Processando</h3>
-            <p class="muted">Fila ativa (Kafka + integradora).</p>
-          </div>
-          <span class="counter">{{ jobsPendente.length }}</span>
-        </div>
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Origem</th>
+          <th>Situação</th>
+          <th>Período</th>
+          <th class="right">Total</th>
+          <th>O que aconteceu</th>
+          <th>Quando</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let r of jobsLista; trackBy: trackByJob">
+          <td class="mono">{{ r.tipo }}</td>
+          <td>
+            <span class="{{ origemClass(r.origem) }}" *ngIf="r.origem">{{ r.origem }}</span>
+            <span class="muted" *ngIf="!r.origem">-</span>
+          </td>
+          <td><span class="{{ chipClass(r.status) }}">{{ jobStatusLabel(r.status) }}</span></td>
+          <td class="nowrap">{{ periodoJob(r) }}</td>
+          <td class="right">{{ r.totalRegistros ?? '-' }}</td>
+          <td class="cell-what">
+            <span class="err-text" *ngIf="r.status === 'ERRO'" [title]="r.mensagemErro || ''">{{ r.mensagemErro || 'Erro sem detalhe' }}</span>
+            <button *ngIf="r.status !== 'ERRO' && temHistorico(r)" class="btn small ghost" type="button"
+                    (click)="abrirDetalhe(r)" [title]="resumoRodada(r)">
+              <i class="fas fa-magnifying-glass-chart"></i> {{ resumoCurto(r) }}
+            </button>
+            <span class="muted" *ngIf="r.status !== 'ERRO' && !temHistorico(r)">-</span>
+          </td>
+          <td class="nowrap">{{ formatDateTime(r.atualizadoEm || r.criadoEm || null) }}</td>
+          <td class="right">
+            <button *ngIf="r.tipo === 'CARGAS' && r.status === 'ERRO'" class="btn small danger" type="button" (click)="retryJob(r)">
+              <i class="fas fa-arrow-rotate-right"></i> Reprocessar
+            </button>
+          </td>
+        </tr>
 
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Origem</th>
-              <th>Status</th>
-              <th>Data</th>
-              <th class="right">Total</th>
-              <th>Atualizado</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let r of jobsPendente">
-              <td class="mono">{{ r.tipo }}</td>
-              <td><span class="{{ origemClass(r.origem) }}" *ngIf="r.origem">{{ r.origem }}</span><span class="muted" *ngIf="!r.origem">-</span></td>
-              <td><span class="{{ chipClass(r.status) }}">{{ jobStatusLabel(r.status) }}</span></td>
-              <td>{{ formatDate(r.dataReferencia || null) }}</td>
-              <td class="right">{{ r.totalRegistros ?? '-' }}</td>
-              <td>{{ formatDateTime(r.atualizadoEm || r.criadoEm || null) }}</td>
-            </tr>
-
-            <tr *ngIf="!jobsLoading && jobsPendente.length===0">
-              <td colspan="6" class="muted center"><i class="fas fa-circle-check empty-row-icon"></i> Sem pendências.</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ERROS -->
-      <div class="card">
-        <div class="card-h">
-          <div>
-            <h3><i class="fas fa-triangle-exclamation card-icon"></i> Erros</h3>
-            <p class="muted">Falhas de cargas podem ser reprocessadas.</p>
-          </div>
-          <span class="counter err">{{ jobsErro.length }}</span>
-        </div>
-
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Origem</th>
-              <th>Status</th>
-              <th>Data</th>
-              <th>Erro</th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let r of jobsErro">
-              <td class="mono">{{ r.tipo }}</td>
-              <td><span class="{{ origemClass(r.origem) }}" *ngIf="r.origem">{{ r.origem }}</span><span class="muted" *ngIf="!r.origem">-</span></td>
-              <td><span class="{{ chipClass(r.status) }}">{{ jobStatusLabel(r.status) }}</span></td>
-              <td>{{ formatDate(r.dataReferencia || null) }}</td>
-              <td class="truncate" [title]="r.mensagemErro || ''">{{ r.mensagemErro || '-' }}</td>
-              <td class="right">
-                <button *ngIf="r.tipo === 'CARGAS'" class="btn small danger" type="button" (click)="retryJob(r)">
-                  <i class="fas fa-arrow-rotate-right"></i> Reprocessar
-                </button>
-              </td>
-            </tr>
-
-            <tr *ngIf="!jobsLoading && jobsErro.length===0">
-              <td colspan="6" class="muted center"><i class="fas fa-circle-check empty-row-icon"></i> Nenhum erro.</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- CONCLUÍDOS -->
-      <div class="card">
-        <div class="card-h">
-          <div>
-            <h3><i class="fas fa-circle-check card-icon"></i> Concluídos</h3>
-            <p class="muted">Sincronizações finalizadas.</p>
-          </div>
-          <span class="counter ok">{{ jobsConcluido.length }}</span>
-        </div>
-
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Origem</th>
-              <th>Status</th>
-              <th>Data</th>
-              <th class="right">Total</th>
-              <th>Finalizado</th>
-              <th>O que mudou</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let r of jobsConcluido">
-              <td class="mono">{{ r.tipo }}</td>
-              <td><span class="{{ origemClass(r.origem) }}" *ngIf="r.origem">{{ r.origem }}</span><span class="muted" *ngIf="!r.origem">-</span></td>
-              <td><span class="{{ chipClass(r.status) }}">{{ jobStatusLabel(r.status) }}</span></td>
-              <td>{{ formatDate(r.dataReferencia || null) }}</td>
-              <td class="right">{{ r.totalRegistros ?? '-' }}</td>
-              <td>{{ formatDateTime(r.atualizadoEm || r.criadoEm || null) }}</td>
-              <td>
-                <button *ngIf="temHistorico(r)" class="btn small ghost" type="button" (click)="abrirDetalhe(r)"
-                        [title]="resumoRodada(r)">
-                  <i class="fas fa-magnifying-glass-chart"></i> {{ resumoCurto(r) }}
-                </button>
-                <span *ngIf="!temHistorico(r)" class="muted">-</span>
-              </td>
-            </tr>
-
-            <tr *ngIf="!jobsLoading && jobsConcluido.length===0">
-              <td colspan="7" class="muted center"><i class="fas fa-inbox empty-row-icon"></i> Nenhum concluído.</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+        <tr *ngIf="!jobsLoading && jobsLista.length === 0">
+          <td colspan="8" class="muted center empty-row">
+            <i class="fas fa-inbox"></i> Nada para mostrar neste filtro.
+          </td>
+        </tr>
+        </tbody>
+      </table>
     </div>
-
-    <div class="note">
-      <span class="muted">
-        <i class="fas fa-circle-info row-icon"></i>
-        A ação "Reprocessar" está disponível somente para jobs de carga com erro.
-      </span>
-    </div>
-  </ng-container>
+  </section>
 
   <!-- ========================= -->
   <!-- LOGS -->
   <!-- ========================= -->
-  <ng-container *ngIf="tab==='logs'">
-    <div class="toolbar">
-      <div class="left">
-        <span class="muted">Fonte</span>
-        <select class="select" [(ngModel)]="logSource" (change)="refreshLogs()">
-          <option value="API">API</option>
-          <option value="INTEGRADORA">Integradora</option>
+  <section class="panel" *ngIf="tab==='logs'">
+    <div class="panel-bar">
+      <div class="panel-tools grow">
+        <select class="select wide" [(ngModel)]="logSource" (change)="refreshLogs()" aria-label="Fonte do log">
+          <option *ngFor="let f of logFontes" [value]="f.valor">{{ f.rotulo }}</option>
         </select>
-
-        <span class="muted">Linhas</span>
-        <select class="select" [(ngModel)]="logLines" (change)="refreshLogs()">
-          <option [ngValue]="200">200</option>
-          <option [ngValue]="300">300</option>
-          <option [ngValue]="500">500</option>
-          <option [ngValue]="1000">1000</option>
-          <option [ngValue]="2000">2000</option>
+        <select class="select" [(ngModel)]="logLines" (change)="refreshLogs()" aria-label="Quantidade de linhas">
+          <option [ngValue]="200">200 linhas</option>
+          <option [ngValue]="300">300 linhas</option>
+          <option [ngValue]="500">500 linhas</option>
+          <option [ngValue]="1000">1000 linhas</option>
+          <option [ngValue]="2000">2000 linhas</option>
         </select>
-
-        <span class="muted">Buscar</span>
-        <input class="input" style="max-width:260px"
-               [(ngModel)]="logSearch" (input)="applyLogFilter()"
-               placeholder="Ex.: ERROR, jobId, Oracle, Kafka..." />
+        <input class="input search" [(ngModel)]="logSearch" (input)="applyLogFilter()"
+               placeholder="Buscar: ERROR, job=..., Oracle, carga 422238" aria-label="Buscar no log" />
+        <button class="btn ghost" type="button" [class.on]="logSoProblemas" (click)="toggleSoProblemas()"
+                title="Mostrar só as linhas WARN e ERROR">
+          <i class="fas fa-triangle-exclamation"></i> Só problemas
+        </button>
       </div>
 
-      <div class="right">
-        <button class="btn ghost" type="button" (click)="toggleAutoRefreshLogs()">
+      <div class="panel-tools">
+        <button class="btn ghost" type="button" [class.on]="autoRefreshLogs" (click)="toggleAutoRefreshLogs()"
+                title="Atualiza sozinho a cada 5 segundos">
           <i class="fas" [class.fa-toggle-on]="autoRefreshLogs" [class.fa-toggle-off]="!autoRefreshLogs"></i>
-          {{ autoRefreshLogs ? 'Auto: ON' : 'Auto: OFF' }}
+          Auto {{ autoRefreshLogs ? 'ligado' : 'desligado' }}
         </button>
-
-        <button class="btn ghost" type="button" (click)="copyLogs()"
-                [disabled]="(filteredLogLines?.length||0)===0">
+        <button class="btn ghost" type="button" (click)="copyLogs()" [disabled]="(filteredLogLines?.length||0)===0">
           <i class="fas fa-copy"></i> Copiar
         </button>
-
         <button class="btn primary" type="button" (click)="refreshLogs()" [disabled]="logsLoading">
           <i class="fas" [class.fa-rotate]="!logsLoading" [class.fa-spinner]="logsLoading" [class.fa-spin]="logsLoading"></i>
           {{ logsLoading ? 'Atualizando...' : 'Atualizar' }}
@@ -506,33 +378,21 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-h">
-        <div>
-          <h3><i class="fas fa-terminal card-icon"></i> Logs — {{ logSource }}</h3>
-          <p class="muted">
-            Atualizado em: {{ formatDateTime(rawLogs?.fetchedAt || null) }}
-            <span class="dot">•</span>
-            Retornadas: {{ rawLogs?.linesReturned ?? 0 }}/{{ rawLogs?.linesRequested ?? logLines }}
-            <span class="dot">•</span>
-            Filtradas: {{ filteredLogLines?.length ?? 0 }}
-          </p>
-        </div>
-      </div>
-
-      <div class="log-wrap">
-        <pre class="log-pre" *ngIf="(filteredLogLines?.length||0) > 0">{{ filteredLogLines.join('\n') }}</pre>
-
-        <div class="empty" *ngIf="(filteredLogLines?.length||0) === 0">
-          <i class="fas fa-file-circle-question empty-icon-big"></i>
-          <div class="empty-title">Sem logs para mostrar</div>
-          <div class="muted">
-            Troque a fonte, aumente o número de linhas ou limpe o filtro de busca.
-          </div>
-        </div>
-      </div>
+    <div class="log-meta muted small">
+      {{ logFonteRotulo() }} · atualizado {{ formatDateTime(rawLogs?.fetchedAt || null) }} ·
+      {{ filteredLogLines?.length ?? 0 }} de {{ rawLogs?.linesReturned ?? 0 }} linhas
     </div>
-  </ng-container>
+
+    <div class="log-view" *ngIf="(filteredLogLines?.length||0) > 0">
+      <div class="log-line" *ngFor="let l of filteredLogLines; trackBy: trackByIndex" [ngClass]="logNivel(l)">{{ l }}</div>
+    </div>
+
+    <div class="empty" *ngIf="(filteredLogLines?.length||0) === 0">
+      <i class="fas fa-file-circle-question"></i>
+      <div class="empty-title">Sem logs para mostrar</div>
+      <div class="muted">Troque a fonte, aumente o número de linhas ou limpe a busca.</div>
+    </div>
+  </section>
 
   <!-- ========================= -->
   <!-- DETALHE DA RODADA: o que mudou em cada carga -->
@@ -546,15 +406,10 @@
           <p class="muted">
             {{ detalheJob.origem || 'Sincronização' }} ·
             {{ formatDateTime(detalheJob.atualizadoEm || detalheJob.criadoEm || null) }}
-            <ng-container *ngIf="detalheJob.periodoInicial">
-              · período {{ formatDate(detalheJob.periodoInicial) }}
-              <ng-container *ngIf="detalheJob.periodoFinal && detalheJob.periodoFinal !== detalheJob.periodoInicial">
-                a {{ formatDate(detalheJob.periodoFinal) }}
-              </ng-container>
-            </ng-container>
+            <ng-container *ngIf="detalheJob.periodoInicial">· período {{ periodoJob(detalheJob) }}</ng-container>
           </p>
         </div>
-        <button class="btn small ghost" type="button" (click)="fecharDetalhe()" aria-label="Fechar">
+        <button class="icon-btn" type="button" (click)="fecharDetalhe()" aria-label="Fechar">
           <i class="fas fa-xmark"></i>
         </button>
       </div>
@@ -567,10 +422,10 @@
         <span class="chip warn">{{ detalheJob.qtdDiminuicaoBloqueada ?? 0 }} diminuição(ões) retida(s)</span>
       </div>
 
-      <div class="toolbar">
-        <div class="left">
+      <div class="panel-bar tight-bar">
+        <div class="panel-tools">
           <span class="muted">Mostrar</span>
-          <select class="select" [(ngModel)]="detalheFiltro">
+          <select class="select" [(ngModel)]="detalheFiltro" aria-label="Filtrar itens">
             <option value="TODOS">Tudo que mudou</option>
             <option value="NOVA">Novas</option>
             <option value="ATUALIZADA">Atualizadas</option>
@@ -578,13 +433,13 @@
             <option value="DESCARTADA">Descartadas</option>
           </select>
         </div>
-        <div class="right muted">{{ itensDetalheFiltrados.length }} carga(s)</div>
+        <span class="muted">{{ itensDetalheFiltrados.length }} carga(s)</span>
       </div>
 
       <div class="muted center" *ngIf="detalheLoading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
       <div class="muted center" *ngIf="detalheErro">{{ detalheErro }}</div>
 
-      <div class="table-wrap modal-table" *ngIf="!detalheLoading && !detalheErro">
+      <div class="table-scroll modal-table" *ngIf="!detalheLoading && !detalheErro">
         <table class="table">
           <thead>
           <tr>
@@ -626,8 +481,8 @@
             <td class="motivo">{{ i.motivo || '-' }}</td>
           </tr>
           <tr *ngIf="itensDetalheFiltrados.length === 0">
-            <td colspan="5" class="muted center">
-              <i class="fas fa-inbox empty-row-icon"></i>
+            <td colspan="5" class="muted center empty-row">
+              <i class="fas fa-inbox"></i>
               Nada para mostrar. Cargas relidas sem nenhuma mudança não entram no histórico.
             </td>
           </tr>

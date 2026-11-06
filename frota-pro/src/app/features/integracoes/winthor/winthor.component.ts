@@ -88,11 +88,23 @@ export class WinthorComponent implements OnInit, OnDestroy {
   detalheErro: string | null = null;
   detalheFiltro: 'TODOS' | TipoItemSincronizacao = 'TODOS';
 
+  /** Filtro rápido da lista de jobs (por situação). */
+  jobsFiltro: 'TODOS' | 'ANDAMENTO' | 'ERRO' | 'CONCLUIDO' = 'TODOS';
+
   // Logs
+  readonly logFontes: { valor: IntegracaoLogSource; rotulo: string }[] = [
+    { valor: 'API', rotulo: 'API — completo' },
+    { valor: 'API_SINCRONIZACAO', rotulo: 'API — sincronização' },
+    { valor: 'API_INTEGRACAO', rotulo: 'API — integração' },
+    { valor: 'API_ERROS', rotulo: 'API — só erros e avisos' },
+    { valor: 'INTEGRADORA', rotulo: 'Integradora' },
+  ];
   logsLoading = false;
   logSource: IntegracaoLogSource = 'API';
   logLines = 300;
   logSearch = '';
+  /** Mostra só as linhas WARN/ERROR. */
+  logSoProblemas = false;
   autoRefreshLogs = false;
   private logsTimer?: any;
 
@@ -492,14 +504,81 @@ export class WinthorComponent implements OnInit, OnDestroy {
   }
 
   applyLogFilter(): void {
-    const base = this.rawLogs?.lines || [];
+    let base = this.rawLogs?.lines || [];
     const q = (this.logSearch || '').trim().toLowerCase();
 
+    if (this.logSoProblemas) {
+      base = base.filter(l => this.logNivel(l) === 'err' || this.logNivel(l) === 'warn');
+    }
     if (!q) {
       this.filteredLogLines = base;
       return;
     }
     this.filteredLogLines = base.filter(l => (l || '').toLowerCase().includes(q));
+  }
+
+  toggleSoProblemas(): void {
+    this.logSoProblemas = !this.logSoProblemas;
+    this.applyLogFilter();
+  }
+
+  /** Nível da linha de log, para pintar de vermelho (ERROR) ou amarelo (WARN). */
+  logNivel(linha: string | null | undefined): 'err' | 'warn' | 'info' {
+    const l = linha || '';
+    if (/\bERROR\b/.test(l.slice(0, 80)) || l.startsWith('[LOG]')) return 'err';
+    if (/\bWARN\b/.test(l.slice(0, 80))) return 'warn';
+    return 'info';
+  }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  trackByJob(_index: number, j: IntegracaoWinthorJobResponse): string {
+    return j.tipo + j.jobId;
+  }
+
+  logFonteRotulo(): string {
+    return this.logFontes.find(f => f.valor === this.logSource)?.rotulo ?? this.logSource;
+  }
+
+  // =========================
+  // Lista de jobs (uma tabela só, com filtro por situação)
+  // =========================
+  get jobsTodos(): IntegracaoWinthorJobResponse[] {
+    const ts = (j: IntegracaoWinthorJobResponse) => new Date(j.atualizadoEm || j.criadoEm || 0).getTime();
+    return [...this.jobsPendente, ...this.jobsErro, ...this.jobsConcluido].sort((a, b) => ts(b) - ts(a));
+  }
+
+  get jobsLista(): IntegracaoWinthorJobResponse[] {
+    switch (this.jobsFiltro) {
+      case 'ANDAMENTO':
+        return this.jobsPendente.slice().sort((a, b) => (b.criadoEm || '').localeCompare(a.criadoEm || ''));
+      case 'ERRO':
+        return this.jobsErro;
+      case 'CONCLUIDO':
+        return this.jobsConcluido;
+      default:
+        return this.jobsTodos;
+    }
+  }
+
+  /** O job de cargas concluído mais recente — vira o resumo "Última sincronização" na visão geral. */
+  get ultimaSyncCargas(): IntegracaoWinthorJobResponse | null {
+    return this.jobsConcluido.find(j => j.tipo === 'CARGAS') ?? null;
+  }
+
+  periodoJob(r: IntegracaoWinthorJobResponse): string {
+    if (r.periodoInicial) {
+      const ini = this.formatDate(r.periodoInicial);
+      const fim = r.periodoFinal && r.periodoFinal !== r.periodoInicial ? ' a ' + this.formatDate(r.periodoFinal) : '';
+      return ini + fim;
+    }
+    return this.formatDate(r.dataReferencia || null);
+  }
+
+  get filtrosAtivos(): number {
+    return (this.codigosCaminhoesInput.trim() ? 1 : 0) + (this.codigosMotoristasInput.trim() ? 1 : 0);
   }
 
   toggleAutoRefreshLogs(): void {
