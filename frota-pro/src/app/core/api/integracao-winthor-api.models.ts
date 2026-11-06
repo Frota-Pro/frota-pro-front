@@ -90,7 +90,7 @@ export interface IntegracaoWinthorStatusResponse {
   verificadoEm?: string | null;
 }
 
-export type IntegracaoLogSource = 'API' | 'INTEGRADORA';
+export type IntegracaoLogSource = 'API' | 'API_SINCRONIZACAO' | 'API_INTEGRACAO' | 'API_ERROS' | 'INTEGRADORA';
 
 export interface IntegracaoWinthorLogsResponse {
   source: IntegracaoLogSource;
