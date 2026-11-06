@@ -17,6 +17,8 @@ import {
   CargaMinResponse,
   RelatorioCargasSumidasWinThorResponse,
   RelatorioCargaSumidaLinha,
+  RelatorioCargasReentregaConferirResponse,
+  RelatorioCargaReentregaConferirLinha,
   RelatorioCargasNaoSincronizadasResponse,
   RelatorioCargaNaoSincronizadaLinha,
 } from '../../core/api/carga-api.models';
@@ -33,6 +35,7 @@ type ReportKey =
   | 'DESPESAS_CATEGORIAS'
   | 'VIDA_UTIL_PNEU'
   | 'CARGAS_SUMIDAS_WINTHOR'
+  | 'CARGAS_REENTREGA_CONFERIR'
   | 'CARGAS_NAO_SINCRONIZADAS'
   | 'VINCULO_MOTORISTA_CAMINHAO';
 
@@ -169,6 +172,15 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
       enabled: true,
     },
     {
+      key: 'CARGAS_REENTREGA_CONFERIR',
+      title: 'Reentregas Iniciadas (conferir)',
+      category: 'Cargas',
+      icon: '🔎',
+      short: 'Cargas iniciadas que no WinThor são reentrega parada',
+      note: 'Cargas que o motorista já iniciou (ou finalizou) e que, no WinThor, estão num carregamento com motorista/veículo genérico de REENTREGA. O sistema não mexe nelas sozinho: confira aqui e decida. Em rota aparecem sempre; finalizadas, só as que saíram no período (padrão: últimos 30 dias). Filtros abaixo são opcionais.',
+      enabled: true,
+    },
+    {
       key: 'CARGAS_NAO_SINCRONIZADAS',
       title: 'Cargas Não Sincronizadas',
       category: 'Cargas',
@@ -246,6 +258,8 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
   vidaUtilResult: PneuVidaUtilRelatorioResponse | null = null;
   cargasSumidasLoading = false;
   cargasSumidasResult: RelatorioCargasSumidasWinThorResponse | null = null;
+  cargasReentregaLoading = false;
+  cargasReentregaResult: RelatorioCargasReentregaConferirResponse | null = null;
   cargasNaoSincronizadasLoading = false;
   cargasNaoSincronizadasResult: RelatorioCargasNaoSincronizadasResponse | null = null;
   motivoNaoSincronizada = '';
@@ -307,13 +321,15 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
 
   /** Se há algo pra limpar no painel de resultado (PDF, tabela de vida útil ou de cargas sumidas). */
   get podeLimpar(): boolean {
-    return !!this.pdfSafeUrl || !!this.vidaUtilResult || !!this.cargasSumidasResult || !!this.cargasNaoSincronizadasResult;
+    return !!this.pdfSafeUrl || !!this.vidaUtilResult || !!this.cargasSumidasResult
+      || !!this.cargasReentregaResult || !!this.cargasNaoSincronizadasResult;
   }
 
   /** Relatórios que mostram tabela na tela (e exportam o PDF por botão) em vez de pré-visualizar o PDF. */
   get tipoComTabela(): boolean {
     return this.form.tipo === 'VIDA_UTIL_PNEU'
       || this.form.tipo === 'CARGAS_SUMIDAS_WINTHOR'
+      || this.form.tipo === 'CARGAS_REENTREGA_CONFERIR'
       || this.form.tipo === 'CARGAS_NAO_SINCRONIZADAS';
   }
 
@@ -355,6 +371,9 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     }
     if (def.key !== 'CARGAS_SUMIDAS_WINTHOR') {
       this.cargasSumidasResult = null;
+    }
+    if (def.key !== 'CARGAS_REENTREGA_CONFERIR') {
+      this.cargasReentregaResult = null;
     }
     if (def.key !== 'CARGAS_NAO_SINCRONIZADAS') {
       this.cargasNaoSincronizadasResult = null;
@@ -442,6 +461,28 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
           error: (e) => {
             this.cargasSumidasResult = null;
             this.errorMsg = extrairMensagemErro(e, 'Erro ao carregar relatório de cargas sumidas do WinThor.');
+          },
+        });
+      return;
+    }
+
+    if (def.key === 'CARGAS_REENTREGA_CONFERIR') {
+      this.loading = false;
+      this.cargasReentregaLoading = true;
+      this.pdfSafeUrl = null;
+      this.lastBlob = null;
+
+      this.cargaApi
+        .relatorioReentregaConferir({
+          inicio: this.form.inicio || undefined,
+          fim: this.form.fim || undefined,
+        })
+        .pipe(finalize(() => (this.cargasReentregaLoading = false)))
+        .subscribe({
+          next: (res) => (this.cargasReentregaResult = res),
+          error: (e) => {
+            this.cargasReentregaResult = null;
+            this.errorMsg = extrairMensagemErro(e, 'Erro ao carregar as reentregas para conferir.');
           },
         });
       return;
@@ -601,6 +642,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
     this.pdfSafeUrl = null;
     this.vidaUtilResult = null;
     this.cargasSumidasResult = null;
+    this.cargasReentregaResult = null;
     this.cargasNaoSincronizadasResult = null;
     this.revokeObjectUrl();
   }
@@ -711,6 +753,10 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
   }
 
   trackByCargaSumida(_: number, row: RelatorioCargaSumidaLinha): string {
+    return row.numeroCarga;
+  }
+
+  trackByCargaReentrega(_: number, row: RelatorioCargaReentregaConferirLinha): string {
     return row.numeroCarga;
   }
 

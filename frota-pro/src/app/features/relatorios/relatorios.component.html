@@ -192,6 +192,17 @@
           {{ verificandoAgora ? 'Verificando...' : '🔄 Verificar agora (sem esperar o job de 3h)' }}
         </button>
 
+        <!-- ✅ REENTREGAS INICIADAS (conferir): período opcional -->
+        <div class="field" *ngIf="form.tipo === 'CARGAS_REENTREGA_CONFERIR'">
+          <label>Saída — início (opcional)</label>
+          <input type="date" [(ngModel)]="form.inicio" />
+        </div>
+
+        <div class="field" *ngIf="form.tipo === 'CARGAS_REENTREGA_CONFERIR'">
+          <label>Saída — fim (opcional)</label>
+          <input type="date" [(ngModel)]="form.fim" />
+        </div>
+
         <!-- ✅ CARGAS NÃO SINCRONIZADAS: filtros todos opcionais -->
         <div class="field" *ngIf="form.tipo === 'CARGAS_NAO_SINCRONIZADAS'">
           <label>Saída — início (opcional)</label>
@@ -443,6 +454,58 @@
           </tbody>
         </table>
       </div>
+
+      <div class="table-wrap" *ngIf="form.tipo === 'CARGAS_REENTREGA_CONFERIR'">
+        <div class="empty" *ngIf="cargasReentregaLoading"><span class="spinner"></span>Carregando relatório...</div>
+
+        <div class="report-meta" *ngIf="!cargasReentregaLoading && cargasReentregaResult">
+          <span><strong>Total para conferir:</strong> {{ cargasReentregaResult.total ?? 0 }}</span>
+        </div>
+
+        <table class="table" *ngIf="!cargasReentregaLoading && (cargasReentregaResult?.linhas?.length || 0) > 0; else emptyCargasReentrega">
+          <thead>
+          <tr>
+            <th>Carga</th>
+            <th>Externo (WinThor)</th>
+            <th>Status</th>
+            <th>Saída</th>
+            <th>Motorista</th>
+            <th>Caminhão</th>
+            <th class="right">Km inicial</th>
+            <th class="right">Km final</th>
+            <th class="right">Peso (t)</th>
+            <th class="right">Valor</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let l of cargasReentregaResult?.linhas || []; trackBy: trackByCargaReentrega">
+            <td>{{ formatText(l.numeroCarga) }}</td>
+            <td><strong>{{ formatText(l.numeroCargaExterno) }}</strong></td>
+            <td>{{ formatText(l.statusCarga) }}</td>
+            <td>{{ l.dtSaida ? (l.dtSaida | date:'dd/MM/yyyy') : '-' }}</td>
+            <td>{{ formatText(l.codigoMotorista) }} <span class="hint">{{ formatText(l.nomeMotorista) }}</span></td>
+            <td>{{ formatText(l.codigoCaminhao) }} <span class="hint">{{ formatText(l.placaCaminhao) }}</span></td>
+            <td class="right">{{ l.kmInicial ?? '-' }}</td>
+            <td class="right">{{ l.kmFinal ?? '-' }}</td>
+            <td class="right">{{ formatNumber(l.pesoCarga) }}</td>
+            <td class="right">{{ formatNumber(l.valorTotal) }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #emptyCargasReentrega>
+        <div class="empty" *ngIf="form.tipo === 'CARGAS_REENTREGA_CONFERIR' && !cargasReentregaLoading">
+          <ng-container *ngIf="cargasReentregaResult; else geraCargasReentrega">
+            <span class="empty-icon">👍</span>
+            Nenhuma carga iniciada em reentrega parada para conferir.
+          </ng-container>
+          <ng-template #geraCargasReentrega>
+            <span class="empty-icon">🔎</span>
+            Gere o relatório para visualizar os dados aqui.
+          </ng-template>
+        </div>
+      </ng-template>
 
       <div class="table-wrap" *ngIf="form.tipo === 'CARGAS_NAO_SINCRONIZADAS'">
         <div class="empty" *ngIf="cargasNaoSincronizadasLoading"><span class="spinner"></span>Carregando relatório...</div>
