@@ -8,7 +8,7 @@ import { extrairMensagemErro } from '../../core/utils/api-error.util';
 import { formatKgFromTon } from '../../shared/utils/weight';
 import { ConferenciaApiService } from '../../core/api/conferencia-api.service';
 import { ConferenciaMotoristaCaminhaoLinha } from '../../core/api/conferencia-api.models';
-import { caminhaoAtual, motoristaAtual, perguntaDeConfirmacao, resumoDaMudanca } from './conferencia.utils';
+import { caminhaoAtual, motoristaAtual, perguntaDeConfirmacao, periodoPadraoDoMes, resumoDaMudanca } from './conferencia.utils';
 
 interface Mensagem {
   tipo: 'success' | 'error';
@@ -36,22 +36,13 @@ export class ConferenciaMotoristaCaminhaoComponent implements OnInit {
   private processando = new Set<string>();
 
   constructor(private api: ConferenciaApiService) {
-    const hoje = new Date();
-    const trintaDiasAtras = new Date(hoje);
-    trintaDiasAtras.setDate(hoje.getDate() - 30);
-    this.inicio = this.toIsoDate(trintaDiasAtras);
-    this.fim = this.toIsoDate(hoje);
+    const periodo = periodoPadraoDoMes();
+    this.inicio = periodo.inicio;
+    this.fim = periodo.fim;
   }
 
   ngOnInit(): void {
     this.buscar();
-  }
-
-  private toIsoDate(d: Date): string {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
   }
 
   buscar(): void {

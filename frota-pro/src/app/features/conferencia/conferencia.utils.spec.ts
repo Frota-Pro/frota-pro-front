@@ -1,5 +1,5 @@
 import { ConferenciaMotoristaCaminhaoLinha } from '../../core/api/conferencia-api.models';
-import { perguntaDeConfirmacao, resumoDaMudanca } from './conferencia.utils';
+import { perguntaDeConfirmacao, periodoPadraoDoMes, resumoDaMudanca } from './conferencia.utils';
 
 function linhaDoCasoReal(parcial: Partial<ConferenciaMotoristaCaminhaoLinha> = {}): ConferenciaMotoristaCaminhaoLinha {
   return {
@@ -51,6 +51,12 @@ describe('conferencia.utils', () => {
       linhaDoCasoReal({ codigoCaminhaoNovo: null, placaCaminhaoNovo: null, podeConfirmar: false }),
     );
     expect(frases[0]).toContain('253 (não cadastrado)');
+  });
+
+  it('o período padrão vai do dia 1 do mês até hoje', () => {
+    expect(periodoPadraoDoMes(new Date(2026, 10, 10))).toEqual({ inicio: '2026-11-01', fim: '2026-11-10' });
+    expect(periodoPadraoDoMes(new Date(2026, 0, 1))).toEqual({ inicio: '2026-01-01', fim: '2026-01-01' });
+    expect(periodoPadraoDoMes(new Date(2026, 11, 31))).toEqual({ inicio: '2026-12-01', fim: '2026-12-31' });
   });
 
   it('a pergunta de confirmação cita a carga e a troca', () => {
