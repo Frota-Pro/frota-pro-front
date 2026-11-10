@@ -1,0 +1,115 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <a class="voltar" routerLink="/dashboard/conferencia"><i class="fas fa-chevron-left"></i> Conferência</a>
+      <h1>Reentrega: motorista/caminhão diferente do manifesto</h1>
+      <p>
+        Notas que voltaram de uma viagem e entraram num carregamento novo <strong>depois</strong> de o MDF-e ser gerado.
+        O manifesto continua sendo o da viagem antiga, então a carga pode ter vindo com o motorista ou o caminhão errado.
+        Confira cada uma: <strong>Confirmar</strong> troca pelo que está no carregamento; <strong>Ignorar</strong> não altera nada.
+      </p>
+    </div>
+  </div>
+
+  <section class="filtro">
+    <label>
+      Notas que entraram no carregamento de
+      <input type="date" [(ngModel)]="inicio" />
+    </label>
+    <label>
+      até
+      <input type="date" [(ngModel)]="fim" />
+    </label>
+    <button class="btn primary" type="button" (click)="buscar()" [disabled]="loading">Buscar</button>
+  </section>
+
+  <div class="mensagem" *ngIf="mensagem" [class.ok]="mensagem.tipo === 'success'" [class.erro]="mensagem.tipo === 'error'">
+    {{ mensagem.texto }}
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+  <div class="loading" *ngIf="loading"><span class="spinner"></span>Consultando o WinThor... (pode levar alguns segundos)</div>
+
+  <div class="empty" *ngIf="!loading && carregou && !errorMsg && linhas.length === 0">
+    Nada a conferir neste período.
+  </div>
+
+  <article class="item" *ngFor="let l of linhas; trackBy: trackByCarga" [class.iniciada]="l.iniciada">
+    <header class="item-topo">
+      <div class="item-id">
+        <a class="carga-link" [routerLink]="['/dashboard/cargas', l.numeroCarga]">{{ l.numeroCarga }}</a>
+        <span class="muted">carregamento {{ l.numeroCargaExterno }}</span>
+        <span class="chip" [class.chip-alerta]="l.iniciada">{{ l.statusCarga }}</span>
+      </div>
+      <div class="item-numeros muted">
+        Peso {{ pesoKg(l) }} • Valor {{ l.valorTotal != null ? (l.valorTotal | currency:'BRL') : '-' }}
+        <ng-container *ngIf="l.kmInicial != null"> • KM inicial {{ l.kmInicial }}</ng-container>
+      </div>
+    </header>
+
+    <div class="comparacao">
+      <div class="lado">
+        <h4>Manifesto (MDF-e {{ l.manifesto.numMdfe }})</h4>
+        <div class="muted">
+          Gerado em {{ l.manifesto.dataGeracao ? (l.manifesto.dataGeracao | date:'dd/MM/yyyy HH:mm') : '-' }}
+          <ng-container *ngIf="l.manifesto.situacao"> • situação {{ l.manifesto.situacao }}</ng-container>
+        </div>
+        <div><span class="rotulo">Motorista</span> {{ l.manifesto.codigoMotorista || '-' }} - {{ l.manifesto.nomeMotorista || '-' }}</div>
+        <div><span class="rotulo">Veículo</span> {{ l.manifesto.codigoVeiculo || '-' }} - {{ l.manifesto.placa || '-' }}</div>
+      </div>
+
+      <div class="lado destaque">
+        <h4>Carregamento no WinThor</h4>
+        <div class="muted">É quem vai (ou foi) fazer a entrega</div>
+        <div [class.diferente]="l.trocarMotorista"><span class="rotulo">Motorista</span> {{ l.carregamento.codigoMotorista || '-' }} - {{ l.carregamento.nomeMotorista || '-' }}</div>
+        <div [class.diferente]="l.trocarCaminhao"><span class="rotulo">Veículo</span> {{ l.carregamento.codigoVeiculo || '-' }} - {{ l.carregamento.placa || '-' }}</div>
+      </div>
+
+      <div class="lado">
+        <h4>Hoje no FrotaPRO</h4>
+        <div class="muted">
+          <ng-container *ngIf="l.motoristaDefinidoManualmente">motorista trocado à mão</ng-container>
+          <ng-container *ngIf="l.motoristaDefinidoManualmente && l.caminhaoDefinidoManualmente"> • </ng-container>
+          <ng-container *ngIf="l.caminhaoDefinidoManualmente">caminhão trocado à mão</ng-container>
+          <ng-container *ngIf="!l.motoristaDefinidoManualmente && !l.caminhaoDefinidoManualmente">vindo da sincronização</ng-container>
+        </div>
+        <div [class.diferente]="l.trocarMotorista"><span class="rotulo">Motorista</span> {{ motoristaAtual(l) }}</div>
+        <div [class.diferente]="l.trocarCaminhao"><span class="rotulo">Caminhão</span> {{ caminhaoAtual(l) }}</div>
+      </div>
+    </div>
+
+    <details class="notas">
+      <summary>{{ l.transferencias.length }} nota(s) que entraram depois do manifesto</summary>
+      <table class="mini">
+        <thead>
+          <tr><th>Nota</th><th>Veio do carregamento</th><th>Quando</th><th>Motivo</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of l.transferencias">
+            <td class="mono">{{ t.numNota }}</td>
+            <td class="mono">{{ t.numCarAnterior || '-' }}</td>
+            <td>{{ t.dataTransferencia ? (t.dataTransferencia | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+            <td class="muted">{{ t.motivo || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+
+    <div class="aviso" *ngIf="l.aviso" [class.aviso-bloqueio]="!l.podeConfirmar">{{ l.aviso }}</div>
+
+    <footer class="item-rodape">
+      <div class="mudanca">
+        <span class="rotulo">Ao confirmar</span>
+        <ul>
+          <li *ngFor="let f of resumo(l)">{{ f }}</li>
+        </ul>
+      </div>
+      <div class="acoes">
+        <button class="btn" type="button" (click)="ignorar(l)" [disabled]="estaProcessando(l)">Ignorar</button>
+        <button class="btn primary" type="button" (click)="confirmar(l)" [disabled]="!l.podeConfirmar || estaProcessando(l)">
+          {{ estaProcessando(l) ? 'Aguarde...' : 'Confirmar troca' }}
+        </button>
+      </div>
+    </footer>
+  </article>
+</div>
