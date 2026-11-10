@@ -140,6 +140,20 @@ export const routes: Routes = [
             .then((m) => m.RelatoriosComponent),
       },
 
+      // Conferência (listas para a pessoa conferir; nada muda sozinho)
+      {
+        path: 'conferencia',
+        loadComponent: () =>
+          import('./features/conferencia/conferencia.component')
+            .then((m) => m.ConferenciaComponent),
+      },
+      {
+        path: 'conferencia/reentrega-motorista-caminhao',
+        loadComponent: () =>
+          import('./features/conferencia/conferencia-motorista-caminhao.component')
+            .then((m) => m.ConferenciaMotoristaCaminhaoComponent),
+      },
+
       // Abastecimentos
       {
         path: 'abastecimentos',

@@ -1,0 +1,29 @@
+.page { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+
+.header {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  background: #fff; border-radius: 16px; padding: 14px;
+  box-shadow: 0 1px 8px rgba(0,0,0,.06);
+}
+.header h1 { margin: 0; font-size: 20px; }
+.header p { margin: 4px 0 0; color: #6b7280; font-size: 13px; max-width: 760px; }
+
+.alert { color: #b91c1c; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.20); padding: 10px 12px; border-radius: 12px; }
+
+.loading { display: flex; gap: 10px; align-items: center; padding: 14px; background: #fff; border-radius: 16px; box-shadow: 0 1px 8px rgba(0,0,0,.06); }
+.spinner { width: 16px; height: 16px; border-radius: 999px; border: 2px solid #e5e7eb; border-top-color: #111827; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.tipos { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+
+.tipo-card {
+  display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit;
+  background: #fff; border-radius: 16px; padding: 16px; border: 1px solid #eef2f7;
+  box-shadow: 0 1px 8px rgba(0,0,0,.06); transition: border-color .15s, transform .15s;
+}
+.tipo-card:hover { border-color: #111827; transform: translateY(-1px); }
+.tipo-titulo { font-size: 15px; font-weight: 700; color: #111827; }
+.tipo-descricao { font-size: 13px; color: #6b7280; line-height: 1.4; }
+.tipo-abrir { margin-top: 4px; font-size: 12px; font-weight: 650; color: #111827; }
+
+.empty { padding: 18px; text-align: center; color: #6b7280; background: #fff; border-radius: 16px; }

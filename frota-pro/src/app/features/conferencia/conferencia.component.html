@@ -1,0 +1,27 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>Conferência</h1>
+      <p>
+        Listas do que o sistema acha estranho. Nada muda sozinho: você confere pelo sistema e, só se confirmar,
+        a mudança é feita.
+      </p>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="loading" *ngIf="loading"><span class="spinner"></span>Carregando...</div>
+
+  <div class="tipos" *ngIf="!loading && !errorMsg">
+    <ng-container *ngFor="let tipo of tipos; trackBy: trackByCodigo">
+      <a class="tipo-card" *ngIf="rotaDoTipo(tipo) as rota" [routerLink]="rota">
+        <span class="tipo-titulo">{{ tipo.titulo }}</span>
+        <span class="tipo-descricao">{{ tipo.descricao }}</span>
+        <span class="tipo-abrir">Abrir lista <i class="fas fa-chevron-right"></i></span>
+      </a>
+    </ng-container>
+
+    <div class="empty" *ngIf="tipos.length === 0">Nenhum tipo de conferência disponível.</div>
+  </div>
+</div>
