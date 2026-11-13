@@ -1,0 +1,5 @@
+.nova { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.nova .campo { min-width: 240px; }
+.busca { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.busca .campo { min-width: 260px; }
+.contagem { color: #6b7280; font-size: 13px; }

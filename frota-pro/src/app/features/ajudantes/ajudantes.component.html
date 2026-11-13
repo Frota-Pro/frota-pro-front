@@ -1,0 +1,80 @@
+<div class="page">
+  <app-confirmacao *ngIf="confirmacao as pergunta" [pedido]="pergunta" (confirmar)="confirmarPergunta()" (cancelar)="cancelarPergunta()"></app-confirmacao>
+
+  <div class="header">
+    <div>
+      <h1>Ajudantes</h1>
+      <p>Quem ajuda nas rotas. Os ajudantes cadastrados aqui aparecem para escolher no planejamento de cargas.</p>
+    </div>
+    <div class="nova" *ngIf="podeEditar">
+      <input
+        type="text"
+        class="campo"
+        placeholder="Nome do novo ajudante"
+        [(ngModel)]="nomeNovo"
+        (keyup.enter)="adicionar()"
+        maxlength="150"
+        aria-label="Nome do novo ajudante"
+      />
+      <button class="btn primary" (click)="adicionar()" [disabled]="salvando">
+        <i class="fas fa-plus"></i> Cadastrar
+      </button>
+    </div>
+  </div>
+
+  <div class="msg" *ngIf="mensagem as m" [class.erro]="m.tipo === 'error'" [class.sucesso]="m.tipo === 'success'">{{ m.texto }}</div>
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+  <div class="loading" *ngIf="loading"><span class="spinner"></span>Carregando...</div>
+
+  <div class="card" *ngIf="!loading">
+    <div class="busca">
+      <input type="text" class="campo" placeholder="Buscar por nome ou código" [(ngModel)]="busca" aria-label="Buscar ajudante" />
+      <span class="contagem">{{ visiveis.length }} ajudante(s)</span>
+    </div>
+
+    <table class="tabela" *ngIf="visiveis.length > 0">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nome</th>
+          <th class="acoes"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of visiveis; trackBy: trackByCodigo">
+          <td>{{ a.codigo }}</td>
+          <td>
+            <ng-container *ngIf="editando !== a.codigo">{{ a.nome }}</ng-container>
+            <input
+              *ngIf="editando === a.codigo"
+              type="text"
+              class="campo"
+              [(ngModel)]="nomeEditado"
+              (keyup.enter)="salvarEdicao(a)"
+              (keyup.escape)="cancelarEdicao()"
+              maxlength="150"
+              aria-label="Nome do ajudante"
+            />
+          </td>
+          <td class="acoes">
+            <ng-container *ngIf="podeEditar">
+              <ng-container *ngIf="editando !== a.codigo">
+                <button class="btn pequeno" (click)="editar(a)">Editar</button>
+                <button class="btn pequeno perigo" (click)="desativar(a)" [disabled]="salvando">Desativar</button>
+              </ng-container>
+              <ng-container *ngIf="editando === a.codigo">
+                <button class="btn pequeno primary" (click)="salvarEdicao(a)" [disabled]="salvando">Salvar</button>
+                <button class="btn pequeno" (click)="cancelarEdicao()">Cancelar</button>
+              </ng-container>
+            </ng-container>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="empty" *ngIf="visiveis.length === 0">
+      {{ busca ? 'Nenhum ajudante com esse nome.' : 'Nenhum ajudante cadastrado ainda.' }}
+      <span *ngIf="!busca && podeEditar">Digite o nome lá em cima e clique em "Cadastrar".</span>
+    </div>
+  </div>
+</div>
