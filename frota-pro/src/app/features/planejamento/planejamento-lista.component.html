@@ -1,0 +1,55 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>Planejamento de cargas</h1>
+      <p>
+        A planilha do dia: quais carregamentos saem juntos, com qual motorista e caminhão. Os carregamentos vêm do
+        WinThor antes do faturamento. Isso não muda nada nas cargas nem nas metas.
+      </p>
+    </div>
+    <div class="nova" *ngIf="podeEditar">
+      <input type="date" [(ngModel)]="dataNova" [max]="hoje" aria-label="Dia da planilha" />
+      <button class="btn primary" (click)="criar()" [disabled]="criando || !dataNova">
+        <i class="fas fa-plus"></i> {{ criando ? 'Criando...' : 'Nova planilha' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="loading" *ngIf="loading"><span class="spinner"></span>Carregando...</div>
+
+  <div class="card" *ngIf="!loading">
+    <table class="tabela" *ngIf="planilhas.length > 0">
+      <thead>
+        <tr>
+          <th>Dia</th>
+          <th>Situação</th>
+          <th class="n">Rotas</th>
+          <th class="n">Carregamentos</th>
+          <th class="n">Peso (t)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of planilhas; trackBy: trackById">
+          <td><strong>{{ formatarData(p.data) }}</strong></td>
+          <td>
+            <span class="selo" [class.ok]="p.status === 'FECHADA'" [class.aviso]="p.status === 'ABERTA'">
+              {{ p.status === 'FECHADA' ? 'Fechada' : 'Aberta' }}
+            </span>
+          </td>
+          <td class="n">{{ p.totalRotas }}</td>
+          <td class="n">{{ p.totalCarregamentos }}</td>
+          <td class="n">{{ formatarToneladas(p.pesoToneladas) }}</td>
+          <td class="acoes"><a class="btn" [routerLink]="['/dashboard/planejamento/cargas', p.id]">Abrir</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="empty" *ngIf="planilhas.length === 0">
+      Nenhuma planilha ainda.
+      <span *ngIf="podeEditar">Escolha o dia e clique em "Nova planilha".</span>
+    </div>
+  </div>
+</div>

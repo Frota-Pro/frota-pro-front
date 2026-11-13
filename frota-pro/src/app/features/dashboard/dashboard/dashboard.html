@@ -48,6 +48,11 @@
         <span *ngIf="!isClosed">Motoristas</span>
       </a>
 
+      <a class="menu-item" routerLink="ajudantes" routerLinkActive="active">
+        <i class="icon fas fa-user-friends"></i>
+        <span *ngIf="!isClosed">Ajudantes</span>
+      </a>
+
       <a class="menu-item" routerLink="cargas" routerLinkActive="active">
         <i class="icon fas fa-cube"></i>
         <span *ngIf="!isClosed">Cargas</span>
@@ -83,6 +88,30 @@
         <i class="icon fas fa-clipboard-check"></i>
         <span *ngIf="!isClosed">Conferência</span>
       </a>
+
+      <!-- PLANEJAMENTO -->
+      <li class="menu-item submenu-wrapper" [class.open]="submenuPlanejamentoAberto">
+
+        <button class="menu-btn" (click)="toggleSubmenuPlanejamento()">
+          <i class="icon fas fa-calendar-check"></i>
+
+          <span class="menu-text" *ngIf="!isClosed">Planejamento</span>
+
+          <i
+            class="fas chevron"
+            *ngIf="!isClosed"
+            [ngClass]="{
+              'fa-chevron-down': !submenuPlanejamentoAberto,
+              'fa-chevron-up': submenuPlanejamentoAberto
+            }">
+          </i>
+        </button>
+
+        <ul class="submenu" *ngIf="submenuPlanejamentoAberto && !isClosed">
+          <li routerLink="/dashboard/planejamento/cargas" routerLinkActive="active">Planejamento de cargas</li>
+        </ul>
+
+      </li>
 
       <a class="menu-item" routerLink="multas" routerLinkActive="active">
         <i class="icon fas fa-gavel"></i>

@@ -1,0 +1,322 @@
+<div class="page">
+  <app-confirmacao *ngIf="confirmacao as pergunta" [pedido]="pergunta" (confirmar)="confirmarPergunta()" (cancelar)="cancelarPergunta()"></app-confirmacao>
+
+  <a class="voltar" routerLink="/dashboard/planejamento/cargas"><i class="fas fa-chevron-left"></i> Planilhas</a>
+
+  <div class="alert" *ngIf="errorMsg">{{ errorMsg }}</div>
+  <div class="loading" *ngIf="loading && !planilha"><span class="spinner"></span>Carregando...</div>
+
+  <ng-container *ngIf="planilha as p">
+    <div class="header">
+      <div>
+        <h1>
+          Planilha de {{ formatarData(p.data) }}
+          <span class="selo" [class.ok]="p.status === 'FECHADA'" [class.aviso]="p.status === 'ABERTA'">
+            {{ p.status === 'FECHADA' ? 'Fechada' : 'Aberta' }}
+          </span>
+        </h1>
+        <p>
+          {{ p.totalCarregamentos }} carregamento(s) · {{ formatarToneladas(p.pesoToneladas) }} t · {{ formatarMoeda(p.valorTotal) }}
+          <span *ngIf="p.status === 'FECHADA' && p.fechadaPor"> · fechada por {{ p.fechadaPor }}</span>
+        </p>
+      </div>
+      <div class="botoes">
+        <button class="btn" *ngIf="editavel" (click)="atualizar()" [disabled]="trabalhando">
+          <i class="fas fa-sync-alt"></i> Buscar novos do WinThor
+        </button>
+        <button class="btn" (click)="imprimir()" [title]="dicaImprimir"><i class="fas fa-print"></i> {{ textoImprimir }}</button>
+        <button class="btn primary" *ngIf="editavel" (click)="fechar()" [disabled]="trabalhando">
+          <i class="fas fa-lock"></i> Fechar planilha
+        </button>
+        <button class="btn" *ngIf="podeEditar && p.status === 'FECHADA' && p.podeReabrir" (click)="reabrir()" [disabled]="trabalhando">
+          <i class="fas fa-lock-open"></i> Reabrir
+        </button>
+      </div>
+    </div>
+
+    <div class="msg" *ngIf="mensagem as m" [class.erro]="m.tipo === 'error'" [class.sucesso]="m.tipo === 'success'">{{ m.texto }}</div>
+    <div class="dica" *ngIf="p.status === 'FECHADA' && !p.podeReabrir">
+      Planilha fechada de um dia que já passou: só consulta e impressão.
+    </div>
+
+    <div class="inconsistencias" *ngIf="inconsistencias.length > 0" role="alert">
+      <div class="inconsistencias-titulo">
+        <i class="fas fa-exclamation-triangle"></i> {{ inconsistencias.length }} inconsistência(s) para resolver
+      </div>
+      <ul>
+        <li *ngFor="let i of inconsistencias">
+          <span>{{ i.texto }}</span>
+          <span class="rotas-links">
+            <button type="button" class="link-rota" *ngFor="let n of i.rotas" (click)="irParaLinha(n)">Ver rota {{ n }}</button>
+          </span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="empty" *ngIf="p.rotas.length === 0">
+      Nenhum carregamento na planilha. {{ editavel ? 'Clique em "Buscar novos do WinThor" quando aparecerem.' : '' }}
+    </div>
+
+    <ng-container *ngIf="p.rotas.length > 0">
+      <!-- FILTROS -->
+      <div class="filtros">
+        <select class="campo" [(ngModel)]="filtros.situacao" (ngModelChange)="recalcular()" aria-label="Situação">
+          <option value="todas">Todas as situações</option>
+          <option value="naoFaturadas">Só não faturadas</option>
+          <option value="faturadas">Só faturadas</option>
+        </select>
+        <select class="campo" [(ngModel)]="filtros.destino" (ngModelChange)="recalcular()" aria-label="Cidade">
+          <option value="">Todas as cidades</option>
+          <option *ngFor="let d of destinosDoFiltro" [value]="d.chave">{{ d.rotulo }} ({{ d.qtd }})</option>
+        </select>
+        <select class="campo" [(ngModel)]="filtros.winthor" (ngModelChange)="recalcular()" aria-label="Motorista e veículo do WinThor">
+          <option value="">Todos (motorista / veículo do WinThor)</option>
+          <option *ngFor="let w of winthorDoFiltro" [value]="w.chave">{{ w.rotulo }} ({{ w.qtd }})</option>
+        </select>
+        <input class="campo curto" type="text" placeholder="Nº do carregamento" [(ngModel)]="filtros.busca" (ngModelChange)="recalcular()" aria-label="Buscar número" />
+        <div class="chips-rota" *ngIf="juntas.length > 0">
+          <span class="chips-titulo">Rotas juntas:</span>
+          <button
+            type="button"
+            class="chip-rota"
+            *ngFor="let r of juntas"
+            [class.ativa]="filtros.rota === r.numeroPrincipal"
+            [style.--rota-borda]="cor(r)?.borda"
+            [style.--rota-fundo]="cor(r)?.fundo"
+            [attr.aria-pressed]="filtros.rota === r.numeroPrincipal"
+            [attr.aria-label]="'Mostrar só a rota ' + r.numeroPrincipal"
+            (click)="filtrarRota(r)"
+          >
+            <span class="bolinha"></span>{{ r.numeroPrincipal }} +{{ r.carregamentos.length - 1 }}
+          </button>
+        </div>
+        <button class="btn" *ngIf="filtrando" (click)="limparFiltros()">Limpar filtros</button>
+        <span class="contagem">{{ rotasVisiveis.length }} linha(s) · {{ filtradas.length }} de {{ linhas.length }} carregamento(s)</span>
+      </div>
+
+      <!-- O QUE FAZER COM AS LINHAS MARCADAS -->
+      <div class="lote">
+        <button class="btn pequeno" (click)="alternarTodas()" [disabled]="rotasVisiveis.length === 0">
+          {{ todasMarcadas ? 'Desmarcar todas' : 'Marcar todas' }}{{ filtrando ? ' do filtro' : '' }} ({{ rotasVisiveis.length }})
+        </button>
+        <ng-container *ngIf="selecionadas.size > 0">
+          <span class="lote-sel">{{ selecionadas.size }} marcada(s)</span>
+          <button class="btn pequeno" (click)="limparSelecao()">Limpar</button>
+          <button class="btn pequeno" (click)="abrirMensagem()"><i class="fab fa-whatsapp"></i> Gerar mensagem</button>
+          <ng-container *ngIf="editavel">
+            <button class="btn pequeno" (click)="juntarSelecionadas()" [disabled]="selecionadas.size < 2 || temFaturadaNaSelecao || trabalhando">
+              Juntar marcadas
+            </button>
+            <button class="btn pequeno perigo" (click)="tirarSelecionadas()" [disabled]="trabalhando">Tirar marcadas</button>
+          </ng-container>
+          <span class="dica-lote" *ngIf="editavel && temFaturadaNaSelecao">Faturado só pode ser tirado (não junta).</span>
+        </ng-container>
+      </div>
+
+      <!-- MENSAGEM PARA O GRUPO -->
+      <div class="mensagem-painel" *ngIf="mensagemAberta">
+        <div class="mensagem-topo">
+          <strong>Mensagem para o grupo</strong>
+          <button class="btn pequeno" (click)="fecharMensagem()">Fechar</button>
+        </div>
+        <textarea class="mensagem-texto" [(ngModel)]="mensagemTexto" [rows]="linhasDaMensagem" aria-label="Texto da mensagem"></textarea>
+        <div class="mensagem-acoes">
+          <button class="btn primary" (click)="copiarMensagem()">{{ copiado ? 'Copiado!' : 'Copiar' }}</button>
+          <button class="btn" (click)="abrirWhatsApp()"><i class="fab fa-whatsapp"></i> Abrir no WhatsApp</button>
+          <span class="dica-lote">Só a cidade da carga principal de cada rota. Dá para editar o texto antes de copiar.</span>
+        </div>
+      </div>
+
+      <!-- A PLANILHA: UMA LINHA POR ROTA -->
+      <div class="card tabela-wrap planilha-wrap">
+        <table class="tabela planilha-tabela">
+          <thead>
+            <tr>
+              <th class="marca col-fixa-1">
+                <input type="checkbox" [checked]="todasMarcadas" (change)="alternarTodas()" aria-label="Marcar todas as linhas do filtro" />
+              </th>
+              <th class="col-fixa-2">Carga</th>
+              <th class="col-fixa-3">Destino</th>
+              <th>Motorista</th>
+              <th>Ajudantes</th>
+              <th>Caminhão</th>
+              <th>Box</th>
+              <th>Dia</th>
+              <th>Turno</th>
+              <th>S. carga</th>
+              <th class="n">Peso</th>
+              <th>Situação</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let r of rotasVisiveis; trackBy: trackRota"
+              [id]="'linha-' + r.numeroPrincipal"
+              [class.selecionada]="estaMarcada(r)"
+              [class.com-problema]="(r.conflitos?.length ?? 0) > 0"
+              [class.destacada]="destacada === r.numeroPrincipal"
+              [class.travada]="rotaTravada(r)"
+              [class.colorida]="!!cor(r)"
+              [style.--rota-borda]="cor(r)?.borda"
+              [style.--rota-fundo]="cor(r)?.fundo"
+            >
+              <td class="marca col-fixa-1">
+                <input type="checkbox" [checked]="estaMarcada(r)" (change)="alternar(r)" [attr.aria-label]="'Marcar a linha ' + r.numeroPrincipal" />
+              </td>
+              <td class="col-fixa-2">
+                <strong>{{ r.numeroPrincipal }}</strong>
+                <i class="fas fa-exclamation-triangle icone-problema" *ngIf="(r.conflitos?.length ?? 0) > 0" title="Tem inconsistência: veja o aviso no alto"></i>
+              </td>
+              <td class="col-fixa-3 destino-celula">{{ r.destinos.join(' / ') }}</td>
+
+
+              <ng-container *ngIf="editavel && !rotaTravada(r); else fixas">
+                <td [class.celula-conflito]="temConflito(r, 'MOTORISTA')">
+                  <app-autocomplete
+                    placeholder="motorista"
+                    largura="180px"
+                    rotulo="Motorista da rota"
+                    [opcoes]="opcoesMotorista(r)"
+                    [valorRotulo]="rotuloMotorista(r)"
+                    [desabilitado]="trabalhando"
+                    (escolher)="escolherMotorista(r, $event)"
+                    (limpar)="limparMotorista(r)"
+                  ></app-autocomplete>
+                </td>
+                <td class="celula-ajudantes">
+                  <div class="ajudantes-pilha">
+                  <span class="chip-ajudante" *ngFor="let a of r.ajudantes" [class.conflito]="temConflito(r, 'AJUDANTE', a.codigo)">
+                    {{ a.nome }}
+                    <button type="button" class="x" [attr.aria-label]="'Tirar ' + a.nome" [disabled]="trabalhando" (click)="removerAjudante(r, a.codigo)">×</button>
+                  </span>
+                  <app-autocomplete
+                    placeholder="+ ajudante"
+                    largura="150px"
+                    rotulo="Adicionar ajudante"
+                    [opcoes]="opcoesAjudante(r)"
+                    [limpavel]="false"
+                    [limparAoEscolher]="true"
+                    [permitirCriar]="true"
+                    [desabilitado]="trabalhando"
+                    (escolher)="adicionarAjudante(r, $event)"
+                    (criar)="cadastrarAjudante(r, $event)"
+                  ></app-autocomplete>
+                  </div>
+                </td>
+                <td [class.celula-conflito]="temConflito(r, 'CAMINHAO')">
+                  <app-autocomplete
+                    placeholder="placa"
+                    largura="104px"
+                    rotulo="Caminhão da rota"
+                    [opcoes]="opcoesCaminhao(r)"
+                    [valorRotulo]="rotuloCaminhao(r)"
+                    [desabilitado]="trabalhando"
+                    (escolher)="escolherCaminhao(r, $event)"
+                    (limpar)="limparCaminhao(r)"
+                  ></app-autocomplete>
+                </td>
+                <td>
+                  <select class="campo pequeno" aria-label="Box da rota" [disabled]="trabalhando" (change)="escolherBox(r, $any($event.target).value)">
+                    <option value="">—</option>
+                    <option *ngFor="let b of p.boxes" [value]="b.numero" [selected]="b.numero === r.box?.numero" [disabled]="boxOcupado(b, r)">
+                      {{ b.numero }}{{ boxOcupado(b, r) ? ' (rota ' + b.ocupadoPorRota + ')' : '' }}
+                    </option>
+                  </select>
+                </td>
+                <td>
+                  <select class="campo pequeno" aria-label="Dia da saída" [disabled]="trabalhando" (change)="escolherDia(r, $any($event.target).value)">
+                    <option value="">—</option>
+                    <option *ngFor="let d of dias" [value]="d.valor" [selected]="d.valor === r.diaSaida">{{ d.rotulo }}</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="campo pequeno" aria-label="Turno da saída" [disabled]="trabalhando" (change)="escolherTurno(r, $any($event.target).value)">
+                    <option value="">—</option>
+                    <option *ngFor="let t of turnos" [value]="t.valor" [selected]="t.valor === r.turnoSaida">{{ t.rotulo }}</option>
+                  </select>
+                </td>
+              </ng-container>
+              <ng-template #fixas>
+                <td>{{ r.motorista?.nome || '—' }}</td>
+                <td>{{ nomesDosAjudantes(r) || '—' }}</td>
+                <td>{{ r.caminhao?.placa || '—' }}</td>
+                <td>{{ r.box?.nome || '—' }}</td>
+                <td>{{ r.diaSaida === 'HOJE' ? 'Hoje' : r.diaSaida === 'AMANHA' ? 'Amanhã' : '—' }}</td>
+                <td>{{ r.turnoSaida ? turnoRotulo(r.turnoSaida) : '—' }}</td>
+              </ng-template>
+
+              <!-- S. carga: os complementos da rota -->
+              <td class="celula-complementos">
+                <div class="complementos-pilha">
+                <span class="chip-carga" *ngFor="let c of r.carregamentos.slice(1)">
+                  <b>{{ c.numero }}</b>
+                  <button
+                    type="button"
+                    class="x"
+                    *ngIf="editavel && !rotaTravada(r)"
+                    [disabled]="trabalhando"
+                    [attr.aria-label]="'Tirar a carga ' + c.numero + ' da rota'"
+                    title="Voltar a ter linha própria"
+                    (click)="removerComplemento(c.numero)"
+                  >×</button>
+                </span>
+                <app-autocomplete
+                  *ngIf="editavel && !rotaTravada(r)"
+                  placeholder="+ carga"
+                  largura="80px"
+                  [rotulo]="'Adicionar complemento à rota ' + r.numeroPrincipal"
+                  [opcoes]="opcoesComplemento(r)"
+                  [limpavel]="false"
+                  [limparAoEscolher]="true"
+                  [desabilitado]="trabalhando"
+                  (escolher)="adicionarComplemento(r, $event)"
+                ></app-autocomplete>
+                </div>
+              </td>
+
+              <td class="n celula-peso">
+                <strong>{{ formatarToneladas(r.pesoToneladas) }} t</strong>
+                <div class="sub">{{ r.totalPedidos }} ped · {{ r.totalClientes }} entrg</div>
+              </td>
+
+              <td class="celula-situacao">
+                <span class="selo" *ngFor="let s of selos(r)" [ngClass]="s.tipo">{{ s.texto }}</span>
+                <div class="wt-linha" [class.destaque]="ehClienteVemBuscar(r.carregamentos[0])" *ngIf="partesWinThor(r.carregamentos[0]) as w">
+                  {{ w.nome }} · {{ w.placa }}<ng-container *ngIf="w.buscar"> · Cliente vem buscar</ng-container>
+                </div>
+                <div class="real" *ngIf="r.carregamentos[0].faturada && (r.carregamentos[0].motoristaCarga || r.carregamentos[0].caminhaoCarga)">
+                  Na carga: {{ r.carregamentos[0].motoristaCarga || 'sem motorista' }} · {{ r.carregamentos[0].caminhaoCarga || 'sem caminhão' }}
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="rotasVisiveis.length === 0">
+              <td colspan="12" class="vazio-filtro">Nenhuma linha com esses filtros.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TOTAIS -->
+      <div class="totais">
+        <div class="totais-bloco selecao" *ngIf="selecionadas.size > 0">
+          <div class="totais-titulo">Marcadas ({{ selecionadas.size }} linha(s) · {{ totaisSelecao.carregamentos }} carregamento(s))</div>
+          <div class="totais-linha">
+            <div><span>Peso</span><b>{{ formatarToneladas(totaisSelecao.pesoToneladas) }} t</b></div>
+            <div><span>Valor</span><b>{{ formatarMoeda(totaisSelecao.valor) }}</b></div>
+            <div><span>Clientes</span><b>{{ totaisSelecao.clientes }}</b></div>
+            <div><span>Pedidos</span><b>{{ totaisSelecao.pedidos }}</b></div>
+          </div>
+        </div>
+        <div class="totais-bloco">
+          <div class="totais-titulo">{{ filtrando ? 'Total do filtro' : 'Total da planilha' }} ({{ totaisFiltro.carregamentos }})</div>
+          <div class="totais-linha">
+            <div><span>Peso</span><b>{{ formatarToneladas(totaisFiltro.pesoToneladas) }} t</b></div>
+            <div><span>Valor</span><b>{{ formatarMoeda(totaisFiltro.valor) }}</b></div>
+            <div><span>Clientes</span><b>{{ totaisFiltro.clientes }}</b></div>
+            <div><span>Pedidos</span><b>{{ totaisFiltro.pedidos }}</b></div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </ng-container>
+</div>

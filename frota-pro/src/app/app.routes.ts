@@ -49,6 +49,12 @@ export const routes: Routes = [
 
       // Motoristas
       {
+        path: 'ajudantes',
+        loadComponent: () =>
+          import('./features/ajudantes/ajudantes.component')
+            .then(m => m.AjudantesComponent),
+      },
+      {
         path: 'motoristas',
         loadComponent: () =>
           import('./features/motoristas/motoristas-list/motoristas-list.component')
@@ -152,6 +158,20 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/conferencia/conferencia-motorista-caminhao.component')
             .then((m) => m.ConferenciaMotoristaCaminhaoComponent),
+      },
+
+      // Planejamento de cargas (planilha do dia, antes do faturamento)
+      {
+        path: 'planejamento/cargas',
+        loadComponent: () =>
+          import('./features/planejamento/planejamento-lista.component')
+            .then((m) => m.PlanejamentoListaComponent),
+      },
+      {
+        path: 'planejamento/cargas/:id',
+        loadComponent: () =>
+          import('./features/planejamento/planejamento-planilha.component')
+            .then((m) => m.PlanejamentoPlanilhaComponent),
       },
 
       // Abastecimentos

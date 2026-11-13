@@ -36,6 +36,7 @@ export class Dashboard implements OnInit {
 
   // ✅ Submenus do print
   submenuOficinaAberto = true;
+  submenuPlanejamentoAberto = false;
   submenuIntegracoesAberto = false;
   submenuAdministracaoAberto = false;
 
@@ -133,6 +134,7 @@ export class Dashboard implements OnInit {
 
   private fecharTodosSubmenus() {
     this.submenuOficinaAberto = false;
+    this.submenuPlanejamentoAberto = false;
     this.submenuIntegracoesAberto = false;
     this.submenuAdministracaoAberto = false;
     this.submenuVeiculosAberto = false;
@@ -144,6 +146,11 @@ export class Dashboard implements OnInit {
   toggleSubmenuOficina() {
     if (this.isClosed) return;
     this.submenuOficinaAberto = !this.submenuOficinaAberto;
+  }
+
+  toggleSubmenuPlanejamento() {
+    if (this.isClosed) return;
+    this.submenuPlanejamentoAberto = !this.submenuPlanejamentoAberto;
   }
 
   toggleSubmenuIntegracoes() {
